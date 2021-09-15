@@ -3,9 +3,9 @@
 #   File : cthulhu.pl
 #   Date : 12/Aug/2021
 #   Author : spjspj
-#   Purpose : Implement Don't mess with Cthulhu! (deluxe edition, with some rule mods)
+#   Purpose : Implement Don't mess with Cthulhu! (deluxe edition)
 #   Purpose : Requires having an Apache service setup (see conf file)
-#             Not providing images for the game, but you will need the following ones:
+#             Not providing the images for the game, but you will need the following ones:
 #             _cthulhu.jpg rock.jpg rune.jpg necro.jpg private_eye.jpg mirage.jpg back.jpg insane.jpg paranoia.jpg prescient_vision.jpg torch.jpg cultist.jpg oberon.jpg
 ##
 
@@ -72,6 +72,7 @@ my $SMALL_CTHULHU = "<img width=\"60\" height=\"83\" src=\"_$CTH.jpg\"><\/img>";
 my $SMALL_PRIVATE_EYE = "<img width=\"60\" height=\"83\" src=\"private_eye.jpg\"><\/img>";
 my $SMALL_RUNE = "<img width=\"60\" height=\"83\" src=\"rune.jpg\"><\/img>";
 my %rand_colors;
+my %FACEUP_ORDER;
 
 my $DEBUG = "";
 my @player_names;
@@ -83,6 +84,11 @@ my %already_shuffled;
 my $needs_shuffle_but_before_next_card_picked = 0;
 my %BANNED_NAMES;
 my %CHAT_MESSAGES;
+my $ZOOM_URL_LINK = "No zoom link pasted into chat yet!";
+my $ZOOM_URL_LINK_DATE;
+my $RINGINGROOM_URL_LINK;
+my $ZOOM_URL_LINK_set = 0;
+my $RR_URL_LINK_set = 0;
 my $NUM_CHAT_MESSAGES = 0;
 my %NOT_HIDDEN_INFO;
 
@@ -93,6 +99,7 @@ my $NUM_EXPOSED_CARDS = 0;
 my $NECRO_PICKED = 0;
 my $NUM_RUNES_PICKED = 0;
 my $MIRAGE_PICKED = 0;
+my $CHANGE_OF_ROUND = 0;
 my $num_cards_per_player = $NUM_CARDS_AT_START_OF_GAME;
 my @player_ips;
 my $num_players_in_lobby = 0;
@@ -596,6 +603,19 @@ sub reduce_cards_by_1
 sub force_needs_refresh
 {
     my $i = 0;
+    my $reason = $_ [0];
+    print (" FORCING REFRESH Called from $reason\n");
+    for ($i = 0; $i < $num_players_in_lobby; $i++)
+    {
+        $NEEDS_REFRESH [$i] = 1;
+        print (" FORCING REFRESH FOR $i - " . get_player_name ($i));
+    }
+}
+
+sub force_needs_refresh_trigger
+{
+    my $i = 0;
+    my $reason = $_ [0];
     for ($i = 0; $i < $num_players_in_lobby; $i++)
     {
         $NEEDS_REFRESH [$i] = 1;
@@ -857,8 +877,10 @@ sub pick_card
     # Shuffle the deck and farm out cards..
     if (start_of_new_round ())
     {
+        $CHANGE_OF_ROUND = 1;
         $IP =~ s/(\d)$1$//;
-        my $hands = get_faceup_hand ($IP);
+        my %NEW_FACEUP_ORDER;
+        %FACEUP_ORDER = %NEW_FACEUP_ORDER;
 
         # Setup the deck..
         setup_deck ();
@@ -948,6 +970,12 @@ sub new_game
     $num_players_in_game = $num_players_in_lobby;
     set_who_has_torch (int (rand ($num_players_in_game)));
     $NECRO_PICKED = 0;
+    $NUM_RUNES_PICKED = 0;
+    $MIRAGE_PICKED = 0;
+    $GAME_WON = 0;
+    $NUM_EXPOSED_CARDS = 0;
+    $CHANGE_OF_ROUND = 0;
+
 
     my $num_cultists = get_num_cultists ();
 
@@ -1027,6 +1055,7 @@ sub reset_game
     $MIRAGE_PICKED = 0;
     $GAME_WON = 0;
     $NUM_EXPOSED_CARDS = 0;
+    $CHANGE_OF_ROUND = 0;
     $reason_for_game_end = "";
     my %no_exposure;
     %exposed_cards = %no_exposure;
@@ -1313,6 +1342,20 @@ sub get_faceup_hand
         $c++;
     }
     @rand_ord = shuffle (@rand_ord);
+    if (!defined ($FACEUP_ORDER {$id}))
+    {
+        $FACEUP_ORDER {$id} = join (",", @rand_ord);
+    }
+    else
+    {
+        my $rand_ord = $FACEUP_ORDER {$id};
+        my $i = 0;
+        while ($rand_ord =~ s/^(\d+),//)
+        {
+            $rand_ord [$i] = $1;
+            $i++;
+        }
+    }
 
     $c = 0;
     my $c2;
@@ -1354,7 +1397,7 @@ sub print_game_state
         return "";
     }
 
-    my $out = "<table><tr><td  width=\"80%\" style=\"vertical-align: top;\">You are in the game! (Total players=$num_players_in_game)<br>";
+    my $out = "You are in the game! (Total players=$num_players_in_game)<br>";
 
     if (get_game_won () ne "")
     {
@@ -1372,7 +1415,11 @@ sub print_game_state
         %revealed_cards = %no_revealed_cards;
         my %no_revealed_cards_imgs;
         %revealed_cards_imgs = %no_revealed_cards_imgs;
-        force_needs_refresh();
+        if ($CHANGE_OF_ROUND == 0)
+        {
+            $CHANGE_OF_ROUND = 1;
+            force_needs_refresh_trigger ("PRINT_GAME_STATE");
+        }
     }
 
     my $id = get_player_id ($IP);
@@ -1388,7 +1435,6 @@ sub print_game_state
     {
         $out .= "<script>alert (\"You are now at the start of the next round as $NUM_EXPOSED_CARDS cards were turned up.  Stop and go around and say what your new hands are!\"); <\/script>\n";
     }
-    $out .= "</td>";
     return $out;
 }
 
@@ -1480,7 +1526,7 @@ sub get_refresh_code
 
 sub get_chat_code
 {
-    my $out = "<form action=\"/forperl/add_chat_message\"><input size=80 type=\"text\" id=\"msg\" name=\"msg\" value=\"Type a message here!\"><br><input type=\"submit\" value=\"Send Message\"></form>";
+    my $out = "<form action=\"/forperl/add_chat_message\"><input size=80 type=\"text\" id=\"msg\" name=\"msg\" value=\"Put a message in here for chat\"><br><input type=\"submit\" value=\"Send Message!!\"></form>";
     $out .= "&nbsp;Precanned chat messages: <font size=-1><a href=\"/forperl/add_chat_message_msg=I have passed the torch\">Torch</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=I have the torch\">Have the torch</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=All rocks..\">Rocks</a>";
@@ -1576,7 +1622,7 @@ sub get_game_state
         if (in_game ($IP))
         {
             $out = print_game_state ($IP);
-            $out .= "<td  style=\"vertical-align: top;\">Reset the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
+            $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
         }
         elsif (!game_started ())
         {
@@ -1638,7 +1684,6 @@ sub get_game_state
         my $lat;
         my $long;
         my $txt = read_from_socket (\*CLIENT);
-        print $txt;
 
         $CURRENT_CTHULHU_NAME = "";
         if ($txt =~ m/^Cookie.*?newCTHULHUNAME=(\w\w\w[\w_]+).*?(;|$)/im)
