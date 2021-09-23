@@ -72,7 +72,6 @@ my $SMALL_CTHULHU = "<img width=\"60\" height=\"83\" src=\"_$CTH.jpg\"><\/img>";
 my $SMALL_PRIVATE_EYE = "<img width=\"60\" height=\"83\" src=\"private_eye.jpg\"><\/img>";
 my $SMALL_RUNE = "<img width=\"60\" height=\"83\" src=\"rune.jpg\"><\/img>";
 my %rand_colors;
-my %FACEUP_ORDER;
 
 my $DEBUG = "";
 my @player_names;
@@ -86,9 +85,7 @@ my %BANNED_NAMES;
 my %CHAT_MESSAGES;
 my $ZOOM_URL_LINK = "No zoom link pasted into chat yet!";
 my $ZOOM_URL_LINK_DATE;
-my $RINGINGROOM_URL_LINK;
 my $ZOOM_URL_LINK_set = 0;
-my $RR_URL_LINK_set = 0;
 my $NUM_CHAT_MESSAGES = 0;
 my %NOT_HIDDEN_INFO;
 
@@ -267,9 +264,41 @@ sub write_to_socket
     }
 
     $msg_body = $header . $msg_body;
+}
+
+sub write_to_socket_zoom
+{
+    my $sock_ref = $_ [0];
+    my $msg_body = $_ [1];
+    my $form = $_ [2];
+    my $redirect = $_ [3];
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime (time);
+    my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+    print $yyyymmddhhmmss, "\n";
+
+    $msg_body = '<html><head><META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE"><br></head><body>' . $form . $msg_body . get_debug() . "</body></html>";
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body .= chr (13) . chr (10);
+    $msg_body =~ s/href="/href="\/forperl\//img;
+    $msg_body =~ s/\/\//\//img;
+    $msg_body =~ s/forperl.forperl/forperl/img;
+    $msg_body =~ s/forperl.forperl/forperl/img;
+    $msg_body =~ s/forperl.forperl/forperl/img;
+    $msg_body =~ s/forperl.forperl/forperl/img;
+
+    my $header;
+    if ($redirect =~ m/^redirect/i)
+    {
+        $header = "HTTP/1.1 302 Moved\nLocation: $ZOOM_URL_LINK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+    }
+
+    $msg_body = $header . $msg_body;
 
     syswrite ($sock_ref, $msg_body);
 }
+
 
 sub read_from_socket
 {
@@ -879,8 +908,7 @@ sub pick_card
     {
         $CHANGE_OF_ROUND = 1;
         $IP =~ s/(\d)$1$//;
-        my %NEW_FACEUP_ORDER;
-        %FACEUP_ORDER = %NEW_FACEUP_ORDER;
+        my $hands = get_faceup_hand ($IP);
 
         # Setup the deck..
         setup_deck ();
@@ -922,7 +950,7 @@ sub get_num_cultists
     if ($num_players_in_game <= $SMALL_GAME)
     {
         $num_cultists = int (rand (10));
-        if ($num_cultists > 7)
+        if ($num_cultists >= 7)
         {
             $num_cultists = 2;
         }
@@ -938,8 +966,8 @@ sub get_num_cultists
     elsif ($num_players_in_game <= $MED_GAME)
     {
         $num_cultists = int (rand (2) + 1);
-        my $extra_cultist = int (rand ($num_players_in_game) + 1);
-        if ($extra_cultist >= $SMALL_GAME)
+        my $extra_cultist = int (rand ($num_players_in_game * 2));
+        if ($extra_cultist >= $MED_GAME)
         {
             $num_cultists++;
         }
@@ -947,10 +975,6 @@ sub get_num_cultists
         if ($num_cultists == 0)
         {
             $num_cultists = 1;
-        }
-        if ($num_cultists >= 3)
-        {
-            $num_cultists = 2;
         }
     }
     return $num_cultists;
@@ -990,7 +1014,7 @@ sub new_game
 
     for ($i = 0; $i < $num_cultists; $i++)
     {
-        my $cultist = int (rand ($num_players_in_game+1));
+        my $cultist = int (rand ($num_players_in_game));
         if ($player_cultist [$cultist] == 0)
         {
             $player_cultist [$cultist] = 1;
@@ -1342,20 +1366,6 @@ sub get_faceup_hand
         $c++;
     }
     @rand_ord = shuffle (@rand_ord);
-    if (!defined ($FACEUP_ORDER {$id}))
-    {
-        $FACEUP_ORDER {$id} = join (",", @rand_ord);
-    }
-    else
-    {
-        my $rand_ord = $FACEUP_ORDER {$id};
-        my $i = 0;
-        while ($rand_ord =~ s/^(\d+),//)
-        {
-            $rand_ord [$i] = $1;
-            $i++;
-        }
-    }
 
     $c = 0;
     my $c2;
@@ -1520,13 +1530,20 @@ sub get_refresh_code
     $txt .= "    }\n";
     $txt .= "<\/script>" . "\n";
     $txt .= "<a href=\"\/forperl\/force_refresh\">Force Refresh<\/a><br>";
-
+    if ($ZOOM_URL_LINK_set)
+    {
+        $txt .= "<br><font size=+1><a href=\"$ZOOM_URL_LINK\">Current Meeting Zoom URL (pasted in chat at $ZOOM_URL_LINK_DATE)<\/a></font>";
+    }
+    else
+    {
+        $txt .= "<br>No Zoom Meeting URL pasted in chat as yet";
+    }
     return $txt;
 }
 
 sub get_chat_code
 {
-    my $out = "<form action=\"/forperl/add_chat_message\"><input size=80 type=\"text\" id=\"msg\" name=\"msg\" value=\"Put a message in here for chat\"><br><input type=\"submit\" value=\"Send Message!!\"></form>";
+    my $out = "<form action=\"/forperl/add_chat_message\"><input size=80 type=\"text\" id=\"msg\" name=\"msg\" value=\"CopyAndPasteAMessageInHere\"><br><input type=\"submit\" value=\"Send Message!!\"></form>";
     $out .= "&nbsp;Precanned chat messages: <font size=-1><a href=\"/forperl/add_chat_message_msg=I have passed the torch\">Torch</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=I have the torch\">Have the torch</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=All rocks..\">Rocks</a>";
@@ -1564,10 +1581,19 @@ sub add_chat_message
         $msg =~ s/%3D/=/img;
         force_needs_refresh ();
 
-        $msg =~ s/%20/ /img;
-        $msg =~ s/\+/ /img;
-        $CHAT_MESSAGES {$NUM_CHAT_MESSAGES} = $CURRENT_CTHULHU_NAME . "&nbsp;--&nbsp;$msg";
-        $NUM_CHAT_MESSAGES++;
+        if ($msg =~ m/https.*zoom/img)
+        {
+            $ZOOM_URL_LINK = $msg;
+            $ZOOM_URL_LINK_set = 1;
+            $ZOOM_URL_LINK_DATE = strftime "%Y%m%d %H%M", localtime(time());
+        }
+        else
+        {
+            $msg =~ s/%20/ /img;
+            $msg =~ s/\+/ /img;
+            $CHAT_MESSAGES {$NUM_CHAT_MESSAGES} = $CURRENT_CTHULHU_NAME . "&nbsp;--&nbsp;$msg";
+            $NUM_CHAT_MESSAGES++;
+        }
     }
 }
 
@@ -1606,7 +1632,7 @@ sub get_game_state
     my $id = get_player_id_from_name ($CURRENT_CTHULHU_NAME);
     if ($id == -1)
     {
-        $out .= "<font color=green size=+2>Join with a new game here:</font><br><br>";
+        $out .= "<font color=green size=+2>Join with your user name here:</font><br><br>";
         $out .= "
             <form action=\"/forperl/new_user\">
             <label for=\"fname\">User name:</label><br>
@@ -1642,7 +1668,6 @@ sub get_game_state
     }
     $out .= get_refresh_code ($do_refresh, $id, $who_has_torch);
     $out .= get_chat_code ();
-    $out .= "</td></tr></table>";
     return $out;
 }
 
@@ -1770,6 +1795,12 @@ sub get_game_state
         if ($txt =~ m/.*add_chat_message.msg=(....+).HTTP/im)
         {
             write_to_socket (\*CLIENT, add_chat_message ($1), "", "redirect");
+            next;
+        }
+
+        if ($txt =~ m/GET .*zoom.*/mi)
+        {
+            write_to_socket_zoom (\*CLIENT, "$txt", "", "redirect");
             next;
         }
 
