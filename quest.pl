@@ -112,10 +112,19 @@ my $STATE_AWAITING_QUEST = "STATE_AWAITING_QUEST";
 my $STATE_AWAITING_QUEST_RESULTS = "STATE_AWAITING_QUEST_RESULTS";
 my $STATE_AWAITING_NEXT_LEADER = "STATE_AWAITING_NEXT_LEADER";
 my $STATE_GOODS_LAST_CHANCE = "STATE_GOODS_LAST_CHANCE";
+my $STATE_GAME_FINISHED = "STATE_GAME_FINISHED";
+
+my %relative_val_of_states;
+$relative_val_of_states {$STATE_AWAITING_QUEST} = 1;
+$relative_val_of_states {$STATE_AWAITING_QUEST_RESULTS} = 2;
+$relative_val_of_states {$STATE_AWAITING_NEXT_LEADER} = 3;
+$relative_val_of_states {$STATE_GOODS_LAST_CHANCE} = 4;
+$relative_val_of_states {$STATE_GAME_FINISHED} = 5;
+
+my $STATE_OF_ROUND = $STATE_AWAITING_QUEST;
 my $THE_ACCUSED;
 my $NUMBER_QUEST_RESULTS = 0;
 my $NUMBER_FAILS_NEEDED = 2;
-my $STATE_OF_ROUND = $STATE_AWAITING_QUEST;
 my %AWAITING_QUESTERS;
 my %AWAITING_LAST_ACCUSSED;
 my %VOTING_RESULTS;
@@ -181,15 +190,85 @@ sub add_to_debug
 sub game_won
 {
     my $win_con = $_ [0];
+    print (">>> $win_con\n");
 
     if ($GAME_WON == 0)
     {
-        force_needs_refresh();
+        force_needs_refresh("game_won");
         $GAME_WON = $_ [0];
         $reason_for_game_end = $_ [1];
         add_to_debug ("GAME WON: $reason_for_game_end");
         add_to_debug (join ("<br>", @in_game_players));
     }
+}
+
+
+sub get_roles
+{
+    my $i = 0;
+    my $t;
+    while ($i < scalar @player_roles)
+    {
+        my $role = $player_roles [$i];
+        my $font_color = "darkred"; 
+
+        if ($role eq $APPRENTICE || $role eq $ARCHDUKE ||
+            $role eq $ARTHUR || $role eq $CLERIC ||
+            $role eq $DUKE || $role eq $GENERIC_GOOD ||
+            $role eq $RELUCTANT_LEADER || $role eq $SABOTEUR ||
+            $role eq $SENTINEL || $role eq $TROUBLEMAKER ||
+            $role eq $YOUTH) 
+        {
+            $font_color = "lightblue"; 
+        }
+
+        $t .= "<font color=$font_color>" . $player_names [$i] . " -- " . $player_roles [$i] . "</font><br>";
+        $i++;
+    }
+    return $t;
+}
+
+sub prettify_accused
+{
+    my $new_accused = $THE_ACCUSED;
+    my $i;
+
+    while ($i < scalar @player_roles)
+    {
+        my $role = $player_roles [$i];
+        my $name = $player_names [$i];
+        my $font_color = "darkred"; 
+
+        if ($role eq $APPRENTICE || $role eq $ARCHDUKE ||
+            $role eq $ARTHUR || $role eq $CLERIC ||
+            $role eq $DUKE || $role eq $GENERIC_GOOD ||
+            $role eq $RELUCTANT_LEADER || $role eq $SABOTEUR ||
+            $role eq $SENTINEL || $role eq $TROUBLEMAKER ||
+            $role eq $YOUTH) 
+        {
+            $font_color = "lightblue"; 
+        }
+
+        if ($font_color eq "darkred")
+        {
+            $new_accused =~ s/(Player $name.*?of being bad)/<font size=-2 color=grey>$1<\/font>/img;
+        }
+        $new_accused =~ s/($name)/<font color=$font_color>$1<\/font>/img;
+        $i++;
+    }
+    $new_accused = "\n$new_accused\n";
+    $new_accused =~ s/Player/\n<br>Player/img;
+    $new_accused =~ s/\n(.*?lightblue.*?lightblue.*?\n)/\n$1 -- <font size=+2 color=darkred> BAD WINS! (as good guys accused other good guys)<\/font>/img;
+
+    if ($new_accused =~ m/BAD WINS/img)
+    {
+        game_won ($BAD_GUYS, "Good guys accused goods guys in Last-chance round!");
+    }
+    else
+    {
+        game_won ($GOOD_GUYS, "<font size=-2>Good guys didn't accuse any other good guy (check if they accused all bad guys though..)!<\/font>");
+    }
+    return $new_accused;
 }
 
 sub get_game_won
@@ -261,25 +340,13 @@ sub get_game_won
         my $x = int (rand (55));
 
         my $t = "<font color=darkred size=+3>muhahaha, the evil forces of Morgan-Le-Fay have swept all beneath them with treachery (well done guys!) ($reason_for_game_end)<br>";
-        $t .= "These were the evil characters who " . $thes {$x} . " merged their dark Lady's PR that had *no* unit testing :|<br>";
-
-        while ($i < scalar @player_roles)
-        {
-            $t .= $player_names [$i] . " -- " . $player_roles [$i] . "<br>";
-            $i++;
-        }
-        $t .= "<\/font>";
+        $t .= "These were the evil characters who " . $thes {$x} . " merged their dark Lady's PR that had *no* unit testing :|<br><\/font>";
+        $t .= "These were the roles:<br>" . get_roles ();
         return $t;
     }
 
-    my $t = "<font color=lightblue size=+3>Good guys won! ($reason_for_game_end)<br>";
-    $t .= "These were the vdsl hardware enginerds who reduced radioactive bit flipping to -125dbi: ";
-    while ($i < scalar @player_roles)
-    {
-        $t .= $player_names [$i] . "<br>";
-        $i++;
-    }
-    $t .= "<\/font>";
+    my $t = "<font color=lightblue size=+3>Good guys won! ($reason_for_game_end)<br><\/font>";
+    $t .= "These were the roles:<br>" . get_roles ();
     return $t;
 }
 
@@ -301,7 +368,37 @@ sub get_debug
 sub change_game_state
 {
     my $new_state = $_ [0];
-    
+    my $force = $_ [1];
+
+    if ($force)
+    {
+        $STATE_OF_ROUND = $new_state;
+
+        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE) 
+        {
+            $THE_ACCUSED = "";
+            my %newAWAITING_LAST_ACCUSSED;
+            %AWAITING_LAST_ACCUSSED = %newAWAITING_LAST_ACCUSSED;
+            
+            my $m;
+            for ($m = 0; $m < $num_players_in_game; $m++) 
+            {
+                $AWAITING_LAST_ACCUSSED {$m} = 1;
+            }
+        }
+        check_if_won ();
+        return;
+    }
+
+    my $new_state_val = $relative_val_of_states {$new_state};
+    my $old_state_val = $relative_val_of_states {$STATE_OF_ROUND};
+
+    # Have some kind of order..
+    if ($new_state_val < $old_state_val)
+    {
+        return;
+    }
+
     if ($new_state ne $STATE_OF_ROUND)
     {
         $STATE_OF_ROUND = $new_state;
@@ -676,7 +773,7 @@ sub check_if_won
             if ($num_fails >= $NUMBER_FAILS_NEEDED)
             {
                 # Go to good's last chance..
-                change_game_state ($STATE_GOODS_LAST_CHANCE);
+                change_game_state ($STATE_GOODS_LAST_CHANCE, 0);
             }
         }
         if ($QUEST_OUTCOMES {$q} =~ m/Success/img)
@@ -685,6 +782,7 @@ sub check_if_won
             if ($num_successes >= 3)
             {
                 game_won ($GOOD_GUYS, "3 or more successful quests!");
+                change_game_state ($STATE_GAME_FINISHED, 1);
             }
         }
     }
@@ -692,6 +790,7 @@ sub check_if_won
     if (get_quest_number() > $TOTAL_QUESTS)
     {
         game_won ($GOOD_GUYS, "Enough successful quests!");
+        change_game_state ($STATE_GAME_FINISHED, 1);
     }
 }
 
@@ -708,8 +807,9 @@ sub get_quest_number
 
 sub force_needs_refresh
 {
+    my $reason = $_ [0];
     my $i = 0;
-    add_to_debug (" IN FORCING REFRESH\n");
+    add_to_debug (" IN FORCING REFRESH - $reason\n");
     for ($i = 0; $i < $num_players_in_lobby; $i++)
     {
         $NEEDS_REFRESH [$i] = 1;
@@ -864,9 +964,9 @@ sub new_game
         $num_players_on_quests {2} = 3;
         $num_players_on_quests {3} = 2;
         $num_players_on_quests {4} = 4;
-        $num_players_on_quests {4} = 3;
+        $num_players_on_quests {5} = 3;
         $TOTAL_QUESTS = 4;
-        $NUMBER_FAILS_NEEDED = 2;
+        $NUMBER_FAILS_NEEDED = 3;
     }
     if ($num_players_in_game == 6)
     {
@@ -994,9 +1094,9 @@ sub new_game
     }
 
     $QUEST_NUMBER = 1;
-    change_game_state ($STATE_AWAITING_QUEST);
+    change_game_state ($STATE_AWAITING_QUEST, 1);
 
-    force_needs_refresh();
+    force_needs_refresh("new_game");
     my %new_already_shuffled;
     $START_OF_NEW_ROUND = 1;
     $DONT_PASS_TORCH = 0;
@@ -1012,7 +1112,11 @@ sub reset_game
     $NUM_EXPOSED_CARDS = 0;
     $CHANGE_OF_ROUND = 0;
     $QUEST_NUMBER = 1;
-    change_game_state ($STATE_AWAITING_QUEST);
+    my %newQUEST_OUTCOMES;
+    my %newQUEST_INFO;
+    %QUEST_OUTCOMES = %newQUEST_OUTCOMES;
+    %QUEST_INFO = %newQUEST_INFO;
+    change_game_state ($STATE_AWAITING_QUEST, 1);
     $IN_DEBUG_MODE = 0;
     $TEMPLATE_LAYOUT = "";
     $reason_for_game_end = "";
@@ -1027,7 +1131,7 @@ sub reset_game
     my @new_players;
     @in_game_players = @new_players;
     my $out = "Game reset <a href=\"\/\">Lobby or Game window<\/a>";
-    force_needs_refresh();
+    force_needs_refresh("reset_game");
     #add_to_debug ("Game reset");
     my %new_already_shuffled;
     my %new_NOT_HIDDEN_INFO;
@@ -1285,13 +1389,13 @@ sub print_game_state
         $out .= "You are: " . get_small_image (get_character_image($id), 75);
 
         my $num_questers = get_players_for_current_quest ();
-        if ($STATE_OF_ROUND ne $STATE_GOODS_LAST_CHANCE)
+        if ($STATE_OF_ROUND ne $STATE_GOODS_LAST_CHANCE && $STATE_OF_ROUND ne $STATE_GAME_FINISHED)
         {
             $out .= "<br><font size=+1 color=darkblue>" . get_player_name ($who_is_leader) . " is the leader for the next quest of $num_questers!</font>\n";
         }
-        else
+        elsif ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
         {
-            $out .= "<br><font size=+2 color=darkblue>This is Good's last chance to win!</font>$THE_ACCUSED<br>Each person has to nominate in a circle two other people whom they think are bad.<br>After each person has nominated their two, the evil players out themselves and their nominations no longer count.<br>If *all* the evil characters and *only* the evil characters are pointed at, then good wins the day!<br>";  
+            $out .= "<br><font size=+2 color=darkblue>This is Good's last chance to win!</font><br>$THE_ACCUSED<br><br>Each person has to nominate in a circle two other people whom they think are bad.<br>After each person has nominated their two, the evil players out themselves and their nominations no longer count.<br>If *all* the evil characters and *only* the evil characters are pointed at, then good wins the day!<br>";  
             $interaction = "<script>alert (\"This is good's last chance to win.  Accuse two (2) players of being bad!\"); <\/script>\n";
             if (defined ($AWAITING_LAST_ACCUSSED {$id}) && $AWAITING_LAST_ACCUSSED {$id} >= 1 && $STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
             {
@@ -1303,7 +1407,12 @@ sub print_game_state
                 my $i = 1;
                 foreach $name (@player_names)
                 {
-                    $out .= "\n<input type=\"checkbox\" id=\"ACCUSED_$i\" name=\"ACCUSED_$i\" value=\"$name\" onchange=\"last_chance_accuse(2)\"> <label for=\"ACCUSED_$i\">Accuse $name of badness</label><br>";
+                    my $id_of_accused = get_player_id_from_name ($name);
+                    # Can't accuse yourself..
+                    if ($id != $id_of_accused)
+                    {
+                        $out .= "\n<input type=\"checkbox\" id=\"ACCUSED_$id_of_accused\" name=\"ACCUSED_$id_of_accused\" value=\"$name\" onchange=\"last_chance_accuse(2)\"> <label for=\"ACCUSED_$id_of_accused\">Accuse $name of badness</label><br>";
+                    }
                     $i++;
                 }
 
@@ -1311,6 +1420,11 @@ sub print_game_state
 
             }
             $out .= "</div>";
+        }
+        elsif ($STATE_OF_ROUND eq $STATE_GAME_FINISHED)
+        {
+            $out .= "<br><font size=+2 color=darkblue>Game has finished!</font><br>" . prettify_accused () . "<br><br>If *all* the evil characters and *only* the evil characters are pointed at, then good wins the day!<br>";  
+            $out .= get_roles ();
         }
 
         if ($id == $who_is_leader && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST)
@@ -1411,7 +1525,7 @@ sub print_game_state
         {
             if ($AWAITING_QUESTERS {$x} == 0)
             {
-                $done_voting .= ": " . get_player_name ($x);
+                $done_voting .= ": ($x>>" . get_player_name ($x) . ")";
             }
             if ($AWAITING_QUESTERS {$x} >= 1)
             {
@@ -1445,9 +1559,9 @@ sub print_game_state
             {
                 $QUEST_OUTCOMES {get_quest_number()} = "Fail ($num_failed_votes)";
             }
-            change_game_state ($STATE_AWAITING_NEXT_LEADER);
+            change_game_state ($STATE_AWAITING_NEXT_LEADER, 1);
             $out .= "<br>Voting just finished. Result was: " .  $QUEST_OUTCOMES {get_quest_number()} . "<br>Please press F5 to refresh manually!";
-            $QUEST_INFO {get_quest_number()} = "Leader was - " . get_player_name ($who_is_leader) . " - Folk on it were: $done_voting";
+            $QUEST_INFO {get_quest_number()} = "Leader was - " . get_player_name ($who_is_leader) . " - Folk on it were: $done_voting.";
         }
     }
 
@@ -1497,7 +1611,7 @@ sub get_refresh_code
     $txt .= "   }\n";
     $txt .= "}\n";
     $txt .= "    var doRefresh = " . $do_refresh . ";\n";
-    $txt .= "    var numseconds = 2;" . "\n";
+    $txt .= "    var numseconds = 5;" . "\n";
     $txt .= "    function countdownTimer() {" . "\n";
     $txt .= "        if (numseconds > 0)" . "\n";
     $txt .= "        {" . "\n";
@@ -1604,7 +1718,7 @@ sub add_chat_message
         $msg =~ s/%3A/:/img;
         $msg =~ s/%3F/?/img;
         $msg =~ s/%3D/=/img;
-        force_needs_refresh ();
+        force_needs_refresh ("chat_message");
 
         if ($msg =~ m/https.*zoom/img)
         {
@@ -1771,6 +1885,8 @@ sub get_game_state
         {
             add_to_debug ("BANNING $CURRENT_QUEST_NAME atm");
             $CURRENT_QUEST_NAME = "";
+            write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
+            next;
         }
 
         $CURRENT_QUEST_NAME =~ s/^(...........).*/$1/img;
@@ -1796,7 +1912,9 @@ sub get_game_state
 
         if ($txt =~ m/.*force.*refresh.*/m)
         {
-            force_needs_refresh ();
+            force_needs_refresh ("called explicitly");
+            write_to_socket (\*CLIENT, "", "", "redirect");
+            next;
         }
 
         if ($txt =~ m/.*favico.*/m)
@@ -1830,7 +1948,7 @@ sub get_game_state
 
         if ($txt =~ m/.*set_next_on_quest.*/m && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST)
         {
-            change_game_state ($STATE_AWAITING_QUEST_RESULTS);
+            change_game_state ($STATE_AWAITING_QUEST_RESULTS, 0);
             $NUMBER_QUEST_RESULTS = 0; 
             my %new_AWAITING_QUESTERS;
             %AWAITING_QUESTERS = %new_AWAITING_QUESTERS;
@@ -1842,7 +1960,7 @@ sub get_game_state
                 $AWAITING_QUESTERS {$id_of_quester} = 1;
                 $VOTING_RESULTS {$id_of_quester} = 0;
                 print ("QUESTER was $id_of_quester\n");
-                force_needs_refresh ();
+                force_needs_refresh ("set next quest");
             }
             
             while ($txt =~ s/.*(set_next_on_quest.*)QUESTER_MAGIC=(\w+)/$1/s)
@@ -1850,24 +1968,47 @@ sub get_game_state
                 my $name_of_magic_token_holder = $2;
                 my $id_of_quester = get_player_id_from_name ($name_of_magic_token_holder);
                 $AWAITING_QUESTERS {$id_of_quester} = 2;
+                $AWAITING_QUESTERS {$MAGIC_TOKEN} = $name_of_magic_token_holder;
                 $VOTING_RESULTS {$id_of_quester} = 0;
                 print ("MAGIC QUESTER was $id_of_quester\n");
-                force_needs_refresh ();
+                force_needs_refresh ("magic token quester");
             }
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
         
-        if ($txt =~ m/.*last_chance_accuse.*/m && $STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
+        if ($txt =~ m/.*last_chance_accuse.*/m && $STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE && $AWAITING_LAST_ACCUSSED {get_player_id_from_name ($CURRENT_QUEST_NAME)} == 1)
         {
             while ($txt =~ s/.*(last_chance_accuse.*)ACCUSED_(\d+)/$1/s)
             {
-                my $id_of_accused = $2 - 1;
+                my $id_of_accused = $2;
                 my $accused_name = get_player_name ($id_of_accused);
-                force_needs_refresh ();
-                $THE_ACCUSED .= ",$CURRENT_QUEST_NAME accused $accused_name ";
+                force_needs_refresh ("last chance");
+                $THE_ACCUSED .= "Player $CURRENT_QUEST_NAME accused $accused_name of being bad";
                 $AWAITING_LAST_ACCUSSED {get_player_id_from_name ($CURRENT_QUEST_NAME)} = 0;
+                print (">>ACCUSED=$THE_ACCUSED\n"); 
             }
+
+            my $done = 1;
+            my $already_done_done = 0;
+            my $ala;
+            foreach $ala (sort keys (%AWAITING_LAST_ACCUSSED))
+            {
+                if ($AWAITING_LAST_ACCUSSED {$ala} > 0)
+                {
+                    $done = 0;
+                }
+                if ($AWAITING_LAST_ACCUSSED {$ala} < 0)
+                {
+                    $already_done_done = 1;
+                }
+            }
+            if ($done == 1 && !$already_done_done)
+            { 
+                change_game_state ($STATE_GAME_FINISHED, 1);
+            }
+
+            $THE_ACCUSED .= "<br>";
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
@@ -1893,7 +2034,7 @@ sub get_game_state
                     {
                         $VOTING_RESULTS {$id_of_quester} = -1;
                     }
-                    force_needs_refresh ();
+                    force_needs_refresh ("voted on quest");
                 }
             }
             write_to_socket (\*CLIENT, "", "", "redirect");
@@ -1904,9 +2045,9 @@ sub get_game_state
         {
             my $next_leader = $1;
             set_leader ($next_leader);
-            change_game_state ($STATE_AWAITING_QUEST);
+            change_game_state ($STATE_AWAITING_QUEST, 1);
             increment_the_number_of_rounds ();
-            force_needs_refresh ();
+            force_needs_refresh ("next leader chosen");
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
