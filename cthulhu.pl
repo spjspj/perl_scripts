@@ -49,10 +49,11 @@ my $IN_DEBUG_MODE = 0;
 
 my $BAD_GUYS = -1;
 my $GOOD_GUYS = 1;
+my $PATH = "d:\\perl_programs\\$CTH";
 my $CULTIST = "cultist";
 my $OBERON = "oberon";
 my $INVESTIGATOR = "investigator";
-my $CTHULHU = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"_$CTH.jpg\"><\/img>";
+my $CTHULHU = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"big_c.jpg\"><\/img>";
 my $ROCK = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"rock.jpg\"><\/img>";
 my $RUNE = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"rune.jpg\"><\/img>";
 my $NECRO = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"necro.jpg\"><\/img>";
@@ -68,7 +69,7 @@ my $OBERON_IMG = "<img width=\"120\" height=\"175\" src=\"$OBERON.jpg\"></img>";
 my $INVESTIGATOR_IMG = "<img width=\"120\" height=\"175\" src=\"$INVESTIGATOR.jpg\"></img>";
 my $SMALL_CULTIST_IMG = "<img width=\"60\" height=\"83\" src=\"$CULTIST.jpg\"></img>";
 my $SMALL_INVESTIGATOR_IMG = "<img width=\"60\" height=\"83\" src=\"$INVESTIGATOR.jpg\"></img>";
-my $SMALL_CTHULHU = "<img width=\"60\" height=\"83\" src=\"_$CTH.jpg\"><\/img>";
+my $SMALL_CTHULHU = "<img width=\"60\" height=\"83\" src=\"big_c.jpg\"><\/img>";
 my $SMALL_PRIVATE_EYE = "<img width=\"60\" height=\"83\" src=\"private_eye.jpg\"><\/img>";
 my $SMALL_RUNE = "<img width=\"60\" height=\"83\" src=\"rune.jpg\"><\/img>";
 my %rand_colors;
@@ -77,6 +78,7 @@ my $DEBUG = "";
 my @player_names;
 my @NEEDS_REFRESH;
 my @NEEDS_ALERT;
+# If 2, then they are the oberon cultist.
 my @player_cultist;
 my @deck;
 my %already_shuffled;
@@ -85,7 +87,9 @@ my %BANNED_NAMES;
 my %CHAT_MESSAGES;
 my $ZOOM_URL_LINK = "No zoom link pasted into chat yet!";
 my $ZOOM_URL_LINK_DATE;
+my $RINGINGROOM_URL_LINK;
 my $ZOOM_URL_LINK_set = 0;
+my $RR_URL_LINK_set = 0;
 my $NUM_CHAT_MESSAGES = 0;
 my %NOT_HIDDEN_INFO;
 
@@ -101,6 +105,11 @@ my $num_cards_per_player = $NUM_CARDS_AT_START_OF_GAME;
 my @player_ips;
 my $num_players_in_lobby = 0;
 
+sub add_to_debug
+{
+    #print ("$_[0]\n");
+}
+
 sub game_won
 {
     my $win_con = $_ [0];
@@ -110,6 +119,8 @@ sub game_won
         force_needs_refresh();
         $GAME_WON = $_ [0];
         $reason_for_game_end = $_ [1];
+        add_to_debug ("GAME WON: $reason_for_game_end");
+        add_to_debug (join ("<br>", @deck));
     }
 }
 
@@ -239,17 +250,17 @@ sub write_to_socket
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body .= chr (13) . chr (10);
     #$msg_body =~ s/<img.*?src="(.*?)".*?>(.*?)<\/img>/$1 - $2/img;
-    $msg_body =~ s/href="/href="\/forperl\//img;
+    $msg_body =~ s/href="/href="\/cthulhu\//img;
     $msg_body =~ s/\/\//\//img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
 
     my $header;
     if ($redirect =~ m/^redirect/i)
     {
-        $header = "HTTP/1.1 302 Moved\nLocation: \/forperl\/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        $header = "HTTP/1.1 302 Moved\nLocation: \/cthulhu\/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
     }
     elsif ($redirect =~ m/^noredirect/i)
     {
@@ -264,6 +275,10 @@ sub write_to_socket
     }
 
     $msg_body = $header . $msg_body;
+    #print ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
+    #add_to_debug ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
+
+    syswrite ($sock_ref, $msg_body);
 }
 
 sub write_to_socket_zoom
@@ -281,12 +296,14 @@ sub write_to_socket_zoom
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body .= chr (13) . chr (10);
-    $msg_body =~ s/href="/href="\/forperl\//img;
+    #$msg_body =~ s/<img.*?src="(.*?)".*?>(.*?)<\/img>/$1 - $2/img;
+    $msg_body =~ s/href="/href="\/cthulhu\//img;
     $msg_body =~ s/\/\//\//img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
-    $msg_body =~ s/forperl.forperl/forperl/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    #print ("$msg_body\n");
 
     my $header;
     if ($redirect =~ m/^redirect/i)
@@ -295,10 +312,229 @@ sub write_to_socket_zoom
     }
 
     $msg_body = $header . $msg_body;
+    #print ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
+    #add_to_debug ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
 
     syswrite ($sock_ref, $msg_body);
 }
 
+sub write_to_socket_rr
+{
+    my $sock_ref = $_ [0];
+    my $msg_body = $_ [1];
+    my $form = $_ [2];
+    my $redirect = $_ [3];
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime (time);
+    my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+    #print $yyyymmddhhmmss, "\n";
+
+    $msg_body = '<html><head><META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE"><br></head><body>' . $form . $msg_body . get_debug() . "</body></html>";
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body .= chr (13) . chr (10);
+    #$msg_body =~ s/<img.*?src="(.*?)".*?>(.*?)<\/img>/$1 - $2/img;
+    $msg_body =~ s/href="/href="\/cthulhu\//img;
+    $msg_body =~ s/\/\//\//img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    $msg_body =~ s/cthulhu.cthulhu/cthulhu/img;
+    #print ("$msg_body\n");
+
+    my $header;
+    if ($redirect =~ m/^redirect/i)
+    {
+        $header = "HTTP/1.1 302 Moved\nLocation: $RINGINGROOM_URL_LINK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+    }
+
+    $msg_body = $header . $msg_body;
+    #print ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
+    add_to_debug ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
+
+    syswrite ($sock_ref, $msg_body);
+}
+
+sub old_bin_write_to_socket
+{
+    my $sock_ref = $_ [0];
+    my $img = $_ [1];
+    my $buffer;
+    my $size = 0;
+
+    if (-f $img)
+    {
+        $size = -s $img;
+    }
+    my $msg_body = "HTTP/2.0 200 OK\nDate: Mon, 20 May 2019 13:20:41 GMT\nConnection: close\nContent-type: image/jpeg\nContent-length: $size\n\n";
+    #print $msg_body, "\n";
+    syswrite ($sock_ref, $msg_body);
+
+
+    open IMAGE, $img;
+    binmode IMAGE;
+
+    my $buffer;
+    while (read (IMAGE, $buffer, 16384))
+    {
+        syswrite ($sock_ref, $buffer);
+    }
+}
+
+my %ips_slowed_down_for;
+my %images;
+sub newer_bin_write_to_socket
+{
+    my $sock_ref = $_ [0];
+    my $img = $_ [1];
+    my $ip = $_ [4];
+
+    my $buffer;
+    my $size = 0;
+
+    if (-f $img)
+    {
+        $size = -s $img;
+    }
+    my $img_type = $img;
+    $img_type =~ s/.*\.//;
+    my $msg_body = "HTTP/2 304 Not Modified\nContent-type: image/$img_type\nConnection: close\nContent-length: $size\nExpires: Sat, 16 Aug 2025 06:46:59 GMT\nLast-modified: Fri, 14 Aug 2020 06:48:59 GMT\nCache-control: public, max-age=31536000\n\n";
+
+    my $buffer;
+    my $len;
+
+    if (!defined ($images {$img}))
+    {
+        $msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nConnection: close\nContent-length: $size\nExpires: Sat, 16 Aug 2025 06:46:59 GMT\nLast-modified: Fri, 14 Aug 2020 06:48:59 GMT\nCache-control: public, max-age=31536000\n\n";
+        open IMAGE, $img;
+        binmode IMAGE;
+        while ($len = read (IMAGE, $buffer, 10000))
+        {
+            $images {$img} .= $buffer;
+        }
+        $images {$img} .= $buffer;
+        close IMAGE;
+    }
+
+    $ips_slowed_down_for {$ip} ++;
+    if ($ips_slowed_down_for {$ip} < 10)
+    {
+        $msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nConnection: close\nContent-length: $size\nExpires: Sat, 16 Aug 2025 06:46:59 GMT\nLast-modified: Fri, 14 Aug 2020 06:48:59 GMT\nCache-control: public, max-age=31536000\n\n";
+    }
+    else
+    {
+        #$msg_body = "HTTP/2 304 Not Modified\nContent-type: image/$img_type\nConnection: close\nContent-length: $size\nExpires: Sat, 16 Aug 2025 06:46:59 GMT\nLast-modified: Fri, 14 Aug 2020 06:48:59 GMT\nCache-control: public, max-age=31536000\n\n";
+        $msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nConnection: close\nContent-length: $size\nExpires: Sat, 16 Aug 2025 06:46:59 GMT\nLast-modified: Fri, 14 Aug 2020 06:48:59 GMT\nCache-control: public, max-age=31536000\n\n";
+    }
+    syswrite ($sock_ref, $msg_body);
+
+    if (defined ($images {$img}))
+    {
+        syswrite ($sock_ref, $images {$img});
+    }
+
+    #if ($ips_slowed_down_for {$ip} < 10)
+    {
+         #Time::HiRes::sleep (0.1); #.1 seconds
+    }
+}
+
+sub experimental_bin_write_to_socket
+{
+    my $sock_ref = $_ [0];
+    my $img = $_ [1];
+    my $ip = $_ [4];
+
+    my $buffer;
+    my $size = 0;
+
+    if (-f $img)
+    {
+        $size = -s $img;
+    }
+    my $img_type = $img;
+    $img_type =~ s/.*\.//;
+    my $msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nContent-length: $size\nPragma: no-cache\n\n";
+
+    my $buffer;
+    my $len;
+
+    if (!defined ($images {$img}))
+    {
+        #$msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nPragma: no-cache\n\n";
+        open IMAGE, $img;
+        binmode IMAGE;
+        while ($len = read (IMAGE, $buffer, 10000))
+        {
+            $images {$img} .= $buffer;
+        }
+        $images {$img} .= $buffer;
+        close IMAGE;
+    }
+
+    $ips_slowed_down_for {$ip} ++;
+    if ($ips_slowed_down_for {$ip} < 10)
+    {
+        #$msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nPragma: no-cache\n\n";
+    }
+    else
+    {
+        #$msg_body = "HTTP/2 200 OK\nContent-type: image/$img_type\nPragma: no-cache\n\n";
+    }
+    syswrite ($sock_ref, $msg_body);
+
+    if (defined ($images {$img}))
+    {
+        syswrite ($sock_ref, $images {$img});
+        #syswrite ($sock_ref, $images {$img});
+    }
+
+    #if ($ips_slowed_down_for {$ip} < 10)
+    {
+         #Time::HiRes::sleep (0.1); #.1 seconds
+    }
+}
+
+sub bin_write_to_socket
+{
+    my $sock_ref = $_ [0];
+    my $img = $_ [1];
+    my $buffer;
+    my $size = 0;
+
+    if (-f $img)
+    {
+        $size = -s $img;
+        #print ("SIZE ($img) WAS $size\n");
+    }
+    #print ("222 SIZE ($img) WAS $size\n");
+    my $img_type = $img;
+    $img_type =~ s/.*\.//;
+    my $msg_body = "HTTP/2 304 Not Modified\ncontent-type: image/$img_type\nConnection: close\ncontent-length: $size\nexpires: Sat, 16 Aug 2025 06:46:59 GMT\nlast-modified: Fri, 14 Aug 2020 06:48:59 GMT\ncache-control: public, max-age=31536000\n\n";
+
+    my $buffer;
+    my $len;
+
+    if (!defined ($images {$img}))
+    {
+        $msg_body = "HTTP/2 200 OK\ncontent-type: image/$img_type\nConnection: close\ncontent-length: $size\nexpires: Sat, 16 Aug 2025 06:46:59 GMT\nlast-modified: Fri, 14 Aug 2020 06:48:59 GMT\ncache-control: public, max-age=31536000\n\n";
+        open IMAGE, $img;
+        binmode IMAGE;
+        while ($len = read (IMAGE, $buffer, 10000))
+        {
+            $images {$img} .= $buffer;
+        }
+        $images {$img} .= $buffer;
+        close IMAGE;
+    }
+    $msg_body = "HTTP/2 200 OK\ncontent-type: image/$img_type\nConnection: close\ncontent-length: $size\nexpires: Sat, 16 Aug 2025 06:46:59 GMT\nlast-modified: Fri, 14 Aug 2020 06:48:59 GMT\ncache-control: public, max-age=31536000\n\n";
+    syswrite ($sock_ref, $msg_body);
+
+    if (defined ($images {$img}))
+    {
+        syswrite ($sock_ref, $images {$img});
+    }
+}
 
 sub read_from_socket
 {
@@ -316,13 +552,17 @@ sub read_from_socket
 
     vec ($rin, fileno ($sock_ref), 1) = 1;
 
+    # Read the message header
     while ((!(ord ($ch) == 13 and ord ($prev_ch) == 10)))
     {
         if (select ($rout=$rin, undef, undef, 200) == 1)
         {
             $prev_ch = $ch;
+            # There is at least one byte ready to be read..
             if (sysread ($sock_ref, $ch, 1) < 1)
             {
+                #print ("$header!!\n");
+                #print (" ---> Unable to read a character\n");
                 return "resend";
             }
             $header .= $ch;
@@ -331,6 +571,7 @@ sub read_from_socket
         }
     }
 
+    #print "\n++++++++++++++++++++++\n", $header, "\n";
     return $header;
 }
 
@@ -363,6 +604,7 @@ sub get_player_id
         }
         $i ++;
     }
+    #add_to_debug ("Didn't find |$IP| in |" . join ("|", @player_ips));
     return -1;
 }
 
@@ -429,6 +671,8 @@ sub setup_deck
     }
     @deck = @new_deck;
     do_shuffle ();
+    add_to_debug ("Setup deck with: $CTH:" . $COUNTS_OF_CARDS {$CTH} . ",$NEC:" . $COUNTS_OF_CARDS {$NEC} . ",$PRIV:" . $COUNTS_OF_CARDS {$PRIV} . ",$PRESC:" . $COUNTS_OF_CARDS {$PRESC} . ",$PARA:" . $COUNTS_OF_CARDS {$PARA} . ",$MIR:" . $COUNTS_OF_CARDS {$MIR} . ",$RRR:" . $COUNTS_OF_CARDS {$RRR} . ",$RCK:" . $COUNTS_OF_CARDS {$RCK});
+    add_to_debug (join ("<br>", @deck));
 }
 
 sub get_player_name
@@ -455,6 +699,8 @@ sub set_who_has_torch
     {
         $DONT_PASS_TORCH = 2;
     }
+
+    add_to_debug ("SET_WHO_HAS_TORCH $who_has_torch (would have been $pot_who_has_torch - paranoia is $DONT_PASS_TORCH) now has torch.." . get_player_name ($who_has_torch));
 }
 
 sub get_character
@@ -530,19 +776,26 @@ sub add_new_user
     {
         if ($name_find eq $this_name)
         {
+            #add_to_debug (" ... 777 Already user logged in with that name ($name_find)..\n");
             return "";
         }
     }
 
     {
+        add_to_debug ("ADDING NEW_USER ($this_name)..\n");
         $player_names [$num_players_in_lobby] = $this_name;
         $player_ips [$num_players_in_lobby] = $IP;
+        add_to_debug ("ADDING NEW_USER Player IPS:" . join ("<br>", @player_ips));
+        add_to_debug ("ADDING NEW_USER Player Names:" . join ("<br>", @player_names));
         $NEEDS_REFRESH [$num_players_in_lobby] = 1;
         $NEEDS_ALERT [$num_players_in_lobby] = 0;
         $num_players_in_lobby++;
+        add_to_debug ("ADDING NEW_USER ($this_name)..\n");
+
 
         my $col = sprintf ("#%lX%1X%1X", int (rand (200) + 55), int (rand (200) + 55), int (rand (200) + 55));
         $rand_colors {$this_name} = $col;
+        add_to_debug ("RAND COLOR - $this_name = $rand_colors{$this_name} ($col)\n");
         return "Welcome $this_name";
     }
 }
@@ -568,15 +821,19 @@ sub boot_person
     my $i = 0;
     my $new_i = 0;
 
+    add_to_debug ("BOOT_PERSON $i, $len boot_person $person_to_boot ");
     while ($i < $len)
     {
+        add_to_debug ("BOOT_PERSON in $i, $len boot_person $person_to_boot ");
         if ($i == $person_to_boot_id)
         {
+            add_to_debug ("Booting this person BOOT_PERSON found in $i, $len boot_person $person_to_boot add $player_names[$i] to banned..");
             $BANNED_NAMES {$player_names [$i]} = 1;
             $i++;
             $num_players_in_lobby--;
             next;
         }
+        add_to_debug ("Not booting this person BOOT_PERSON found in $new_i, $i, $len boot_person $person_to_boot ");
         $new_player_names [$new_i] = $player_names [$i];
         $new_player_ips [$new_i] = $player_ips [$i];
 
@@ -588,8 +845,12 @@ sub boot_person
     {
         $num_players_in_lobby = 0;
     }
+    add_to_debug ("Before BOOT_PERSON ($person_to_boot) had names of: " . join (",", sort (@player_names)));
+    add_to_debug ("Before BOOT_PERSON ($person_to_boot) had ips of: " . join (",", sort (@player_ips)));
     @player_names = @new_player_names;
     @player_ips = @new_player_ips;
+    add_to_debug ("After BOOT_PERSON ($person_to_boot) had names of: " . join (",", sort (@player_names)));
+    add_to_debug ("After BOOT_PERSON ($person_to_boot) had ips of: " . join (",", sort (@player_ips)));
     return "";
 }
 
@@ -632,13 +893,13 @@ sub reduce_cards_by_1
 sub force_needs_refresh
 {
     my $i = 0;
-    my $reason = $_ [0];
-    print (" FORCING REFRESH Called from $reason\n");
+    add_to_debug (" IN FORCING REFRESH\n");
     for ($i = 0; $i < $num_players_in_lobby; $i++)
     {
         $NEEDS_REFRESH [$i] = 1;
-        print (" FORCING REFRESH FOR $i - " . get_player_name ($i));
+        add_to_debug (" FORCING REFRESH FOR $i - " . get_player_name ($i));
     }
+    add_to_debug (" DONE FORCING REFRESH");
 }
 
 sub force_needs_refresh_trigger
@@ -671,8 +932,10 @@ sub pick_card
     my $IP = $_ [1];
     my $id = get_player_id ($IP);
     my $n = get_player_name ($id);
+    #print ("\n\n================================\n$DEBUG\n==================\n\n");
     if ($id != $who_has_torch)
     {
+        #add_to_debug ("<br>" . "NAUGHTY --...  >$IP< if $id != $who_has_torch) Picking torch when not have..\n");
         return ("");
     }
 
@@ -683,7 +946,9 @@ sub pick_card
     {
         $card_picked = $1;
         my $name_of_card_picked = $deck [$card_picked];
+        add_to_debug ("KNOWS $name_of_card_picked\n");
         $needs_shuffle_but_before_next_card_picked = 0;
+
 
         if ($NEXT_PICK_IS_PRESCIENT == 2)
         {
@@ -724,6 +989,7 @@ sub pick_card
                         if ($player_cultist [$i] == 1 && $player_cultist [$j] == 1 && $i != $j)
                         {
                             $NOT_HIDDEN_INFO {"$i knows $j"} = 1;
+                            add_to_debug ("CTHULHU REVEALED $i knows $j");
                         }
                     }
                 }
@@ -738,10 +1004,12 @@ sub pick_card
                 {
                     my $str = uc($exposed_cards {$c});
 
+                    add_to_debug ("KNOWS checking str($str) vs CTHULHU\n");
                     if ($str =~ m/.*CTHULHU.*/img)
                     {
                         if ($remove_cthulhu)
                         {
+                            add_to_debug ("KNOWS CTHULHU exposed and REVEALED card $str\n");
                             $revealed_cards {$str . "_$c"}++;
                             $revealed_cards_imgs {$SMALL_CTHULHU}++;
                             $remove_cthulhu = 0;
@@ -795,6 +1063,7 @@ sub pick_card
         {
             my $id_who_has_card = who_has_card ($card_picked);
             $NOT_HIDDEN_INFO {"$id knows $id_who_has_card"} = ($player_cultist [$id_who_has_card] >= 1);
+            add_to_debug ("KNOWS $id knows $id_who_has_card (cultist = " . ($player_cultist [$id_who_has_card] >= 1) . ")\n");
 
             # Put PRIVATE_EYE aside to be shuffled in later..
             my %new_exposed_cards;
@@ -805,11 +1074,13 @@ sub pick_card
             foreach $c (sort { $a <=> $b } keys %exposed_cards)
             {
                 my $str = uc($exposed_cards {$c});
+                add_to_debug ("KNOWS Looking at exposed card $exposed_cards{$c}\n");
 
                 if ($str =~ m/.*PRIV.*/img)
                 {
                     if ($remove_priv)
                     {
+                        add_to_debug ("KNOWS PRIV exposed card $exposed_cards{$c}\n");
                         $revealed_cards {$str . "_$c"}++;
                         $revealed_cards_imgs {$SMALL_PRIVATE_EYE}++;
                         $remove_priv = 0;
@@ -876,7 +1147,9 @@ sub pick_card
                         $new_c ++;
                     }
                 }
+                #add_to_debug ("Old exposed cards:" . join (",", sort keys (%exposed_cards)) . join (",", sort values (%exposed_cards)));
                 %exposed_cards = %new_exposed_cards;
+                #add_to_debug ("New exposed cards:" . join (",", sort keys (%new_exposed_cards)) . join (",", sort values (%new_exposed_cards)));
             }
         }
     }
@@ -899,6 +1172,7 @@ sub pick_card
     }
     else
     {
+        add_to_debug ("KNOWS CTHULHU? $deck[$card_picked] (Exposed = $NUM_EXPOSED_CARDS) ");
         $exposed_cards {$NUM_EXPOSED_CARDS} = $deck [$card_picked];
         $NUM_EXPOSED_CARDS ++;
     }
@@ -908,6 +1182,7 @@ sub pick_card
     {
         $CHANGE_OF_ROUND = 1;
         $IP =~ s/(\d)$1$//;
+        add_to_debug ("SHUFFLING AND DEALING FOR NEXT ROUND (from $IP)");
         my $hands = get_faceup_hand ($IP);
 
         # Setup the deck..
@@ -936,12 +1211,14 @@ sub decrease_count
 {
     my $key = $_[0];
     $COUNTS_OF_CARDS {$key} --;
+    add_to_debug ("Decreased count of $key to $COUNTS_OF_CARDS{$key}");
 }
 
 sub increase_count
 {
     my $key = $_[0];
     $COUNTS_OF_CARDS {$key} ++;
+    add_to_debug ("Increased count of $key to $COUNTS_OF_CARDS{$key}");
 }
 
 sub get_num_cultists
@@ -969,6 +1246,7 @@ sub get_num_cultists
         my $extra_cultist = int (rand ($num_players_in_game * 2));
         if ($extra_cultist >= $MED_GAME)
         {
+            #print ("Adding in extra cultist\n");
             $num_cultists++;
         }
 
@@ -1093,6 +1371,7 @@ sub reset_game
     @deck = @new_deck;
     my $out = "Game reset <a href=\"\/\">Lobby or Game window<\/a>";
     force_needs_refresh();
+    #add_to_debug ("Game reset");
     my %new_already_shuffled;
     %already_shuffled = %new_already_shuffled;
     my %new_NOT_HIDDEN_INFO;
@@ -1171,8 +1450,11 @@ sub get_board
 {
     my $IP = $_ [0];
     my $id = get_player_id ($IP);
+    add_to_debug ("GET BOARD for this number of players in game: $num_players_in_game");
+    add_to_debug ("GET BOARD Player Names:" . join ("<br>", @player_names));
     if (!in_game ($IP))
     {
+        #add_to_debug ("No game in place for this player");
         return " NO BOARD TO SEE..";
     }
 
@@ -1213,6 +1495,11 @@ sub get_facedown_hand
             if (!defined ($NOT_HIDDEN_INFO {"$actual_deck_id faceup"}))
             {
                 my $b = $BACK;
+                #if (get_player_name ($id) =~ m/Scott/img)
+                #{
+                #    my $x = (int (rand (9)) * 45) . "deg";
+                #    $b =~ s/xxx"/xxx" style="transform:rotate($x)"/img;
+                #}
                 $b =~ s/xxx/card_$actual_deck_id/;
                 $hand .= $b;
                 if ($SHOW_CARDS_MODE)
@@ -1228,6 +1515,7 @@ sub get_facedown_hand
                 $hand .= $h;
             }
         }
+
 
         $c++;
     }
@@ -1303,6 +1591,7 @@ sub get_exposed
     }
     $exposed =~ s/80/100/img;
     $exposed =~ s/131/157/img;
+    #add_to_debug ("Exposed cards: $exposed << $list_of_cards");
     return $exposed;
 }
 
@@ -1432,11 +1721,14 @@ sub print_game_state
         }
     }
 
+
     my $id = get_player_id ($IP);
     if ($id == $who_has_torch)
     {
         $out .= "";
     }
+
+    #$out .= get_character ($IP . "11") . get_faceup_hand ($IP . "11") . "<br>";
 
     $out .= get_exposed ($IP) . "<br>";
     $out .= get_board ($IP) . "<br>";
@@ -1468,6 +1760,7 @@ sub get_refresh_code
 
     $txt .= "<div id='countdown'></div>" . "\n";
     $txt .= "<script>" . "\n";
+
     $txt .= "var HttpClient = function() {\n";
     $txt .= "   this.get = function(aUrl, aCallback) {\n";
     $txt .= "       var anHttpRequest = new XMLHttpRequest();\n";
@@ -1493,13 +1786,14 @@ sub get_refresh_code
     $txt .= "        {" . "\n";
     $txt .= "            var client = new HttpClient();\n";
     $txt .= "            numseconds = 2;\n";
-    $txt .= "            client.get('/forperl/needs_refresh', function(response) {\n";
+    $txt .= "            client.get('/cthulhu/needs_refresh', function(response) {\n";
     $txt .= "                    var str = response;\n";
     $txt .= "                    var match = str.match(/.*NEEDS_REFRESH.*/i);\n";
     $txt .= "                    numseconds = 2;\n";
     $txt .= "                    if (match != null && match.length > 0) {";
     $txt .= "                        location.reload();" . "\n\n";
     $txt .= "                    }";
+    #$txt .= "                    document.getElementById('countdown').innerHTML = response;" . "\n\n";
     $txt .= "            });\n";
     $txt .= "        }" . "\n";
     $txt .= "        document.getElementById('countdown').innerHTML = '<font color=white>Refreshing page in:' + numseconds + '</font>';" . "\n";
@@ -1529,7 +1823,7 @@ sub get_refresh_code
     $txt .= "      return \"\";\n";
     $txt .= "    }\n";
     $txt .= "<\/script>" . "\n";
-    $txt .= "<a href=\"\/forperl\/force_refresh\">Force Refresh<\/a><br>";
+    $txt .= "<a href=\"\/cthulhu\/force_refresh\">Force Refresh<\/a><br>";
     if ($ZOOM_URL_LINK_set)
     {
         $txt .= "<br><font size=+1><a href=\"$ZOOM_URL_LINK\">Current Meeting Zoom URL (pasted in chat at $ZOOM_URL_LINK_DATE)<\/a></font>";
@@ -1538,28 +1832,36 @@ sub get_refresh_code
     {
         $txt .= "<br>No Zoom Meeting URL pasted in chat as yet";
     }
+    if ($RR_URL_LINK_set)
+    {
+        $txt .= "<br><font size=+1><a href=\"$RINGINGROOM_URL_LINK\">Ringing Room URL (use middle mouse button as will redirect)<\/a></font>";
+    }
     return $txt;
 }
 
 sub get_chat_code
 {
-    my $out = "<form action=\"/forperl/add_chat_message\"><input size=80 type=\"text\" id=\"msg\" name=\"msg\" value=\"CopyAndPasteAMessageInHere\"><br><input type=\"submit\" value=\"Send Message!!\"></form>";
-    $out .= "&nbsp;Precanned chat messages: <font size=-1><a href=\"/forperl/add_chat_message_msg=I have passed the torch\">Torch</a>";
-    $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=I have the torch\">Have the torch</a>";
-    $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=All rocks..\">Rocks</a>";
-    $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=Insane\">Insane</a>";
-    $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=Private eye\">Private eye</a>";
-    $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=Don't come to me\">Don't pick me!</a>";
-    $out .= "&nbsp;&nbsp;<a href=\"/forperl/add_chat_message_msg=I have 3 runestones and no bad stuff\">...</a></font>";
+    my $out = "<form action=\"/cthulhu/add_chat_message\"><input size=80 type=\"text\" id=\"msg\" name=\"msg\" value=\"CopyAndPasteAMessageInHere\"><br><input type=\"submit\" value=\"Send Message!!\"></form>";
+    $out .= "&nbsp;Precanned chat messages: <font size=-1><a href=\"/cthulhu/add_chat_message_msg=I have passed the torch\">Torch</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=I have the torch\">Have the torch</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=All rocks..\">Rocks</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=Insane\">Insane</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=Private eye\">Private eye</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=Don't come to me\">Don't pick me!</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=I have 1 runestone and private eye\">Phil special</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/cthulhu/add_chat_message_msg=I have 3 runestones and no bad stuff\">...</a></font>";
     $out .= "<table>\n";
 
     my $i = $NUM_CHAT_MESSAGES - 1;
     my $total = 0;
+    add_to_debug ("CHAT msgs = $i");
     while ($total < 10 && defined ($CHAT_MESSAGES {$i}))
     {
         my $u = $CHAT_MESSAGES{$i};
         $u =~ s/^(.*)&nbsp;--.*/$1/;
+        add_to_debug ("CHAT with $CHAT_MESSAGES{$i}");
         my $col = $rand_colors {$u};
+        add_to_debug (" using RAND COLOR >$u< >$col<\n");
         $out .= "<tr bgcolor=\"$col\"><td><font size=-1>$CHAT_MESSAGES{$i}</font></td></tr>\n";
         $i--;
         $total++;
@@ -1571,6 +1873,9 @@ sub get_chat_code
 sub add_chat_message
 {
     my $msg = $_ [0];
+    #$msg =~ s/\W/ /img;
+    #$msg =~ s/  / /img;
+    #$msg =~ s/^(......................................................................).*/$1/img;
 
     if ($CURRENT_CTHULHU_NAME =~ m/\w\w\w[\w_]+/)
     {
@@ -1580,6 +1885,12 @@ sub add_chat_message
         $msg =~ s/%3F/?/img;
         $msg =~ s/%3D/=/img;
         force_needs_refresh ();
+
+        if ($msg =~ m/http.*ringingroom/img)
+        {
+            $RINGINGROOM_URL_LINK = $msg;
+            $RR_URL_LINK_set = 1;
+        }
 
         if ($msg =~ m/https.*zoom/img)
         {
@@ -1615,7 +1926,7 @@ sub get_game_state
     my $IP = $_ [0];
 
     my $out .= "<h1>Welcome to Cthulhu, <font color=" . $rand_colors {$CURRENT_CTHULHU_NAME} . ">$CURRENT_CTHULHU_NAME</font> </h1><br><br>&nbsp;There are $num_players_in_lobby players logged in.<br>";
-    $out .= "Player names are:<br>" . join ("<br>", @player_names);
+    $out .= "Player names are:<br>" . join ("<br>", @player_names); # . "<br>IPs:<br>" . join ("<br>", @player_ips);
     $out .= "<br><br><font size=-2>You can boot players here whilst the game is not started:</font><br>";
 
     my $n;
@@ -1630,32 +1941,40 @@ sub get_game_state
     }
 
     my $id = get_player_id_from_name ($CURRENT_CTHULHU_NAME);
+    #add_to_debug ("Found player of $id from $CURRENT_CTHULHU_NAME");
     if ($id == -1)
     {
+        #$out .= "Looked for $IP and didn't find it..<br>";
         $out .= "<font color=green size=+2>Join with your user name here:</font><br><br>";
         $out .= "
-            <form action=\"/forperl/new_user\">
+            <form action=\"/cthulhu/new_user\">
             <label for=\"fname\">User name:</label><br>
             <input type=\"text\" id=\"fname\" name=\"fname\" value=\"xyz\"><br>
             <input type=\"submit\" value=\"Join Now!!\">
             </form>";
+        #$out .= "<a href=\"quick_start\">Begin Quick Debug<\/a><br>";
+        #add_to_debug ("get_game_state");
         my $next_num = $num_players_in_lobby +1;
         $out =~ s/xyz/User$next_num/img;
     }
     else
     {
         $out .= "<font size=+1 color=red>Welcome to Cthulhu, " . get_player_name ($id) . "<br><\/font>";
+        #add_to_debug ("Checking if in_game $CURRENT_CTHULHU_NAME (this equals an id of:" . get_player_id_from_name ($CURRENT_CTHULHU_NAME) . ")");
         if (in_game ($IP))
         {
+            #add_to_debug ("doing PRINT_GAME_STATE : Player=$id $IP was in_game");
             $out = print_game_state ($IP);
             $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
         }
         elsif (!game_started ())
         {
+            #add_to_debug ("Game not started");
             $out .= "<a href=\"new_game\">Start new game!<\/a>";
         }
         else
         {
+            #add_to_debug ("Game started without you in it..");
             $out .= "Game has already started!<br><br>";
             $out .= "*Reset and Restart* the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
         }
@@ -1685,10 +2004,12 @@ sub get_game_state
     my $data_from_client;
     $|=1;
 
+    print ("example: $PATH\\cthulhu.pl 1 1 0 1 1 \"each opponent\" \".*\" 0 5\n\n");
+
     socket (SERVER, PF_INET, SOCK_STREAM, $proto) or die "Failed to create a socket: $!";
     setsockopt (SERVER, SOL_SOCKET, SO_REUSEADDR, 1) or die "setsocketopt: $!";
 
-    # Bind to a port, then listen
+    # bind to a port, then listen
     bind (SERVER, sockaddr_in ($port, INADDR_ANY)) or die "Can't bind to port $port! \n";
     listen (SERVER, 10) or die "listen: $!";
     print ("Listening on port: $port\n");
@@ -1703,12 +2024,14 @@ sub get_game_state
         print ("- - - - - - -\n");
 
         ($client_port, $iaddr) = sockaddr_in ($paddr);
+        add_to_debug ("Saw iaddr of $iaddr");
         $client_addr = inet_ntoa ($iaddr);
         $client_addr =~ s/\W//img;
 
         my $lat;
         my $long;
         my $txt = read_from_socket (\*CLIENT);
+        print $txt;
 
         $CURRENT_CTHULHU_NAME = "";
         if ($txt =~ m/^Cookie.*?newCTHULHUNAME=(\w\w\w[\w_]+).*?(;|$)/im)
@@ -1723,6 +2046,7 @@ sub get_game_state
 
         if (defined $BANNED_NAMES {$CURRENT_CTHULHU_NAME})
         {
+            add_to_debug ("BANNING $CURRENT_CTHULHU_NAME atm");
             $CURRENT_CTHULHU_NAME = "";
         }
 
@@ -1752,8 +2076,20 @@ sub get_game_state
             force_needs_refresh ();
         }
 
+        if ($txt =~ m/.*favico.*/m)
+        {
+            my $size = -s ("d:/perl_programs/cthulhu/_cthulhu.jpg");
+            print (">>>>> size = $size\n");
+            my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
+            print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
+            syswrite (\*CLIENT, $h);
+            copy "d:/perl_programs/cthulhu/_cthulhu.jpg", \*CLIENT;
+            next;
+        }
+
         if ($txt =~ m/GET[^\n]*?new_user/mi)
         {
+            add_to_debug ("REAL INSTANCE OF calling New_User: $txt with $client_addr<br>");
             my $ret = add_new_user ($txt, $client_addr);
             if ($ret =~ m/^Welcome/)
             {
@@ -1773,6 +2109,8 @@ sub get_game_state
             next;
         }
 
+        add_to_debug ("Just before BOOT_PERSON had names of: " . join (",", sort (@player_names)));
+        add_to_debug ("Just before BOOT_PERSON had ips of: " . join (",", sort (@player_ips)));
         if ($txt =~ m/.*boot.*person.*name=(\w\w\w[\w_]+)/mi)
         {
             my $person_to_boot = $1;
@@ -1784,6 +2122,8 @@ sub get_game_state
         if ($txt =~ m/GET.*new_game.*/m)
         {
             new_game ();
+            #write_to_socket (\*CLIENT, new_game (), "", "noredirect");
+            #next;
         }
 
         if ($txt =~ m/.*reset.*game.*/m)
@@ -1794,6 +2134,7 @@ sub get_game_state
 
         if ($txt =~ m/.*add_chat_message.msg=(....+).HTTP/im)
         {
+            add_to_debug ("CHAT WITH $1 <br>");
             write_to_socket (\*CLIENT, add_chat_message ($1), "", "redirect");
             next;
         }
@@ -1804,8 +2145,14 @@ sub get_game_state
             next;
         }
 
+        if ($txt =~ m/GET .http.*ringingroom.*/mi)
+        {
+            write_to_socket_rr (\*CLIENT, "$txt", "", "redirect");
+            next;
+        }
+
         print ("Read -> $txt\n");
-        $txt =~ s/forperl.*forperl/forperl/img;
+        $txt =~ s/cthulhu.*cthulhu/cthulhu/img;
 
         print ("2- - - - - - -\n");
         write_to_socket (\*CLIENT, get_game_state($client_addr), "", "noredirect");
