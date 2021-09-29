@@ -190,7 +190,8 @@ sub add_to_debug
 sub game_won
 {
     my $win_con = $_ [0];
-    print (">>> $win_con\n");
+    my $reason_for_game_end = $_ [1];
+    print (">>> $win_con, $reason_for_game_end\n");
 
     if ($GAME_WON == 0)
     {
@@ -782,7 +783,7 @@ sub check_if_won
             if ($num_successes >= 3)
             {
                 game_won ($GOOD_GUYS, "3 or more successful quests!");
-                change_game_state ($STATE_GAME_FINISHED, 1);
+                change_game_state ($STATE_GAME_FINISHED, 0);
             }
         }
     }
@@ -790,7 +791,7 @@ sub check_if_won
     if (get_quest_number() > $TOTAL_QUESTS)
     {
         game_won ($GOOD_GUYS, "Enough successful quests!");
-        change_game_state ($STATE_GAME_FINISHED, 1);
+        change_game_state ($STATE_GAME_FINISHED, 0);
     }
 }
 
@@ -1523,11 +1524,15 @@ sub print_game_state
         my $finished_voting = 1;
         foreach $x (sort keys (%AWAITING_QUESTERS))
         {
-            if ($AWAITING_QUESTERS {$x} == 0)
+            if ($x eq $MAGIC_TOKEN)
+            {
+                $done_voting .= ": ($x>>" . $AWAITING_QUESTERS{$x} . ")";
+            }
+            elsif ($AWAITING_QUESTERS {$x} == 0)
             {
                 $done_voting .= ": ($x>>" . get_player_name ($x) . ")";
             }
-            if ($AWAITING_QUESTERS {$x} >= 1)
+            elsif ($AWAITING_QUESTERS {$x} >= 1)
             {
                 $not_done_voting .= ": " . get_player_name ($x);
                 $finished_voting = 0;
