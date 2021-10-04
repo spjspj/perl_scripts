@@ -42,6 +42,10 @@ my $TRICKSTER = "trickster"; my $TRICKSTER_IMAGE = "<img height=250 src=\"q_imag
 my $TROUBLEMAKER = "troublemaker"; my $TROUBLEMAKER_IMAGE = "<img height=250 src=\"q_images/troublemaker.jpg\"></img>";
 my $YOUTH = "youth"; my $YOUTH_IMAGE = "<img height=250 src=\"q_images/youth.jpg\"></img>";
 
+my $GOOD_COLOUR = "lightblue";
+my $BAD_COLOUR = "darkred";
+
+
 # Quest player images
 my %player_images;
 $player_images {$APPRENTICE} = $APPRENTICE_IMAGE;
@@ -84,13 +88,19 @@ my $BOARD_9_PLAYERS2 = "9_players2"; my $BOARD_9_PLAYERS2_IMAGE = "<img height=4
 my $CARD_BACK = "card_back"; my $CARD_BACK_IMAGE = "<img height=250 src=\"q_images/card_back.jpg\"></img>";
 my $CARD_BACK2 = "card_back2"; my $CARD_BACK2_IMAGE = "<img height=250 src=\"q_images/card_back2.jpg\">$CARD_BACK2</img>";
 my $CROWN = "crown"; my $CROWN_IMAGE = "<img height=70 src=\"q_images/crown.jpg\"></img>";
-my $EVIL = "evil"; my $EVIL_IMAGE = "<img height=250 src=\"q_images/evil.jpg\">$EVIL</img>";
+my $EVIL = "evil_indicator"; my $EVIL_IMAGE = "<img height=250 src=\"q_images/evil.jpg\">$EVIL</img>";
 my $FAIL = "fail"; my $FAIL_IMAGE = "<img height=250 src=\"q_images/fail.jpg\">$FAIL</img>";
-my $GOOD = "Good"; my $GOOD_IMAGE = "<img height=250 src=\"q_images/Good.jpg\">$GOOD</img>";
+my $GOOD = "good_indicator"; my $GOOD_IMAGE = "<img height=250 src=\"q_images/Good.jpg\">$GOOD</img>";
 my $GOOD_TOKEN = "good_token"; my $GOOD_TOKEN_IMAGE = "<img height=250 src=\"q_images/good_token.jpg\">$GOOD_TOKEN</img>";
 my $SUCCESS = "success"; my $SUCCESS_IMAGE = "<img height=250 src=\"q_images/success.jpg\">$SUCCESS</img>";
 my $SWORD = "sword"; my $SWORD_IMAGE = "<img height=250 src=\"q_images/sword.jpg\">$SWORD</img>";
 my $MAGIC_TOKEN = "magic_token"; my $MAGIC_TOKEN_IMAGE = "<img height=250 src=\"q_images/magic_token.jpg\">$MAGIC_TOKEN</img>";
+my $FAIL_BUTTON = "q_images/fail_button.png";
+my $FAIL_BUTTON_IMAGE = "<img height=250 src=\"q_images/fail_button.png\"></img>";
+my $SUCCESS_BUTTON = "q_images/success_button.png";
+my $SUCCESS_BUTTON_IMAGE = "<img height=250 src=\"q_images/success_button.png\"></img>";
+my $AMULET_BUTTON = "q_images/amulet.png";
+my $NULL_BUTTON = "q_images/null.png";
 
 # Error :(
 my $ERROR_IMAGE = $SWORD_IMAGE;
@@ -101,6 +111,7 @@ my $SMALL_GAME = 3;
 my $MED_GAME = 6;
 my %COUNTS_OF_ROLES;
 my %ROLES_ESSENTIAL;
+my %PLAYER_IS_BOT;
 my %exposed_cards;
 my %revealed_cards;
 my %revealed_cards_imgs;
@@ -110,6 +121,8 @@ my $BCK = "back";
 
 my $STATE_AWAITING_QUEST = "STATE_AWAITING_QUEST";
 my $STATE_AWAITING_QUEST_RESULTS = "STATE_AWAITING_QUEST_RESULTS";
+my $STATE_AWAITING_AMULET = "STATE_AWAITING_AMULET";
+my $STATE_AWAITING_AMULET_RESULT = "STATE_AWAITING_AMULET_RESULT";
 my $STATE_AWAITING_NEXT_LEADER = "STATE_AWAITING_NEXT_LEADER";
 my $STATE_GOODS_LAST_CHANCE = "STATE_GOODS_LAST_CHANCE";
 my $STATE_GAME_FINISHED = "STATE_GAME_FINISHED";
@@ -117,9 +130,11 @@ my $STATE_GAME_FINISHED = "STATE_GAME_FINISHED";
 my %relative_val_of_states;
 $relative_val_of_states {$STATE_AWAITING_QUEST} = 1;
 $relative_val_of_states {$STATE_AWAITING_QUEST_RESULTS} = 2;
-$relative_val_of_states {$STATE_AWAITING_NEXT_LEADER} = 3;
-$relative_val_of_states {$STATE_GOODS_LAST_CHANCE} = 4;
-$relative_val_of_states {$STATE_GAME_FINISHED} = 5;
+$relative_val_of_states {$STATE_AWAITING_AMULET} = 3;
+$relative_val_of_states {$STATE_AWAITING_AMULET_RESULT} = 4;
+$relative_val_of_states {$STATE_AWAITING_NEXT_LEADER} = 5;
+$relative_val_of_states {$STATE_GOODS_LAST_CHANCE} = 6;
+$relative_val_of_states {$STATE_GAME_FINISHED} = 7;
 
 my $STATE_OF_ROUND = $STATE_AWAITING_QUEST;
 my $THE_ACCUSED;
@@ -128,9 +143,15 @@ my $NUMBER_FAILS_NEEDED = 2;
 my %AWAITING_QUESTERS;
 my %AWAITING_LAST_ACCUSSED;
 my %VOTING_RESULTS;
+my $NO_VOTE = 0;
+my $BAD_VOTE = -1;
+my $GOOD_VOTE = 1;
 my %QUEST_OUTCOMES;
+my %AMULET_OUTCOMES;
 my %QUEST_INFO;
 my %HAS_BEEN_LEADER;
+my %HAS_HAD_AMULET;
+my %BEEN_CHECKED_BY_AMULET;
 
 my $GAME_WON = 0;
 my $reason_for_game_end = "";
@@ -151,6 +172,7 @@ my @NEEDS_ALERT;
 my $QUEST_NUMBER = 1;
 my $TOTAL_QUESTS = 1;
 my %num_players_on_quests;
+my %num_amulets;
 my @in_game_players;
 my $START_OF_NEW_ROUND = 0;
 my %BANNED_NAMES;
@@ -163,6 +185,7 @@ my $NUM_CHAT_MESSAGES = 0;
 my %NOT_HIDDEN_INFO;
 
 my $who_is_leader;
+my $who_is_amulet;
 my $pot_who_has_torch;
 my $num_players_in_game = -1;
 my $NUM_EXPOSED_CARDS = 0;
@@ -172,13 +195,13 @@ my $num_players_in_lobby = 0;
 
 # Player layouts for the table.
 my $CROWN_TOKEN = "<img src=\"q_images/crown.jpg\" height=\"75\">";
-my $PLAYER_LAYOUT_4 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td rowspan=2><img height=600 src=\"q_images/4_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_5 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td rowspan=2><img height=600 src=\"q_images/5_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_6 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2 rowspan=2><img height=600 src=\"q_images/6_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_7 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td align=center><img height=500 src=\"q_images/7_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> <td align=center></td> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_8 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td align=center><img height=500 src=\"q_images/8_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_9 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td align=center colspan=2><img height=500 src=\"q_images/9_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center colspan=2><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_10 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td align=center colspan=2><img height=500 src=\"q_images/10_player.jpg\" ></img></td> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TEN_IMAGE.jpg\" height=\"200\">CROWN_TEN  <font color=\"darkgreen\">PLAYER_TEN_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_4 = "<table class=\"questTable\"><tbody> <tr> <td align=center> <img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td rowspan=2> <div style=\"position:relative;\"><img src=\"q_images/4_player.jpg\" height=\"600\"/> <img src=\"QUEST1_BUTTON\" height=\"140\" style=\"position:absolute; top:240px; left:120px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"140\" style=\"position:absolute; top:240px; left:270px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"140\" style=\"position:absolute; top:240px; left:420px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"140\" style=\"position:absolute; top:240px; left:565px; z-index:5; border:none;\"/> </div></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_5 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td rowspan=2> <div style=\"position:relative;\"><img src=\"q_images/5_player.jpg\" height=\"600\"/> <img src=\"QUEST1_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:20px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:170px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:330px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:480px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:635px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_6 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2 rowspan=2> <div style=\"position:relative;\"><img height=600 src=\"q_images/6_player.jpg\" ></img><img src=\"QUEST1_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:190px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:350px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:500px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"100\" style=\"position:absolute; top:140px; left:290px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:660px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_7 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td> <div style=\"position:relative;\"> <img src=\"q_images/7_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:15px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:140px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:270px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:175px; left:390px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:130px; left:230px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:125px; left:345px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:170px; left:510px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> <td align=center></td> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_8 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td > <div style=\"position:relative;\"> <img src=\"q_images/8_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:15px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:140px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:270px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:175px; left:390px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:240px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:130px; left:360px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:125px; left:475px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:170px; left:510px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_9 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2> <div style=\"position:relative;\"> <img src=\"q_images/9_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:160px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:280px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:410px; z-index:5; border:none;\"/> <img src=\"q_images/amulet.png\" height=\"75\" style=\"position:absolute; top:135px; left:240px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:250px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:370px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:490px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:535px; z-index:5; border:none;\"/> </div> </td> <td align=center> <img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center colspan=2><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_10 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2> <div style=\"position:relative;\"> <img src=\"q_images/10_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:160px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:280px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:410px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:250px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:375px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:500px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:530px; z-index:5; border:none;\"/> </div> </td> <td align=center> <img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TEN_IMAGE.jpg\" height=\"200\">CROWN_TEN  <font color=\"darkgreen\">PLAYER_TEN_NAME</font></td> </tr> </tbody></table>";
 my $TEMPLATE_LAYOUT;
 
 
@@ -211,16 +234,16 @@ sub get_roles
     while ($i < scalar @player_roles)
     {
         my $role = $player_roles [$i];
-        my $font_color = "darkred"; 
+        my $font_color = "$BAD_COLOUR";
 
         if ($role eq $APPRENTICE || $role eq $ARCHDUKE ||
             $role eq $ARTHUR || $role eq $CLERIC ||
             $role eq $DUKE || $role eq $GENERIC_GOOD ||
             $role eq $RELUCTANT_LEADER || $role eq $SABOTEUR ||
             $role eq $SENTINEL || $role eq $TROUBLEMAKER ||
-            $role eq $YOUTH) 
+            $role eq $YOUTH)
         {
-            $font_color = "lightblue"; 
+            $font_color = "$GOOD_COLOUR";
         }
 
         $t .= "<font color=$font_color>" . $player_names [$i] . " -- " . $player_roles [$i] . "</font><br>";
@@ -238,28 +261,21 @@ sub prettify_accused
     {
         my $role = $player_roles [$i];
         my $name = $player_names [$i];
-        my $font_color = "darkred"; 
 
-        if ($role eq $APPRENTICE || $role eq $ARCHDUKE ||
-            $role eq $ARTHUR || $role eq $CLERIC ||
-            $role eq $DUKE || $role eq $GENERIC_GOOD ||
-            $role eq $RELUCTANT_LEADER || $role eq $SABOTEUR ||
-            $role eq $SENTINEL || $role eq $TROUBLEMAKER ||
-            $role eq $YOUTH) 
+        my $font_color = "$GOOD_COLOUR";
+        my $bad = is_role_bad ($role);
+        if ($bad)
         {
-            $font_color = "lightblue"; 
-        }
-
-        if ($font_color eq "darkred")
-        {
+            $font_color = "$BAD_COLOUR";
             $new_accused =~ s/(Player $name.*?of being bad)/<font size=-2 color=grey>$1<\/font>/img;
         }
         $new_accused =~ s/($name)/<font color=$font_color>$1<\/font>/img;
         $i++;
     }
+
     $new_accused = "\n$new_accused\n";
     $new_accused =~ s/Player/\n<br>Player/img;
-    $new_accused =~ s/\n(.*?lightblue.*?lightblue.*?\n)/\n$1 -- <font size=+2 color=darkred> BAD WINS! (as good guys accused other good guys)<\/font>/img;
+    $new_accused =~ s/(Player.*?<font.*?$GOOD_COLOUR.*?accused.*<font.*?$GOOD_COLOUR.*?of being bad)/\n$1 -- <font size=+1 color=$BAD_COLOUR> BAD WINS! (as good guys accused other good guys)<\/font>/img;
 
     if ($new_accused =~ m/BAD WINS/img)
     {
@@ -267,9 +283,9 @@ sub prettify_accused
     }
     else
     {
-        game_won ($GOOD_GUYS, "<font size=-2>Good guys didn't accuse any other good guy (check if they accused all bad guys though..)!<\/font>");
+        game_won ($GOOD_GUYS, "<font size=-1>Good guys didn't accuse any other good guy (check if they accused all bad guys though..)!<\/font>");
     }
-    return $new_accused;
+    return $new_accused . "<br><br>$THE_ACCUSED<br>";
 }
 
 sub get_game_won
@@ -340,13 +356,13 @@ sub get_game_won
         $thes {55} = "dastardly";
         my $x = int (rand (55));
 
-        my $t = "<font color=darkred size=+3>muhahaha, the evil forces of Morgan-Le-Fay have swept all beneath them with treachery (well done guys!) ($reason_for_game_end)<br>";
+        my $t = "<font color=$BAD_COLOUR size=+3>muhahaha, the evil forces of Morgan-Le-Fay have swept all beneath them with treachery (well done guys!) ($reason_for_game_end)<br>";
         $t .= "These were the evil characters who " . $thes {$x} . " merged their dark Lady's PR that had *no* unit testing :|<br><\/font>";
-        $t .= "These were the roles:<br>" . get_roles ();
+        $t .= "<br>These were the roles:<br>" . get_roles ();
         return $t;
     }
 
-    my $t = "<font color=lightblue size=+3>Good guys won! ($reason_for_game_end)<br><\/font>";
+    my $t = "<font color=$GOOD_COLOUR size=+3>Good guys won! ($reason_for_game_end)<br><\/font>";
     $t .= "These were the roles:<br>" . get_roles ();
     return $t;
 }
@@ -370,19 +386,21 @@ sub change_game_state
 {
     my $new_state = $_ [0];
     my $force = $_ [1];
+    my $reason = $_ [2];
 
+    print ("Change Game State ($reason) - $new_state, current=$STATE_OF_ROUND, $force\n");
     if ($force)
     {
         $STATE_OF_ROUND = $new_state;
 
-        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE) 
+        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
         {
             $THE_ACCUSED = "";
             my %newAWAITING_LAST_ACCUSSED;
             %AWAITING_LAST_ACCUSSED = %newAWAITING_LAST_ACCUSSED;
-            
+
             my $m;
-            for ($m = 0; $m < $num_players_in_game; $m++) 
+            for ($m = 0; $m < $num_players_in_game; $m++)
             {
                 $AWAITING_LAST_ACCUSSED {$m} = 1;
             }
@@ -404,14 +422,14 @@ sub change_game_state
     {
         $STATE_OF_ROUND = $new_state;
 
-        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE) 
+        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
         {
             $THE_ACCUSED = "";
             my %newAWAITING_LAST_ACCUSSED;
             %AWAITING_LAST_ACCUSSED = %newAWAITING_LAST_ACCUSSED;
-            
+
             my $m;
-            for ($m = 0; $m < $num_players_in_game; $m++) 
+            for ($m = 0; $m < $num_players_in_game; $m++)
             {
                 $AWAITING_LAST_ACCUSSED {$m} = 1;
             }
@@ -579,11 +597,31 @@ sub get_player_name
     return $player_names [$ID];
 }
 
+sub get_player_name_from_id
+{
+    return get_player_name ($_ [0]);
+}
+
 sub set_leader
 {
     $who_is_leader = $_ [0];
+    increment_the_number_of_rounds ();
+
+    print ("NEW_LEADER $who_is_leader\n");
+    if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "set_leader"))
+    {
+        print ("NEW_LEADER IS A BOT $who_is_leader\n");
+        handle_bot_being_leader ($who_is_leader);
+    }
     $HAS_BEEN_LEADER {$who_is_leader} = 1;
     $HAS_BEEN_LEADER {get_player_name ($who_is_leader)} = 1;
+}
+
+sub set_amulet
+{
+    $who_is_amulet = $_ [0];
+    $HAS_HAD_AMULET {$who_is_amulet} = 1;
+    $HAS_HAD_AMULET {get_player_name ($who_is_amulet)} = 1;
 }
 
 sub get_character_role
@@ -649,6 +687,7 @@ sub add_new_user
 {
     my $in = $_ [0];
     my $IP = $_ [1];
+    my $is_bot = $_ [2];
 
     my $this_name = "";
     if ($in =~ m/name=([\w][\w][\w][\w_]+)_*$/)
@@ -702,8 +741,59 @@ sub add_new_user
         my $col = sprintf ("#%lX%1X%1X", int (rand (200) + 55), int (rand (200) + 55), int (rand (200) + 55));
         $rand_colors {$this_name} = $col;
         add_to_debug ("RAND COLOR - $this_name = $rand_colors{$this_name} ($col)\n");
+        $PLAYER_IS_BOT {$this_name} = 0;
+        if ($is_bot)
+        {
+            $PLAYER_IS_BOT {$this_name} = 1;
+            print ("THIS PLAYER IS A BOT: $this_name\n");
+        }
         return "Welcome $this_name";
     }
+}
+
+sub is_bot
+{
+    my $name = $_ [0];
+    my $id = $_ [1];
+    my $from = $_ [2];
+
+    if ($name eq "")
+    {
+        $name = get_player_id_from_name ($id);
+    }
+
+    print (join (",", sort keys (%PLAYER_IS_BOT)));
+    if (defined ($PLAYER_IS_BOT {$name}) && ($PLAYER_IS_BOT {$name} == 1))
+    {
+        print ("\nBOT found: $name $id >> a bot!!!\n");
+        return 1;
+    }
+    return 0;
+}
+
+sub get_vote_from_bot
+{
+    my $id = $_ [0];
+    my $magic_token = $_ [1];
+
+    print ("Getting vote for bot from $id, $magic_token\n");
+    if (!is_bot (get_player_name ($id), $id, "get_vote_from_bot"))
+    {
+        print ("Error with bot checking..");
+        return $NO_VOTE;
+    }
+
+    if (is_role_bad (get_character_role ($id)) && (!$magic_token || $magic_token && get_character_role ($id) eq $MORGAN_LE_FAY))
+    {
+        my $r = int (rand (10));
+        if ($r < 7)
+        {
+            return $BAD_VOTE;
+        }
+        return $GOOD_VOTE;
+    }
+
+    return $GOOD_VOTE;
 }
 
 sub boot_person
@@ -774,7 +864,7 @@ sub check_if_won
             if ($num_fails >= $NUMBER_FAILS_NEEDED)
             {
                 # Go to good's last chance..
-                change_game_state ($STATE_GOODS_LAST_CHANCE, 0);
+                change_game_state ($STATE_GOODS_LAST_CHANCE, 0, "check_if_won");
             }
         }
         if ($QUEST_OUTCOMES {$q} =~ m/Success/img)
@@ -783,7 +873,7 @@ sub check_if_won
             if ($num_successes >= 3)
             {
                 game_won ($GOOD_GUYS, "3 or more successful quests!");
-                change_game_state ($STATE_GAME_FINISHED, 0);
+                change_game_state ($STATE_GAME_FINISHED, 0, "check_if_won2");
             }
         }
     }
@@ -791,9 +881,36 @@ sub check_if_won
     if (get_quest_number() > $TOTAL_QUESTS)
     {
         game_won ($GOOD_GUYS, "Enough successful quests!");
-        change_game_state ($STATE_GAME_FINISHED, 0);
+        change_game_state ($STATE_GAME_FINISHED, 0, "check_if_won3");
     }
 }
+
+sub get_quest_button
+{
+    my $q = $_ [0];
+    my $qq = $QUEST_OUTCOMES {$q};
+    if ($qq =~ m/Fail/img)
+    {
+        return $FAIL_BUTTON;
+    }
+    if ($qq =~ m/Success/img)
+    {
+        return $SUCCESS_BUTTON;
+    }
+    return $NULL_BUTTON;
+}
+
+sub get_amulet_button
+{
+    my $q = $_ [0];
+    my $qq = $AMULET_OUTCOMES {$q};
+    if ($qq =~ m/..../img)
+    {
+        return $AMULET_BUTTON;
+    }
+    return $NULL_BUTTON;
+}
+
 
 sub increment_the_number_of_rounds
 {
@@ -867,6 +984,40 @@ sub set_who_knows_who_id_id
     $NOT_HIDDEN_INFO {"$id1 knows $id2"} = 1;
 }
 
+sub is_role_bad
+{
+    my $role = $_ [0];
+    my $is_bad = 1;
+
+    if ($role eq $APPRENTICE || $role eq $ARCHDUKE ||
+        $role eq $ARTHUR || $role eq $CLERIC ||
+        $role eq $DUKE || $role eq $GENERIC_GOOD ||
+        $role eq $RELUCTANT_LEADER || $role eq $SABOTEUR ||
+        $role eq $SENTINEL || $role eq $TROUBLEMAKER ||
+        $role eq $YOUTH)
+    {
+        $is_bad = 0;
+    }
+    return $is_bad;
+}
+
+sub set_who_knows_who_id_id_good_or_bad_only
+{
+    my $id1 = $_ [0];
+    my $id2 = $_ [1];
+
+    print ("Setting that $id1 knows $id2!!!\n");
+    print (" $id2 is - " . get_character_role ($id2));
+    if (is_role_bad (get_character_role ($id2)))
+    {
+        $NOT_HIDDEN_INFO {"$id1 knows $id2 is bad"} = 1;
+    }
+    else
+    {
+        $NOT_HIDDEN_INFO {"$id1 knows $id2 is good"} = 1;
+    }
+}
+
 # Can only be used for roles that are unique for both!
 sub set_who_knows_who_role_role
 {
@@ -917,15 +1068,29 @@ sub new_game
         return error_starting_game ();
     }
 
+    my %new_NOT_HIDDEN_INFO;
+    %NOT_HIDDEN_INFO = %new_NOT_HIDDEN_INFO;
+    change_game_state ($STATE_AWAITING_QUEST, 1, "new_game");
+    #reset_game ();
     $num_players_in_game = $num_players_in_lobby;
+    $who_is_leader = -1;
+    $who_is_amulet = -1;
+    my %new_HAS_HAD_AMULET;
+    %HAS_HAD_AMULET = %new_HAS_HAD_AMULET;
+    my %new_BEEN_CHECKED_BY_AMULET;
+    %BEEN_CHECKED_BY_AMULET = %new_BEEN_CHECKED_BY_AMULET;
+
     if ($IN_DEBUG_MODE)
     {
+        $QUEST_NUMBER = 0;
         set_leader (0);
     }
     else
     {
+        $QUEST_NUMBER = 0;
         set_leader (int (rand ($num_players_in_game)));
     }
+
     $GAME_WON = 0;
     $NUM_EXPOSED_CARDS = 0;
     $CHANGE_OF_ROUND = 0;
@@ -953,6 +1118,10 @@ sub new_game
         $num_players_on_quests {2} = 3;
         $num_players_on_quests {3} = 2;
         $num_players_on_quests {4} = 3;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 0;
+        $num_amulets {3} = 0;
+        $num_amulets {4} = 0;
         $TOTAL_QUESTS = 4;
         $NUMBER_FAILS_NEEDED = 2;
     }
@@ -966,6 +1135,11 @@ sub new_game
         $num_players_on_quests {3} = 2;
         $num_players_on_quests {4} = 4;
         $num_players_on_quests {5} = 3;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 0;
+        $num_amulets {3} = 0;
+        $num_amulets {4} = 0;
+        $num_amulets {5} = 0;
         $TOTAL_QUESTS = 4;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -981,6 +1155,11 @@ sub new_game
         $num_players_on_quests {3} = 4;
         $num_players_on_quests {4} = 3;
         $num_players_on_quests {5} = 4;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 1;
+        $num_amulets {3} = 0;
+        $num_amulets {4} = 0;
+        $num_amulets {5} = 0;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -997,6 +1176,11 @@ sub new_game
         $num_players_on_quests {3} = 3;
         $num_players_on_quests {4} = 4;
         $num_players_on_quests {5} = 4;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 1;
+        $num_amulets {3} = 1;
+        $num_amulets {4} = 0;
+        $num_amulets {5} = 0;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1013,6 +1197,11 @@ sub new_game
         $num_players_on_quests {3} = 4;
         $num_players_on_quests {4} = 5;
         $num_players_on_quests {5} = 5;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 1;
+        $num_amulets {3} = 1;
+        $num_amulets {4} = 1;
+        $num_amulets {5} = 0;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1030,6 +1219,11 @@ sub new_game
         $num_players_on_quests {3} = 4;
         $num_players_on_quests {4} = 5;
         $num_players_on_quests {5} = 5;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 1;
+        $num_amulets {3} = 1;
+        $num_amulets {4} = 1;
+        $num_amulets {5} = 0;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1047,12 +1241,18 @@ sub new_game
         $num_players_on_quests {3} = 4;
         $num_players_on_quests {4} = 5;
         $num_players_on_quests {5} = 5;
+        $num_amulets {1} = 0;
+        $num_amulets {2} = 1;
+        $num_amulets {3} = 1;
+        $num_amulets {4} = 1;
+        $num_amulets {5} = 0;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
 
     # Setup the players..
     setup_players ();
+    $THE_ACCUSED = "";
 
     # Setup whom knows whom.
     if ($num_players_in_game < 6)
@@ -1082,7 +1282,6 @@ sub new_game
                 }
             }
         }
-
     }
 
     my $i = 0;
@@ -1095,7 +1294,6 @@ sub new_game
     }
 
     $QUEST_NUMBER = 1;
-    change_game_state ($STATE_AWAITING_QUEST, 1);
 
     force_needs_refresh("new_game");
     my %new_already_shuffled;
@@ -1109,6 +1307,7 @@ sub reset_game
 {
     $num_players_in_game = -1;
     $who_is_leader = -1;
+    $who_is_amulet = -1;
     $GAME_WON = 0;
     $NUM_EXPOSED_CARDS = 0;
     $CHANGE_OF_ROUND = 0;
@@ -1117,7 +1316,9 @@ sub reset_game
     my %newQUEST_INFO;
     %QUEST_OUTCOMES = %newQUEST_OUTCOMES;
     %QUEST_INFO = %newQUEST_INFO;
-    change_game_state ($STATE_AWAITING_QUEST, 1);
+    my %newAMULET_OUTCOMES;
+    %AMULET_OUTCOMES = %newAMULET_OUTCOMES;
+    change_game_state ($STATE_AWAITING_QUEST, 1, "reset_game");
     $IN_DEBUG_MODE = 0;
     $TEMPLATE_LAYOUT = "";
     $reason_for_game_end = "";
@@ -1140,6 +1341,11 @@ sub reset_game
     $START_OF_NEW_ROUND = 0;
     my %new_HAS_BEEN_LEADER;
     %HAS_BEEN_LEADER = %new_HAS_BEEN_LEADER;
+    my %new_HAS_HAD_AMULET;
+    %HAS_HAD_AMULET = %new_HAS_HAD_AMULET;
+    my %new_BEEN_CHECKED_BY_AMULET;
+    %BEEN_CHECKED_BY_AMULET = %new_BEEN_CHECKED_BY_AMULET;
+    $THE_ACCUSED = "";
     return $out;
 }
 
@@ -1147,16 +1353,16 @@ sub simulate_game
 {
     # Add simulated users..
     my $num_users = $_ [0];
-    add_new_user ("name=Aaron", "192.155.155.150");
-    add_new_user ("name=Bob_Bobberson", "192.156.155.150");
-    add_new_user ("name=Charlie", "192.165.155.150");
+    add_new_user ("name=Aaron_bot", "192.155.155.150", 1);
+    add_new_user ("name=Bob_Bobberson_bot", "192.156.155.150", 1);
+    add_new_user ("name=Charlie_bot", "192.165.155.150", 1);
     $IN_DEBUG_MODE = 1;
-    if ($num_users > 4) { add_new_user ("name=Donquil", "192.185.155.150"); }
-    if ($num_users > 5) { add_new_user ("name=Eragon", "193.155.155.150"); }
-    if ($num_users > 6) { add_new_user ("name=Caesar", "194.155.155.150"); }
-    if ($num_users > 7) { add_new_user ("name=Gerry", "195.155.155.150"); }
-    if ($num_users > 8) { add_new_user ("name=Gaius", "197.155.155.150"); }
-    if ($num_users > 9) { add_new_user ("name=Julius", "198.155.155.150"); }
+    if ($num_users > 4) { add_new_user ("name=Donquil_bot", "192.185.155.150", 1); }
+    if ($num_users > 5) { add_new_user ("name=Eragon_bot", "193.155.155.150", 1); }
+    if ($num_users > 6) { add_new_user ("name=Caesar_bot", "194.155.155.150", 1); }
+    if ($num_users > 7) { add_new_user ("name=Gerry_bot", "195.155.155.150", 1); }
+    if ($num_users > 8) { add_new_user ("name=Gaius_bot", "197.155.155.150", 1); }
+    if ($num_users > 9) { add_new_user ("name=Julius_bot", "198.155.155.150", 1); }
     new_game ();
 }
 
@@ -1215,6 +1421,16 @@ sub get_template_crown
     if ($id == 9) { return "CROWN_TEN"; }
 }
 
+sub get_template_quest_outcome
+{
+    my $id = $_ [0];
+    if ($id == 1) { return "QUEST1_BUTTON"; }
+    if ($id == 2) { return "QUEST2_BUTTON"; }
+    if ($id == 3) { return "QUEST3_BUTTON"; }
+    if ($id == 4) { return "QUEST4_BUTTON"; }
+    if ($id == 5) { return "QUEST5_BUTTON"; }
+}
+
 sub player_row
 {
     my $id = $_ [0];
@@ -1230,13 +1446,26 @@ sub player_row
 
     my $known_to_user = -1;
     my $hidden_identity = "";
+    print (" ###### NOT_HIDDEN:::" . join (",", sort keys (%NOT_HIDDEN_INFO)));
     if (defined ($NOT_HIDDEN_INFO {"$this_player_id knows $id"}) || $this_player_id == $id || $IN_DEBUG_MODE)
     {
         $known_to_user = $NOT_HIDDEN_INFO {"$this_player_id knows $id"};
         $hidden_identity = get_character_role ($id);
+        print ("$this_player_id knows $id\n");
+    }
+    elsif (defined ($NOT_HIDDEN_INFO {"$this_player_id knows $id is bad"}))
+    {
+        print (" ###### $this_player_id knows $id is bad\n");
+        $hidden_identity = $EVIL;
+    }
+    elsif (defined ($NOT_HIDDEN_INFO {"$this_player_id knows $id is good"}))
+    {
+        print (" ###### $this_player_id knows $id is good\n");
+        $hidden_identity = $GOOD;
     }
     else
     {
+        print ("  >>###### $this_player_id does not know $id\n");
         $hidden_identity = $CARD_BACK;
     }
 
@@ -1290,6 +1519,17 @@ sub player_row
     return $current_table;
 }
 
+sub add_quest_button
+{
+    my $quest_num = $_ [0];
+    my $table = $_ [1];
+    my $button_template = get_template_quest_outcome ($quest_num);
+    my $button = get_quest_button ($quest_num);
+
+    $table =~ s/$button_template/$button/img;
+    return $table;
+}
+
 sub get_board
 {
     my $IP = $_ [0];
@@ -1312,6 +1552,12 @@ sub get_board
     if ($num_players_in_game >= 9) { $current_table_for_player = player_row (8, $IP, $current_table_for_player); }
     if ($num_players_in_game >= 10) { $current_table_for_player = player_row (9, $IP, $current_table_for_player); }
 
+    $current_table_for_player = add_quest_button (1, $current_table_for_player);
+    $current_table_for_player = add_quest_button (2, $current_table_for_player);
+    $current_table_for_player = add_quest_button (3, $current_table_for_player);
+    $current_table_for_player = add_quest_button (4, $current_table_for_player);
+    $current_table_for_player = add_quest_button (5, $current_table_for_player);
+
     return $current_table_for_player;
 }
 
@@ -1328,11 +1574,13 @@ sub get_all_character_roles
 {
     my $role;
     my $all_characters;
+    my $roles;
     foreach $role (sort @player_roles)
     {
-        $all_characters .= get_small_image (get_image_from_role ($role), 125);
+        $all_characters .= get_small_image (get_image_from_role ($role), 175);
+        $roles .= ",$role";
     }
-    return $all_characters;
+    return $all_characters; # . "&nbsp;$roles";
 }
 
 sub get_current_quests_outcomes
@@ -1347,7 +1595,7 @@ sub get_current_quests_outcomes
             $a_quest = 1;
             $o = "";
         }
-        $o .= "Quest $q result was:  $QUEST_OUTCOMES{$q} ($QUEST_INFO{$q})<br>";
+        $o .= "Quest $q result was:  $QUEST_OUTCOMES{$q} ($QUEST_INFO{$q})bbbb $q <br>";
     }
     return $o;
 }
@@ -1360,6 +1608,15 @@ sub get_players_for_current_quest
         return 2;
     }
     return ($num_players_on_quests {$QUEST_NUMBER});
+}
+
+sub get_amulet_for_current_quest
+{
+    #if ($IN_DEBUG_MODE)
+    #{
+    #    return 1;
+    #}
+    return ($num_amulets {$QUEST_NUMBER});
 }
 
 sub print_game_state
@@ -1387,7 +1644,7 @@ sub print_game_state
     my $interaction = "";
     if (start_of_new_round ())
     {
-        $out .= "You are: " . get_small_image (get_character_image($id), 75);
+        $out .= "You (" . get_player_name ($id) . ") are: " . get_small_image (get_character_image($id), 115) . " INTERACTION_HOLDER";
 
         my $num_questers = get_players_for_current_quest ();
         if ($STATE_OF_ROUND ne $STATE_GOODS_LAST_CHANCE && $STATE_OF_ROUND ne $STATE_GAME_FINISHED)
@@ -1396,8 +1653,8 @@ sub print_game_state
         }
         elsif ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
         {
-            $out .= "<br><font size=+2 color=darkblue>This is Good's last chance to win!</font><br>$THE_ACCUSED<br><br>Each person has to nominate in a circle two other people whom they think are bad.<br>After each person has nominated their two, the evil players out themselves and their nominations no longer count.<br>If *all* the evil characters and *only* the evil characters are pointed at, then good wins the day!<br>";  
-            $interaction = "<script>alert (\"This is good's last chance to win.  Accuse two (2) players of being bad!\"); <\/script>\n";
+            $out .= "<br><font size=+2 color=darkblue>This is Good's last chance to win!</font><br>$THE_ACCUSED<br>If *all* the evil characters and *only* the evil characters are pointed at by the good guys, then good wins the day!";
+            $interaction = "<br>Alert!! This is good's last chance to win.  Accuse two (2) players of being bad";
             if (defined ($AWAITING_LAST_ACCUSSED {$id}) && $AWAITING_LAST_ACCUSSED {$id} >= 1 && $STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
             {
                 $out .= "<script>function last_chance_accuse(numExpected){ var inputElems = document.getElementsByTagName(\"input\"), count = 0; for (var i=0; i<inputElems.length; i++) { if (inputElems[i].type === \"checkbox\" && inputElems[i].checked === true){ count++; } } document.getElementById(\"submitlastchance\").disabled=true; if (numExpected == count) { document.getElementById(\"submitlastchance\").disabled=false; }}</script>\n<br>";
@@ -1421,20 +1678,22 @@ sub print_game_state
 
             }
             $out .= "</div>";
+
+
         }
         elsif ($STATE_OF_ROUND eq $STATE_GAME_FINISHED)
         {
-            $out .= "<br><font size=+2 color=darkblue>Game has finished!</font><br>" . prettify_accused () . "<br><br>If *all* the evil characters and *only* the evil characters are pointed at, then good wins the day!<br>";  
-            $out .= get_roles ();
+            $out .= "<br><font size=+2 color=darkblue>Game has finished!</font><br>" . prettify_accused () . "<br><br>If *all* the evil characters and *only* the evil characters are pointed at, then good wins the day!<br>";
+            return $out;
         }
 
         if ($id == $who_is_leader && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST)
         {
-            $interaction = "<script>alert (\"You are the leader.  You have to put $num_questers players on the next quest.  Choose one player to get the magic token (they can't fail the quest)!\"); <\/script>\n";
+            $interaction = "<br>Alert!! You are the leader.  You have to put $num_questers players on the next quest.  Choose one player to get the magic token (they can't fail the quest)";
             $out .= "<script>function check_questers(numExpected, numMagic){var cbs = document.getElementsByTagName(\"input\"), magic = 0, count = 0; for (var i=0; i<cbs.length; i++) { if (cbs[i].type === \"checkbox\" && cbs[i].checked === true){ count++; } if (cbs[i].type === \"radio\" && cbs[i].checked === true){ magic++;}} document.getElementById(\"submitnewquest\").disabled=true; if (numExpected == count && numMagic == magic) { document.getElementById(\"submitnewquest\").disabled=false; }}</script>\n<br>";
-            $out .= "<br>Select $num_questers questers for the next quest (1 will have the " . get_small_image ($MAGIC_TOKEN_IMAGE, 75) . " which means they can't lie) and press 'Submit New Quest':<br>";
             $out .= "<div width=300 style=\"background-image: url('q_images/evil_indicator.jpg'); width:300px;\">";
             $out .= "<form action=\"/Quest/set_next_on_quest\">";
+            $out .= "<br><font color=blue>Check " . ($num_questers - 1) . " quester/s below,</font><br>";
             my $name;
             my $i = 1;
             my $radio = "";
@@ -1445,11 +1704,11 @@ sub print_game_state
                 $i++;
             }
 
+            $out .= "<br><font color=blue>and then add an extra person with the" . get_small_image ($MAGIC_TOKEN_IMAGE, 75) . ".</font><br>";
             $out .= $radio;
             $out .= "<input id=\"submitnewquest\" type=\"submit\" value=\"Submit New Quest\" disabled></form>";
             $out .= "</div>";
         }
-
 
         my %no_revealed_cards;
         %revealed_cards = %no_revealed_cards;
@@ -1464,7 +1723,7 @@ sub print_game_state
 
     if ($STATE_OF_ROUND eq $STATE_AWAITING_QUEST_RESULTS)
     {
-        $out .= "$STATE_OF_ROUND " . join (keys (%AWAITING_QUESTERS));
+        $out .= "$STATE_OF_ROUND " . join (",", keys (%AWAITING_QUESTERS));
     }
 
     if (defined ($AWAITING_QUESTERS {$id}) && $AWAITING_QUESTERS {$id} >= 1 && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST_RESULTS)
@@ -1472,11 +1731,11 @@ sub print_game_state
         my $with_magic_token = 0;
         if ($AWAITING_QUESTERS {$id} == 1)
         {
-            $interaction = "<script>alert (\"You can vote now\"); <\/script>\n";
+            $interaction = "<br>Alert!! You can vote now";
         }
         elsif ($AWAITING_QUESTERS {$id} == 2)
         {
-            $interaction = "<script>alert (\"You can vote now.  You have the Magic token which means you can't fail unless your identity says you can ignore it or you must fail the quest in some other way!\"); <\/script>\n";
+            $interaction = "<br>Alert!! You can vote now.  You have the Magic token which means you can't fail unless your identity says you can ignore it or you must fail the quest in some other way";
             $with_magic_token = 1;
         }
         $out .= "<script>function voteboxes(numExpected){ var inputElems = document.getElementsByTagName(\"input\"), count = 0; for (var i=0; i<inputElems.length; i++) { if (inputElems[i].type === \"checkbox\" && inputElems[i].checked === true){ count++; } } document.getElementById(\"postalvote\").disabled=true; if (numExpected == count) { document.getElementById(\"postalvote\").disabled=false; }}</script>\n<br>";
@@ -1492,11 +1751,34 @@ sub print_game_state
         $out .= "<input id=\"postalvote\" type=\"submit\" value=\"Postal Vote\" disabled></form>";
         $out .= "</div>";
     }
-    
+
+    if ($id == $who_is_leader && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET && get_amulet_for_current_quest () > 0)
+    {
+        $interaction = "<br>Alert!! Pick who will have the amulet";
+        $out .= "<script>function check_amulet(numExpected){ var inputElems = document.getElementsByTagName(\"input\"), count = 0; for (var i=0; i<inputElems.length; i++) { if (inputElems[i].type === \"checkbox\" && inputElems[i].checked === true){ count++; } } document.getElementById(\"new_amulet_holder\").disabled=true; if (numExpected == count) { document.getElementById(\"new_amulet_holder\").disabled=false; }}</script>\n<br>";
+        $out .= "<br>Select the next amulet holder and press 'Submit New Amulet Holder':<br>";
+        $out .= "<div width=300 style=\"background-image: url('q_images/light_amulet.png'); width:300px;\">";
+        $out .= "<form action=\"/Quest/next_amulet_chosen\">";
+        my $name;
+        my $i = 1;
+        foreach $name (@player_names)
+        {
+            my $pot_amulet_id = get_player_id_from_name ($name);
+            if (!defined ($HAS_BEEN_LEADER {$name}) && !defined ($HAS_HAD_AMULET {$name}))
+            {
+                $out .= "\n<input type=\"checkbox\" id=\"AMULET_$pot_amulet_id\" name=\"AMULET_$pot_amulet_id\" value=\"$name\" onchange=\"check_amulet(1)\"> <label for=\"AMULET_$pot_amulet_id\">Set $name to have the next amulet</label><br>";
+            }
+            $i++;
+        }
+
+        $out .= "<input id=\"new_amulet_holder\" type=\"submit\" value=\"Submit New Amulet Holder\" disabled></form>";
+        $out .= "</div>";
+    }
+
     if ($id == $who_is_leader && $STATE_OF_ROUND eq $STATE_AWAITING_NEXT_LEADER)
     {
-        $interaction = "<script>alert (\"You must pick the next leader now\"); <\/script>\n";
-        $out .= "<script>function check_leader(numExpected){ var inputElems = document.getElementsByTagName(\"input\"), count = 0; for (var i=0; i<inputElems.length; i++) { if (inputElems[i].type === \"checkbox\" && inputElems[i].checked === true){ count++; } } document.getElementById(\"submitnewquest\").disabled=true; if (numExpected == count) { document.getElementById(\"submitnewquest\").disabled=false; }}</script>\n<br>";
+        $interaction = "<br>Alert!! You must pick the next leader now";
+        $out .= "<script>function check_leader(numExpected){ var inputElems = document.getElementsByTagName(\"input\"), count = 0; for (var i=0; i<inputElems.length; i++) { if (inputElems[i].type === \"checkbox\" && inputElems[i].checked === true){ count++; } } document.getElementById(\"new_leader\").disabled=true; if (numExpected == count) { document.getElementById(\"new_leader\").disabled=false; }}</script>\n<br>";
         $out .= "<br>Select the next leader and press 'Submit New Leader':<br>";
         $out .= "<div width=300 style=\"background-image: url('q_images/evil_indicator.jpg'); width:300px;\">";
         $out .= "<form action=\"/Quest/next_leader_chosen\">";
@@ -1512,62 +1794,36 @@ sub print_game_state
             $i++;
         }
 
-        $out .= "<input id=\"submitnewquest\" type=\"submit\" value=\"Submit New Leader\" disabled></form>";
+        $out .= "<input id=\"new_leader\" type=\"submit\" value=\"Submit New Leader\" disabled></form>";
+        $out .= "</div>";
+    }
+
+    if ($id == $who_is_amulet && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET_RESULT)
+    {
+        $interaction = "<br>Alert!! You have the amulet. Pick someone to find out if they're evil or not!";
+        $out .= "<script>function amulet_check(numExpected){ var inputElems = document.getElementsByTagName(\"input\"), count = 0; for (var i=0; i<inputElems.length; i++) { if (inputElems[i].type === \"checkbox\" && inputElems[i].checked === true){ count++; } } document.getElementById(\"checkamulet\").disabled=true; if (numExpected == count) { document.getElementById(\"checkamulet\").disabled=false; }}</script>\n<br>";
+        $out .= "<br>Select whom you wish to see is bad or good then press 'Submit Check If Bad':<br>";
+        $out .= "<div width=350 style=\"background-image: url('q_images/light_amulet.png'); width:350px;\">";
+        $out .= "<form action=\"/Quest/amulet_check\">";
+        my $name;
+        my $i = 1;
+        foreach $name (@player_names)
+        {
+            my $check_amulet_id = get_player_id_from_name ($name);
+            if (!defined ($BEEN_CHECKED_BY_AMULET {$check_amulet_id}) && !defined ($HAS_HAD_AMULET {$check_amulet_id}))
+            {
+                $out .= "\n<input type=\"checkbox\" id=\"CHECK_AMULET_$check_amulet_id\" name=\"CHECK_AMULET_$check_amulet_id\" value=\"$name\" onchange=\"amulet_check(1)\"> <label for=\"CHECK_AMULET_$check_amulet_id\">Check if $name is bad or not..</label><br>";
+            }
+            $i++;
+        }
+
+        $out .= "<input id=\"checkamulet\" type=\"submit\" value=\"Check if they're bad!\" disabled></form>";
         $out .= "</div>";
     }
 
     if ($STATE_OF_ROUND eq $STATE_AWAITING_QUEST_RESULTS)
     {
-        my $done_voting;
-        my $not_done_voting;
-        my $x;
-        my $finished_voting = 1;
-        foreach $x (sort keys (%AWAITING_QUESTERS))
-        {
-            if ($x eq $MAGIC_TOKEN)
-            {
-                $done_voting .= ": ($x>>" . $AWAITING_QUESTERS{$x} . ")";
-            }
-            elsif ($AWAITING_QUESTERS {$x} == 0)
-            {
-                $done_voting .= ": ($x>>" . get_player_name ($x) . ")";
-            }
-            elsif ($AWAITING_QUESTERS {$x} >= 1)
-            {
-                $not_done_voting .= ": " . get_player_name ($x);
-                $finished_voting = 0;
-            }
-        }
-        $out .= "Awaiting results of votes!<br>Already voted:$done_voting<br>Yet to vote: $not_done_voting";
-
-        if ($finished_voting)
-        {
-            my $num_failed_votes;
-            my $num_success_votes;
-            foreach $out (sort keys (%VOTING_RESULTS))
-            {
-                if ($VOTING_RESULTS{$out} == -1)
-                {
-                    $num_failed_votes++;
-                }
-                elsif ($VOTING_RESULTS{$out} == 1)
-                {
-                    $num_success_votes++;
-                }
-            }
-
-            if ($num_failed_votes == 0)
-            {
-                $QUEST_OUTCOMES {get_quest_number()} = "Success";
-            }
-            else
-            {
-                $QUEST_OUTCOMES {get_quest_number()} = "Fail ($num_failed_votes)";
-            }
-            change_game_state ($STATE_AWAITING_NEXT_LEADER, 1);
-            $out .= "<br>Voting just finished. Result was: " .  $QUEST_OUTCOMES {get_quest_number()} . "<br>Please press F5 to refresh manually!";
-            $QUEST_INFO {get_quest_number()} = "Leader was - " . get_player_name ($who_is_leader) . " - Folk on it were: $done_voting.";
-        }
+        $out .= handle_quest_voting ();
     }
 
     $out .= get_board ($IP) . "<br>";
@@ -1579,7 +1835,11 @@ sub print_game_state
         $out .= "NOT_HIDDEN:::" . join (",", sort keys (%NOT_HIDDEN_INFO));
     }
 
-    $out .= $interaction;
+    if ($interaction =~ m/...../)
+    {
+        $interaction = "<font color=darkgreen size=+2>$interaction</font><br>";
+    }
+    $out =~ s/INTERACTION_HOLDER/$interaction/;
     return $out;
 }
 
@@ -1786,18 +2046,6 @@ sub get_game_state
             $out = print_game_state ($IP);
             $out .= "<br>Current state of game is: $STATE_OF_ROUND";
             $out .= "<br>Reset the game here: <a href=\"reset_game\">Reset<\/a><br>";
-
-            # Stupid popup box stuff..
-            # https://bbbootstrap.com/snippets/modal-popup-custom-radio-buttons-and-checkboxes-32199170
-            #$out .= "<link rel=\"stylesheet\" href=\"q_images/css/alert_css.css\"></link>";
-            #$out .= "<link rel=\"stylesheet\" href=\"q_images/css/bootstrap.bundle.min.js\"></link>";
-            #$out .= "<link rel=\"stylesheet\" href=\"q_images/css/bootstrap.min.css\"></link>";
-            #$out .= "<link rel=\"stylesheet\" href=\"q_images/css/font-awesome.min.css\"></link>";
-            #$out .= "<link rel=\"stylesheet\" href=\"q_images/css/jquery.min.js\"></link>";
-            #$out .= "<script>" . "\n";
-            #$out .= "\$(document).ready(function(){ \$('[data-toggle=\"popover\"]').popover(); \$(function () { \$('.example-popover').popover({ container: 'body' }) }) \$(function() { function reposition() { var modal = \$(this), dialog = modal.find('.modal-dialog'); modal.css('display', 'block'); dialog.css(\"margin-top\", Math.max(0, (\$(window).height() - dialog.height()) / 2)); } \$('.modal').on('show.bs.modal', reposition); \$(window).on('resize', function() { \$('.modal:visible').each(reposition); }); }); });";
-            #$out .= "<\/script>" . "\n";
-            #$out .= "<div class=\"container d-flex justify-content-center\"> <button type=\"button\" class=\"btn btn-primary\" data-toggle=\"modal\" data-target=\"#myModal\" id=\"Modal_button\"> Open modal </button> <div class=\"modal fade\" id=\"myModal\"> <div class=\"modal-dialog\"> <div class=\"modal-content\"> <div class=\"modal-header\"> <button type=\"button\" class=\"close\" data-dismiss=\"modal\">&times;</button> </div> <div class=\"modal-body mb-0 pb-0 mt-0\"> <div class=\"container \"> <div class=\"holder\"> <div class=\"row mb-1\"> <div class=\"col\"> <h2>Choose File Types</h2> </div> </div> <form action=\"#\" class=\"customRadio customCheckbox m-0 p-0\"> <div class=\"row mb-0\"> <div class=\"row justify-content-start\"> <div class=\"col-12\"> <div class=\"row\"> <input type=\"radio\" name=\"textEditor\" id=\"dreamweaver\" checked> <label for=\"dreamweaver\">Back up all files folders</label> </div> <div class=\"row\"> <input type=\"radio\" name=\"textEditor\" id=\"sublime\"> <label for=\"sublime\">Back up photos and videos</label> </div> </div> </div> </div> <div class=\"row mt-0 ml-4\"> <div class=\"col-12 my_checkbox \"> <div class=\"row\"> <input type=\"checkbox\" id=\"screenshots\" checked> <label for=\"javascript\" id=\"screenshots_label\">Back up screenshots</label> </div> <div class=\"row\"> <input type=\"checkbox\" id=\"RAW\"> <label for=\"RAW\">Back up RAW files</label> </div> <div class=\"row\"> <input type=\"checkbox\" id=\"Library\"> <label for=\"Library\">Back up Photos Library metadata</label> </div> </div> </div> <div class=\"row mt-4\"> <div class=\"col-12 Advanced_setting\"> Advanced Setting &nbsp;<i class=\"icon-action fa fa-chevron-down\"></i> </div> </div> </form> </div> </div> </div> <div class=\"modal-footer pt-0 mt-0 pb-5 pr-6 m-1 \"> <div class=\"col-2\"> </div> <div class=\"col-6 justify-content-start\"> <a href=\"#\" id=\"modal_footer_support\" data-toggle=\"popover\" title=\"Support\" data-content=\"Support Message\" class=\"modal_footer\"><i class=\"fa fa-question-circle-o modal_footer\" aria-hidden=\"true\"></i> <span class=\"modal_footer\">Support</span> </a> </div> <div class=\"col-2 justify-content-end \"> <button type=\"button\" class=\"btn btn-outline-light modal_footer\" data-dismiss=\"modal\">Cancel</button> </div> <div class=\"col-2 justify-content-start m-0 p-0\"> <button type=\"button\" class=\"btn btn-success box-shadow--16dp\" data-dismiss=\"modal\">OK</button> </div> </div> </div> </div> </div> </div>";
         }
         elsif (!game_started ())
         {
@@ -1832,6 +2080,202 @@ sub get_game_state
     $out .= get_refresh_code ($do_refresh, $id, $who_is_leader);
     $out .= get_chat_code ();
     return $out;
+}
+
+sub handle_quest_voting
+{
+    my $done_voting;
+    my $not_done_voting;
+    my $x;
+    my $finished_voting = 1;
+    
+    foreach $x (sort keys (%AWAITING_QUESTERS))
+    {
+        if ($x eq $MAGIC_TOKEN)
+        {
+            $done_voting .= ": ($x>>" . $AWAITING_QUESTERS{$x} . ")";
+        }
+        elsif ($AWAITING_QUESTERS {$x} == 0)
+        {
+            $done_voting .= ": ($x>>" . get_player_name ($x) . ")";
+        }
+        elsif ($AWAITING_QUESTERS {$x} >= 1)
+        {
+            if (is_bot (get_player_name ($x), $x, "is_bot_to_vote"))
+            {
+                $VOTING_RESULTS {$x} = get_vote_from_bot ($x, 0);
+                $AWAITING_QUESTERS {$x} = 0;
+                $done_voting .= ": " . get_player_name ($x);
+            }
+            else
+            {
+                $not_done_voting .= ": " . get_player_name ($x);
+                $finished_voting = 0;
+            }
+        }
+    }
+
+    my $out = "Awaiting results of votes!<br>Already voted:$done_voting<br>Yet to vote: $not_done_voting<br>" . join (",", keys (%AWAITING_QUESTERS));
+    if ($finished_voting)
+    {
+        my $num_failed_votes;
+        my $num_success_votes;
+        foreach $out (sort keys (%VOTING_RESULTS))
+        {
+            if ($VOTING_RESULTS{$out} == $BAD_VOTE)
+            {
+                $num_failed_votes++;
+            }
+            elsif ($VOTING_RESULTS{$out} == $GOOD_VOTE)
+            {
+                $num_success_votes++;
+            }
+        }
+
+        if ($num_failed_votes == 0)
+        {
+            $QUEST_OUTCOMES {get_quest_number()} = "Success";
+            $QUEST_INFO {get_quest_number()} = "Leader was - " . get_player_name ($who_is_leader) . " - Folk on it were: $done_voting.";
+            print ("QUEST - JUST DID SUCCESS: " . $QUEST_INFO {get_quest_number()});
+        }
+        else
+        {
+            $QUEST_OUTCOMES {get_quest_number()} = "Fail ($num_failed_votes) xyz";
+            $QUEST_INFO {get_quest_number()} = "qqq Leader was - " . get_player_name ($who_is_leader) . " - Folk on it were: $done_voting.";
+            print ("QUEST - JUST DID FAIL: " . $QUEST_INFO {get_quest_number()});
+        }
+
+        if (get_amulet_for_current_quest () > 0)
+        {
+            change_game_state ($STATE_AWAITING_AMULET, 1, "amulet_for_quest");
+        }
+        else
+        {
+            change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "new_quest_leader");
+        }
+
+        $out .= "<br>Voting just finished. Result was: " .  $QUEST_OUTCOMES {get_quest_number()} . "<br>Please press F5 to refresh manually!";
+    }
+    return $out;
+}
+
+sub handle_bot_choose_next_leader
+{
+    my $num_leader;
+    my $only_bots = 1;
+    for ($num_leader = 0; $num_leader < 1; $num_leader++)
+    {
+        my $pot_leader_id = int (rand ($num_players_in_game));
+        if (!defined ($HAS_BEEN_LEADER {$pot_leader_id}))
+        {
+            $HAS_BEEN_LEADER {$pot_leader_id} = 1;
+            print ("  >> BOT set new leader $pot_leader_id --> is_bot?? = " . is_bot (get_player_name ($pot_leader_id), $pot_leader_id, "next_leader") . "\n");
+            set_leader ($pot_leader_id);
+
+            # Handle $pot_leader_id being a bot..
+            if (is_bot (get_player_name ($pot_leader_id), $pot_leader_id, "next_leader"))
+            {
+                handle_bot_being_leader ($pot_leader_id);
+                force_needs_refresh ("next leader chosen");
+                write_to_socket (\*CLIENT, "", "", "redirect");
+                next;
+            }
+        }
+        else
+        {
+            $num_leader--;
+        }
+    }
+}
+
+sub handle_bot_being_leader
+{
+    my $next_leader_id = $_ [0];
+
+    print (get_player_name ($next_leader_id) . " <<< BOT IS LEADER !!!\n");
+    if (is_bot (get_player_name ($next_leader_id), $next_leader_id, "handle_bot_being_leader"))
+    {
+        # Bot was chosen as leader
+        change_game_state ($STATE_AWAITING_QUEST_RESULTS, 1, "bot_is_leader");
+
+        my %new_AWAITING_QUESTERS;
+        %AWAITING_QUESTERS = %new_AWAITING_QUESTERS;
+        my %new_VOTING_RESULTS;
+        %VOTING_RESULTS = %new_VOTING_RESULTS;
+
+        my $num_questers;
+        my $only_bots = 1;
+        for ($num_questers = 0; $num_questers < get_players_for_current_quest () - 1; $num_questers++)
+        {
+            my $pot_id = int (rand ($num_players_in_game));
+            if (!defined ($AWAITING_QUESTERS {$pot_id}))
+            {
+                $AWAITING_QUESTERS {$pot_id} = 1;
+                print ("  >> BOT was leader - put on $pot_id\n");
+
+                # Handle $pot_id being a bot..
+                if (is_bot (get_player_name ($pot_id), $pot_id, "handle_bot_handle_vote.."))
+                {
+                    $VOTING_RESULTS {$pot_id} = get_vote_from_bot ($pot_id, 0);
+                    $AWAITING_QUESTERS {$pot_id} = 0;
+                }
+                else
+                {
+                    $only_bots = 0;
+                }
+            }
+            else
+            {
+                $num_questers--;
+            }
+        }
+
+        for ($num_questers = 0; $num_questers < 1; $num_questers++)
+        {
+            my $pot_id = int (rand ($num_players_in_game));
+            if (!defined ($AWAITING_QUESTERS {$pot_id}))
+            {
+                $AWAITING_QUESTERS {$pot_id} = 2;
+                print ("  >> BOT was leader - put on $pot_id with magic token\n");
+
+                # Handle $pot_id being a bot..
+                if (is_bot (get_player_name ($pot_id), $pot_id, "handle_bot_handle_vote.."))
+                {
+                    $VOTING_RESULTS {$pot_id} = get_vote_from_bot ($pot_id, 1);
+                    $AWAITING_QUESTERS {$pot_id} = 0;
+                    $AWAITING_QUESTERS {$MAGIC_TOKEN} = get_player_name ($pot_id);
+                }
+                else
+                {
+                    $only_bots = 0;
+                }
+            }
+            else
+            {
+                $num_questers--;
+            }
+        }
+
+        print ("BOT was leader - " . get_player_name ($next_leader_id) . " and put only bots on? $only_bots\n");
+        handle_quest_voting ();
+
+        if ($only_bots)
+        {
+            print (" Progress as only bots were on .. \n");
+            if (get_amulet_for_current_quest () > 0)
+            {
+                print (" AMULET Progress as only bots were on .. \n");
+                change_game_state ($STATE_AWAITING_AMULET, 1, "amulet_progress_bot");
+            }
+            else
+            {
+                print (" NEXT LEADER Progress as only bots were on .. \n");
+                change_game_state ($STATE_AWAITING_QUEST, 1, "next_leader_bot");
+                handle_bot_choose_next_leader ();
+            }
+        }
+        force_needs_refresh ("set next quest");
+    }
 }
 
 # Main
@@ -1886,6 +2330,7 @@ sub get_game_state
             $CURRENT_QUEST_NAME = $1;
         }
 
+        # HTTP
         if (defined $BANNED_NAMES {$CURRENT_QUEST_NAME})
         {
             add_to_debug ("BANNING $CURRENT_QUEST_NAME atm");
@@ -1895,14 +2340,16 @@ sub get_game_state
         }
 
         $CURRENT_QUEST_NAME =~ s/^(...........).*/$1/img;
-
+        my $this_player_id = get_player_id_from_name ($CURRENT_QUEST_NAME);
+        # HTTP
         if ($CURRENT_QUEST_NAME ne "" && get_player_id_from_name ($CURRENT_QUEST_NAME) == -1)
         {
-            add_new_user ("name=$CURRENT_QUEST_NAME", $client_addr);
+            add_new_user ("name=$CURRENT_QUEST_NAME", $client_addr, 0);
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "noredirect");
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*need.*refresh.*/m)
         {
             if (get_needs_refresh ($client_addr))
@@ -1915,6 +2362,7 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*force.*refresh.*/m)
         {
             force_needs_refresh ("called explicitly");
@@ -1922,6 +2370,7 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*favico.*/m)
         {
             my $size = -s ("d:/perl_programs/quest/_quest.jpg");
@@ -1933,16 +2382,42 @@ sub get_game_state
             next;
         }
 
+        # HTTP - bot..
+        if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "http_auto_next_leader") && $STATE_OF_ROUND eq $STATE_AWAITING_NEXT_LEADER)
+        {
+            handle_bot_choose_next_leader ();
+            force_needs_refresh ("next leader chosen");
+            write_to_socket (\*CLIENT, "", "", "redirect");
+            next;
+        }
+        
+        # HTTP - bot..
+        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
+        {
+            my $p = 0;
+            for ($p = 0; $p < $num_players_in_game; $p++)
+            {
+                if (is_bot (get_player_name ($p), $p, "bot_last_chance") && $AWAITING_LAST_ACCUSSED {$p} > 0)
+                {
+                    $AWAITING_LAST_ACCUSSED {$p} = 0;
+                    $THE_ACCUSED .= "Player " . get_player_name ($p) . " was a bot so doesn't count in voting!";
+                }
+                print ("AUTO: LAST_CHANcE $THE_ACCUSED\n");
+            }
+        }
+        print ("just after AUTO: LAST_CHANcE\n");
+
+
+        # HTTP
         if ($txt =~ m/GET[^\n]*?new_user/mi)
         {
             add_to_debug ("REAL INSTANCE OF calling New_User: $txt with $client_addr<br>");
-            my $ret = add_new_user ($txt, $client_addr);
+            my $ret = add_new_user ($txt, $client_addr, 0);
             write_to_socket (\*CLIENT, "Welcome!!<a href=\"\/\">Lobby or Game window<\/a>", "", "noredirect");
             next;
         }
 
-        add_to_debug ("Just before BOOT_PERSON had names of: " . join (",", sort (@player_names)));
-        add_to_debug ("Just before BOOT_PERSON had ips of: " . join (",", sort (@player_ips)));
+        # HTTP
         if ($txt =~ m/.*boot.*person.*name=(\w\w\w[\w_]+)/mi)
         {
             my $person_to_boot = $1;
@@ -1951,10 +2426,11 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*set_next_on_quest.*/m && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST)
         {
-            change_game_state ($STATE_AWAITING_QUEST_RESULTS, 0);
-            $NUMBER_QUEST_RESULTS = 0; 
+            change_game_state ($STATE_AWAITING_QUEST_RESULTS, 0, "set_next_on_quest");
+            $NUMBER_QUEST_RESULTS = 0;
             my %new_AWAITING_QUESTERS;
             %AWAITING_QUESTERS = %new_AWAITING_QUESTERS;
             my %new_VOTING_RESULTS;
@@ -1963,25 +2439,44 @@ sub get_game_state
             {
                 my $id_of_quester = $2 - 1;
                 $AWAITING_QUESTERS {$id_of_quester} = 1;
-                $VOTING_RESULTS {$id_of_quester} = 0;
+                $VOTING_RESULTS {$id_of_quester} = $NO_VOTE;
                 print ("QUESTER was $id_of_quester\n");
+
+                # Check if bot
+                if (is_bot (get_player_name ($id_of_quester), $id_of_quester, "set_next_on_quest"))
+                {
+                    $VOTING_RESULTS {$id_of_quester} = get_vote_from_bot ($id_of_quester, 0);
+                    $AWAITING_QUESTERS {$id_of_quester} = 0;
+                }
+
                 force_needs_refresh ("set next quest");
             }
-            
+
             while ($txt =~ s/.*(set_next_on_quest.*)QUESTER_MAGIC=(\w+)/$1/s)
             {
                 my $name_of_magic_token_holder = $2;
                 my $id_of_quester = get_player_id_from_name ($name_of_magic_token_holder);
                 $AWAITING_QUESTERS {$id_of_quester} = 2;
                 $AWAITING_QUESTERS {$MAGIC_TOKEN} = $name_of_magic_token_holder;
-                $VOTING_RESULTS {$id_of_quester} = 0;
+                $VOTING_RESULTS {$id_of_quester} = $NO_VOTE;
+
+                # Check if bot
+                if (is_bot (get_player_name ($id_of_quester), $id_of_quester, "setnext"))
+                {
+                    $VOTING_RESULTS {$id_of_quester} = get_vote_from_bot ($id_of_quester, 1);
+                    $AWAITING_QUESTERS {$id_of_quester} = 0;
+                }
+
                 print ("MAGIC QUESTER was $id_of_quester\n");
                 force_needs_refresh ("magic token quester");
             }
             write_to_socket (\*CLIENT, "", "", "redirect");
+
+
             next;
         }
-        
+
+        # HTTP
         if ($txt =~ m/.*last_chance_accuse.*/m && $STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE && $AWAITING_LAST_ACCUSSED {get_player_id_from_name ($CURRENT_QUEST_NAME)} == 1)
         {
             while ($txt =~ s/.*(last_chance_accuse.*)ACCUSED_(\d+)/$1/s)
@@ -1991,7 +2486,7 @@ sub get_game_state
                 force_needs_refresh ("last chance");
                 $THE_ACCUSED .= "Player $CURRENT_QUEST_NAME accused $accused_name of being bad";
                 $AWAITING_LAST_ACCUSSED {get_player_id_from_name ($CURRENT_QUEST_NAME)} = 0;
-                print (">>ACCUSED=$THE_ACCUSED\n"); 
+                print (">>ACCUSED=$THE_ACCUSED\n");
             }
 
             my $done = 1;
@@ -2009,15 +2504,15 @@ sub get_game_state
                 }
             }
             if ($done == 1 && !$already_done_done)
-            { 
-                change_game_state ($STATE_GAME_FINISHED, 1);
+            {
+                change_game_state ($STATE_GAME_FINISHED, 1, "last_chance_accuse");
             }
 
             $THE_ACCUSED .= "<br>";
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
-        
+
         if ($txt =~ m/.*voted_on_quest.*/m && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST_RESULTS && $NUMBER_QUEST_RESULTS < get_players_for_current_quest ())
         {
             if ($txt =~ m/.*(voted_on_quest.*)(SUCCESS|FAILURE)_(\d+)/img)
@@ -2033,11 +2528,11 @@ sub get_game_state
 
                     if ($success =~ m/success/img)
                     {
-                        $VOTING_RESULTS {$id_of_quester} = 1;
+                        $VOTING_RESULTS {$id_of_quester} = $GOOD_VOTE;
                     }
                     elsif ($success =~ m/failure/img)
                     {
-                        $VOTING_RESULTS {$id_of_quester} = -1;
+                        $VOTING_RESULTS {$id_of_quester} = $BAD_VOTE;
                     }
                     force_needs_refresh ("voted on quest");
                 }
@@ -2045,18 +2540,60 @@ sub get_game_state
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
-        
+
+        # HTTP
+        if ($txt =~ m/.*next_amulet_chosen.*AMULET_(\d+)/m && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET)
+        {
+            my $next_amulet_id = $1;
+            set_amulet ($next_amulet_id);
+
+            change_game_state ($STATE_AWAITING_AMULET_RESULT, 1, "next_amulet_holder_chosen");
+            if (is_bot (get_player_name ($next_amulet_id), $next_amulet_id, "amulet"))
+            {
+                # Bot don't need to check ..
+                change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "bot_next_amulet_holder_chosen");
+            }
+
+            force_needs_refresh ("next amulet chosen");
+            write_to_socket (\*CLIENT, "", "", "redirect");
+            next;
+        }
+
+        # HTTP
+        if ($txt =~ m/.*amulet_check.*CHECK_AMULET_(\d+)/m && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET_RESULT)
+        {
+            my $check_amulet_id = $1;
+            change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "amulet_check_done");
+            $BEEN_CHECKED_BY_AMULET {$check_amulet_id} = 1;
+            $BEEN_CHECKED_BY_AMULET {get_player_name ($check_amulet_id)} = 1;
+            set_who_knows_who_id_id_good_or_bad_only ($this_player_id, $check_amulet_id);
+            force_needs_refresh ("amulet result just done");
+            write_to_socket (\*CLIENT, "", "", "redirect");
+            next;
+        }
+
+        # HTTP
         if ($txt =~ m/.*next_leader_chosen.*LEADER_(\d+)/m && $STATE_OF_ROUND eq $STATE_AWAITING_NEXT_LEADER)
         {
-            my $next_leader = $1;
-            set_leader ($next_leader);
-            change_game_state ($STATE_AWAITING_QUEST, 1);
-            increment_the_number_of_rounds ();
+            my $next_leader_id = $1;
+
+            change_game_state ($STATE_AWAITING_QUEST, 1, "next_leader_33");
+            set_leader ($next_leader_id);
+
+            if (is_bot (get_player_name ($next_leader_id), $next_leader_id, "next_leader"))
+            {
+                handle_bot_being_leader ($next_leader_id);
+                force_needs_refresh ("next leader chosen");
+                write_to_socket (\*CLIENT, "", "", "redirect");
+                next;
+            }
+
             force_needs_refresh ("next leader chosen");
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
 
+        # HTTP
         if ($txt =~ m/GET.*new_game.*/m)
         {
             new_game ();
@@ -2064,6 +2601,7 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/GET.*simulate_game_(\d*).*/m)
         {
             simulate_game ($1);
@@ -2071,12 +2609,14 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*reset.*game.*/m)
         {
             write_to_socket (\*CLIENT, reset_game (), "", "redirect");
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*add_chat_message.msg=(....+).HTTP/im)
         {
             add_to_debug ("CHAT WITH $1 <br>");
@@ -2085,6 +2625,7 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/GET .*zoom.*/mi)
         {
             write_to_socket_zoom (\*CLIENT, "$txt", "", "redirect");
