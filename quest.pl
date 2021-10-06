@@ -172,6 +172,7 @@ my $QUEST_NUMBER = 1;
 my $TOTAL_QUESTS = 5;
 my %num_players_on_quests;
 my %num_amulets;
+my %num_fails_on_quests;
 my @in_game_players;
 my $START_OF_NEW_ROUND = 0;
 my %BANNED_NAMES;
@@ -296,7 +297,7 @@ sub get_game_won
     {
         return "";
     }
-    print ("GAME WON??$GAME_WON\n"); 
+    print ("GAME WON??$GAME_WON\n");
     my $i = 0;
 
     if ($GAME_WON == -1)
@@ -412,6 +413,9 @@ sub change_game_state
         }
 
         $GAME_STATES .= "\n<br> QN=" . get_quest_number() . ") $STATE_OF_ROUND ($force) -- $reason -- " . get_quest_number ();
+        $GAME_STATES =~ s/\n\n/\n/img;
+        $GAME_STATES =~ s/\n\n/\n/img;
+        $GAME_STATES =~ s/\n\n/\n/img;
         print ("\n==gggg=================\n$GAME_STATES\n=====================\n");
         check_if_won ("game_state_change");
         return;
@@ -459,7 +463,7 @@ sub change_game_state
 
 sub is_game_over
 {
-    if ($STATE_OF_ROUND eq $STATE_GAME_FINISHED) 
+    if ($STATE_OF_ROUND eq $STATE_GAME_FINISHED)
     {
         return 1;
     }
@@ -632,7 +636,6 @@ sub get_player_name_from_id
 sub set_leader
 {
     $who_is_leader = $_ [0];
-    $GAME_STATES .= "\n<br> QN=" . get_quest_number () . " NEW_LEADER $who_is_leader " . get_player_name ($who_is_leader) . " for quest " . get_quest_number () . "\n";
     increment_the_number_of_rounds ();
     $GAME_STATES .= "\n<br> QN=" . get_quest_number () . " NEW_LEADER $who_is_leader for quest " . get_quest_number () . ":" . get_player_name ($who_is_leader) . "\n";
 
@@ -965,6 +968,7 @@ sub increment_the_number_of_rounds
         change_game_state ($STATE_GAME_FINISHED, 1, "increment_num_rounds");
         check_if_won ("increment_rounds");
         $QUEST_NUMBER = $TOTAL_QUESTS;
+        $GAME_STATES .= "\n<br>  QN just set.. QN=" . get_quest_number() . ")";
     }
     check_if_won ("increment_rounds");
 }
@@ -974,9 +978,16 @@ sub get_quest_number
     return $QUEST_NUMBER;
 }
 
+my $last_fnr_reason;
 sub force_needs_refresh
 {
     my $reason = $_ [0];
+    if ($last_fnr_reason eq $reason)
+    {
+        add_to_debug (" Failed to force_refresh for $last_fnr_reason\n");
+        return;
+    }
+    $last_fnr_reason = $reason;
     my $i = 0;
     add_to_debug (" IN FORCING REFRESH - $reason\n");
     for ($i = 0; $i < $num_players_in_lobby; $i++)
@@ -1118,8 +1129,9 @@ sub new_game
     {
         return error_starting_game ();
     }
-    print ("NEW_GAME HERE\n"); 
     $GAME_STATES = "";
+    $QUEST_NUMBER = 1;
+    $GAME_STATES .= "\n<br>  QN 00b just set.. QN=" . get_quest_number() . ")";
 
     my %new_NOT_HIDDEN_INFO;
     %NOT_HIDDEN_INFO = %new_NOT_HIDDEN_INFO;
@@ -1130,7 +1142,6 @@ sub new_game
     $who_is_amulet = -1;
     my %new_BEEN_CHECKED_BY_AMULET;
     %BEEN_CHECKED_BY_AMULET = %new_BEEN_CHECKED_BY_AMULET;
-    print ("22 NEW_GAME HERE\n"); 
     my %new_HAS_BEEN_LEADER;
     %HAS_BEEN_LEADER = %new_HAS_BEEN_LEADER;
     my %new_HAS_HAD_AMULET;
@@ -1143,7 +1154,6 @@ sub new_game
     my %newAMULET_OUTCOMES;
     %AMULET_OUTCOMES = %newAMULET_OUTCOMES;
 
-    print ("33 NEW_GAME HERE\n"); 
     $GAME_WON = 0;
     $NUM_EXPOSED_CARDS = 0;
     $CHANGE_OF_ROUND = 0;
@@ -1159,7 +1169,6 @@ sub new_game
     %COUNTS_OF_ROLES = %new_COUNTS_OF_ROLES;
     my %new_QUEST_INFO;
     $COUNTS_OF_ROLES {$MORGAN_LE_FAY} = 1;
-    print ("44 NEW_GAME HERE\n"); 
 
     if ($num_players_in_game == 4)
     {
@@ -1174,6 +1183,10 @@ sub new_game
         $num_amulets {2} = 0;
         $num_amulets {3} = 0;
         $num_amulets {4} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 1;
         $TOTAL_QUESTS = 4;
         $NUMBER_FAILS_NEEDED = 2;
     }
@@ -1192,6 +1205,11 @@ sub new_game
         $num_amulets {3} = 0;
         $num_amulets {4} = 0;
         $num_amulets {5} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 1;
+        $num_fails_on_quests {5} = 1;
         $TOTAL_QUESTS = 4;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1212,10 +1230,15 @@ sub new_game
         $num_amulets {3} = 0;
         $num_amulets {4} = 0;
         $num_amulets {5} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 1;
+        $num_fails_on_quests {5} = 1;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
-    print ("$TOTAL_QUESTS << total quests qqq vs  $num_players_in_game zzz\n"); 
+    print ("$TOTAL_QUESTS << total quests qqq vs  $num_players_in_game zzz\n");
     if ($num_players_in_game == 7)
     {
         $COUNTS_OF_ROLES {$ARTHUR} = 1;
@@ -1234,6 +1257,11 @@ sub new_game
         $num_amulets {3} = 1;
         $num_amulets {4} = 0;
         $num_amulets {5} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 2;
+        $num_fails_on_quests {5} = 1;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1255,6 +1283,11 @@ sub new_game
         $num_amulets {3} = 1;
         $num_amulets {4} = 1;
         $num_amulets {5} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 2;
+        $num_fails_on_quests {5} = 1;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1299,6 +1332,11 @@ sub new_game
         $num_amulets {3} = 1;
         $num_amulets {4} = 1;
         $num_amulets {5} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 2;
+        $num_fails_on_quests {5} = 1;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
@@ -1350,16 +1388,15 @@ sub new_game
     if ($IN_DEBUG_MODE)
     {
         $QUEST_NUMBER = 0;
+        $GAME_STATES .= "\n<br>  QN 00 just set.. QN=" . get_quest_number() . ")";
         set_leader (0);
     }
     else
     {
         $QUEST_NUMBER = 0;
+        $GAME_STATES .= "\n<br>  QN 00a just set.. QN=" . get_quest_number() . ")";
         set_leader (int (rand ($num_players_in_game)));
     }
-
- 
-    $QUEST_NUMBER = 1;
 
     force_needs_refresh("new_game");
     my %new_already_shuffled;
@@ -1378,6 +1415,7 @@ sub reset_game
     $NUM_EXPOSED_CARDS = 0;
     $CHANGE_OF_ROUND = 0;
     $QUEST_NUMBER = 1;
+    $GAME_STATES .= "\n<br>  QN 00c just set.. QN=" . get_quest_number() . ")";
     my %newQUEST_OUTCOMES;
     %QUEST_OUTCOMES = %newQUEST_OUTCOMES;
     my %newAMULET_OUTCOMES;
@@ -1685,7 +1723,7 @@ sub get_current_quests_outcomes
             $a_quest = 1;
             $o = "";
         }
-        
+
         $o .= "Quest $q result was:  $QUEST_OUTCOMES{$q} (for Quest#$q -- Had $num_players_on_quests{$q} questers)<br>";
     }
     return $o;
@@ -1798,7 +1836,7 @@ sub print_game_state
                 $i++;
             }
 
-            $out .= "<br><font color=blue>and then add an extra person with the" . get_small_image ($MAGIC_TOKEN_IMAGE, 75) . ".</font><br>";
+            $out .= "<br><font color=darkblue><b>and then add an extra person</b> with the" . get_small_image ($MAGIC_TOKEN_IMAGE, 75) . ".</font><br>";
             $out .= $radio;
             $out .= "<input id=\"submitnewquest\" type=\"submit\" value=\"Submit New Quest\" disabled></form>";
             $out .= "</div>";
@@ -1957,7 +1995,6 @@ sub get_refresh_code
 
     $txt .= "<div id='countdown'></div>" . "\n";
     $txt .= "<script>" . "\n";
-
     $txt .= "var HttpClient = function() {\n";
     $txt .= "   this.get = function(aUrl, aCallback) {\n";
     $txt .= "       var anHttpRequest = new XMLHttpRequest();\n";
@@ -2043,7 +2080,7 @@ sub get_chat_code
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=Hello.  Not sure how this translates to Quest..\">Phil special</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=Shane is bad :|\">Shane is bad..</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=2B or not 2B.  I lead you astray with this one.\">...</a></font>";
-    $out .= "&nbsp;&nbsp;<a href=\"/Quest/do_debug\">Debug</a></font>";
+    #$out .= "&nbsp;&nbsp;<a href=\"/Quest/do_debug\">Debug</a></font>";
     $out .= "<table>\n";
 
     my $i = $NUM_CHAT_MESSAGES - 1;
@@ -2106,7 +2143,7 @@ sub get_game_state
     my $IP = $_ [0];
 
     my $out .= "<h1>Welcome to Quest, <font color=" . $rand_colors {$CURRENT_QUEST_NAME} . ">$CURRENT_QUEST_NAME</font> </h1><br><br>&nbsp;There are $num_players_in_lobby players logged in.<br>";
-    $out .= "Player names are:<br>" . join ("<br>", @player_names); # . "<br>IPs:<br>" . join ("<br>", @player_ips);
+    $out .= "Player names are:<br>" . join (",&nbsp;", @player_names); # . "<br>IPs:<br>" . join ("<br>", @player_ips);
     $out .= "<br><br><font size=-2>You can boot players here whilst the game is not started:</font><br>";
 
     my $n;
@@ -2183,7 +2220,7 @@ sub handle_quest_voting
     my $not_done_voting;
     my $x;
     my $finished_voting = 1;
-    
+
     foreach $x (sort keys (%AWAITING_QUESTERS))
     {
         if ($x eq $MAGIC_TOKEN)
@@ -2228,9 +2265,14 @@ sub handle_quest_voting
             }
         }
 
-        if ($num_failed_votes == 0)
+        if ($num_failed_votes < $num_fails_on_quests {get_quest_number()})
         {
             $QUEST_OUTCOMES {get_quest_number()} = "Success (Leader was " . get_player_name ($who_is_leader) . " People on quest: " . $done_voting . ")";
+
+            if ($num_fails_on_quests {get_quest_number()} > 1)
+            {
+                $QUEST_OUTCOMES {get_quest_number()} = "Success (Double fail required but only $num_failed_votes failing votes) (Leader was " . get_player_name ($who_is_leader) . " People on quest: " . $done_voting . ")";
+            }
             print ("QUEST - JUST DID SUCCESS: " . $QUEST_OUTCOMES {get_quest_number()} . " ccc " . get_quest_number());
             $GAME_STATES .= "\n<br>  SS QN=" . get_quest_number() . ") Just successed $who_is_leader " . get_player_name ($who_is_leader);
         }
@@ -2265,7 +2307,7 @@ sub handle_bot_choose_next_leader
     {
         my $num_keys = scalar keys (%HAS_BEEN_LEADER);
         # IDs + Names in %HAS_BEEN_LEADER
-        if ($num_keys >= 2 * $TOTAL_QUESTS) 
+        if ($num_keys >= 2 * $TOTAL_QUESTS)
         {
             $GAME_STATES .= "\n<br>  hbcnl too many quests..(2 * $TOTAL_QUESTS vs $num_keys) QN=" . get_quest_number() . ")\n";
             return;
@@ -2310,9 +2352,54 @@ sub handle_bot_being_leader
 
         my $num_questers;
         my $only_bots = 1;
+        my $put_self_on = 1;
+
         for ($num_questers = 0; $num_questers < get_players_for_current_quest () - 1; $num_questers++)
         {
             my $pot_id = int (rand ($num_players_in_game));
+
+            if ($put_self_on)
+            {
+                $pot_id = $next_leader_id;
+                $put_self_on = 0;
+            }
+
+            # Is bad?
+            my $dude_is_ok = 1;
+            if (is_role_bad (get_character_role ($next_leader_id)))
+            {
+                # Need one or two fails?
+                if ($pot_id != $next_leader_id && defined ($NOT_HIDDEN_INFO {"$next_leader_id knows $pot_id"}))
+                {
+                    if (is_role_bad (get_character_role ($pot_id)) && $num_fails_on_quests {get_quest_number()} > 1)
+                    {
+                        $dude_is_ok = 2;
+                    }
+                }
+            }
+            else
+            {
+                # Need zero fails!
+                if ($pot_id != $next_leader_id && defined ($NOT_HIDDEN_INFO {"$next_leader_id knows $pot_id"}))
+                {
+                    if (!is_role_bad (get_character_role ($pot_id)))
+                    {
+                        $dude_is_ok = 2;
+                    }
+                    else
+                    {
+                        $dude_is_ok = 0;
+                    }
+                }
+            }
+
+            if ($dude_is_ok == 0)
+            {
+                next;
+            }
+
+            # Need two bads?
+
             if (!defined ($AWAITING_QUESTERS {$pot_id}))
             {
                 $AWAITING_QUESTERS {$pot_id} = 1;
@@ -2385,7 +2472,7 @@ sub handle_bot_being_leader
                 print (" NEXT LEADER Progress as only bots were on .. \n");
                 change_game_state ($STATE_AWAITING_QUEST, 1, "next_leader_bot");
                 print ("10After change game state\n");
-                
+
                 if (!is_game_over ())
                 {
                     handle_bot_choose_next_leader ();
@@ -2437,7 +2524,7 @@ sub handle_bot_being_leader
         my $txt = read_from_socket (\*CLIENT);
 
         $CURRENT_QUEST_NAME = "";
-        print (">>>\n\nread in: $txt\n"); 
+        print (">>>\n\nread in: $txt\n");
         if ($txt =~ m/^Cookie.*?QUEST_NAME=(\w\w\w[\w_]+).*?(;|$)/im)
         {
             $CURRENT_QUEST_NAME = $1;
@@ -2501,20 +2588,20 @@ sub handle_bot_being_leader
         }
 
         # HTTP - bot..
-        if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "http_auto_next_leader") && $STATE_OF_ROUND eq $STATE_AWAITING_NEXT_LEADER)
+        if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "http_auto_next_leader11") && $STATE_OF_ROUND eq $STATE_AWAITING_NEXT_LEADER)
         {
             if (!is_game_over ())
             {
                 handle_bot_choose_next_leader ();
             }
-            force_needs_refresh ("next leader chosen");
+            force_needs_refresh ("next leader chosen11");
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
         print ("\n====mmmm======\n$STATE_OF_ROUND, $who_is_leader, $THE_ACCUSED, \n========mmmm=======\n");
-        
+
         # HTTP - bot..
-        if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "http_auto_next_leader") && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET)
+        if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "http_auto_next_leader22") && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET)
         {
             print ("11BEFORE change game state\n");
             change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "bot_amulet");
@@ -2523,11 +2610,11 @@ sub handle_bot_being_leader
             {
                 handle_bot_choose_next_leader ();
             }
-            force_needs_refresh ("next leader chosen");
+            force_needs_refresh ("next leader chosen22");
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
-        
+
         # HTTP - bot..
         if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
         {
@@ -2551,7 +2638,10 @@ sub handle_bot_being_leader
         {
             add_to_debug ("REAL INSTANCE OF calling New_User: $txt with $client_addr<br>");
             my $ret = add_new_user ($txt, $client_addr, 0);
-            write_to_socket (\*CLIENT, "Welcome!!<a href=\"\/\">Lobby or Game window<\/a>", "", "noredirect");
+            my $out = "Welcome!!<a href=\"\/\">Lobby or Game window<\/a> (or you will be redirected soon :) )<br>";
+            $out .= get_refresh_code (1, $this_player_id, -1);
+            force_needs_refresh ("chat_message");
+            write_to_socket (\*CLIENT, $out, "", "redirect");
             next;
         }
 
@@ -2743,12 +2833,12 @@ sub handle_bot_being_leader
             if (is_bot (get_player_name ($next_leader_id), $next_leader_id, "next_leader"))
             {
                 handle_bot_being_leader ($next_leader_id, "http_next_leader");
-                force_needs_refresh ("next leader chosen");
+                force_needs_refresh ("next leader chosen33");
                 write_to_socket (\*CLIENT, "", "", "redirect");
                 next;
             }
 
-            force_needs_refresh ("next leader chosen");
+            force_needs_refresh ("next leader chosen44");
             write_to_socket (\*CLIENT, "", "", "redirect");
             next;
         }
