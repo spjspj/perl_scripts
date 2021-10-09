@@ -202,7 +202,7 @@ my $PLAYER_LAYOUT_5 = "<table class=\"questTable\"><tbody> <tr> <td align=center
 my $PLAYER_LAYOUT_6 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2 rowspan=2> <div style=\"position:relative;\"><img height=600 src=\"q_images/6_player.jpg\" ></img><img src=\"QUEST1_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:190px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:350px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:500px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"100\" style=\"position:absolute; top:140px; left:290px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"150\" style=\"position:absolute; top:220px; left:660px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> </tbody></table>";
 my $PLAYER_LAYOUT_7 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td> <div style=\"position:relative;\"> <img src=\"q_images/7_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:15px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:140px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:270px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:175px; left:390px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:130px; left:230px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:125px; left:345px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:170px; left:510px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> <td align=center></td> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> </tr> </tbody></table>";
 my $PLAYER_LAYOUT_8 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> <td > <div style=\"position:relative;\"> <img src=\"q_images/8_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:15px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:140px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:270px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:175px; left:390px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:240px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:130px; left:360px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:125px; left:475px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:170px; left:510px; z-index:5; border:none;\"/> </div> </td> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> </tr> </tbody></table>";
-my $PLAYER_LAYOUT_9 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2> <div style=\"position:relative;\"> <img src=\"q_images/9_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:160px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:280px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:410px; z-index:5; border:none;\"/> <img src=\"q_images/amulet.png\" height=\"75\" style=\"position:absolute; top:135px; left:240px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:250px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:370px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:490px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:535px; z-index:5; border:none;\"/> </div> </td> <td align=center> <img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center colspan=2><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> </tr> </tbody></table>";
+my $PLAYER_LAYOUT_9 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2> <div style=\"position:relative;\"> <img src=\"q_images/9_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:160px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:280px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:410px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:240px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:250px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:370px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:490px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"125\" style=\"position:absolute; top:180px; left:535px; z-index:5; border:none;\"/> </div> </td> <td align=center> <img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center colspan=2><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> </tr> </tbody></table>";
 my $PLAYER_LAYOUT_10 = "<table class=\"questTable\"><tbody> <tr> <td align=center><img src=\"q_images/PLAYER_ONE_IMAGE.jpg\" height=\"200\">CROWN_ONE<font size=\"+2\" color=\"darkblue\">PLAYER_ONE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TWO_IMAGE.jpg\" height=\"200\">CROWN_TWO <font color=\"darkgreen\">PLAYER_TWO_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_THREE_IMAGE.jpg\" height=\"200\">CROWN_THREE <font color=\"darkgreen\">PLAYER_THREE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_FOUR_IMAGE.jpg\" height=\"200\">CROWN_FOUR <font color=\"darkgreen\">PLAYER_FOUR_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_FIVE_IMAGE.jpg\" height=\"200\">CROWN_FIVE <font color=\"darkgreen\">PLAYER_FIVE_NAME</font></td> <td colspan=2> <div style=\"position:relative;\"> <img src=\"q_images/10_player.jpg\" height=\"500\"/> <img src=\"QUEST1_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:30px; z-index:5; border:none;\"/> <img src=\"QUEST2_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:160px; z-index:5; border:none;\"/> <img src=\"QUEST3_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:280px; z-index:5; border:none;\"/> <img src=\"QUEST4_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:410px; z-index:5; border:none;\"/> <img src=\"AMULET1_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:250px; z-index:5; border:none;\"/> <img src=\"AMULET2_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:375px; z-index:5; border:none;\"/> <img src=\"AMULET3_BUTTON\" height=\"75\" style=\"position:absolute; top:135px; left:500px; z-index:5; border:none;\"/> <img src=\"QUEST5_BUTTON\" height=\"135\" style=\"position:absolute; top:180px; left:530px; z-index:5; border:none;\"/> </div> </td> <td align=center> <img src=\"q_images/PLAYER_SIX_IMAGE.jpg\" height=\"200\">CROWN_SIX <font color=\"darkgreen\">PLAYER_SIX_NAME</font></td> </tr> <tr> <td align=center><img src=\"q_images/PLAYER_SEVEN_IMAGE.jpg\" height=\"200\">CROWN_SEVEN <font color=\"darkgreen\">PLAYER_SEVEN_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_EIGHT_IMAGE.jpg\" height=\"200\">CROWN_EIGHT <font color=\"darkgreen\">PLAYER_EIGHT_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_NINE_IMAGE.jpg\" height=\"200\">CROWN_NINE <font color=\"darkgreen\">PLAYER_NINE_NAME</font></td> <td align=center><img src=\"q_images/PLAYER_TEN_IMAGE.jpg\" height=\"200\">CROWN_TEN  <font color=\"darkgreen\">PLAYER_TEN_NAME</font></td> </tr> </tbody></table>";
 my $TEMPLATE_LAYOUT;
 
@@ -654,7 +654,7 @@ sub get_character_role
     {
         return $player_roles [$id];
     }
-    return "";
+    return "NOTHINGHERE..";
 }
 
 sub get_character_image
@@ -801,16 +801,50 @@ sub get_vote_from_bot
         return $NO_VOTE;
     }
 
-    if (is_role_bad (get_character_role ($id)) && (!$magic_token || $magic_token && get_character_role ($id) eq $MORGAN_LE_FAY))
+    my $r = int (rand (10));
+    if (is_role_bad (get_character_role ($id)))
     {
-        my $r = int (rand (10));
-        if ($r < 7)
+        if ($magic_token)
         {
-            return $BAD_VOTE;
+            if (get_character_role ($id) eq $MORGAN_LE_FAY)
+            {
+                # Do nothing - can fail even with magic token
+            }
+            else
+            {
+                # Can't fail..
+                $r = 100;
+            }
         }
-        return $GOOD_VOTE;
+        elsif (get_character_role ($id) eq $BRUTE)
+        {
+            if (get_quest_number () > 3)
+            {
+                # Can't fail quests 4,5
+                $r = 100;
+            }
+        }
+        elsif (get_character_role ($id) eq $LUNATIC)
+        {
+            # Must fail every quest
+            $r = 0;
+        }
+    }
+    else
+    {
+        # Good, so can't fail..
+        $r = 100;
+        if (get_character_role ($id) eq $YOUTH && $magic_token)
+        {
+            # Youth must fail if has magic token
+            $r = 0;
+        } 
     }
 
+    if ($r <= 4 || $num_fails_on_quests {get_quest_number()} > 1 && $r <= 2)
+    {
+        return $BAD_VOTE;
+    }
     return $GOOD_VOTE;
 }
 
@@ -1040,12 +1074,28 @@ sub is_role_bad
     return $is_bad;
 }
 
+sub is_perceived_role_bad
+{
+    my $role = $_ [0];
+    my $is_bad = 1;
+
+    if ($role eq $APPRENTICE || $role eq $ARCHDUKE ||
+        $role eq $ARTHUR || $role eq $CLERIC ||
+        $role eq $DUKE || $role eq $GENERIC_GOOD ||
+        $role eq $RELUCTANT_LEADER || $role eq $SABOTEUR ||
+        $role eq $SENTINEL || $role eq $YOUTH)
+    {
+        $is_bad = 0;
+    }
+    return $is_bad;
+}
+
 sub set_who_knows_who_id_id_good_or_bad_only
 {
     my $id1 = $_ [0];
     my $id2 = $_ [1];
 
-    if (is_role_bad (get_character_role ($id2)))
+    if (is_perceived_role_bad (get_character_role ($id2)))
     {
         $NOT_HIDDEN_INFO {"$id1 knows $id2 is bad"} = 1;
     }
@@ -1075,6 +1125,8 @@ sub setup_players
 
     @player_roles = @new_player_roles;
 
+    $GAME_STATES .= "\n<br>  PLAYER Role -- " . join (",", sort keys (%COUNTS_OF_ROLES));
+    $GAME_STATES .= "\n<br>  PLAYER Role -- " . join (",", sort values (%COUNTS_OF_ROLES));
     foreach $role (sort keys (%COUNTS_OF_ROLES))
     {
         my $x = $COUNTS_OF_ROLES {$role};
@@ -1082,17 +1134,13 @@ sub setup_players
         {
             $x--;
             $player_roles [$i] = $role;
+            $GAME_STATES .= "\n<br>  PLAYER $i -- $role";
             $in_game_players [$i] = $player_names [$i];
             $i++;
         }
     }
     @player_roles = shuffle (@player_roles);
     @in_game_players = shuffle (@in_game_players);
-
-    my $n;
-    for ($n = 0; $n < $i; $n++)
-    {
-    }
 }
 
 sub new_game
@@ -1194,6 +1242,16 @@ sub new_game
         $COUNTS_OF_ROLES {$GENERIC_GOOD} = 2;
         $COUNTS_OF_ROLES {$GENERIC_BAD} = 1;
         $COUNTS_OF_ROLES {$CHANGELING} = 1;
+
+        my $change_bad = int (rand (7));
+        if ($change_bad > 3)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_BAD} --;
+            if ($change_bad == 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
+            if ($change_bad == 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
+            if ($change_bad == 6) { $COUNTS_OF_ROLES {$BRUTE}++; }
+        }
+
         $TEMPLATE_LAYOUT = $PLAYER_LAYOUT_6;
         $num_players_on_quests {1} = 2;
         $num_players_on_quests {2} = 3;
@@ -1221,6 +1279,27 @@ sub new_game
         $COUNTS_OF_ROLES {$GENERIC_BAD} = 1;
         $COUNTS_OF_ROLES {$CHANGELING} = 1;
         $TEMPLATE_LAYOUT = $PLAYER_LAYOUT_7;
+        
+        my $change_bad = int (rand (7));
+        if ($change_bad > 3)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_BAD} --;
+            if ($change_bad == 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
+            if ($change_bad == 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
+            if ($change_bad == 6) { $COUNTS_OF_ROLES {$BRUTE}++; }
+        }
+        
+        my $change_good = int (rand (7));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good == 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+
+
         $num_players_on_quests {1} = 2;
         $num_players_on_quests {2} = 3;
         $num_players_on_quests {3} = 3;
@@ -1246,6 +1325,36 @@ sub new_game
         $COUNTS_OF_ROLES {$DUKE} = 1;
         $COUNTS_OF_ROLES {$GENERIC_BAD} = 1;
         $COUNTS_OF_ROLES {$CHANGELING} = 1;
+        
+        my $change_bad = int (rand (7));
+        if ($change_bad > 3)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_BAD} --;
+            if ($change_bad == 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
+            if ($change_bad == 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
+            if ($change_bad == 6) { $COUNTS_OF_ROLES {$BRUTE}++; }
+        }
+        
+        my $change_good = int (rand (7));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good == 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+        
+        $change_good = int (rand (7));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good == 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+
         $TEMPLATE_LAYOUT = $PLAYER_LAYOUT_8;
         $num_players_on_quests {1} = 3;
         $num_players_on_quests {2} = 4;
@@ -1268,11 +1377,43 @@ sub new_game
     if ($num_players_in_game == 9)
     {
         $COUNTS_OF_ROLES {$ARTHUR} = 1;
-        $COUNTS_OF_ROLES {$GENERIC_GOOD} = 3;
-        $COUNTS_OF_ROLES {$DUKE} = 1;
-        $COUNTS_OF_ROLES {$ARCHDUKE} = 1;
+        #$COUNTS_OF_ROLES {$GENERIC_GOOD} = 3;
+        #$COUNTS_OF_ROLES {$DUKE} = 1;
+        #$COUNTS_OF_ROLES {$ARCHDUKE} = 1;
         $COUNTS_OF_ROLES {$GENERIC_BAD} = 1;
         $COUNTS_OF_ROLES {$CHANGELING} = 1;
+        $COUNTS_OF_ROLES {$CLERIC} = 5;
+        
+        my $change_bad = int (rand (2));
+        if ($change_bad > 3)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_BAD} --;
+            if ($change_bad == 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
+            if ($change_bad == 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
+            if ($change_bad >= 6) { $COUNTS_OF_ROLES {$BRUTE}++; }
+        }
+        
+        my $change_good = int (rand (1));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good >= 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+        
+        $change_good = int (rand (7));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good >= 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+
+ 
         $TEMPLATE_LAYOUT = $PLAYER_LAYOUT_9;
         $num_players_on_quests {1} = 3;
         $num_players_on_quests {2} = 4;
@@ -1284,17 +1425,61 @@ sub new_game
         $num_amulets {3} = 1;
         $num_amulets {4} = 1;
         $num_amulets {5} = 0;
+        $num_fails_on_quests {1} = 1;
+        $num_fails_on_quests {2} = 1;
+        $num_fails_on_quests {3} = 1;
+        $num_fails_on_quests {4} = 2;
+        $num_fails_on_quests {5} = 1;
         $TOTAL_QUESTS = 5;
         $NUMBER_FAILS_NEEDED = 3;
     }
     if ($num_players_in_game == 10)
     {
         $COUNTS_OF_ROLES {$ARTHUR} = 1;
-        $COUNTS_OF_ROLES {$GENERIC_GOOD} = 3;
+        $COUNTS_OF_ROLES {$GENERIC_GOOD} = 2;
         $COUNTS_OF_ROLES {$DUKE} = 1;
         $COUNTS_OF_ROLES {$ARCHDUKE} = 1;
         $COUNTS_OF_ROLES {$GENERIC_BAD} = 2;
         $COUNTS_OF_ROLES {$CHANGELING} = 1;
+        $COUNTS_OF_ROLES {$CLERIC} = 1;
+        
+        my $change_bad = int (rand (7));
+        if ($change_bad > 3)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_BAD} --;
+            if ($change_bad <= 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
+            if ($change_bad >= 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
+        }
+        
+        $change_bad = int (rand (7));
+        if ($change_bad > 3)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_BAD} --;
+            if ($change_bad <= 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
+            if ($change_bad >= 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
+        }
+        
+        my $change_good = int (rand (7));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good >= 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+        
+        $change_good = int (rand (7));
+        if ($change_good > 2)
+        {
+            $COUNTS_OF_ROLES {$GENERIC_GOOD} --;
+            if ($change_good == 3) { $COUNTS_OF_ROLES {$YOUTH}++; }
+            if ($change_good == 4) { $COUNTS_OF_ROLES {$CLERIC}++; }
+            if ($change_good == 5) { $COUNTS_OF_ROLES {$APPRENTICE}++; }
+            if ($change_good >= 6) { $COUNTS_OF_ROLES {$TROUBLEMAKER}++; }
+        }
+
+ 
         $TEMPLATE_LAYOUT = $PLAYER_LAYOUT_10;
         $num_players_on_quests {1} = 3;
         $num_players_on_quests {2} = 4;
@@ -1333,7 +1518,7 @@ sub new_game
     my $i = 0;
     for ($i = 0; $i < $num_players_in_game && $num_players_in_game >= 6; $i++)
     {
-        if ($player_roles [$i] eq $GENERIC_BAD)
+        if ($player_roles [$i] eq $GENERIC_BAD || $player_roles [$i] eq $LUNATIC || $player_roles [$i] eq $BRUTE)
         {
             set_who_knows_who_id_id (get_id_by_role ($MORGAN_LE_FAY), $i);
             set_who_knows_who_id_id ($i, get_id_by_role ($MORGAN_LE_FAY));
@@ -1345,33 +1530,41 @@ sub new_game
                     set_who_knows_who_id_id ($i, $j);
                     set_who_knows_who_id_id ($j, $i);
                 }
+                
+                if ($player_roles [$j] eq $BRUTE && $i != $j)
+                {
+                    set_who_knows_who_id_id ($i, $j);
+                    set_who_knows_who_id_id ($j, $i);
+                }
+                
+
+                
+                if ($player_roles [$j] eq $LUNATIC && $i != $j)
+                {
+                    set_who_knows_who_id_id ($i, $j);
+                    set_who_knows_who_id_id ($j, $i);
+                }
             }
         }
     }
 
+    change_game_state ($STATE_AWAITING_QUEST, 1, "new_game");
+    $QUEST_NUMBER = 0;
+    $GAME_STATES .= "\n<br>  QN 00a just set.. QN=" . get_quest_number() . ")";
+
+    my $first_leader = int (rand ($num_players_in_game));
     my $i = 0;
     for ($i = 0; $i < $num_players_in_game && $num_players_in_game >= 6; $i++)
     {
         if ($player_roles [$i] eq $CLERIC)
         {
-            set_who_knows_who_id_id ($i, $who_is_leader);
+            set_who_knows_who_id_id_good_or_bad_only ($i, $first_leader);
+            $GAME_STATES .= "\n<br>  PLAYER KNOWS $CLERIC ($i) knows $first_leader)";
         }
     }
 
-    change_game_state ($STATE_AWAITING_QUEST, 1, "new_game");
-    if ($IN_DEBUG_MODE)
-    {
-        $QUEST_NUMBER = 0;
-        $GAME_STATES .= "\n<br>  QN 00 just set.. QN=" . get_quest_number() . ")";
-        set_leader (0);
-    }
-    else
-    {
-        $QUEST_NUMBER = 0;
-        $GAME_STATES .= "\n<br>  QN 00a just set.. QN=" . get_quest_number() . ")";
-        set_leader (int (rand ($num_players_in_game)));
-    }
-
+    set_leader ($first_leader);
+    
     force_needs_refresh("new_game");
     my %new_already_shuffled;
     $START_OF_NEW_ROUND = 1;
@@ -2048,6 +2241,7 @@ sub get_chat_code
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=Just double bluffing... PLEASE PICK ME!!\">Don't pick me!</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=Hello.  Not sure how this translates to Quest..\">Phil special</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=Shane is bad :|\">Shane is bad..</a>";
+    $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=New zoom up\">New zoom link has been added</a>";
     $out .= "&nbsp;&nbsp;<a href=\"/Quest/add_chat_message_msg=2B or not 2B.  I lead you astray with this one.\">...</a></font>";
     #$out .= "&nbsp;&nbsp;<a href=\"/Quest/do_debug\">Debug</a></font>";
     $out .= "<table>\n";
@@ -2147,6 +2341,10 @@ sub get_game_state
             $out = print_game_state ($IP);
             $out .= "<br>Current state of game is: $STATE_OF_ROUND";
             $out .= "<br>Reset the game here: <a href=\"reset_game\">Reset<\/a><br>";
+            if ($num_players_in_lobby >= 4)
+            {
+                $out .= "<a href=\"new_game\">Start new game!<\/a>";
+            }
         }
         elsif (!game_started ())
         {
@@ -2242,13 +2440,13 @@ sub handle_quest_voting
 
             if ($num_fails_on_quests {get_quest_number()} > 1)
             {
-                $QUEST_OUTCOMES {get_quest_number()} = "Success (Double fail required but only $num_failed_votes failing votes) (Leader was " . get_player_name ($who_is_leader) . " People on quest: " . $done_voting . ")";
+                $QUEST_OUTCOMES {get_quest_number()} = "Success (Double fail required but only $num_failed_votes failing votes) (Leader was " . get_player_name ($who_is_leader) . " Folk on quest: " . $done_voting . ")";
             }
             $GAME_STATES .= "\n<br>  SS QN=" . get_quest_number() . ") Just successed $who_is_leader " . get_player_name ($who_is_leader) . " >> " . $QUEST_OUTCOMES {get_quest_number()};
         }
         else
         {
-            $QUEST_OUTCOMES {get_quest_number()} = "Fail ($num_failed_votes) (Leader was " . get_player_name ($who_is_leader) . " People on quest: $done_voting)";
+            $QUEST_OUTCOMES {get_quest_number()} = "Fail ($num_failed_votes) (Leader was " . get_player_name ($who_is_leader) . " Folk on quest: $done_voting)";
             $GAME_STATES .= "\n<br>  FF QN=" . get_quest_number() . ") Just failed ($num_failed_votes) $who_is_leader " . get_player_name ($who_is_leader);
 
             # Add to badness factor..
@@ -2532,7 +2730,7 @@ sub handle_bot_being_leader
         {
             add_to_debug ("BANNING $CURRENT_QUEST_NAME atm");
             $CURRENT_QUEST_NAME = "";
-            write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
+            write_to_socket (\*CLIENT, get_game_state($client_addr), "", "noredirect");
             next;
         }
 
@@ -2623,7 +2821,7 @@ sub handle_bot_being_leader
                 if (is_bot (get_player_name ($p), $p, "bot_last_chance") && $AWAITING_LAST_ACCUSSED {$p} > 0)
                 {
                     $AWAITING_LAST_ACCUSSED {$p} = 0;
-                    $THE_ACCUSED .= "Player " . get_player_name ($p) . " was a bot so doesn't count in voting!";
+                    $THE_ACCUSED .= "<font size=-2>Player " . get_player_name ($p) . " was a bot so doesn't count in voting!</font><br>";
                     $GAME_STATES .= "AUTO: LAST_CHANcE $THE_ACCUSED\n";
                 }
             }
