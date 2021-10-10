@@ -150,6 +150,7 @@ my %AMULET_OUTCOMES;
 my $AMULET_OUTCOMES_NUM = 1;
 my %POSSIBLE_BADNESS;
 my %HAS_BEEN_LEADER;
+my $ALL_LEADERS_BAD = 1;
 my %HAS_HAD_AMULET;
 my %BEEN_CHECKED_BY_AMULET;
 
@@ -403,6 +404,11 @@ sub change_game_state
     {
         $STATE_OF_ROUND = $new_state;
 
+        if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE && $ALL_LEADERS_BAD)
+        {
+            game_won ($GOOD_GUYS, "All leaders were bad!");
+        }
+
         if ($STATE_OF_ROUND eq $STATE_GOODS_LAST_CHANCE)
         {
             $THE_ACCUSED = "";
@@ -628,6 +634,11 @@ sub set_leader
     $HAS_BEEN_LEADER {$who_is_leader} = 1;
     $HAS_BEEN_LEADER {get_player_name ($who_is_leader)} = 1;
 
+    if (!is_role_bad (get_character_role ($who_is_leader)))
+    {
+        $ALL_LEADERS_BAD = 0;
+    }
+
     if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "set_leader"))
     {
         $GAME_STATES .= "\n<br> SET_LEADER HERE QN=" . get_quest_number () . " NEW_LEADER is a BOT $who_is_leader for quest " . get_quest_number () . "\n";
@@ -841,7 +852,7 @@ sub get_vote_from_bot
         } 
     }
 
-    if ($r <= 4 || $num_fails_on_quests {get_quest_number()} > 1 && $r <= 2)
+    if ($r <= 6 || $num_fails_on_quests {get_quest_number()} > 1 && $r <= 7)
     {
         return $BAD_VOTE;
     }
@@ -1164,6 +1175,7 @@ sub new_game
     %BEEN_CHECKED_BY_AMULET = %new_BEEN_CHECKED_BY_AMULET;
     my %new_HAS_BEEN_LEADER;
     %HAS_BEEN_LEADER = %new_HAS_BEEN_LEADER;
+    $ALL_LEADERS_BAD = 1;
     $GAME_STATES .= "\n<br>  HAS_BEEN_LEADER just reset.. QN=" . get_quest_number() . ")";
     my %new_HAS_HAD_AMULET;
     %HAS_HAD_AMULET = %new_HAS_HAD_AMULET;
@@ -1377,20 +1389,18 @@ sub new_game
     if ($num_players_in_game == 9)
     {
         $COUNTS_OF_ROLES {$ARTHUR} = 1;
-        #$COUNTS_OF_ROLES {$GENERIC_GOOD} = 3;
-        #$COUNTS_OF_ROLES {$DUKE} = 1;
-        #$COUNTS_OF_ROLES {$ARCHDUKE} = 1;
+        $COUNTS_OF_ROLES {$GENERIC_GOOD} = 3;
+        $COUNTS_OF_ROLES {$DUKE} = 1;
+        $COUNTS_OF_ROLES {$ARCHDUKE} = 1;
         $COUNTS_OF_ROLES {$GENERIC_BAD} = 1;
         $COUNTS_OF_ROLES {$CHANGELING} = 1;
-        $COUNTS_OF_ROLES {$CLERIC} = 5;
         
         my $change_bad = int (rand (2));
         if ($change_bad > 3)
         {
             $COUNTS_OF_ROLES {$GENERIC_BAD} --;
             if ($change_bad == 4) { $COUNTS_OF_ROLES {$LUNATIC}++; }
-            if ($change_bad == 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
-            if ($change_bad >= 6) { $COUNTS_OF_ROLES {$BRUTE}++; }
+            if ($change_bad >= 5) { $COUNTS_OF_ROLES {$BRUTE}++; }
         }
         
         my $change_good = int (rand (1));
@@ -1614,6 +1624,7 @@ sub reset_game
     $START_OF_NEW_ROUND = 0;
     my %new_HAS_BEEN_LEADER;
     %HAS_BEEN_LEADER = %new_HAS_BEEN_LEADER;
+    $ALL_LEADERS_BAD = 1;
     $GAME_STATES .= "\n<br>  HAS_BEEN_LEADER22 just reset.. QN=" . get_quest_number() . ")";
     my %new_HAS_HAD_AMULET;
     %HAS_HAD_AMULET = %new_HAS_HAD_AMULET;
@@ -2330,6 +2341,7 @@ sub get_game_state
             <input type=\"text\" id=\"fname\" name=\"fname\" value=\"xyz\"><br>
             <input type=\"submit\" value=\"Join Now!!\">
             </form>";
+        $out .= "<a href=\"new_game\">Start new game!<\/a>";
         my $next_num = $num_players_in_lobby +1;
         $out =~ s/xyz/User$next_num/img;
     }
@@ -2789,27 +2801,59 @@ sub handle_bot_being_leader
         # HTTP - bot..
         if (is_bot (get_player_name ($who_is_leader), $who_is_leader, "http_auto_next_leader22") && $STATE_OF_ROUND eq $STATE_AWAITING_AMULET)
         {
-            change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "bot_amulet");
-
-
-            my $bot_amulet_find_id = int (rand ($num_players_in_game));
-
-            if ($bot_amulet_find_id != $who_is_leader)
+        
+            # Try and give it to a human..
             {
-                set_who_knows_who_id_id_good_or_bad_only ($who_is_leader, $bot_amulet_find_id);
-                $HAS_HAD_AMULET {$who_is_leader} = 1;
-                $AMULET_OUTCOMES {$AMULET_OUTCOMES_NUM} = "(bot) $who_is_leader knows $bot_amulet_find_id";
-                $AMULET_OUTCOMES {$AMULET_OUTCOMES_NUM} = "(bot) " . get_player_name ($who_is_leader) . " knows " . get_player_name ($bot_amulet_find_id);
-                $AMULET_OUTCOMES_NUM++;
-            }
+                my $counter = 10;
+                my $give_amulet_to_id = int (rand ($num_players_in_game));
+                $GAME_STATES .= "\n<br>  >> QN=" . get_quest_number() . ") Trying to give amulet from bot to human $give_amulet_to_id >> " . get_player_name ($give_amulet_to_id);
+                while ($counter > 0 && (is_bot (get_player_name ($give_amulet_to_id), $give_amulet_to_id, "http_auto_next_leader22") || $HAS_HAD_AMULET {$give_amulet_to_id}))
+                {
+                    $give_amulet_to_id = int (rand ($num_players_in_game));
+                    $GAME_STATES .= "\n<br>  >> ($counter) QN=" . get_quest_number() . ") Trying to give amulet from bot to human $give_amulet_to_id >> " . get_player_name ($give_amulet_to_id);
+                    $counter --;
+                }
 
-            if (!is_game_over ())
-            {
-                handle_bot_choose_next_leader ();
+                if ($counter == 0)
+                {
+                    $give_amulet_to_id = $who_is_leader;
+                }
+
+                $GAME_STATES .= "\n<br>  >> QN=" . get_quest_number() . ") Amulet from bot to human? $give_amulet_to_id >> " . get_player_name ($give_amulet_to_id);
+
+                set_amulet ($give_amulet_to_id);
+
+                change_game_state ($STATE_AWAITING_AMULET_RESULT, 1, "next_amulet_holder_chosen");
+                if (is_bot (get_player_name ($give_amulet_to_id), $give_amulet_to_id, "amulet"))
+                {
+                    # Bot don't need to check ..
+                    change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "bot_next_amulet_holder_chosen");
+                }
+
+                force_needs_refresh ("next amulet chosen");
+                write_to_socket (\*CLIENT, "", "", "redirect");
+                next;
             }
-            force_needs_refresh ("next leader chosen22");
-            write_to_socket (\*CLIENT, "", "", "redirect");
-            next;
+            #change_game_state ($STATE_AWAITING_NEXT_LEADER, 1, "bot_amulet");
+#
+#            my $bot_amulet_find_id = int (rand ($num_players_in_game));
+#
+#            if ($bot_amulet_find_id != $who_is_leader)
+#            {
+#                set_who_knows_who_id_id_good_or_bad_only ($who_is_leader, $bot_amulet_find_id);
+#                $HAS_HAD_AMULET {$who_is_leader} = 1;
+#                $AMULET_OUTCOMES {$AMULET_OUTCOMES_NUM} = "(bot) $who_is_leader knows $bot_amulet_find_id";
+#                $AMULET_OUTCOMES {$AMULET_OUTCOMES_NUM} = "(bot) " . get_player_name ($who_is_leader) . " knows " . get_player_name ($bot_amulet_find_id);
+#                $AMULET_OUTCOMES_NUM++;
+#            }
+#
+#            if (!is_game_over ())
+#            {
+#                handle_bot_choose_next_leader ();
+#            }
+#            force_needs_refresh ("next leader chosen22");
+#            write_to_socket (\*CLIENT, "", "", "redirect");
+#            next;
         }
 
         # HTTP - bot..
