@@ -14,7 +14,6 @@ use POSIX qw(strftime);
 my %all_json_fields;
 sub read_json_values
 {
-    # Example: {"id":"B193","device":"9C65F921EFED","time":1585658204458,"cell":{"earfcn":675,"pci":243,"celltiming":[247698,247698],"rsrp":[-93.44,-92.00,-92.00],"rsrq":[-13.25,-8.38,-8.38],"sinr":[13.30,11.10]},"neighbours":[],"loc":[-7187201,4217819]},
     my $chunk = $_ [0];
     print ("Dealing with: $chunk\n");
     my $print_it = $_ [1];
