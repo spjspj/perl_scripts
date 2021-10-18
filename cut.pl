@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 ##
-#   File : get_all.pl
+#   File : cut.pl
 #   Date : 11/July/2010
 #   Author : spjspj
-#   Purpose : Break out a big lot of files from a get_all command into the constituent files again..
+#   Purpose : Roll your own text processor
 ##  
 
 use strict;
@@ -16,7 +16,6 @@ my %all_json_fields;
 
 sub read_json_values
 {
-    # Example: {"id":"B193","device":"9C65F921EFED","time":1585658204458,"cell":{"earfcn":675,"pci":243,"celltiming":[247698,247698],"rsrp":[-93.44,-92.00,-92.00],"rsrq":[-13.25,-8.38,-8.38],"sinr":[13.30,11.10]},"neighbours":[],"loc":[-7187201,4217819]},
     my $chunk = $_ [0];
     print ("Dealing with: $chunk\n");
     my $print_it = $_ [1];
@@ -25,14 +24,12 @@ sub read_json_values
     my $number_of_array = 0;
 
     # Get the headers for this chunk
-    #print ("$chunk\n");
     $chunk =~ s/,/,\n/img;
     $chunk =~ s/[\{\}]/\n/img;
 
     while ($chunk =~ s/^(.*)\n//im)
     {
         my $json_field = $1;
-        #print ("Looking at chunk $json_field -- ");
         
         {
             if ($json_field =~ m/"([^"]+)":"([^"]+)"/)
@@ -40,7 +37,6 @@ sub read_json_values
                 $last_json_header = $1;
                 $json_fields {$1} = $2;
                 $all_json_fields {$1} = "";
-                #print (" aaa $1\n");
                 $number_of_array = 0;
             } 
             elsif ($json_field =~ m/"([^"]+)":(.*),/)
@@ -49,15 +45,12 @@ sub read_json_values
                 my $val = $2;
                 $json_fields {$1} = "$val";
                 $all_json_fields {$1} = "";
-                #print (" bbb $1\n");
                 $number_of_array = 0;
             }
             else
             {
                 $number_of_array++;
-                #print ("\n    >>> $last_json_header _  $number_of_array \n");
                 my $numbered_field = $last_json_header . "_" . $number_of_array;
-                #print (" ccc $numbered_field\n");
                 $json_field =~ s/\W*$//;
                 $json_fields {$numbered_field} = $json_field;
                 $all_json_fields {$numbered_field} = "";
@@ -70,7 +63,6 @@ sub read_json_values
     {
         if ($print_it)
         {
-            #print ("$k => $json_fields{$k} ##");
             print ("$json_fields{$k},");
         }
     }
@@ -158,7 +150,6 @@ sub get_next_json_chunk
         while ($line =~ s/^([^\{\}])//i)
         {
             $json_chunk .= $1;
-            #print ("$level >> $json_chunk\n");
         }
 
         if ($line =~ m/^}/ && $level == 0)
@@ -349,8 +340,6 @@ sub work_out_ringing_positions
             chomp $_;
             my $file = $_;
             my $found_output = 0;
-            #print "==========\n";
-            #print "RUNNING: cut.pl $file $term $helper $operation \n";
             open PROC, "cut.pl $file $term $helper $operation |";
             while (<PROC>)
             {
@@ -923,9 +912,6 @@ sub work_out_ringing_positions
             if ($line !~ m/$term/i && $use_before)
             {
                 $before_lines [$before_index] = $line;
-                #print (" >>>>  adding in $before_index ($line)\n");
-                #print (join (',,,', @before_lines));
-                #print ("\n");
                 $before_index ++;
                 if ($before_index >= $before)
                 {
@@ -937,7 +923,6 @@ sub work_out_ringing_positions
             {
                 if ($use_before)
                 {
-                    #print ("bbb===================\n");
                     my $b = $before_index;
                     my $ok_once = 1;
 
@@ -945,7 +930,6 @@ sub work_out_ringing_positions
                     {
                         if (defined ($before_lines [$b]))
                         {
-                            #print ("bbb" , $before_lines [$b], "\n");#.($b, .$before. $before_index, $ok_once).\n");
                             print ($before_lines [$b], "\n");#.($b, .$before. $before_index, $ok_once).\n");
                         }
                         $ok_once = 0;
@@ -1023,8 +1007,7 @@ sub work_out_ringing_positions
             my $x = 40;
             my $y = 40;
             my $counter = 0;
-            #print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle.float,color.color,counter...counter2,counter...counter3\n");
-             print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle,grid.color,counter...counter2;;;thedate.datetime\n");
+            print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle,grid.color,counter...counter2;;;thedate.datetime\n");
             my $the_date = "2021-08-26T05:51:";
             for (my $i = 0; $i < 2 * $x; $i++)
             {
@@ -1220,7 +1203,6 @@ sub work_out_ringing_positions
             {
                 $print_last_file = 1;
                 $last_file = $line;
-                #print ("Just saw ->> $last_file\n");
             }
             if ($line =~ m/$term/i)
             {
@@ -1337,7 +1319,6 @@ sub work_out_ringing_positions
                 print ("SEEN HTTP\n");
             }
 
-            #print (">>$line<<\n");
             $lines_http ++;
 
             if ($seen_http && $line eq "")
@@ -1468,7 +1449,6 @@ sub work_out_ringing_positions
             my $orig_line = $line;
             $helper =~ s/\\n/zyzyz/img;
             #$line =~ s/$term/$helper/gi;
-            #print ("$line\n");
             eval("\$orig_line =~ s/$term/$helper/gi;");
             $orig_line =~ s/zyzyz/\n/img;
             #$line =~ s/$term/$helper/gi;
@@ -1523,7 +1503,6 @@ sub work_out_ringing_positions
         {
             if ($condense_begin == 1)
             {
-                #print (" begin........... $line \n");
                 $condense_begin = 0;
                 $condense_line = $line;
                 $condense_start = $line;
@@ -1535,7 +1514,6 @@ sub work_out_ringing_positions
             {
                 if ($line =~ $condense_start)
                 {
-                    #print (" similar........... $line \n");
                     $condense_count++;
                 }
                 else
@@ -1603,7 +1581,6 @@ sub work_out_ringing_positions
             $current_val =~ s/ /XXX/g;
             $current_val =~ s/\W//g;
             $current_val =~ s/XXX*/ /g;
-            #print $current_key , " ---- ", $current_val, "\n";
 
             my @words = split / /, uc ($current_val);
 
@@ -1846,7 +1823,6 @@ sub work_out_ringing_positions
                 $ulines {$line} = 1;
                 $ulines_count ++;
                 print $line, "\n";
-                #print "xxx $ulines_count\n";
             }
         }
 
@@ -1879,7 +1855,6 @@ sub work_out_ringing_positions
         my $nextFile;
         foreach $nextFile (grep {-f && ($helper > -M)} readdir DIR) 
         {
-            #print $nextFile, " -- $helper - ", -M, "\n";
             if ($nextFile =~ m/$term/)
             {
                 print "type $nextFile\n";
