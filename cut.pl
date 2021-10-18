@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 ##
-#   File : cut.pl
+#   File : get_all.pl
 #   Date : 11/July/2010
 #   Author : spjspj
-#   Purpose : Roll your own text processor
+#   Purpose : Break out a big lot of files from a get_all command into the constituent files again..
 ##  
 
 use strict;
@@ -11,9 +11,12 @@ use LWP::Simple;
 use Math::Trig;
 use POSIX qw(strftime);
 
+my $PI = 3.14159265358979323;
 my %all_json_fields;
+
 sub read_json_values
 {
+    # Example: {"id":"B193","device":"9C65F921EFED","time":1585658204458,"cell":{"earfcn":675,"pci":243,"celltiming":[247698,247698],"rsrp":[-93.44,-92.00,-92.00],"rsrq":[-13.25,-8.38,-8.38],"sinr":[13.30,11.10]},"neighbours":[],"loc":[-7187201,4217819]},
     my $chunk = $_ [0];
     print ("Dealing with: $chunk\n");
     my $print_it = $_ [1];
@@ -22,12 +25,14 @@ sub read_json_values
     my $number_of_array = 0;
 
     # Get the headers for this chunk
+    #print ("$chunk\n");
     $chunk =~ s/,/,\n/img;
     $chunk =~ s/[\{\}]/\n/img;
 
     while ($chunk =~ s/^(.*)\n//im)
     {
         my $json_field = $1;
+        #print ("Looking at chunk $json_field -- ");
         
         {
             if ($json_field =~ m/"([^"]+)":"([^"]+)"/)
@@ -35,6 +40,7 @@ sub read_json_values
                 $last_json_header = $1;
                 $json_fields {$1} = $2;
                 $all_json_fields {$1} = "";
+                #print (" aaa $1\n");
                 $number_of_array = 0;
             } 
             elsif ($json_field =~ m/"([^"]+)":(.*),/)
@@ -43,12 +49,15 @@ sub read_json_values
                 my $val = $2;
                 $json_fields {$1} = "$val";
                 $all_json_fields {$1} = "";
+                #print (" bbb $1\n");
                 $number_of_array = 0;
             }
             else
             {
                 $number_of_array++;
+                #print ("\n    >>> $last_json_header _  $number_of_array \n");
                 my $numbered_field = $last_json_header . "_" . $number_of_array;
+                #print (" ccc $numbered_field\n");
                 $json_field =~ s/\W*$//;
                 $json_fields {$numbered_field} = $json_field;
                 $all_json_fields {$numbered_field} = "";
@@ -61,6 +70,7 @@ sub read_json_values
     {
         if ($print_it)
         {
+            #print ("$k => $json_fields{$k} ##");
             print ("$json_fields{$k},");
         }
     }
@@ -148,6 +158,7 @@ sub get_next_json_chunk
         while ($line =~ s/^([^\{\}])//i)
         {
             $json_chunk .= $1;
+            #print ("$level >> $json_chunk\n");
         }
 
         if ($line =~ m/^}/ && $level == 0)
@@ -233,6 +244,8 @@ sub work_out_ringing_positions
         print ("   cut.pl file 0 0 strip_http\n");
         print ("   cut.pl stdin \";;;\" \"1,2,3,4\" fields\n");
         print ("   cut.pl bob.txt 0 0 matrix_flip\n");
+        print ("   cut.pl all_java14.java \"Penny Dreadful\" \"c:\\\\xmage\" egrep | cut.pl stdin \"Penny\" -1 grep\n");
+        print ("   cut.pl all_xml10.xml \"Penny\" \"c:\\\\xmage\" egrep | cut.pl stdin \"Penny\" -1 grep\n");
         print ("   cut.pl bob.txt 0 0 condense   (Used for making similar lines in files smaller..)\n");
         print ("   cut.pl bob.txt 0 0 str_condense   (Used for making similar lines in files smaller..)\n");
         print ("   cut.pl stdin \"http://bob.com/a=XXX.id\" 1000 oneupcount   \n");
@@ -244,6 +257,7 @@ sub work_out_ringing_positions
         print ("   cut.pl stdin \"http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=XXX'  5274 wget\n");
         print ("   cut.pl  modern_bluesa \";;;\" \"0,7\" fields | cut.pl stdin \";;;\" 3 wordcombos\n");
         print ("   cut.pl  modern_bluesa \";;;\" \"0,7\" fields | cut.pl stdin 0 0 uniquewords\n");
+        print ("   cut.pl  modern_bluesa \";;;\" \"0,2\" images_html\n");
         print ("   cut.pl d:/D_Downloads/ip_info.html 0 0 one_url_per_line\n");
         print ("   cut.pl  stdin start_ _end letters\n");
         print ("   cut.pl  file banner hashmod word2word\n");
@@ -335,6 +349,8 @@ sub work_out_ringing_positions
             chomp $_;
             my $file = $_;
             my $found_output = 0;
+            #print "==========\n";
+            #print "RUNNING: cut.pl $file $term $helper $operation \n";
             open PROC, "cut.pl $file $term $helper $operation |";
             while (<PROC>)
             {
@@ -513,7 +529,7 @@ sub work_out_ringing_positions
         my $x = 50;
         for (my $i = 0; $i < $x; $i++)
         {
-            my $rads = 3.14159265358979323 / $x * $i;
+            my $rads = $PI / $x * $i;
             my $x_pos = cos($rads) * 0.5;
             my $y_pos = sin($rads) * 0.5;
             $x_pos =~ s/\.(\d\d\d)\d.*/.$1f/;
@@ -648,12 +664,16 @@ sub work_out_ringing_positions
             }
         }
 
-        if ($operation eq "wget_image_test" || $operation eq "wget_image_test_max")
+        if ($operation eq "wget_image_test" || $operation eq "wget_image_test_max" || $operation eq "wget_image_test_force")
         {
             my $i;
             {
                 # Force to get maximum..
-                #`del "$helper"`;
+                if ($operation eq "wget_image_test_force")
+                {
+                    `del "$helper"`;
+                }
+
                 if (-f "$helper")
                 {
                     $max_size = -s "$helper";
@@ -810,6 +830,56 @@ sub work_out_ringing_positions
                 }
             }
         }
+        if ($operation eq "find_and_copy_missing")
+        {
+            my $file = $helper;
+            $file =~ s/^.*\\//;
+            my $missing = `type missing.txt`;
+            my %missing;
+            while ($missing =~ s/^(.*?)\n//)
+            {
+                my $i = $1;
+                my $orig_i = $1;
+                $i =~ s/.*\\//;
+                $missing {$i} .= $orig_i . "xxx";
+            }
+            my $input = `dir /a /b /s`;
+            my %input;
+            my %input_stripped;
+            while ($input =~ s/^(.*?)\n//)
+            {
+                my $i = $1;
+                my $orig_i = $1;
+                $i =~ s/.*\\(.*)\\([^\\]+)$/$1\\$2/;
+                $input {$i} = 1;
+                $i =~ s/.*\\//;
+                $input_stripped {$i} .= $orig_i . "xxx";
+            }
+
+            my $k;
+            foreach $k (sort (keys (%missing)))
+            {
+                if (exists ($input_stripped {$k}))    
+                {
+                    my $d = $missing {$k};
+                    my $arg1 = $input_stripped{$k};
+                    my $arg2 = $missing{$k};
+                    while ($arg1 =~ s/^(.*?)xxx//)
+                    {
+                        my $a1 = $1;
+                        while ($arg2 =~ s/^(.*?)xxx//)
+                        {
+                            my $a2 = $1;
+                            print ("mkdir \"$d\";\ncopy \"$a1\" \"d:\\xmage_images\\FACE\\$a2\"\n");
+                        }
+                    }
+                }
+                else
+                {
+                    print ("rem NO Match - $k\n");
+                }
+            }
+        }
         if ($operation eq "wget_image")
         {
             my $i;
@@ -853,6 +923,9 @@ sub work_out_ringing_positions
             if ($line !~ m/$term/i && $use_before)
             {
                 $before_lines [$before_index] = $line;
+                #print (" >>>>  adding in $before_index ($line)\n");
+                #print (join (',,,', @before_lines));
+                #print ("\n");
                 $before_index ++;
                 if ($before_index >= $before)
                 {
@@ -864,6 +937,7 @@ sub work_out_ringing_positions
             {
                 if ($use_before)
                 {
+                    #print ("bbb===================\n");
                     my $b = $before_index;
                     my $ok_once = 1;
 
@@ -871,6 +945,7 @@ sub work_out_ringing_positions
                     {
                         if (defined ($before_lines [$b]))
                         {
+                            #print ("bbb" , $before_lines [$b], "\n");#.($b, .$before. $before_index, $ok_once).\n");
                             print ($before_lines [$b], "\n");#.($b, .$before. $before_index, $ok_once).\n");
                         }
                         $ok_once = 0;
@@ -948,14 +1023,15 @@ sub work_out_ringing_positions
             my $x = 40;
             my $y = 40;
             my $counter = 0;
-             print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle,grid.color,counter...counter2\n");
+            #print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle.float,color.color,counter...counter2,counter...counter3\n");
+             print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle,grid.color,counter...counter2;;;thedate.datetime\n");
             my $the_date = "2021-08-26T05:51:";
             for (my $i = 0; $i < 2 * $x; $i++)
             {
                 for (my $j = 0; $j < 2 * $y; $j++)
                 {
-                    my $actual_x = $i / $x * 3.14159265358979323; 
-                    my $actual_y = $j / $y * 3.14159265358979323; 
+                    my $actual_x = $i / $x * $PI; 
+                    my $actual_y = $j / $y * $PI; 
                     my $dist_from_center = $actual_x * $actual_x + $actual_y * $actual_y;
                     $dist_from_center = sqrt ($dist_from_center);
 
@@ -1024,19 +1100,19 @@ sub work_out_ringing_positions
             my $xs = " ,";
             for (my $i = 0; $i < 2 * $x; $i++)
             {
-                my $actual_x2 = $i / $x * 3.14159265358979323; 
+                my $actual_x2 = $i / $x * $PI; 
                 $xs .= $actual_x2 . ",";  
             }
 
             print ("\n SLDKFJSLDFJLSDFJLSKDFJKLSJDF\n$xs\n");
             for (my $i = 0; $i < 2 * $x; $i++)
             {
-                my $actual_x2 = $i / $x * 3.14159265358979323; 
+                my $actual_x2 = $i / $x * $PI; 
                 print ("$actual_x2,");
                 for (my $j = 0; $j < 2 * $y; $j++)
                 {
-                    my $actual_x = $i / $x * 3.14159265358979323; 
-                    my $actual_y = $j / $y * 3.14159265358979323; 
+                    my $actual_x = $i / $x * $PI; 
+                    my $actual_y = $j / $y * $PI; 
                     my $dist_from_center = $actual_x * $actual_x + $actual_y * $actual_y;
                     $dist_from_center = sqrt ($dist_from_center);
                     if ($dist_from_center > 0)
@@ -1053,56 +1129,32 @@ sub work_out_ringing_positions
         
         if ($operation eq "water")
         {
-            my $x = 10;
-            my $y = 10;
+            my $x = 12;
+            my $y = 12;
             my $counter = 0;
-             print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle,grid.color,counter...counter2\n");
-            my $the_date = "2021-08-26T1";
-            for (my $i = -2 * $x; $i < 2 * $x; $i++)
+            print ("counter.integer,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,iteration.integer,currentiteration.integer,circle,counter...counter2\n");
+            my $iteration = 0;
+            my $total_iterations = 10;
+
+            for ($iteration = 0; $iteration < $total_iterations; $iteration++)
             {
-                for (my $j = -2 * $y; $j < 2 * $y; $j++)
+                for (my $i = -2 * $x; $i < 2 * $x; $i++)
                 {
-                    my $actual_x = $i / $x * 3.14159265358979323; 
-                    my $actual_y = $j / $y * 3.14159265358979323; 
-                    my $dist_from_center = $actual_x * $actual_x + $actual_y * $actual_y;
-                    $dist_from_center = sqrt ($dist_from_center);
-
-                    if ($dist_from_center > 0)
+                    for (my $j = -2 * $y; $j < 2 * $y; $j++)
                     {
-                        my $sin_value = sin($dist_from_center) * 100; 
-                        my $final_date = $counter;
+                        my $actual_x = $i / $x * $PI; 
+                        my $actual_y = $j / $y * $PI; 
+                        my $dist_from_center = $actual_x * $actual_x + $actual_y * $actual_y;
+                        $dist_from_center = sqrt ($dist_from_center);
 
-                        $final_date =~ s/[6-9](.)/5\1/img;
-                        $final_date =~ s/[6-9](.)/5\1/img;
-                        $final_date =~ s/[6-9](.)/5\1/img;
-
-                        if ($final_date !~ m/\d\d\d\d\d/)
+                        if ($dist_from_center > 0)
                         {
-                            $final_date = "0000" . $final_date . "500";
-                        }
-                        #\d:\d\d:\d\d.\d\d\d[UTC]
-                        $final_date =~ s/.*(\d)(\d\d)(\d\d)(\d\d\d)$/$1:$2:$3.$4/;
-                        $final_date .= "[UTC]";
+                            my $sin_value = sin($dist_from_center + $iteration / $total_iterations * 4 * $PI) * 100; 
 
-                        my $circle = 0.0;
-                        if ($dist_from_center =~ m/\.[56789]/)
-                        {
-                            $circle = 1.0;
+                            print ("$counter,$i,$j," . ($actual_x * 100) . "," . ($actual_y * 100) . ",$dist_from_center,$sin_value,$iteration,0,0,\n");
                         }
-
-                        my $grid = "Blueberry";
-                        if (($actual_x =~ m/[02468]\./) || ($actual_y =~ m/[02468]\./))
-                        {
-                            $grid = "Banana";
-                            $circle += 2.0;
-                        }
-
-                        if ($j != $y * 2 - 1)
-                        {
-                            print ("$counter," . ($counter+1) . "," . ($counter + 2*$x) . ",$i,$j," . ($actual_x * 100) . "," . ($actual_y * 100) . ",$dist_from_center,$sin_value,$the_date$final_date,$circle,$grid,\n");
-                        }
+                        $counter ++;
                     }
-                    $counter ++;
                 }
             }
         }
@@ -1125,7 +1177,7 @@ sub work_out_ringing_positions
             my $angle = acos($focii1 / $hypot);
             my $minor_axis = sin($angle) * $hypot;
             $minor_axis = 3;
-            my $PI = 3.14159265358979323;
+            my $PI = $PI;
 
             my $total_circum = 2 * $PI * sqrt (($minor_axis * $minor_axis + $major_axis * $major_axis) / 2);
             my $next_segment = 0;
@@ -1168,6 +1220,7 @@ sub work_out_ringing_positions
             {
                 $print_last_file = 1;
                 $last_file = $line;
+                #print ("Just saw ->> $last_file\n");
             }
             if ($line =~ m/$term/i)
             {
@@ -1284,6 +1337,7 @@ sub work_out_ringing_positions
                 print ("SEEN HTTP\n");
             }
 
+            #print (">>$line<<\n");
             $lines_http ++;
 
             if ($seen_http && $line eq "")
@@ -1413,8 +1467,11 @@ sub work_out_ringing_positions
         {
             my $orig_line = $line;
             $helper =~ s/\\n/zyzyz/img;
+            #$line =~ s/$term/$helper/gi;
+            #print ("$line\n");
             eval("\$orig_line =~ s/$term/$helper/gi;");
             $orig_line =~ s/zyzyz/\n/img;
+            #$line =~ s/$term/$helper/gi;
             print ("$orig_line\n");
         }
         if ($operation eq "dedup_line")
@@ -1466,6 +1523,7 @@ sub work_out_ringing_positions
         {
             if ($condense_begin == 1)
             {
+                #print (" begin........... $line \n");
                 $condense_begin = 0;
                 $condense_line = $line;
                 $condense_start = $line;
@@ -1477,6 +1535,7 @@ sub work_out_ringing_positions
             {
                 if ($line =~ $condense_start)
                 {
+                    #print (" similar........... $line \n");
                     $condense_count++;
                 }
                 else
@@ -1544,6 +1603,7 @@ sub work_out_ringing_positions
             $current_val =~ s/ /XXX/g;
             $current_val =~ s/\W//g;
             $current_val =~ s/XXX*/ /g;
+            #print $current_key , " ---- ", $current_val, "\n";
 
             my @words = split / /, uc ($current_val);
 
@@ -1585,6 +1645,10 @@ sub work_out_ringing_positions
                 {
                     print join ("\n", @cut_on_term);
                 }
+                else
+                {
+                    #print ("\nNothing in this segment!!\n");
+                }
                 $saw_helper_cut_on_term = 0; 
                 my @new_array;
                 @cut_on_term = @new_array;
@@ -1596,6 +1660,26 @@ sub work_out_ringing_positions
             }
         }
          
+        if ($operation eq "images_html")
+        {
+            my @fs = split /$term/, $line;
+            my @shows = split /,/, "$helper,";
+            my $s;
+            {
+                # <img src='http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=220251&type=card'/>
+                if ($fs[$shows[0]] =~ m/\*/)
+                {
+                    my $id = $fs[$shows[0]];
+                    $id =~ s/\*//g;
+                    $id =~ s/ //g;
+                    my $x = "<img src='http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=XXX&type=card'/>";
+                    $x =~ s/XXX/$id/;
+                    print "$fs[$shows[1]]<br>$x";
+                    print "\n";
+                }
+            }
+        }
+        
         if ($operation eq "one_url_per_line")
         {
             my $url = $line;
@@ -1639,7 +1723,8 @@ sub work_out_ringing_positions
             {
                 next;
             }
-            if ($line =~ m/\.(ap_|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war)$/img)
+
+            if ($line =~ m/\.(ap_|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war|net|tsv|log|ai|Help|md|vs|gs|fs|mf)$/img)
             {
                 next;
             }
@@ -1651,6 +1736,11 @@ sub work_out_ringing_positions
 
         if ($operation eq "fix_json_field")
         {
+            # Assumes input similar to {"id":"B14E","time":1585657709530,"device":"9C65F921EFED","rank":2,"CQI0":9,"CQI1":8,"subbands":9,"loc":[-7178833,4218827]},
+            # Gives output similar to id,time,device,rank,cqio,cqi1,subbands,loc1,loc2
+            #                         B14E,1585657709530,9C65F921EFED,2,9,8,9,[-7178833,4218827]
+            # Gives output similar to {"id":"B14E","time":1585657709530,"device":"9C65F921EFED","rank":2,"CQI0":9,"CQI1":8,"subbands":9,"loc":[-7178833,4218827]},
+            # Gives output similar to {"id":"B14E","time":1585657709530,"device":"9C65F921EFED","rank":2,"CQI0":9,"CQI1":8,"subbands":9,"loc":[-7178833,4218827]},
             print $line_number, ",";
             my $line_out = "$line_number";
             $line =~ s/["\[\]\{\}]//img;
@@ -1678,6 +1768,7 @@ sub work_out_ringing_positions
                 my $oth = $2;
                 my $day = $13;
                 my $month = uc($1);
+                #my $yyyymmdd2 = "yyy=$year,mmm=$month,ddd=$day,ooo=$oth,ooo2=2$oth2,6$oth6,7$oth7,8$oth8,9$oth9,10$oth10,11$oth11,12$oth12,13$oth13,14$oth14,15$oth15,16$oth16,17$oth17,18$oth18,19$oth19,20$oth20,21$oth21,22$oth22,23$oth23,yyy";
 
                 if ($year =~ m/^\d\d$/)
                 {
@@ -1755,6 +1846,7 @@ sub work_out_ringing_positions
                 $ulines {$line} = 1;
                 $ulines_count ++;
                 print $line, "\n";
+                #print "xxx $ulines_count\n";
             }
         }
 
@@ -1787,6 +1879,7 @@ sub work_out_ringing_positions
         my $nextFile;
         foreach $nextFile (grep {-f && ($helper > -M)} readdir DIR) 
         {
+            #print $nextFile, " -- $helper - ", -M, "\n";
             if ($nextFile =~ m/$term/)
             {
                 print "type $nextFile\n";
@@ -1938,6 +2031,7 @@ sub work_out_ringing_positions
     if ($operation eq "numlines")
     {
         my $line;
+        #foreach $line (sort {$a <=> $b} values %ulines)
         print  ("$ulines_count --- $file\n");
     }
     
@@ -1951,6 +2045,7 @@ sub work_out_ringing_positions
 
     if ($operation eq "letters")
     {
+        #open PROC, "cut.pl $file $term $helper $operation |";
         my %as;
         $as {"A"} = 1;
         $as {"B"} = 1;
