@@ -1530,29 +1530,29 @@ sub new_game
     {
         if ($player_roles [$i] eq $GENERIC_BAD || $player_roles [$i] eq $LUNATIC || $player_roles [$i] eq $BRUTE)
         {
-            set_who_knows_who_id_id (get_id_by_role ($MORGAN_LE_FAY), $i);
-            set_who_knows_who_id_id ($i, get_id_by_role ($MORGAN_LE_FAY));
+            set_who_knows_who_id_id_good_or_bad_only (get_id_by_role ($MORGAN_LE_FAY), $i);
+            set_who_knows_who_id_id_good_or_bad_only ($i, get_id_by_role ($MORGAN_LE_FAY));
             my $j;
             for ($j = 0; $j < $num_players_in_game && $num_players_in_game >= 6; $j++)
             {
                 if ($player_roles [$j] eq $GENERIC_BAD && $i != $j)
                 {
-                    set_who_knows_who_id_id ($i, $j);
-                    set_who_knows_who_id_id ($j, $i);
+                    set_who_knows_who_id_id_good_or_bad_only ($i, $j);
+                    set_who_knows_who_id_id_good_or_bad_only ($j, $i);
                 }
                 
                 if ($player_roles [$j] eq $BRUTE && $i != $j)
                 {
-                    set_who_knows_who_id_id ($i, $j);
-                    set_who_knows_who_id_id ($j, $i);
+                    set_who_knows_who_id_id_good_or_bad_only ($i, $j);
+                    set_who_knows_who_id_id_good_or_bad_only ($j, $i);
                 }
                 
 
                 
                 if ($player_roles [$j] eq $LUNATIC && $i != $j)
                 {
-                    set_who_knows_who_id_id ($i, $j);
-                    set_who_knows_who_id_id ($j, $i);
+                    set_who_knows_who_id_id_good_or_bad_only ($i, $j);
+                    set_who_knows_who_id_id_good_or_bad_only ($j, $i);
                 }
             }
         }
@@ -1949,6 +1949,13 @@ sub print_game_state
         $out .= "You (" . get_player_name ($id) . ") are: " . get_small_image (get_character_image($id), 115) . " <font color=white>INTERACTION_HOLDER</font>";
 
         my $num_questers = get_players_for_current_quest ();
+        
+        if ($STATE_OF_ROUND eq $STATE_AWAITING_AMULET_RESULT)
+        {
+            my $amulet_holder = get_player_name ($who_is_amulet);
+            $out .= "<br><font size=+1 color=purple>$amulet_holder holds the amulet</font><br>";
+        }
+
         if ($STATE_OF_ROUND ne $STATE_GOODS_LAST_CHANCE && $STATE_OF_ROUND ne $STATE_GAME_FINISHED)
         {
             $out .= "<br><font size=+1 color=darkblue>" . get_player_name ($who_is_leader) . " is the leader for the current quest (#" . get_quest_number () . ") of $num_questers!</font>";
@@ -2388,7 +2395,7 @@ sub get_game_state
     my $do_refresh = 1;
     if ($id == $who_is_leader && $STATE_OF_ROUND eq $STATE_AWAITING_QUEST)
     {
-        $do_refresh = 0;
+        #$do_refresh = 0;
     }
     $out .= get_refresh_code ($do_refresh, $id, $who_is_leader);
     $out .= get_chat_code ();
@@ -2697,6 +2704,10 @@ sub handle_bot_being_leader
     my $pid;
     my $SERVER;
     my $port = 3672;
+    #my $port = 6728;
+    #my $port = 6727;
+    #my $port = 17171;
+    #my $port = 17172;
     my $trusted_client;
     my $data_from_client;
     $|=1;
