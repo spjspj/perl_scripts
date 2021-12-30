@@ -10,6 +10,9 @@ use strict;
 use LWP::Simple;
 use Math::Trig;
 use POSIX qw(strftime);
+use Time::Piece;
+use Time::Seconds;
+use DateTime;
 
 my $PI = 3.14159265358979323;
 my %all_json_fields;
@@ -180,6 +183,346 @@ sub get_next_json_chunk
     }
 }
 
+sub print_month
+{
+    my $year = $_ [0];
+    my $month = $_ [1];
+
+    my $month_string = "";
+    my $dt = DateTime->new(year => $year, month => $month, day => 1);
+    my $day_str = " Su Mo Tu We Th Fr Sa";
+
+    my $current_month = $dt->month_name;
+    my $len_mon = length ($current_month);
+    my $len_day = length ($day_str);
+    my $padding = $len_day - $len_mon;
+    my $x = 0;
+    while ($x < $padding)
+    {
+        if ($x < 4)
+        {
+            $current_month = " $current_month";
+        }
+        else
+        {
+            $current_month = "$current_month ";
+        }
+        $x++;
+    }
+
+    $month_string .= "$current_month\n$day_str\n";
+
+    my $dt = DateTime->new(year => $year, month => $month, day => 1);
+    my $current_dow = $dt->day_of_week;
+    if ($current_dow == 7)
+    {
+        $current_dow = 0;
+    }
+    my $i = 0;
+    while ($i < $current_dow) 
+    {
+        $month_string .= "   ";
+        $i++;
+    }
+    $month_string .= "  1";
+    $i++;
+
+    my $total_days_in_month;
+    if ($month == 1) { $total_days_in_month = 31; }
+
+    if ($month == 2)
+    {
+        $total_days_in_month = 28; 
+        if ($year % 400 == 0) { $total_days_in_month = 29; }
+        if ($year % 100 == 0) { $total_days_in_month = 28; }
+        if ($year % 4 == 0) { $total_days_in_month = 29; }
+    }
+
+    if ($month == 3) { $total_days_in_month = 31; }
+    if ($month == 4) { $total_days_in_month = 30; }
+    if ($month == 5) { $total_days_in_month = 31; }
+    if ($month == 6) { $total_days_in_month = 30; }
+    if ($month == 7) { $total_days_in_month = 31; }
+    if ($month == 8) { $total_days_in_month = 31; }
+    if ($month == 9) { $total_days_in_month = 30; }
+    if ($month == 10) { $total_days_in_month = 31; }
+    if ($month == 11) { $total_days_in_month = 30; }
+    if ($month == 12) { $total_days_in_month = 31; }
+
+    my $day = 2;
+    my $done = 0;
+    while ($day < 10) 
+    {
+        while ($i < 7 && !$done) 
+        {
+            if ($day < 10) 
+            {
+                $month_string .= "  $day";
+                $day++;
+                $i++;
+            }
+            else
+            {
+                $done = 1;
+            }
+        }
+
+        if (!$done)
+        {
+            $month_string .= "\n";
+            $i = 0;
+        }
+    }
+    
+    while ($day <= $total_days_in_month) 
+    {
+        while ($i < 7) 
+        {
+            if ($day <= $total_days_in_month) 
+            {
+                $month_string .= " ";
+                $month_string .= "$day";
+            }
+            else
+            {
+                $month_string .= "   ";
+            }
+            $day++;
+            $i++;
+        }
+
+        if ($day <= $total_days_in_month) 
+        {
+            $month_string .= "\n";
+        }
+        $i = 0;
+    }
+
+    return $month_string . "\n";
+}
+
+my $thursday_is_payday;
+sub print_month_w_payday
+{
+    my $year = $_ [0];
+    my $month = $_ [1];
+    my $public_hols_1 = $_ [2];
+    my $public_hols_2 = $_ [3];
+    my $public_hols_3 = $_ [4];
+    my $public_hols_4 = $_ [5];
+
+    my $month_string = "";
+    my $dt = DateTime->new(year => $year, month => $month, day => 1);
+    my $day_str = " Su Mo Tu We Th Fr Sa";
+
+    my $current_month = $dt->month_name;
+    my $len_mon = length ($current_month);
+    my $len_day = length ($day_str);
+    my $padding = $len_day - $len_mon;
+    my $x = 0;
+    while ($x < $padding)
+    {
+        if ($x < 4)
+        {
+            $current_month = " $current_month";
+        }
+        else
+        {
+            $current_month = "$current_month ";
+        }
+        $x++;
+    }
+
+    $month_string .= "$current_month\n$day_str\n";
+
+    my $dt = DateTime->new(year => $year, month => $month, day => 1);
+    my $current_dow = $dt->day_of_week;
+    if ($current_dow == 7)
+    {
+        $current_dow = 0;
+    }
+    my $i = 0;
+    while ($i < $current_dow) 
+    {
+        $month_string .= "   ";
+        $i++;
+    }
+
+    my $total_days_in_month;
+    if ($month == 1) { $total_days_in_month = 31; }
+
+    if ($month == 2)
+    {
+        $total_days_in_month = 28; 
+        if ($year % 400 == 0) { $total_days_in_month = 29; }
+        elsif ($year % 100 == 0) { $total_days_in_month = 28; }
+        elsif ($year % 4 == 0) { $total_days_in_month = 29; }
+    }
+
+    if ($month == 3) { $total_days_in_month = 31; }
+    if ($month == 4) { $total_days_in_month = 30; }
+    if ($month == 5) { $total_days_in_month = 31; }
+    if ($month == 6) { $total_days_in_month = 30; }
+    if ($month == 7) { $total_days_in_month = 31; }
+    if ($month == 8) { $total_days_in_month = 31; }
+    if ($month == 9) { $total_days_in_month = 30; }
+    if ($month == 10) { $total_days_in_month = 31; }
+    if ($month == 11) { $total_days_in_month = 30; }
+    if ($month == 12) { $total_days_in_month = 31; }
+
+    my $day = 1;
+    my $done = 0;
+    my $extra_space = " ";
+    while ($day <= $total_days_in_month) 
+    {
+        while ($i < 7) 
+        {
+            if ($day <= $total_days_in_month) 
+            {
+                if ($i == 4)
+                {
+                    if ($thursday_is_payday)
+                    {
+                        $month_string .= "$extra_space*$day";
+                        $thursday_is_payday = 0;
+                    }
+                    else
+                    {
+                        $month_string .= " $extra_space$day";
+                        $thursday_is_payday = 1;
+                    }
+                }
+                else
+                {
+                    $month_string .= " $extra_space$day";
+                }
+            }
+            else
+            {
+                $month_string .= "   ";
+            }
+            $day++;
+            if ($day >= 10)
+            {
+                $extra_space = "";
+            }
+            $i++;
+        }
+
+        if ($day <= $total_days_in_month) 
+        {
+            $month_string .= "\n";
+        }
+        $i = 0;
+    }
+
+    $month_string =~ s/ $public_hols_1 /#$public_hols_1 /img; 
+    $month_string =~ s/ $public_hols_2 /#$public_hols_2 /img; 
+    $month_string =~ s/ $public_hols_3 /#$public_hols_3 /img; 
+    $month_string =~ s/ $public_hols_4 /#$public_hols_4 /img; 
+    return $month_string . "\n";
+}
+
+sub add_school_holidays
+{
+    my $month_str = $_ [0];
+    my $school_hols_start = $_ [1];
+    my $school_hols_end = $_ [2];
+
+    my $i;
+    for ($i = $school_hols_start; $i <= $school_hols_end; $i++) 
+    {
+        $month_str =~ s/ $i([^0-9])/!$i$1/img;
+        $month_str =~ s/ $i\n/!$i\n/img;
+        #print ("$month_str... for $i\n");
+    }
+    return $month_str;
+}
+
+ 
+
+sub print_months
+{
+    my $month1 = $_ [0];
+    my $month2 = $_ [1];
+    my $month3 = $_ [2];
+    my $is_first = $_ [3];
+
+    if ($is_first == 1)
+    {
+        print ('<html> <head> <style> .cn { font-family: "Lucida Console", "Courier New", monospace; } </style> </head> <body> <p class="cn">');
+        print ("<br>\n");
+    }
+    while ($month1 =~ s/^(.*)\n//)
+    {
+        print $1 . "  ..  ";
+        if ($month2 =~ s/^(.*)\n//)
+        {
+            print $1 . "  ..  ";
+            if ($month3 =~ s/^(.*)\n//)
+            {
+                print $1 . "<br>\n";
+            }
+        }
+    }
+    print "<br>\n";
+    if ($is_first == -1)
+    {
+        print ('</p></body></html>');
+    }
+}
+
+sub print_months_html
+{
+    my $month1 = $_ [0];
+    my $month2 = $_ [1];
+    my $month3 = $_ [2];
+    my $is_first = $_ [3];
+
+    $month1 =~ s/ /&nbsp;/img;
+    $month2 =~ s/ /&nbsp;/img;
+    $month3 =~ s/ /&nbsp;/img;
+    #$month1 =~ s/ /x/img;
+    #$month2 =~ s/ /x/img;
+    #$month3 =~ s/ /x/img;
+    if ($is_first > 0)
+    {
+        print ('<html> <head> <style> .cn { font-family: "Lucida Console", "Courier New", monospace; } </style> </head> <body> <p class="cn">');
+        print ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$is_first<br>\n");
+    }
+    while ($month1 =~ s/^(.*)\n//)
+    {
+        my $line = $1 . "..";
+        $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
+        $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
+        $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
+        print $line;
+
+        if ($month2 =~ s/^(.*)\n//)
+        {
+            my $line = $1 . "..";
+            $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
+            $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
+            $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
+            print $line;
+
+            if ($month3 =~ s/^(.*)\n//)
+            {
+                my $line = $1 . "<br>\n";
+                $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
+                $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
+                $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
+                print $line;
+            }
+        }
+    }
+    print "<br>\n";
+    if ($is_first == -1)
+    {
+        print ('</p></body></html>');
+    }
+}
+
 sub work_out_ringing_positions
 {
     my $chunk = $_ [0];
@@ -222,6 +565,7 @@ sub work_out_ringing_positions
         print ("   dir /a:-d /b /s | cut.pl stdin 0 0 nobinary | cut.pl stdin 0  0 size | sort\n");
         print ("   dir /a:-d /b /s | cut.pl stdin 0  0 size | sort\n");
         print ("   cut.pl git_diff 0  0 sortn\n");
+        print ("   cut.pl git_diff 0  reverse sortn\n");
         print ("   dir /a:-d /b /s | cut.pl stdin 0  0 size | sort\n");
         print ("   dir /a:-d /b /s | cut.pl stdin 0 0 nobinary | cut.pl list example  0 grep\n");
         print ("   dir /a:-d /b /s *.java | cut.pl stdin 0  0 make_code_bat > bob.bat\n");
@@ -242,6 +586,7 @@ sub work_out_ringing_positions
         print ("   cut.pl stdin \"http://bob.com/a=XXX.id\" 1000 oneupcount   \n");
         print ("   cut.pl stdin \"XXX, YYY, ZZZ\" \"255,0,10,25\" allupcount   \n");
         print ("   type xyz.txt | cut.pl stdin '' 1000 oneup\n");
+        print ("   cut.pl all_java9.java 0 0 get_strings > _all_strings5.txt\n");
         print ("   cut.pl stdin \"http://bob.com/a=XXX.id\" 1000 oneupbinary   \n");
         print ("   cut.pl stdin \"http://www.comlaw.gov.au/Details/XXX\" 1000 wget\n");
         print ("   cut.pl stdin \"http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=XXX\"  5274 oneupcount\n");
@@ -254,7 +599,13 @@ sub work_out_ringing_positions
         print ("   cut.pl  file banner hashmod word2word\n");
         print ("   cut.pl all_java21.java  thing_to_search xxxxxx egrep | cut.pl stdin thing_to_search -1 grep    rem for search_in_output..\n");
         print ("   cut.pl all_java.java  \"thing_to_search\" 0 search_in_output\n");
+        print ("   cut.pl all_java.java  \"thing_to_search\" 0 edit_files\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 sinewave\n");
+        print ("   echo \"1\" | cut.pl stdin 2022 0 calendar\n");
+        print ("   echo \"1\" | cut.pl stdin 2022 1 calendar_pay\n");
+        print ("   echo \"1\" | cut.pl stdin 2023 0 calendar_pay\n");
+        print ("   echo \"1\" | cut.pl stdin 2024 1 calendar_pay\n");
+        print ("   echo \"1\" | cut.pl stdin 2025 0 calendar_pay\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 palindrome\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 water\n");
         print ("   echo \"1\" | cut.pl stdin 0  0 find_and_copy_missing # looks for missing.txt in directory..\n");
@@ -272,6 +623,10 @@ sub work_out_ringing_positions
         print ('dir /a:-d /b /s *.jar | cut.pl stdin "^" "7z l -r \""  replace | cut.pl stdin "$" "\"" replace > d:\temp\xyz.bat');
         print ("\n");
         print ('echo "1" | cut.pl stdin "http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=16431&type=card" "6ED/Phantasmal Terrain.full.jpg" wget_image');
+        print ("\n");
+        print ('echo "1" | cut.pl stdin "http://mtgoclientdepot.onlinegaming.wizards.com/Graphics/Cards/Pics/134052_typ_reg_sty_010.jpg" "2XM\Mana Crypt.jpg" wget_image');
+        print ("\n");
+        print ('echo "1" | cut.pl stdin 1 "HermanCainAward" get_reddit');
         print ("\n");
         exit 0;
     }
@@ -581,6 +936,12 @@ sub work_out_ringing_positions
     my $oneup = 0;
     my @cut_on_term;
     my $saw_helper_cut_on_term = 0;
+
+    my $latest_file_name;
+    my %strings_in_files;
+    my %files_to_strings;
+    my %count_of_files_to_strings;
+    
     while (<FILE>)
     {
         chomp $_;
@@ -726,6 +1087,40 @@ sub work_out_ringing_positions
                 #}
             }
         }
+
+        if ($operation eq "get_reddit")
+        {
+            my $now = time ();
+            my $pull = 0;
+            my $starttime = $now;
+            my $content;
+
+            for ($starttime = $now; $starttime > $now - ($term * 24 * 3600); $starttime -= 10800)
+            {
+                my $endtime = $starttime + 10800;  
+                my $url = "http://api.pushshift.io/reddit/search/submission/?subreddit=$helper&sort=asc&size=100&filter=id,author,full_link,link_flair_text,created_utc,is_robot_indexable&before=$endtime&after=$starttime";
+                my $content = get $url;
+                my $orig_content = $content;
+                $content =~ s/\n//img;
+                $content =~ s/{/\n{/img;
+                $content =~ s/  / /img;
+                $content =~ s/  / /img;
+                $content =~ s/  / /img;
+                $content =~ s/  / /img;
+                $content =~ s/  / /img;
+                sleep (1);
+                print "\nNumber of pulls has been: " . $pull . " (from $starttime to $endtime -- $url)\n";
+                $pull++;
+                my $ln = 0;
+                while ($content =~ s/^(.*?)\n//m)
+                {
+                    my $line = $1;
+                    $ln++;
+                    print ("$ln  --- $line\n");
+                }
+            }
+        }
+
         if ($operation eq "wget_image_test_min")
         {
             my $i;
@@ -819,6 +1214,7 @@ sub work_out_ringing_positions
                 }
             }
         }
+
         if ($operation eq "find_and_copy_missing")
         {
             my $file = $helper;
@@ -869,6 +1265,7 @@ sub work_out_ringing_positions
                 }
             }
         }
+
         if ($operation eq "wget_image")
         {
             my $i;
@@ -950,6 +1347,43 @@ sub work_out_ringing_positions
             }
         }
 
+        if ($operation eq "get_strings")
+        {
+            if ($line =~ m/\/\//i)
+            {
+                next;
+            }
+
+            if ($line =~ m/xxxx/i)
+            {
+                print ("$line\n");
+                $latest_file_name = $line;
+                if ($line =~ m/test/img)
+                {
+                    $latest_file_name = "";
+                }
+                if ($line =~ m/html xx/img)
+                {
+                    $latest_file_name = "";
+                }
+            }
+            elsif ($latest_file_name =~ m/../) 
+            {
+                my $orig_line = $line;
+                while ($line =~ s/"([^"]{2,70})"[^"]*$//i)
+                {
+                    my $str = $1;
+                    print ("String: $str\n");
+                    print ("     >> Original line: $orig_line\n");
+                    $strings_in_files {$latest_file_name} .= ",String:$str";
+                    my $short_file_name = $latest_file_name;
+                    $short_file_name =~ s/.*\\//;
+                    $files_to_strings {$str} .= ",File:$short_file_name";
+                    $count_of_files_to_strings {$str}++;
+                }
+            }
+        }
+
         if ($operation eq "oneup")
         {
             if ($line =~ m/XXX/img)
@@ -999,6 +1433,39 @@ sub work_out_ringing_positions
              my $output = `type c:\\tmp\\intermediate2`;
              print $output, "\n";
              `gvim c:\\tmp\\intermediate2`;
+             exit;
+        }
+        
+        if ($operation eq "edit_files")
+        {
+             $term =~ s/"//g;
+             print "Now doing: $0 $file \"$term\" xxxxxx egrep > c:\\tmp\\intermediate\n";
+             my $egrep = `$0 $file \"$term\" xxxxxx egrep > c:\\tmp\\intermediate`;
+             print "Now doing: $0 c:\\tmp\\intermediate \"$term\" -1 grep > c:\\tmp\\intermediate2\n";
+             `$0 c:\\tmp\\intermediate \"$term\" -1 grep > c:\\tmp\\intermediate2`;
+             `$0 c:\\tmp\\intermediate2 \"xxxx\" -1 grep > c:\\tmp\\intermediate3`;
+             open FILES, "c:\\tmp\\intermediate3";
+             my $files = "";
+
+             while (<FILES>)
+             {
+                 chomp;
+                 my $line = $_;
+                 if ($line =~ m/xxxx/)
+                 {
+                     $line =~ s/xxx.*/"/;
+                     $line =~ s/" /"/img;
+                     $line =~ s/ "/"/img;
+                     $files .= $line . " ";
+                 }
+             }
+             close FILES;
+
+             open OUTPUT, "> c:\\tmp\\edit_files.bat";
+             print OUTPUT "gvim $files";
+             close OUTPUT;
+             print "\n\ngvim $files";
+             `c:\\tmp\\edit_files.bat`;
              exit;
         }
 
@@ -1701,11 +2168,77 @@ sub work_out_ringing_positions
                 next;
             }
 
-            if ($line =~ m/\.(ap_|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war|net|tsv|log|ai|Help|md|vs|gs|fs|mf)$/img)
+            if ($line =~ m/\.(ap_|idx|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war|net|tsv|log|ai|Help|md|vs|gs|fs|mf)$/img)
             {
                 next;
             }
             if ($line !~ m/\.(ap_|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war)$/img) 
+            {
+                print ("$line\n");
+            }
+        }
+        
+        if ($operation eq "calendar")
+        {
+            my $month1_string = print_month ($term, 1);
+            my $month2_string = print_month ($term, 2);
+            my $month3_string = print_month ($term, 3);
+            print ("           $term\n");
+            print_months ($month1_string, $month2_string, $month3_string);
+            $month1_string = print_month ($term, 4);
+            $month2_string = print_month ($term, 5);
+            $month3_string = print_month ($term, 6);
+            print_months ($month1_string, $month2_string, $month3_string);
+            $month1_string = print_month ($term, 7);
+            $month2_string = print_month ($term, 8);
+            $month3_string = print_month ($term, 9);
+            print_months ($month1_string, $month2_string, $month3_string);
+            $month1_string = print_month ($term, 10);
+            $month2_string = print_month ($term, 11);
+            $month3_string = print_month ($term, 12);
+            print_months ($month1_string, $month2_string, $month3_string);
+        }
+        
+        if ($operation eq "calendar_pay")
+        {
+            $thursday_is_payday = $helper;
+            my $month1_string = print_month_w_payday ($term, 1, 3, 26, "Z", "Z", "Z", "Z"); $month1_string = add_school_holidays ($month1_string, 1, 31);
+            my $month2_string = print_month_w_payday ($term, 2, "Z", "Z", "Z", "Z"); $month2_string = add_school_holidays ($month2_string, 1, 8);
+            my $month3_string = print_month_w_payday ($term, 3, 14, "Z", "Z", "Z", "Z");
+            print_months_html ($month1_string, $month2_string, $month3_string, $term);
+            $month1_string = print_month_w_payday ($term, 4, 15, 18, 25, "Z", "Z", "Z", "Z"); $month1_string = add_school_holidays ($month1_string, 9, 25);
+            $month2_string = print_month_w_payday ($term, 5, 30, "Z", "Z", "Z", "Z");
+            $month3_string = print_month_w_payday ($term, 6, 13, "Z", "Z", "Z", "Z");
+            print_months_html ($month1_string, $month2_string, $month3_string, 0);
+            $month1_string = print_month_w_payday ($term, 7, "Z", "Z", "Z", "Z"); $month1_string = add_school_holidays ($month1_string, 2, 17);
+            $month2_string = print_month_w_payday ($term, 8, "Z", "Z", "Z", "Z");
+            $month3_string = print_month_w_payday ($term, 9, "Z", "Z", "Z", "Z"); $month3_string = add_school_holidays ($month3_string, 24, 30);
+            print_months_html ($month1_string, $month2_string, $month3_string, 0);
+            $month1_string = print_month_w_payday ($term, 10, 3, "Z", "Z", "Z", "Z"); $month1_string = add_school_holidays ($month1_string, 1, 9);
+            $month2_string = print_month_w_payday ($term, 11, "Z", "Z", "Z", "Z");
+            $month3_string = print_month_w_payday ($term, 12, 25, 26, 27, "Z", "Z", "Z"); $month3_string = add_school_holidays ($month3_string, 17, 31);
+            print_months_html ($month1_string, $month2_string, $month3_string, -1);
+        }
+        
+        if ($operation eq "binary")
+        {
+            if ($line !~ m/\..{0,4}$/img) 
+            {
+                next;
+            }
+
+            my $is_bin = 0;
+            if ($line =~ m/\.(ap_|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war|net|tsv|log|ai|Help|md|vs|gs|fs|mf)$/img)
+            {
+                $is_bin = 1;
+            }
+
+            if ($line =~ m/\.(ap_|mp3|bmp|db|dll|lnk|star|class|dat|exe|vlw|json|js|map|gif|gz|ico|index|jar|jpg|pack|pdf|png|swp|swo|tab|ttf|7z|zip|dex|apk|bin|war)$/img) 
+            {
+                $is_bin = 1;
+            }
+
+            if ($is_bin) 
             {
                 print ("$line\n");
             }
@@ -1836,7 +2369,6 @@ sub work_out_ringing_positions
         {
             $ulines_count ++;
         }
-
     }
 
     if ($operation eq "transpose")
@@ -1986,7 +2518,7 @@ sub work_out_ringing_positions
     {
         my $line;
         #foreach $line (sort {$a <=> $b} values %ulines)
-        foreach $line (sort { $ulines{$a} <=> $ulines{$b} } keys %ulines)
+        foreach $line (sort { $a <=> $b } keys (%ulines))
         {
             print  ("$ulines{$line} ==== $line\n");
         }
@@ -1996,7 +2528,13 @@ sub work_out_ringing_positions
     if ($operation eq "sortn")
     {
         my $line;
-        foreach $line (sort {$a <=> $b} keys %ulines)
+        my @lines = sort {$a <=> $b} (keys (%ulines));
+
+        if ($helper eq "reverse")
+        {
+            @lines = reverse sort {$a <=> $b} (keys (%ulines));
+        }
+        foreach $line (@lines)
         {
             print  ("$line\n");
         }
@@ -2008,6 +2546,22 @@ sub work_out_ringing_positions
         my $line;
         #foreach $line (sort {$a <=> $b} values %ulines)
         print  ("$ulines_count --- $file\n");
+    }
+
+    if ($operation eq "get_strings")
+    {
+        my $k;
+        #foreach $k (sort keys (%strings_in_files))
+        #{
+        #    print "File=$k -- $strings_in_files{$k}\n";
+        #}
+        foreach $k (sort keys (%files_to_strings))
+        {
+            if ($count_of_files_to_strings {$k} > 1)
+            {
+                print "Term seen " . $count_of_files_to_strings {$k} . " times =>$k< -- $files_to_strings{$k}\n";
+            }
+        }
     }
     
     if ($operation eq "odd")
