@@ -838,7 +838,7 @@ sub player_row
     my $name_cell = "<td><font size=+1 color=darkgreen>" . get_player_name ($id) . "</font></td>";
     if ($id == $this_player_id)
     {
-        $name_cell = "<td>**<font size=+2 color=darkblue>" . get_player_name ($id) . "</font>**</td>";
+        $name_cell = "<td>**<font size=+2 color=darkblue>" . get_player_name ($id) . "</font> (" . $player_counters {$id} . " Counters)**</td>";
     }
 
     my $start_bit = "";
@@ -852,8 +852,35 @@ sub player_row
         $final_bit = "</tr>";
     }
     my $out;
-    my $actual_card_cell = "<td>" . $player_cards {$id} . "</td>";
-    $actual_card_cell =~ s/(\d+),/<img width=\"30\" height=\"43\" src="card$1.jpg"><\/img>/img;
+
+    my $cards = $player_cards {$id};
+    my %cards;
+    while ($cards =~ s/^(\d+),//)
+    {
+        my $c = $1;
+        $cards {$c} = "<img width=\"30\" height=\"43\" src=\"card$1.jpg\"><\/img>";
+    }
+    my $k;
+    my $score = 0;
+    my $total_cards = 0;
+    for $k (sort {$a <=> $b} (keys %cards))
+    {
+        $score += $k;
+        $total_cards ++;
+        if (exists ($cards {$k - 1}))
+        {
+            $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card.jpg\"><\/img>";
+            $score -= $k;
+        }
+    }
+    
+    my $actual_card_cell = "<td>";
+    for $k (sort {$a <=> $b} (keys %cards))
+    {
+        $actual_card_cell .= $cards {$k};
+    }
+    $actual_card_cell .= " (Score = $score - Total cards = $total_cards)</td>";
+
     $out .= "$start_bit$name_cell$actual_card_cell$torch_cell<td>" . "</td>$final_bit\n";
 
     my $make_pickable = $this_player_id == $whos_turn && $id != $this_player_id;
