@@ -21,6 +21,8 @@ $| = 1;
 my %revealed_cards_imgs;
 my $BCK = "back";
 my $NUM_COUNTERS_AT_START_OF_GAME = 10;
+my $NUM_CARDS_IN_FULL_DECK = 25;
+my $NUM_CARDS_TO_REMOVE = 7;
 my $GAME_WON = 0;
 my $reason_for_game_end = "";
 my $CURRENT_LOGIN_NAME = "";
@@ -51,6 +53,7 @@ my $needs_shuffle_but_before_next_card_picked = 0;
 my %BANNED_NAMES;
 my $RINGINGROOM_URL_LINK;
 my %NOT_HIDDEN_INFO;
+my %PLAYER_IS_BOT;
 
 my $whos_turn;
 my $pot_whos_turn;
@@ -63,6 +66,7 @@ my $num_players_in_lobby = 0;
 sub add_to_debug
 {
     $DEBUG .= "$_[0]<br>\n";
+    print "$_[0]\n";
 }
 
 sub game_won
@@ -331,6 +335,7 @@ sub bin_write_to_socket
     }
 }
 
+
 sub read_from_socket
 {
     my $sock_ref = $_ [0];
@@ -431,13 +436,13 @@ sub flip_top_card
 sub setup_deck
 {
     # Cards in deck currently..
-    my $total_number_cards_in_deck = 35 - 3 + 1 - 9;
+    my $total_number_cards_in_deck = $NUM_CARDS_IN_FULL_DECK - 3 + 1 - $NUM_CARDS_TO_REMOVE;
     my %banned_cards;
 
     my $i;
-    for ($i = 0; $i < 9; $i++)
+    for ($i = 0; $i < $NUM_CARDS_TO_REMOVE; $i++)
     {
-        my $banned = int (rand (32)) + 3;
+        my $banned = int (rand ($NUM_CARDS_IN_FULL_DECK - 3)) + 3;
         if (!defined ($banned_cards {$banned}))
         {
             $banned_cards {$banned} = 1;
@@ -451,7 +456,7 @@ sub setup_deck
     my $index = 0;
     my $str = "";
     my @new_deck;
-    for ($i = 3; $i <= 35 ; $i++)
+    for ($i = 3; $i <= $NUM_CARDS_IN_FULL_DECK; $i++)
     {
         if (!defined ($banned_cards {$i}))
         {
@@ -482,16 +487,6 @@ sub set_whos_turn
     $pot_whos_turn = $_ [0];
 }
 
-sub set_next_turn
-{
-    $whos_turn++;
-    print ("Whos turn?$whos_turn $num_players_in_game players is next turn...\n");
-    if ($whos_turn >= $num_players_in_game) 
-    {
-        $whos_turn = 0;
-    }
-}
-
 sub get_player_id_from_name
 {
     my $this_name = $_ [0];
@@ -506,6 +501,57 @@ sub get_player_id_from_name
     return -1;
 }
 
+sub is_bot
+{
+    my $name = $_ [0];
+    my $id = $_ [1];
+    my $from = $_ [2];
+
+    if ($name eq "")
+    {
+        $name = $player_names [$id];
+    }
+
+    if (defined ($PLAYER_IS_BOT {$name}) && ($PLAYER_IS_BOT {$name} == 1))
+    {
+        return 1;
+    }
+    return 0;
+}
+
+
+sub handle_bot_next_go
+{
+    print ("Bot of $whos_turn is passing on $current_flipped_card." . ($current_number_of_counters + 1) . "\n");
+
+    my $bots_counters = $player_counters {$whos_turn};
+    if ($bots_counters > 0)
+    {
+        if ($current_flipped_card - $current_number_of_counters > 5)
+        {
+            pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
+            return;
+        }
+    }
+    take_card_with_id ("takecard.$current_flipped_card.$current_number_of_counters", $whos_turn);
+    handle_bot_next_go ();
+}
+
+sub set_next_turn
+{
+    $whos_turn++;
+    if ($whos_turn >= $num_players_in_game) 
+    {
+        $whos_turn = 0;
+    }
+
+    my $is_bot = is_bot ("", $whos_turn);
+    if ($is_bot)
+    {
+        handle_bot_next_go ();
+    }
+}
+
 sub get_player_name_from_IP
 {
     my $IP = $_ [0];
@@ -517,6 +563,7 @@ sub add_new_user
 {
     my $in = $_ [0];
     my $IP = $_ [1];
+    my $is_bot = $_ [2];
 
     my $this_name = "";
     if ($in =~ m/name=([\w][\w][\w][\w_]+)_*$/)
@@ -546,15 +593,18 @@ sub add_new_user
     }
 
     my $name_find;
+    print ("IN ADDING $this_name!!!\n");
     foreach $name_find (@player_names)
     {
         if ($name_find eq $this_name)
         {
             #add_to_debug (" ... 777 Already user logged in with that name ($name_find)..\n");
+            print (" BAD IN ADDING $this_name!!!\n");
             return "";
         }
     }
 
+    print (" OK IN ADDING $this_name!!!\n");
     {
         add_to_debug ("ADDING NEW_USER ($this_name)..\n");
         $player_names [$num_players_in_lobby] = $this_name;
@@ -570,6 +620,11 @@ sub add_new_user
         my $col = sprintf ("#%lX%1X%1X", int (rand (200) + 55), int (rand (200) + 55), int (rand (200) + 55));
         $rand_colors {$this_name} = $col;
         add_to_debug ("RAND COLOR - $this_name = $rand_colors{$this_name} ($col)\n");
+        $PLAYER_IS_BOT {$this_name} = 0;
+        if ($is_bot)
+        {
+            $PLAYER_IS_BOT {$this_name} = 1;
+        }
         return "Welcome $this_name";
     }
 }
@@ -673,11 +728,10 @@ sub get_needs_refresh
     return 0;
 }
 
-sub pass_card 
+sub pass_card_w_id 
 {
     my $in = $_ [0];
-    my $IP = $_ [1];
-    my $id = get_player_id ($IP);
+    my $id = $_ [1];
     my $n = get_player_name ($id);
     if ($id != $whos_turn)
     {
@@ -696,11 +750,18 @@ sub pass_card
     force_needs_refresh ();
 }
 
-sub take_card
+sub pass_card 
 {
     my $in = $_ [0];
     my $IP = $_ [1];
     my $id = get_player_id ($IP);
+    return pass_card_w_id ($in, $id);
+}
+
+sub take_card_with_id
+{
+    my $in = $_ [0];
+    my $id = $_ [1];
     my $n = get_player_name ($id);
     if ($id != $whos_turn)
     {
@@ -723,6 +784,14 @@ sub take_card
     force_needs_refresh ();
 }
 
+sub take_card
+{
+    my $in = $_ [0];
+    my $IP = $_ [1];
+    my $id = get_player_id ($IP);
+    return take_card_with_id ($in, $id);
+}
+
 sub new_game
 {
     if ($num_players_in_game != -1)
@@ -742,16 +811,16 @@ sub new_game
     # Setup the deck..
     setup_deck ();
 
-    $player_counters {0} = 10;
-    $player_counters {1} = 10;
-    $player_counters {2} = 10;
-    $player_counters {3} = 10;
-    $player_counters {4} = 10;
-    $player_counters {5} = 10;
-    $player_counters {6} = 10;
-    $player_counters {7} = 10;
-    $player_counters {8} = 10;
-    $player_counters {9} = 10;
+    $player_counters {0} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {1} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {2} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {3} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {4} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {5} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {6} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {7} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {8} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {9} = $NUM_COUNTERS_AT_START_OF_GAME;
     $player_cards {0} = "";
     $player_cards {1} = "";
     $player_cards {2} = "";
@@ -785,18 +854,20 @@ sub reset_game
     %already_shuffled = %new_already_shuffled;
     my %new_NOT_HIDDEN_INFO;
     %NOT_HIDDEN_INFO = %new_NOT_HIDDEN_INFO;
+    my %new_PLAYER_IS_BOT;
+    %PLAYER_IS_BOT = %new_PLAYER_IS_BOT;
     $needs_shuffle_but_before_next_card_picked = 0;
     
-    $player_counters {0} = 10;
-    $player_counters {1} = 10;
-    $player_counters {2} = 10;
-    $player_counters {3} = 10;
-    $player_counters {4} = 10;
-    $player_counters {5} = 10;
-    $player_counters {6} = 10;
-    $player_counters {7} = 10;
-    $player_counters {8} = 10;
-    $player_counters {9} = 10;
+    $player_counters {0} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {1} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {2} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {3} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {4} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {5} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {6} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {7} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {8} = $NUM_COUNTERS_AT_START_OF_GAME;
+    $player_counters {9} = $NUM_COUNTERS_AT_START_OF_GAME;
     $player_cards {0} = "";
     $player_cards {1} = "";
     $player_cards {2} = "";
@@ -1099,8 +1170,23 @@ sub get_game_state
         }
         elsif (!game_started ())
         {
-            #add_to_debug ("Game not started");
-            $out .= "<a href=\"new_game\">Start new game!<\/a>";
+            if ($num_players_in_lobby >= 2)
+            {
+                $out .= "<a href=\"new_game\">Start new game!<\/a>";
+                $out .= "<br><font size=-1>"; 
+                $out .= "<br><a href=\"simulate_game_1\">Add 1 bot<\/a>";
+                $out .= "<br><a href=\"simulate_game_2\">Add 2 bots<\/a>";
+                $out .= "<br><a href=\"simulate_game_3\">Add 3 bots<\/a>";
+            }
+            else
+            {
+                $out .= "Need 2 players minimum to play Quest (The 'Start' URL will be here when there are enough players!)";
+                $out .= "<br><font size=-1>"; 
+                $out .= "<br><a href=\"simulate_game_1\">Add 1 bot<\/a>";
+                $out .= "<br><a href=\"simulate_game_2\">Add 2 bots<\/a>";
+                $out .= "<br><a href=\"simulate_game_3\">Add 3 bots<\/a>";
+                $out .= "</font>"; 
+            }
         }
         else
         {
@@ -1117,6 +1203,22 @@ sub get_game_state
     }
     $out .= get_refresh_code ($do_refresh, $id, $whos_turn);
     return $out;
+}
+
+sub simulate_game
+{
+    # Add simulated users..
+    my $num_users = $_ [0];
+    add_new_user ("name=Bob_Bobberson_bot", "192.155.155.150", 1);
+    if ($num_users >= 2) { add_new_user ("name=Aaron_bot", "192.185.155.150", 1); }
+    if ($num_users >= 3) { add_new_user ("name=Charlie_bot", "192.165.155.150", 1); }
+    if ($num_users >= 4) { add_new_user ("name=Donquil_bot", "192.185.155.150", 1); }
+    if ($num_users >= 5) { add_new_user ("name=Eragon_bot", "193.155.155.150", 1); }
+    if ($num_users >= 6) { add_new_user ("name=Caesar_bot", "194.155.155.150", 1); }
+    if ($num_users >= 7) { add_new_user ("name=Gerry_bot", "195.155.155.150", 1); }
+    if ($num_users >= 8) { add_new_user ("name=Gaius_bot", "197.155.155.150", 1); }
+    if ($num_users >= 9) { add_new_user ("name=Julius_bot", "198.155.155.150", 1); }
+    new_game ();
 }
 
 # Main
@@ -1246,6 +1348,7 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/.*boot.*person.*name=(\w\w\w[\w_]+)/mi)
         {
             my $person_to_boot = $1;
@@ -1254,9 +1357,18 @@ sub get_game_state
             next;
         }
 
+        # HTTP
         if ($txt =~ m/GET.*new_game.*/m)
         {
             new_game ();
+        }
+
+        # HTTP
+        if ($txt =~ m/GET.*simulate_game_(\d*).*/m)
+        {
+            simulate_game ($1);
+            write_to_socket (\*CLIENT, "Simulated game was just made <a href=\"\/\">Game window<\/a>", "", "redirect");
+            next;
         }
 
         if ($txt =~ m/.*reset.*game.*/m)
