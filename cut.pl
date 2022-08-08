@@ -30,6 +30,7 @@ sub read_json_values
     $chunk =~ s/,/,\n/img;
     $chunk =~ s/[\{\}]/\n/img;
 
+
     while ($chunk =~ s/^(.*)\n//im)
     {
         my $json_field = $1;
@@ -386,7 +387,7 @@ sub print_month_w_payday
                         $month_string .= "$extra_space*$day";
                         $thursday_is_payday = 0;
                     }
-                    else
+                    elsif ($thursday_is_payday == 0)
                     {
                         $month_string .= " $extra_space$day";
                         $thursday_is_payday = 1;
@@ -434,6 +435,38 @@ sub add_school_holidays
     {
         $month_str =~ s/ $i([^0-9])/!$i$1/img;
         $month_str =~ s/ $i\n/!$i\n/img;
+        #print ("$month_str... for $i\n");
+    }
+    return $month_str;
+}
+
+sub add_my_school_holidays
+{
+    my $month_str = $_ [0];
+    my $school_hols_start = $_ [1];
+    my $school_hols_end = $_ [2];
+
+    my $i;
+    for ($i = $school_hols_start; $i <= $school_hols_end; $i++) 
+    {
+        $month_str =~ s/ $i([^0-9])/=$i$1/img;
+        $month_str =~ s/ $i\n/=$i\n/img;
+        #print ("$month_str... for $i\n");
+    }
+    return $month_str;
+}
+
+sub possible_school_holidays
+{
+    my $month_str = $_ [0];
+    my $school_hols_start = $_ [1];
+    my $school_hols_end = $_ [2];
+
+    my $i;
+    for ($i = $school_hols_start; $i <= $school_hols_end; $i++) 
+    {
+        $month_str =~ s/ $i([^0-9])/"$i$1/img;
+        $month_str =~ s/ $i\n/"$i\n/img;
         #print ("$month_str... for $i\n");
     }
     return $month_str;
@@ -496,6 +529,8 @@ sub print_months_html
         $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
         $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
         $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
+        $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
+        $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
         print $line;
 
         if ($month2 =~ s/^(.*)\n//)
@@ -504,6 +539,8 @@ sub print_months_html
             $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
             $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
             $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
+            $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
+            $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
             print $line;
 
             if ($month3 =~ s/^(.*)\n//)
@@ -512,6 +549,8 @@ sub print_months_html
                 $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
                 $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
                 $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
+                $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
+                $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
                 print $line;
             }
         }
@@ -550,7 +589,7 @@ sub work_out_ringing_positions
 {
     if (scalar (@ARGV) == 0 || (scalar (@ARGV) > 2 && scalar (@ARGV) < 4))
     {
-        print ("Usage: cut.pl <file> <term> <helper> <operation>!\n");
+        print ("xxxxxxUsage: cut.pl <file> <term> <helper> <operation>!\n");
         print (" .   File can be - list, STDIN, or an actual file\n");
         print (" .   Term can be - a regex you're looking for\n");
         print (" .   Operation can be - grep, filegrep, count, size, strip_http, matrix_flip(for converting ringing touches!), oneupcount, allupcount, oneup, wget\n");
@@ -577,6 +616,7 @@ sub work_out_ringing_positions
         print ("   cut.pl bob.txt 0 0 numlines\n");
         print ("   dir /a:-d /b /s | cut.pl stdin 0 0 nobinary | cut.pl list 0  0 numlines | sort /n\n");
         print ("   cut.pl file 0 0 strip_http\n");
+        print ("   cut.pl file 0 0 strip_html\n");
         print ("   cut.pl stdin \";;;\" \"1,2,3,4\" fields\n");
         print ("   cut.pl bob.txt 0 0 matrix_flip\n");
         print ("   cut.pl all_java14.java \"Penny Dreadful\" \"c:\\\\xmage\" egrep | cut.pl stdin \"Penny\" -1 grep\n");
@@ -587,10 +627,12 @@ sub work_out_ringing_positions
         print ("   cut.pl stdin \"XXX, YYY, ZZZ\" \"255,0,10,25\" allupcount   \n");
         print ("   type xyz.txt | cut.pl stdin '' 1000 oneup\n");
         print ("   cut.pl all_java9.java 0 0 get_strings > _all_strings5.txt\n");
-        print ("   cut.pl stdin \"http://bob.com/a=XXX.id\" 1000 oneupbinary   \n");
+        print ("   cut.pl stdin \"http://bob.com/a=XXX.id\" 1000 oneupbinary\n");
+        print ("   cut.pl stdin \"http://bob.com/a=XXXXXXXXXXXXXXXXXXXXXX.id\" 1000 zerofilledbinary\n");
         print ("   cut.pl stdin \"http://www.comlaw.gov.au/Details/XXX\" 1000 wget\n");
         print ("   cut.pl stdin \"http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=XXX\"  5274 oneupcount\n");
         print ("   cut.pl stdin \"http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=XXX'  5274 wget\n");
+        print ("   cut.pl stdin \"https://www.theadvocate.com.au/story/7672889/could-i-have-had-covid-and-not-realised-it/'  1 wget\n");
         print ("   cut.pl  modern_bluesa \";;;\" \"0,7\" fields | cut.pl stdin \";;;\" 3 wordcombos\n");
         print ("   cut.pl  modern_bluesa \";;;\" \"0,7\" fields | cut.pl stdin 0 0 uniquewords\n");
         print ("   cut.pl  modern_bluesa \";;;\" \"0,2\" images_html\n");
@@ -695,6 +737,7 @@ sub work_out_ringing_positions
             chomp $_;
             my $file = $_;
             my $found_output = 0;
+            #print "cut.pl $file $term $helper $operation |\n";
             open PROC, "cut.pl $file $term $helper $operation |";
             while (<PROC>)
             {
@@ -747,6 +790,7 @@ sub work_out_ringing_positions
     my %grep_past_lines;
     my $grep_past_lines_index  = 1;
     my $grep_forward_lines = -1;
+
 
     # Grep variables:
     # Before and or after!
@@ -810,7 +854,7 @@ sub work_out_ringing_positions
         for ($i = 0; $i < $helper; $i ++)
         {
             my $l = $term;
-            $l =~ s/XXX/$i/;
+            $l =~ s/XXX/$i/img;
             print ("$l\n");
         }
         exit;
@@ -895,6 +939,21 @@ sub work_out_ringing_positions
         }
         exit;
     }
+    
+    if ($operation eq "zerofilledbinary")
+    {
+        my $i = 0;
+        for ($i = 0; $i < $helper; $i ++)
+        {
+            my $l = $term;
+            my $val = sprintf ("%b", $i);
+            my $ll = length ($val);
+            $l =~ s/(X+)X{$ll}/$1$val/;
+            $l =~ s/X/0/g;
+            print $l, "\n";
+        }
+        exit;
+    }
 
     if ($operation eq "wget_seed")
     {
@@ -928,9 +987,6 @@ sub work_out_ringing_positions
         print ("\@echo off\n");
     }
     
-
-
-
     my %ulines;
     my $ulines_count = 0;
     my $oneup = 0;
@@ -941,6 +997,9 @@ sub work_out_ringing_positions
     my %strings_in_files;
     my %files_to_strings;
     my %count_of_files_to_strings;
+
+    my $transpose_biggest_line = 0;
+    my $transpose_biggest_col = 0;
     
     while (<FILE>)
     {
@@ -1095,7 +1154,7 @@ sub work_out_ringing_positions
             my $starttime = $now;
             my $content;
 
-            for ($starttime = $now; $starttime > $now - ($term * 24 * 3600); $starttime -= 10800)
+            for ($starttime = $now; $starttime > $now - ($term * 24 * 3600); $starttime -= 24 * 3600)
             {
                 my $endtime = $starttime + 10800;  
                 my $url = "http://api.pushshift.io/reddit/search/submission/?subreddit=$helper&sort=asc&size=100&filter=id,author,full_link,link_flair_text,created_utc,is_robot_indexable&before=$endtime&after=$starttime";
@@ -1109,15 +1168,21 @@ sub work_out_ringing_positions
                 $content =~ s/  / /img;
                 $content =~ s/  / /img;
                 sleep (1);
-                print "\nNumber of pulls has been: " . $pull . " (from $starttime to $endtime -- $url)\n";
-                $pull++;
+                my $yyyymmdd = strftime "%Y%m%d %H", localtime($starttime);
+                print "\n......$yyyymmdd ($url)\n";
                 my $ln = 0;
                 while ($content =~ s/^(.*?)\n//m)
                 {
                     my $line = $1;
                     $ln++;
-                    print ("$ln  --- $line\n");
+                    print ("..........$ln  --- $line\n");
                 }
+                $ln++;
+                print ("..........$ln  --- $content\n");
+                $ln --;
+                $ln --;
+                print ("$yyyymmdd found $ln entries\n");
+
             }
         }
 
@@ -1401,8 +1466,17 @@ sub work_out_ringing_positions
             {
                 $col_number++;
                 $transpose_chars {"$line_number,$col_number"} = $1;
-            }
 
+                if ($line_number > $transpose_biggest_line)
+                {
+                    $transpose_biggest_line = $line_number;
+                }
+
+                if ($col_number > $transpose_biggest_col)
+                {
+                    $transpose_biggest_col = $col_number;
+                }
+            }
         }
 
         if ($operation eq "egrep")
@@ -1793,6 +1867,18 @@ sub work_out_ringing_positions
                 $seen_http = 2;
             }
         }
+
+        if ($operation eq "strip_html")
+        {
+            #$line =~ s/<[^>]+>/ /img;
+            #$line =~ s/^(.{100}[^ ]+)(.*)/$1\n$2/img;
+            #$line =~ s/^ \n//img;
+
+            $line =~ s/\W/ /img;
+            $line =~ s/^(.{100}[^ ]+)(.*)/$1\n$2/img;
+            $line =~ s/^ \n//img;
+            print $line, "\n";
+        }
         
         if ($operation eq "ringing")
         {
@@ -2178,7 +2264,7 @@ sub work_out_ringing_positions
             }
         }
         
-        if ($operation eq "calendar")
+        if ($operation eq "calendarxxx")
         {
             my $month1_string = print_month ($term, 1);
             my $month2_string = print_month ($term, 2);
@@ -2199,13 +2285,94 @@ sub work_out_ringing_positions
             print_months ($month1_string, $month2_string, $month3_string);
         }
         
+        if ($operation eq "calendar")
+        {
+            my $month1_string = print_month ($term, 1);
+            my $month2_string = print_month ($term, 2);
+               $month2_string = add_school_holidays ($month2_string, 18, 18);
+               $month2_string = add_school_holidays ($month2_string, 25, 25);
+            my $month3_string = print_month ($term, 3);
+               $month3_string = add_school_holidays ($month3_string, 4, 4);
+               $month3_string = add_school_holidays ($month3_string, 11, 11);
+               $month3_string = add_school_holidays ($month3_string, 18, 18);
+               $month3_string = add_school_holidays ($month3_string, 25, 25);
+            print ("           $term\n");
+            print_months ($month1_string, $month2_string, $month3_string);
+            $month1_string = print_month ($term, 4);
+            $month2_string = print_month ($term, 5);
+            $month3_string = print_month ($term, 6);
+            print_months ($month1_string, $month2_string, $month3_string);
+            $month1_string = print_month ($term, 7);
+            $month2_string = print_month ($term, 8);
+            $month3_string = print_month ($term, 9);
+            print_months ($month1_string, $month2_string, $month3_string);
+            $month1_string = print_month ($term, 10);
+            $month2_string = print_month ($term, 11);
+            $month3_string = print_month ($term, 12);
+            print_months ($month1_string, $month2_string, $month3_string);
+        }
+        
         if ($operation eq "calendar_pay")
+        {
+            $thursday_is_payday = 555;
+            my $month1_string = print_month_w_payday ($term, 1, 3, 26, "Z", "Z", "Z", "Z"); 
+            my $month2_string = print_month_w_payday ($term, 2, "Z", "Z", "Z", "Z"); 
+               $month2_string = add_school_holidays ($month2_string, 18, 18);
+               $month2_string = add_my_school_holidays ($month2_string, 25, 25);
+            my $month3_string = print_month_w_payday ($term, 3, 14, "Z", "Z", "Z", "Z");
+               $month3_string = add_school_holidays ($month3_string, 4, 4);
+               $month3_string = add_my_school_holidays ($month3_string, 11, 11);
+               $month3_string = add_school_holidays ($month3_string, 18, 18);
+               $month3_string = add_my_school_holidays ($month3_string, 25, 25);
+            print_months_html ($month1_string, $month2_string, $month3_string, $term);
+            $month1_string = print_month_w_payday ($term, 4, 15, 18, 25, "Z", "Z", "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 1, 1);
+               $month1_string = possible_school_holidays ($month1_string, 29, 29);
+            $month2_string = print_month_w_payday ($term, 5, 30, "Z", "Z", "Z", "Z");
+               $month2_string = possible_school_holidays ($month2_string, 6, 6);
+               $month2_string = add_my_school_holidays ($month2_string, 13, 13);
+               $month2_string = add_school_holidays ($month2_string, 20, 20);
+               $month2_string = add_my_school_holidays ($month2_string, 27, 27);
+            $month3_string = print_month_w_payday ($term, 6, 13, "Z", "Z", "Z", "Z");
+               $month3_string = add_school_holidays ($month3_string, 3, 3);
+               $month3_string = add_my_school_holidays ($month3_string, 10, 10);
+               $month3_string = add_school_holidays ($month3_string, 17, 17);
+               $month3_string = add_my_school_holidays ($month3_string, 24, 24);
+            print_months_html ($month1_string, $month2_string, $month3_string, 0);
+            $month1_string = print_month_w_payday ($term, 7, "Z", "Z", "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 29, 29);
+            $month2_string = print_month_w_payday ($term, 8, "Z", "Z", "Z", "Z");
+               $month2_string = add_my_school_holidays ($month2_string, 5, 5);
+               $month2_string = add_school_holidays ($month2_string, 12, 12);
+               $month2_string = add_my_school_holidays ($month2_string, 19, 19);
+               $month2_string = add_school_holidays ($month2_string, 26, 26);
+            $month3_string = print_month_w_payday ($term, 9, "Z", "Z", "Z", "Z");
+               $month3_string = add_my_school_holidays ($month3_string, 2, 2);
+               $month3_string = add_school_holidays ($month3_string, 9, 9);
+               $month3_string = add_my_school_holidays ($month3_string, 16, 16);
+            print_months_html ($month1_string, $month2_string, $month3_string, 0);
+            $month1_string = print_month_w_payday ($term, 10, 3, "Z", "Z", "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 14, 14);
+               $month1_string = add_my_school_holidays ($month1_string, 21, 21);
+               $month1_string = add_school_holidays ($month1_string, 28, 28);
+            $month2_string = print_month_w_payday ($term, 11, "Z", "Z", "Z", "Z");
+               $month2_string = add_my_school_holidays ($month2_string, 4, 4);
+               $month2_string = add_school_holidays ($month2_string, 11, 11);
+               $month2_string = add_my_school_holidays ($month2_string, 18, 18);
+               $month2_string = possible_school_holidays ($month2_string, 25, 25);
+            $month3_string = print_month_w_payday ($term, 12, 25, 26, 27, "Z", "Z", "Z");
+               $month3_string = possible_school_holidays ($month3_string, 2, 2);
+            print_months_html ($month1_string, $month2_string, $month3_string, -1);
+        }
+        
+        if ($operation eq "calendar_payxxx")
         {
             $thursday_is_payday = $helper;
             my $month1_string = print_month_w_payday ($term, 1, 3, 26, "Z", "Z", "Z", "Z"); $month1_string = add_school_holidays ($month1_string, 1, 31);
-            my $month2_string = print_month_w_payday ($term, 2, "Z", "Z", "Z", "Z"); $month2_string = add_school_holidays ($month2_string, 1, 8);
+            my $month2_string = print_month_w_payday ($term, 2, "Z", "Z", "Z", "Z"); 
             my $month3_string = print_month_w_payday ($term, 3, 14, "Z", "Z", "Z", "Z");
             print_months_html ($month1_string, $month2_string, $month3_string, $term);
+            #$month1_string = print_month_w_payday ($term, 4, 15, 18, 25, "Z", "Z", "Z", "Z"); $month1_string = possible_school_holidays ($month1_string, 6, 25);
             $month1_string = print_month_w_payday ($term, 4, 15, 18, 25, "Z", "Z", "Z", "Z"); $month1_string = add_school_holidays ($month1_string, 9, 25);
             $month2_string = print_month_w_payday ($term, 5, 30, "Z", "Z", "Z", "Z");
             $month3_string = print_month_w_payday ($term, 6, 13, "Z", "Z", "Z", "Z");
@@ -2374,9 +2541,41 @@ sub work_out_ringing_positions
     if ($operation eq "transpose")
     {
         my $key;
+        my @transpose_array;
+
+        my $blank_line = "";
+        my $i;
+        my $j;
+        for ($j = 0; $j < $transpose_biggest_line; $j++)
+        {
+            $blank_line .= " ";
+        }
+
+        my $i;
+        my $j;
+        for ($i = 0; $i < $transpose_biggest_col; $i++)
+        {
+            $transpose_array [$i] = $blank_line;
+        }
+
         foreach $key (sort keys (%transpose_chars)) 
         {
-            print ("$key $transpose_chars{$key},");
+            if ($key =~ m/(\d*),(\d*)/)
+            {
+                my $i = $1;
+                my $chars = $1 - 1;
+                my $j = $2;
+                my $lines = $j - 1;
+                my $da_line = $transpose_array [$lines];
+                $da_line =~ s/^(.{$chars})./$1$transpose_chars{$key}/;
+                $transpose_array [$lines] = $da_line;
+            }
+        }
+
+        for ($i = 0; $i < $transpose_biggest_col; $i++)
+        {
+            my $da_line = $transpose_array [$i];
+            print ($da_line, "\n");
         }
     }
 
