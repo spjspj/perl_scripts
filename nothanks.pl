@@ -21,7 +21,7 @@ $| = 1;
 my %revealed_cards_imgs;
 my $BCK = "back";
 my $NUM_COUNTERS_AT_START_OF_GAME = 10;
-my $NUM_CARDS_IN_FULL_DECK = 25;
+my $NUM_CARDS_IN_FULL_DECK = 35;
 my $NUM_CARDS_TO_REMOVE = 7;
 my $GAME_WON = 0;
 my $reason_for_game_end = "";
@@ -33,7 +33,6 @@ my $BAD_GUYS = -1;
 my $GOOD_GUYS = 1;
 my $PATH = "d:\\perl_programs\\nothanks";
 my $nothanks = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"big_c.jpg\"><\/img>";
-my $TORCH = "<img src=\"torch.jpg\"><\/img>";
 my %rand_colors;
 
 my $DEBUG = "";
@@ -47,6 +46,7 @@ my $current_flipped_card;
 my $current_number_of_counters;
 my %player_counters;
 my %player_cards;
+my $taken_cards = "";
 
 my %already_shuffled;
 my $needs_shuffle_but_before_next_card_picked = 0;
@@ -85,6 +85,7 @@ sub game_won
 
 sub get_game_won
 {
+
     if ($GAME_WON == 0)
     {
         return "";
@@ -148,8 +149,6 @@ sub write_to_socket
     }
 
     $msg_body = $header . $msg_body;
-    #print ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
-    #add_to_debug ("\n===========\nWrite to socket: ", length ($msg_body), "! >>$msg_body<<\n==========\n");
 
     syswrite ($sock_ref, $msg_body);
 }
@@ -166,7 +165,6 @@ sub old_bin_write_to_socket
         $size = -s $img;
     }
     my $msg_body = "HTTP/2.0 200 OK\nDate: Mon, 20 May 2019 13:20:41 GMT\nConnection: close\nContent-type: image/jpeg\nContent-length: $size\n\n";
-    #print $msg_body, "\n";
     syswrite ($sock_ref, $msg_body);
 
 
@@ -231,11 +229,6 @@ sub newer_bin_write_to_socket
     {
         syswrite ($sock_ref, $images {$img});
     }
-
-    #if ($ips_slowed_down_for {$ip} < 10)
-    {
-         #Time::HiRes::sleep (0.1); #.1 seconds
-    }
 }
 
 sub experimental_bin_write_to_socket
@@ -287,11 +280,6 @@ sub experimental_bin_write_to_socket
         syswrite ($sock_ref, $images {$img});
         #syswrite ($sock_ref, $images {$img});
     }
-
-    #if ($ips_slowed_down_for {$ip} < 10)
-    {
-         #Time::HiRes::sleep (0.1); #.1 seconds
-    }
 }
 
 sub bin_write_to_socket
@@ -304,9 +292,7 @@ sub bin_write_to_socket
     if (-f $img)
     {
         $size = -s $img;
-        #print ("SIZE ($img) WAS $size\n");
     }
-    #print ("222 SIZE ($img) WAS $size\n");
     my $img_type = $img;
     $img_type =~ s/.*\.//;
     my $msg_body = "HTTP/2 304 Not Modified\ncontent-type: image/$img_type\nConnection: close\ncontent-length: $size\nexpires: Sat, 16 Aug 2025 06:46:59 GMT\nlast-modified: Fri, 14 Aug 2020 06:48:59 GMT\ncache-control: public, max-age=31536000\n\n";
@@ -361,8 +347,6 @@ sub read_from_socket
             # There is at least one byte ready to be read..
             if (sysread ($sock_ref, $ch, 1) < 1)
             {
-                #print ("$header!!\n");
-                #print (" ---> Unable to read a character\n");
                 return "resend";
             }
             $header .= $ch;
@@ -371,7 +355,6 @@ sub read_from_socket
         }
     }
 
-    #print "\n++++++++++++++++++++++\n", $header, "\n";
     return $header;
 }
 
@@ -391,7 +374,7 @@ sub get_player_id
     my $ip_find;
     my $i = 0;
 
-    my $x = get_player_id_from_name ($CURRENT_LOGIN_NAME);
+    my $x = get_player_id_from_name ($CURRENT_LOGIN_NAME, "aaa");
     if ($x != -1)
     {
         return $x;
@@ -404,12 +387,12 @@ sub get_player_id
         }
         $i ++;
     }
-    #add_to_debug ("Didn't find |$IP| in |" . join ("|", @player_ips));
     return -1;
 }
 
 sub flip_top_card
 {
+    $current_flipped_card = "GAME_OVER";
     if ($cards_left_in_deck > 0)
     {
         $current_flipped_card = $deck [0];
@@ -484,12 +467,13 @@ sub get_player_name
 
 sub set_whos_turn
 {
-    $pot_whos_turn = $_ [0];
+    $whos_turn = $_ [0];
 }
 
 sub get_player_id_from_name
 {
     my $this_name = $_ [0];
+    my $degg = $_ [1];
     my $id = 0;
     for ($id = 0; $id < scalar @player_names; $id++)
     {
@@ -519,19 +503,69 @@ sub is_bot
     return 0;
 }
 
+sub noone_else_wants
+{
+    my $check_card = $_ [0];
+    my $ignore_id = $_ [1];
+
+    my $one_up = "(^|,)" . ($check_card + 1) . "(\$|,)";
+    my $one_down = "(^|,)" . ($check_card - 1) . "(\$|,)";
+    my $i;
+    for ($i = 0; $i < $num_players_in_game; $i++)
+    {
+        if ($i != $ignore_id)
+        {
+            my $cards = $player_cards {$i};
+            
+            # One up, one down
+            print ("Farming - checking $cards vs $one_up and $one_down\n");
+            if ($cards =~ m/$one_up/ || $cards =~ m/$one_down/)
+            {
+                print ("Farming MATCHED!! - checking $cards vs $one_up and $one_down\n");
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
 
 sub handle_bot_next_go
 {
-    print ("Bot of $whos_turn is passing on $current_flipped_card." . ($current_number_of_counters + 1) . "\n");
+    #$taken_cards .= "Bot of $whos_turn is being handled for $current_flipped_card." . ($current_number_of_counters + 1) . "\n";
+    if ($current_flipped_card eq "GAME_OVER" || $current_flipped_card eq "")
+    {
+        return;
+    }
 
     my $bots_counters = $player_counters {$whos_turn};
     if ($bots_counters > 0)
     {
-        if ($current_flipped_card - $current_number_of_counters > 5)
+        my $cards = $player_cards {$whos_turn};
+        my $current_score = get_score_from_cards ($cards, $whos_turn) + 1;
+        $cards .= "$current_flipped_card,"; 
+        my $poss_score = get_score_from_cards ($cards, $whos_turn) - $current_number_of_counters;
+
+        if ($current_score >= $poss_score)
         {
-            pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
+            # Can do counter farming?
+            if ($current_flipped_card - $current_number_of_counters > 2 * $num_players_in_game)
+            {
+                if (noone_else_wants ($current_flipped_card, $whos_turn))
+                {
+                    #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " is counterfarming.. for $current_flipped_card ($current_score vs $poss_score)<br>"; 
+                    pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
+                    return;
+                }
+            }
+
+            #$taken_cards .= "&nbsp;Bot " . get_player_name ($whos_turn) . " is taking $current_flipped_card ($current_score vs $poss_score)<br>"; 
+            take_card_with_id ("takecard.$current_flipped_card.$current_number_of_counters", $whos_turn);
+            handle_bot_next_go ();
             return;
         }
+        #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " $whos_turn is passing.. for $current_flipped_card ($current_score vs $poss_score)<br>"; 
+        pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
+        return;
     }
     take_card_with_id ("takecard.$current_flipped_card.$current_number_of_counters", $whos_turn);
     handle_bot_next_go ();
@@ -548,6 +582,7 @@ sub set_next_turn
     my $is_bot = is_bot ("", $whos_turn);
     if ($is_bot)
     {
+        #$taken_cards .= "&nbsp;&nbsp;$whos_turn is a bot!!<br>"; 
         handle_bot_next_go ();
     }
 }
@@ -598,8 +633,6 @@ sub add_new_user
     {
         if ($name_find eq $this_name)
         {
-            #add_to_debug (" ... 777 Already user logged in with that name ($name_find)..\n");
-            print (" BAD IN ADDING $this_name!!!\n");
             return "";
         }
     }
@@ -632,7 +665,7 @@ sub add_new_user
 sub boot_person
 {
     my $person_to_boot = $_ [0];
-    my $person_to_boot_id = get_player_id_from_name ($person_to_boot);
+    my $person_to_boot_id = get_player_id_from_name ($person_to_boot, "bbbb");
 
     if ($person_to_boot_id == -1)
     {
@@ -773,6 +806,8 @@ sub take_card_with_id
         my $card_taken = $1;
         my $num_tokens = $2;
         my $name_of_card_picked = $deck [$card_taken];
+        #$taken_cards .= get_player_name ($id) . " took $card_taken (and had $player_counters{$id} counters and will gain $num_tokens)<br>"; 
+        $taken_cards .= get_player_name ($id) . " took $card_taken <br>"; #(and had $player_counters{$id} counters and will gain $num_tokens)<br>"; 
         print ("TOOK name_of_card_picked=$name_of_card_picked by $id!!!\n"); 
         add_to_debug ("KNOWS $name_of_card_picked\n");
         $needs_shuffle_but_before_next_card_picked = 0;
@@ -805,6 +840,7 @@ sub new_game
 
     $num_players_in_game = $num_players_in_lobby;
     set_whos_turn (int (rand ($num_players_in_game)));
+    
     $GAME_WON = 0;
     $NUM_EXPOSED_CARDS = 0;
 
@@ -837,6 +873,14 @@ sub new_game
     my %new_already_shuffled;
     %already_shuffled = %new_already_shuffled;
     $needs_shuffle_but_before_next_card_picked = 0;
+    $taken_cards = "";
+    
+    my $is_bot = is_bot ("", $whos_turn);
+    if ($is_bot)
+    {
+        handle_bot_next_go ();
+    }
+
     return;
 }
 
@@ -854,8 +898,6 @@ sub reset_game
     %already_shuffled = %new_already_shuffled;
     my %new_NOT_HIDDEN_INFO;
     %NOT_HIDDEN_INFO = %new_NOT_HIDDEN_INFO;
-    my %new_PLAYER_IS_BOT;
-    %PLAYER_IS_BOT = %new_PLAYER_IS_BOT;
     $needs_shuffle_but_before_next_card_picked = 0;
     
     $player_counters {0} = $NUM_COUNTERS_AT_START_OF_GAME;
@@ -878,14 +920,13 @@ sub reset_game
     $player_cards {7} = "";
     $player_cards {8} = "";
     $player_cards {9} = "";
-
-
+    $taken_cards = "";
     return $out;
 }
 
 sub in_game
 {
-    my $id = get_player_id_from_name ($CURRENT_LOGIN_NAME);
+    my $id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "ccc");
     if ($id >= 0 && $id < $num_players_in_game)
     {
         return 1;
@@ -893,38 +934,10 @@ sub in_game
     return 0;
 }
 
-sub player_row
+sub get_score_from_cards
 {
-    my $id = $_ [0];
-    my $IP = $_ [1];
-    my $this_player_id = get_player_id_from_name ($CURRENT_LOGIN_NAME);
-
-    my $known_to_user = -1;
-
-    my $torch_cell = "<td></td>";
-    if ($id == $whos_turn)
-    {
-        $torch_cell = "<td>$TORCH</td>";
-    }
-    my $name_cell = "<td><font size=+1 color=darkgreen>" . get_player_name ($id) . "</font></td>";
-    if ($id == $this_player_id)
-    {
-        $name_cell = "<td>**<font size=+2 color=darkblue>" . get_player_name ($id) . "</font> (" . $player_counters {$id} . " Counters)**</td>";
-    }
-
-    my $start_bit = "";
-    if ($id % 2 == 0)
-    {
-        $start_bit = "<tr>";
-    }
-    my $final_bit = "";
-    if ($id % 2 == 1)
-    {
-        $final_bit = "</tr>";
-    }
-    my $out;
-
-    my $cards = $player_cards {$id};
+    my $cards = $_ [0];
+    my $id = $_ [1];
     my %cards;
     while ($cards =~ s/^(\d+),//)
     {
@@ -944,15 +957,82 @@ sub player_row
             $score -= $k;
         }
     }
+    return $score;
+}
+
+sub get_images_from_cards
+{
+    my $cards = $_ [0];
+    my $id = $_ [1];
+    my %cards;
+    while ($cards =~ s/^(\d+),//)
+    {
+        my $c = $1;
+        $cards {$c} = "<img width=\"30\" height=\"43\" src=\"card$1.jpg\"><\/img>";
+    }
+    my $k;
+    my $score = 0;
+    for $k (sort {$a <=> $b} (keys %cards))
+    {
+        $score += $k;
+        if (exists ($cards {$k - 1}))
+        {
+            $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card.jpg\"><\/img>";
+            $score -= $k;
+        }
+    }
     
     my $actual_card_cell = "<td>";
     for $k (sort {$a <=> $b} (keys %cards))
     {
         $actual_card_cell .= $cards {$k};
     }
-    $actual_card_cell .= " (Score = $score - Total cards = $total_cards)</td>";
+    return $actual_card_cell;
+}
 
-    $out .= "$start_bit$name_cell$actual_card_cell$torch_cell<td>" . "</td>$final_bit\n";
+sub player_row
+{
+    my $id = $_ [0];
+    my $IP = $_ [1];
+    my $this_player_id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "ddd");
+
+    my $known_to_user = -1;
+
+    my $who_has_card_cell = "<td></td>";
+    if ($id == $whos_turn)
+    {
+        $who_has_card_cell = "<td><img width=\"61\" height=\"87\" src=\"card$current_flipped_card.jpg\"><\/img></td>";
+    }
+    my $name_cell = "<td><font size=+1 color=darkgreen>" . get_player_name ($id) . "</font></td>";
+    if ($id == $this_player_id || $current_flipped_card eq "GAME_OVER" || $current_flipped_card eq "")
+    {
+        $name_cell = "<td>**<font size=+2 color=darkblue>" . get_player_name ($id) . "</font> (" . $player_counters {$id} . " Counters)**</td>";
+    }
+
+    my $start_bit = "";
+    if ($id % 2 == 0)
+    {
+        $start_bit = "<tr>";
+    }
+    my $final_bit = "";
+    if ($id % 2 == 1)
+    {
+        $final_bit = "</tr>";
+    }
+    my $out;
+
+    my $cards = $player_cards {$id};
+    my $score = get_score_from_cards ($cards, $id);
+    my $actual_card_cell = get_images_from_cards ($cards, $id);
+    $actual_card_cell .= " (Score = $score)";
+    if ($current_flipped_card eq "")
+    {
+        $actual_card_cell .= " (Actual Score = " . ($score - $player_counters {$id}) . ")";
+    }
+    $actual_card_cell .= "</td>";
+
+
+    $out .= "$start_bit$name_cell$actual_card_cell$who_has_card_cell<td>" . "</td>$final_bit\n";
 
     my $make_pickable = $this_player_id == $whos_turn && $id != $this_player_id;
 
@@ -1144,7 +1224,7 @@ sub get_game_state
         $out .= "<br><font size=-2>These players are already banned (use a new user name if you're affected :) ) |" . join (",", sort keys (%BANNED_NAMES)) . "|</font><br>";
     }
 
-    my $id = get_player_id_from_name ($CURRENT_LOGIN_NAME);
+    my $id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "fff");
     if ($id == -1)
     {
         #$out .= "Looked for $IP and didn't find it..<br>";
@@ -1164,8 +1244,9 @@ sub get_game_state
         $out .= "<font size=+1 color=red>Welcome to \"No Thanks!\", " . get_player_name ($id) . "<br><\/font>";
         if (in_game ($IP))
         {
-            #add_to_debug ("doing PRINT_GAME_STATE : Player=$id $IP was in_game");
             $out = print_game_state ($IP);
+            $taken_cards =~ s/<br><br>/<br>/g;
+            $out .= "<font size=-1>$taken_cards</font>";
             $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
         }
         elsif (!game_started ())
@@ -1190,9 +1271,9 @@ sub get_game_state
         }
         else
         {
-            #add_to_debug ("Game started without you in it..");
             $out .= "Game has already started!<br><br>";
             $out .= "*Reset and Restart* the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
+            $out .= print_game_state ($IP);
         }
     }
 
@@ -1282,7 +1363,7 @@ sub simulate_game
 
         $CURRENT_LOGIN_NAME =~ s/^(...........).*/$1/img;
 
-        if ($CURRENT_LOGIN_NAME ne "" && get_player_id_from_name ($CURRENT_LOGIN_NAME) == -1)
+        if ($CURRENT_LOGIN_NAME ne "" && get_player_id_from_name ($CURRENT_LOGIN_NAME, "ggg") == -1)
         {
             add_new_user ("name=$CURRENT_LOGIN_NAME", $client_addr);
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "noredirect");
@@ -1294,7 +1375,6 @@ sub simulate_game
             if (get_needs_refresh ($client_addr))
             {
                 write_to_socket (\*CLIENT, "NEEDS_REFRESH", "", "noredirect");
-                print ("$client_addr << needs_refresh!!\n");
                 next;
             }
             write_to_socket (\*CLIENT, "FINE_FOR_NOW", "", "noredirect");
