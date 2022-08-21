@@ -563,6 +563,16 @@ sub handle_bot_next_go
             handle_bot_next_go ();
             return;
         }
+
+        my $rand_counters = int (rand (10)) + 5;
+        my $rand_chance = int (rand ($current_number_of_counters)) + $current_number_of_counters / 2;
+        if ($current_number_of_counters > $rand_chance && $current_number_of_counters > $rand_counters)
+        {
+            take_card_with_id ("takecard.$current_flipped_card.$current_number_of_counters", $whos_turn);
+            handle_bot_next_go ();
+            return;
+        }
+
         #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " $whos_turn is passing.. for $current_flipped_card ($current_score vs $poss_score)<br>"; 
         pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
         return;
