@@ -1,0 +1,16 @@
+############
+# Night recordings
+01 21 * * * killall run_sound.pl; killall test_sound.pl; killall arecord
+02 21 * * * /home_monitor/run_sound.pl > /dev/null 2>&1
+03 21 * * * /home_monitor/test_sound.pl > /dev/null 2>&1
+01 01 * * * killall run_sound.pl; killall test_sound.pl; killall arecord
+############
+# Day recordings
+01 09 * * * killall run_sound.pl; killall test_sound.pl; killall arecord
+02 09 * * * /home_monitor/run_sound.pl > /dev/null 2>&1
+03 09 * * * /home_monitor/test_sound.pl > /dev/null 2>&1
+01 15 * * * killall run_sound.pl; killall test_sound.pl; killall arecord
+############
+# Delete buildup
+41 00,06,12,18 * * * /home_monitor/del_zips.pl > /tmp/del_zip.out 2>&1
+#   /home_monitor/startStuff.sh &
