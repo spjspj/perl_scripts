@@ -68,6 +68,22 @@ sub write_to_socket
     syswrite ($sock_ref, $msg_body);
 }
 
+sub copy_file_to_socket
+{
+    my $sock_ref = $_ [0];
+    my $img = $_ [1];
+    my $buffer;
+    my $size = 0;
+    $img =~ s/ //img;
+
+    my $size = -s ("$img");
+    print (">>>>> size = $size\n");
+    my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
+    print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
+    syswrite (\*CLIENT, $h);
+    copy "$img", \*CLIENT;
+}
+
 sub bin_write_to_socket
 {
     my $sock_ref = $_ [0];
@@ -212,12 +228,12 @@ sub read_from_socket
 
         if ($txt =~ m/.*favico.*/m)
         {
-            my $size = -s ("d:/perl_programs/aaa.jpg");
+            my $size = -s ("/home/spjspj/download_sound/favicon.ico");
             print (">>>>> size = $size\n");
             my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
             print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
             syswrite (\*CLIENT, $h);
-            copy "d:/perl_programs/aaa.jpg", \*CLIENT;
+            copy "/home/spjspj/download_sound/favicon.ico", \*CLIENT;
             next;
         }
 
@@ -236,21 +252,33 @@ sub read_from_socket
             $original_get =~ s/^.*\///img;
             $original_get =~ s/(.*)axx/\/home_monitor\/Archive\/$1.wav/;
             $original_get =~ s/(.*)sxx/\/home_monitor\/Spool\/$1.wav/;
-            $original_get =~ s/axx/wav/img;
-            $original_get =~ s/sxx/wav/img;
             $original_get =~ s/\.\./\./img;
+            $original_get =~ s/[as]xx/wav/img;
             #write_to_socket (\*CLIENT, "Getting $original_get", "", "noredirect");
-            print ("DOING\n");
-            bin_write_to_socket (\*CLIENT, $original_get, "", "noredirect");
-            print ("DONE\n");
+            print ("DOING --> $original_get\n");
+            copy_file_to_socket (\*CLIENT, $original_get, "", "noredirect");
+            print ("DONE --> $original_get\n");
             next;
+        }
+
+        if ($original_get =~ m/\.(zip)/)
+        {
+            my $b = $original_get;
+            $original_get =~ s/GET //img;
+            $original_get =~ s/HTTP.*//img;
+            $original_get =~ s/^.*\///img;
+            $original_get =~ s/(.*)zip/\/home_monitor\/Archive\/$1.zip/;
+            $original_get =~ s/\.\./\./img;
+            print ("DOING\n");
+            copy_file_to_socket (\*CLIENT, $original_get, "", "noredirect");
+            print ("DONE\n");
         }
 
         {
             $txt =~ s/\n\n/\n/gim;
             $txt =~ s/\n\n/\n/gim;
             #my $ls = `find /home_monitor/Archive -type f`;
-            my $ls = `ls -1 /home_monitor/Archive`;
+            my $ls = `ls -1 /home_monitor/Archive | grep -v 030`;
             $ls =~ s/^(.*?)\n/<a href="homemonitor\/$1">$1<\/a><br>/img;
             $ls =~ s/\/\//\//img;
             $ls =~ s/\/\//\//img;
@@ -259,7 +287,7 @@ sub read_from_socket
             $txt .=  "Archive:<br>$ls<br>";
 
             #$ls = `find /home_monitor/Spool -type f`;
-            $ls = `ls -1 /home_monitor/Spool`;
+            $ls = `ls -1 /home_monitor/Spool | grep -v 030`;
             $ls =~ s/^(.*?)\n/<a href="homemonitor\/$1">$1<\/a><br>/img;
             $ls =~ s/\/\//\//img;
             $ls =~ s/\/\//\//img;
