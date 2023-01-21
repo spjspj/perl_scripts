@@ -22,6 +22,7 @@ my %card_type;
 my %card_converted_cost;
 my %all_cards_abilities;
 my %expansion;
+my $SUPPLIED_PASSWORD;
 
 #####
 sub write_to_socket
@@ -43,7 +44,15 @@ sub write_to_socket
     }
     elsif ($redirect =~ m/^noredirect/i)
     {
-        $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        if ($SUPPLIED_PASSWORD =~ m/^$/)
+        {
+            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        }
+        else
+        {
+            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html\nSet-Cookie: SUPPLIED_PASSWORD=$SUPPLIED_PASSWORD\nContent-Length: " . length ($msg_body) . "\n\n";
+        }
+
     }
 
     #my $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nAccept-Ranges: bytes\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
@@ -75,13 +84,16 @@ sub copy_file_to_socket
     my $buffer;
     my $size = 0;
     $img =~ s/ //img;
+    $img =~ m/(\/home_monitor.*wav)/;
+    my $real_img = $1;
+    chomp $real_img;
 
-    my $size = -s ("$img");
-    print (">>>>> size = $size\n");
-    my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
+    my $size = -s ("$real_img");
+    print (">>>>> size = $size<< (for $real_img)\n");
+    my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nSet-Cookie: SUPPLIED_PASSWORD=$SUPPLIED_PASSWORD\nContent-Length: $size\n\n";
     print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
     syswrite (\*CLIENT, $h);
-    copy "$img", \*CLIENT;
+    copy "$real_img", \*CLIENT;
 }
 
 sub bin_write_to_socket
@@ -118,7 +130,7 @@ sub bin_write_to_socket
     print ("REALLY DOING\n");
 }
 
-sub read_from_socket
+sub read_from_socket2
 {
     my $sock_ref = $_ [0];
     my $ch = "";
@@ -163,6 +175,52 @@ sub read_from_socket
 
     print "\n++++++++++++++++++++++\n", $header, "\n";
     return $header;
+}
+
+sub read_from_socket
+{
+    my $sock_ref = $_ [0];
+    my $ch = "";
+    my $prev_ch = "";
+    my $header = "";
+    my $rin = "";
+    my $rout;
+    my $min;
+    my $max;
+    my $msg_type;
+    my $msg_body;
+    my $msg_len;
+
+    vec ($rin, fileno ($sock_ref), 1) = 1;
+
+    # Read the message header
+    while ((!(ord ($ch) == 13 and ord ($prev_ch) == 10)))
+    {
+        if (select ($rout=$rin, undef, undef, 200) == 1)
+        {
+            $prev_ch = $ch;
+            # There is at least one byte ready to be read..
+            if (sysread ($sock_ref, $ch, 1) < 1)
+            {
+                return "resend";
+            }
+            $header .= $ch;
+            my $h = $header;
+            $h =~ s/(.)/",$1-" . ord ($1) . ";"/emg;
+        }
+    }
+
+    return $header;
+}
+
+sub is_authorized
+{
+    my $pw = $_ [0];
+    if ($pw eq "mebbeNoTtheRealPssw$rd")
+    {
+        return 1;
+    }
+    return 0;
 }
 
 # Main
@@ -226,6 +284,33 @@ sub read_from_socket
         my $long;
         my $txt = read_from_socket (\*CLIENT);
 
+        $SUPPLIED_PASSWORD = "";
+        if ($txt =~ m/^Cookie.*?SUPPLIED_PASSWORD=(\w\w\w[\w_]+).*?(;|$)/im)
+        {
+            $SUPPLIED_PASSWORD = $1;
+        }
+
+        if ($txt =~ m/password=(\w\w\w[\w_]+) HTTP/im)
+        {
+            $SUPPLIED_PASSWORD = $1;
+        }
+
+        my $ok = is_authorized ($SUPPLIED_PASSWORD);
+        if ($ok != 1)
+        {
+            $SUPPLIED_PASSWORD = "";
+            print ("\n\n\n=======================\n\nCould not find a password in::$txt\n::\n");
+            $txt = "<font color=red>Supply password here:</font><br><br>";
+            $txt .= "
+                <form action=\"/homemonitor/password\">
+                <label for=\"password\">Password:</label><br>
+                <input type=\"text\" id=\"password\" name=\"password\" value=\"xyz\"><br>
+                <input type=\"submit\" value=\"Supply password to proceed\">
+                </form>";
+            write_to_socket (\*CLIENT, $txt, "", "noredirect");
+            next;
+        }
+
         if ($txt =~ m/.*favico.*/m)
         {
             my $size = -s ("/home/spjspj/download_sound/favicon.ico");
@@ -275,10 +360,9 @@ sub read_from_socket
         }
 
         {
-            $txt =~ s/\n\n/\n/gim;
-            $txt =~ s/\n\n/\n/gim;
+            $txt = "";
             #my $ls = `find /home_monitor/Archive -type f`;
-            my $ls = `ls -1 /home_monitor/Archive | grep -v 030`;
+            my $ls = `ls -1 /home_monitor/Archive | grep -v _1.wav `;
             $ls =~ s/^(.*?)\n/<a href="homemonitor\/$1">$1<\/a><br>/img;
             $ls =~ s/\/\//\//img;
             $ls =~ s/\/\//\//img;
@@ -286,7 +370,6 @@ sub read_from_socket
             $ls =~ s/\.wav/\.axx/img;
             $txt .=  "Archive:<br>$ls<br>";
 
-            #$ls = `find /home_monitor/Spool -type f`;
             $ls = `ls -1 /home_monitor/Spool | grep -v 030`;
             $ls =~ s/^(.*?)\n/<a href="homemonitor\/$1">$1<\/a><br>/img;
             $ls =~ s/\/\//\//img;
@@ -294,6 +377,26 @@ sub read_from_socket
             $ls =~ s/\/\//\//img;
             $ls =~ s/\.wav/\.sxx/img;
             $txt .=  "<br>Spool:<br>$ls<br>";
+
+            my $spool_files = `find /home_monitor/Spool -type f | sort`;
+            my $fc = 0;
+            while ($spool_files =~ s/^(.*)\n//)
+            {
+                my $file = $1;
+                my $test_str = "/usr/bin/sox $file -n stat 2>&1 |";
+                open PROC, $test_str;
+                while (<PROC>)
+                {
+                    chomp;
+                    if ($_ =~ m/RMS.*amplitude.*?(\d+\.\d+)/i)
+                    {
+                        $txt .= "\n<br>RMS Amp = $1 for $file";
+                    }
+                }
+                close PROC;
+                $fc ++;
+                print ("Looking at $file ($fc)\n");
+            }
             write_to_socket (\*CLIENT, $txt, "", "noredirect");
         }
 
