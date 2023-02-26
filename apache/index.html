@@ -9,8 +9,6 @@
 
     <title>XMage AU server</title>
 
-    </script>
-
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/moment.min.js"></script>
@@ -22,6 +20,32 @@
     body {
       background-image: url("images/battle-background.png");
       background-color: #cccccc;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    a {
+        color:white;
+    }
+    .items {
+        display:block;
+        width:200px;
+        background-color:white;
+        color:black;
+        cursor:pointer;
+        margin-bottom:5px;
+    }
+    .items:hover {
+        background-color:blue;
+        color:white;
+    }
+    .selitem {
+        display:block;
+        width:200px;
+        background-color:red;
+        color:yellow;
+        cursor:pointer;
+        margin-bottom:5px;
+       
     }
     </style>
 </head>
@@ -94,8 +118,11 @@
                     Cards: 
                     <ul>
                         <li><a href="cgibin/ronin_cards.pl">Ronin</a></li>
+                        <li><a href="cgibin/end_games.pl">End Games</a></li>
                         <li><a href="https://www.mtggoldfish.com/deck/3985938#paper">Deck</a></li>
                         <li><a href="filter/filter?0&89&0&0&0&0&0&0&false&false&false&dockside.*extor&.*&.*">Card Search</a></li>
+                        <li><a href="gen_card/cardtext=Brago, King Eternal|Eternal Masters|198|R|%7B2%7D%7BW%7D%7BU%7D|Legendary Creature - Spirit|2|4|Flying&When Brago, King Eternal deals combat damage to a player, exile any number of target nonland permanents you control, then return those cards to the battlefield under their owner's control.|%22My rule persists beyond death itself.%22|">Generate Magic Card</a></li>
+                        <li><a href="bob.html">bob.html</a></li>
                     </ul>
                 </li>
             </ul>
@@ -133,10 +160,22 @@
         </div>
 
         <div>
+            <h4>Monitor:</h4>
+            <ul>
+                <li>
+                    Monitor:
+                    <ul>
+                        <li><a href="homemonitor/">Monitor</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div>
             <h4>Experian Ban Form:</h4>
             <ul>
                 <li>
-                    Ban Form (Do again: 20230112):
+                    Ban Form (Ban expires on 22/12/2023):
                     <ul>
                         <li><a href="https://consumer.experian.com.au/s/ban-request-form?_ga=2.77787351.2113795211.1660531971-1172878176.1656382749">Experian Ban Form</a></li>
                         <li>Use old address...</li>
