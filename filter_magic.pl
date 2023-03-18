@@ -7,6 +7,7 @@
 ##
 
 use strict;
+use POSIX;
 use LWP::Simple;
 use Socket;
 use File::Copy;
@@ -161,7 +162,7 @@ sub get_filtered_cards_advanced
             $i++;
         }
     }
-    return $ret . "\nHave found $count cards\n";
+    return $ret . "\nHave found $count cards - and here it endth\n";
 }
 
 sub original_line
@@ -466,9 +467,10 @@ sub read_all_cards
     #open ALL, "d:/perl_programs/new_all_modern_cards.txt";
     #open ALL, "d:/perl_programs/all_magic_cards.txt";
     # 20190322 - Use the xmage version of the cards..
-    print ("reading from c:/xmage_release/mage/Utils/mtg-cards-data.txt\n");
-    print ("Now (20210707) reading from c:/xmage_release_xxx/mage/Utils/mtg-cards-data.txt\n");
-    open ALL, "c:/xmage_release_xxx/mage/Utils/mtg-cards-data.txt";
+    #open ALL, "c:/xmage_release_xxx/mage/Utils/mtg-cards-data.txt";
+    my $CURRENT_FILE = "c:/xmage_clean/mage/Utils/mtg-cards-data.txt";
+    open ALL, $CURRENT_FILE; 
+    print ("Reading from $CURRENT_FILE\n");
 
     my $count = 0;
     my $cards_count = 0;
@@ -699,7 +701,7 @@ sub get_sets
             #http://127.0.0.1:56789/filter?0&89&0&0&0&0&0&0&false&false&return.*to.*ravnica.*&.*&[12345]..*
             $seen_expansions {$k} = 1;
             $k =~ s/ *\[.*\]//;
-            $s .= "<a href='filter?0&89&0&0&0&0&0&0&false&false&false&$k&.*&[12345]\..*'>$k.*rare</a><br>";
+            $s .= "<a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&$k&.*&[12345]\..*'>$k.*rare</a><br>";
         }
     }
 
@@ -709,9 +711,7 @@ sub get_sets
 
 sub edh_lands
 {
-    my $expansion = $_ [0];
-    my $pack_number = $_ [1];
-    my $how_many_players = $_ [2];
+    my $filter = $_ [0];
     my %exps;
     my %exps_mins;
 
@@ -739,6 +739,7 @@ sub edh_lands
     $edh_land {"Watery Grave"} = 1; $edh_land {"Westvale Abbey"} = 1; $edh_land {"Wind-Scarred Crag"} = 1; $edh_land {"Windbrisk Heights"} = 1; $edh_land {"Windswept Heath"} = 1; $edh_land {"Wirewood Lodge"} = 1; $edh_land {"Witch's Clinic"} = 1; $edh_land {"Witch's Cottage"} = 1; $edh_land {"Witherbloom Campus"} = 1; $edh_land {"Wooded Bastion"} = 1; $edh_land {"Wooded Foothills"} = 1; $edh_land {"Woodland Cemetery"} = 1; $edh_land {"Woodland Chasm"} = 1; $edh_land {"Woodland Stream"} = 1; $edh_land {"Yavimaya Coast"} = 1; $edh_land {"Yavimaya, Cradle of Growth"} = 1; $edh_land {"Yavimaya Hollow"} = 1; $edh_land {"Zagoth Triome"} = 1; $edh_land {"Zhalfirin Void"} = 1;
 
     my $s = "<br>";
+    my $s2 = "<br>";
     my $cardname_set;
     my $c;
     {
@@ -747,7 +748,7 @@ sub edh_lands
             {
                 my $ol = original_line_from_cardname ($c);
 
-                $s .= " $c -- ";
+                $s .= " <font size=-2>$c -- ";
                 my $coled = 0;
                 if ($ol =~ m/\{[^}]*?w[^{]*?\}/img) { $s .= " white, "; $coled = 1; }
                 if ($ol =~ m/\{[^}]*?u[^{]*?\}/img) { $s .= " blue, "; $coled = 1; }
@@ -767,12 +768,12 @@ sub edh_lands
                 while ($ol2 =~ s/(plains|island|swamp|mountain|forest)//im) { $s .= " $1, "; }
                 if ($ol =~ m/^$/)
                 {
-                    $s .= " NOT FOUND!<br>";
+                    $s .= " NOT FOUND!</font><br>";
                 }
                 else
                 {
                     #$s .= " <font size=-2>$ol<\/font><br>";
-                    $s .= " <br>\n";
+                    $s .= " </font><br>1 $c<br>\n";
                 }
             }
         }
@@ -780,6 +781,25 @@ sub edh_lands
 
     #$s .= join ("..", sort keys (%original_lines));
     # Return this..
+    while ($filter =~ s/not([wubrg])//)
+    {
+        my $color = $1;
+        if ($color eq "w") { $s =~ s/^.*white.*$//img; }
+        if ($color eq "u") { $s =~ s/^.*blue.*$//img; }
+        if ($color eq "b") { $s =~ s/^.*black.*$//img; }
+        if ($color eq "r") { $s =~ s/^.*red.*$//img; }
+        if ($color eq "g") { $s =~ s/^.*green.*$//img; }
+        
+        if ($color eq "w") { $s =~ s/^.*plains.*$//img; }
+        if ($color eq "u") { $s =~ s/^.*island.*$//img; }
+        if ($color eq "b") { $s =~ s/^.*swamp.*$//img; }
+        if ($color eq "r") { $s =~ s/^.*mountain.*$//img; }
+        if ($color eq "g") { $s =~ s/^.*forest.*$//img; }
+
+    }
+    $s =~ s/\n//img;
+    $s .= "<br>Finished!<br>";
+    print ("$s<<<");
     return $s;
 }
 
@@ -798,6 +818,7 @@ sub edh_lands
     my $data_from_client;
     $|=1;
     read_all_cards;
+    srand (time);
 
     print ("example: filter_magic.pl 1 1 0 1 1 \"each opponent\" \".*\" 0 5\n\n");
 
@@ -879,14 +900,22 @@ sub edh_lands
             write_to_socket (\*CLIENT, $sets, "", "noredirect");
             next;
         }
-       
-        if ($original_get =~ m/edh_lands/)
+
+        if ($original_get =~ m/edh_filter_(.*)/)
         {
-            my $sets = edh_lands ();
-            write_to_socket (\*CLIENT, $sets, "", "noredirect");
+            my $edh_lands_filtered = edh_lands ($1);
+            #my $edh_lands_filtered = edh_lands ();
+            write_to_socket (\*CLIENT, $edh_lands_filtered, "", "noredirect");
+            #sleep (10);
             next;
         }
-
+        elsif ($original_get =~ m/edh_lands/)
+        {
+            my $edh_lands = edh_lands ();
+            write_to_socket (\*CLIENT, $edh_lands, "", "noredirect");
+            next;
+        }
+        
         $txt =~ s/.*filter\?//;
         $txt =~ s/.*stats\?//;
         $txt =~ s/ http.*//i;
@@ -972,10 +1001,150 @@ sub edh_lands
         $form .= "<input id=full_format type=\"checkbox\" name=\"full_format_only\" value=\"m_full_format\"" . do_checked ($use_full_format) . ">Full format</input>&nbsp;&nbsp;\n";
         $form .= "<input id=block type=\"checkbox\" name=\"blockonly\" value=\"m_block\"" . do_checked ($use_block) . ">Only use current block</input><br>\n";
         $form .= "<input id=uniquenames type=\"checkbox\" name=\"uniquenames\" value=\"m_block\"" . do_checked ($use_unique) . ">Unique names</input><br>\n";
-        $form .= "<a onclick=\"javascript: var ct=document.getElementById('ct').value; var cn=document.getElementById('cn').value; var cr=document.getElementById('cr').value; var mc=document.getElementById('mc').value; var mxc=document.getElementById('mxc').value; var yg=document.getElementById('yg').checked; var ng=document.getElementById('ng').checked; var fg=0;if(yg==true&&ng==false){fg=2;}else if(yg==false&&ng==true){fg=1;} var yr=document.getElementById('yr').checked; var nr=document.getElementById('nr').checked; var fr=0;if(yr==true&&nr==false){fr=2;}else if(yr==false&&nr==true){fr=1;} var yu=document.getElementById('yu').checked; var nu=document.getElementById('nu').checked; var fu=0;if(yu==true&&nu==false){fu=2;}else if(yu==false&&nu==true){fu=1;} var yb=document.getElementById('yb').checked; var nb=document.getElementById('nb').checked; var fb=0;if(yb==true&&nb==false){fb=2;}else if(yb==false&&nb==true){fb=1;} var yw=document.getElementById('yw').checked; var nw=document.getElementById('nw').checked; var fw=0;if(yw==true&&nw==false){fw=2;}else if(yw==false&&nw==true){fw=1;} var yuc=document.getElementById('yuc').checked; var nuc=document.getElementById('nuc').checked; var fuc=0;if(yuc==true&&nuc==false){fuc=2;}else if(yuc==false&&nuc==true){fuc=1;} var std=document.getElementById('full_format').checked; var blk=document.getElementById('block').checked; var uniquenames=document.getElementById('uniquenames').checked; var full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter?'+mc+'&'+mxc+'&'+fr+'&'+fg+'&'+fu+'&'+fb+'&'+fw+'&'+fuc+'&'+std+'&'+blk+'&'+uniquenames+'&'+ct+'&'+cn+'&'+cr; var resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>&nbsp;&nbsp;";
+        $form .= "<a onclick=\"javascript: var ct=document.getElementById('ct').value; var cn=document.getElementById('cn').value; var cr=document.getElementById('cr').value; var mc=document.getElementById('mc').value; var mxc=document.getElementById('mxc').value; var yg=document.getElementById('yg').checked; var ng=document.getElementById('ng').checked; var fg=0;if(yg==true&&ng==false){fg=2;}else if(yg==false&&ng==true){fg=1;} var yr=document.getElementById('yr').checked; var nr=document.getElementById('nr').checked; var fr=0;if(yr==true&&nr==false){fr=2;}else if(yr==false&&nr==true){fr=1;} var yu=document.getElementById('yu').checked; var nu=document.getElementById('nu').checked; var fu=0;if(yu==true&&nu==false){fu=2;}else if(yu==false&&nu==true){fu=1;} var yb=document.getElementById('yb').checked; var nb=document.getElementById('nb').checked; var fb=0;if(yb==true&&nb==false){fb=2;}else if(yb==false&&nb==true){fb=1;} var yw=document.getElementById('yw').checked; var nw=document.getElementById('nw').checked; var fw=0;if(yw==true&&nw==false){fw=2;}else if(yw==false&&nw==true){fw=1;} var yuc=document.getElementById('yuc').checked; var nuc=document.getElementById('nuc').checked; var fuc=0;if(yuc==true&&nuc==false){fuc=2;}else if(yuc==false&&nuc==true){fuc=1;} var std=document.getElementById('full_format').checked; var blk=document.getElementById('block').checked; var uniquenames=document.getElementById('uniquenames').checked; var full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter/filter?'+mc+'&'+mxc+'&'+fr+'&'+fg+'&'+fu+'&'+fb+'&'+fw+'&'+fuc+'&'+std+'&'+blk+'&'+uniquenames+'&'+ct+'&'+cn+'&'+cr; var resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>&nbsp;&nbsp;";
         my $x_card_name = $card_text;
-        $x_card_name =~ s/(o.*?)o/$1&#664;/;
-        $x_card_name =~ s/%20/ /img;
+        
+        
+        my $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+
+        #char a
+        if ($rand_letter < 3) { $x_card_name =~ s/a/&#192;/img; }
+        #elsif ($rand_letter > 7) { $x_card_name =~ s/a/&#7680;/img; }
+        #char b
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/b/&#946;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/b/&#384;/img; }
+        #char c
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/c/&#199;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/c/&#891;/img; }
+        #char d
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/d/&#270;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/d/&#270;/img; }
+        #char e
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/e/&#276;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/e/&#276;/img; }
+        #char e
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/f/&#131;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/f/&#131;/img; }
+        #char f
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/f/&#1171;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/f/&#1171;/img; }
+        #char g
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/g/&#485;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/g/&#42924;/img; }
+        #char h
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/h/&#614;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/h/&#615;/img; }
+        #char i
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/i/&#204;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/i/&#407;/img; }
+        #char j
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/j/&#4325;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/j/&#4325;/img; }
+        #char k
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/k/&#1036;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/k/&#1036;/img; }
+        #char l
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/l/&#8467;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/l/&#621;/img; }
+        #char m
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/m/&#653;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/m/&#625;/img; }
+        #char n
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/n/&#209;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/n/&#627;/img; }
+        #char o
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/o/&#210;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/o/&#248;/img; }
+        #char p
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/p/&#254;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/p/&#421;/img; }
+        #char q
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/q/&#493;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/q/&#493;/img; }
+        #char r
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/r/&#1103;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/r/&#7449;/img; }
+        #char s
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/s/&#575;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/s/&#642;/img; }
+        #char t
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/t/&#430;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/t/&#648;/img; }
+        #char u
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/u/&#217;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/u/&#650;/img; }
+        #char v
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/v/&#8730;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/v/&#651;/img; }
+        #char w
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter > 7) { $x_card_name =~ s/w/&#42934;/img; }
+        elsif ($rand_letter < 3) { $x_card_name =~ s/w/&#936;/img; }
+        #char x
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/x/&#1078;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/x//img; }
+        #char y
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/y/&#221;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/y/&#221;/img; }
+        #char z
+        $rand_letter = rand (10);
+        print ("RANT was $rand_letter\n");
+        if ($rand_letter < 3) { $x_card_name =~ s/z/&#382;/img; }
+        elsif ($rand_letter > 7) { $x_card_name =~ s/z/&#657;/img; }
+
+        $x_card_name =~ s/%20/&nbsp;/img;
+        # Weird font html text from: https://graphemica.com/%C5%BE#code
+
         $form .= "<p><br>$x_card_name<br></p>";
 
 #        $form .= "&#000; -> 000 &#001; -> 001 &#002; -> 002 &#003; -> 003 &#004; -> 004 &#005; -> 005 &#006; -> 006 &#007; -> 007 &#008; -> 008<br> &#009; -> 009 &#010; -> 010 &#011; -> 011 &#012; -> 012 &#013; -> 013 &#014; -> 014 &#015; -> 015 &#016; -> 016 &#017; -> 017<br> &#018; -> 018 &#019; -> 019 &#020; -> 020 &#021; -> 021 &#022; -> 022 &#023; -> 023 &#024; -> 024";
@@ -1028,11 +1197,10 @@ sub edh_lands
             $txt =~ s/\n\n/\n/gim;
             $txt =~ s/\n\n/\n/gim;
             my $copy = $txt;
-            my $set = expansion ();
-            #$txt =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|.*/$1|$2|$3|$4|$5|$6<br>/gim; #<< normal one..
             if (!($use_full_format eq "true"))
             {
-                $txt =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|.*/1 $1 xx $2<br>/gim; #<< for entering rares one..
+                #$txt =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|.*/1 $1 xx $2<br>/gim; #<< for entering rares one..
+                $txt =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|.*/1 $1<br>/gim; #<< for entering rares one..
                 $txt =~ s/xx.*\[/[/gim;
             }
             else
@@ -1046,7 +1214,40 @@ sub edh_lands
                 '<a href="https://scryfall.com/search?q=name:/' . $card_name . '/">Scryfall name</a><br>' .
                 '<a href="https://scryfall.com/search?q=oracle:/' . $card_text . '/ name:/' . $card_name . '/">Scryfall both name/text</a><br>';
 
-            $txt = "<style>p.a{font-family:\"Courier New\", Times, serif;}</style><font color=blue size=+3>MAGIC CARDS </font><font color=green size=+1><a href='http://127.0.0.1:60001/blah'>Deck input </a></font>&nbsp;&nbsp;<font color=red size=+1><a href='http://127.0.0.1:60000/dragons.*tarkir&dragons.*tarkir&fate.*reforged&8&1&1'>Draft (DTK,DTK,FRF)</a></font><br>$form<br>Example <a href='filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir&.*&.*'>DTK</a>&nbsp;&nbsp; Example <a href='filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir.*rare&.*&.*'>DTK (Rare)</a><br>Example <a href='filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged&.*&.*'>FRF</a>&nbsp;&nbsp; Example <a href='filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged.*rare&.*&.*'>FRF (Rare)</a> <br> Only planeswalkers: <a href='filter?0&89&0&0&0&0&0&0&false&false&false&.*types.*planeswalker.*cardtext.*&.*&[1234]..*'>Planewalkers</a> <br> View by expansion set: <a href='all_sets'>See the sets</a></br> <br> View EDH lands: <a href='edh_lands'>See EDH lands</a><br> $set <br> <p class=\"a\">$txt</p>";
+            $txt = "<style>p.a{font-family:\"Courier New\", Times, serif;}</style><font color=blue size=+3>MAGIC CARDS </font><font color=green size=+1><a href='http://127.0.0.1:60001/blah'>Deck input </a></font>&nbsp;&nbsp;<font color=red size=+1><a href='http://127.0.0.1:60000/dragons.*tarkir&dragons.*tarkir&fate.*reforged&8&1&1'>Draft (DTK,DTK,FRF)</a></font><br>$form<br>Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir&.*&.*'>DTK</a>&nbsp;&nbsp; Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir.*rare&.*&.*'>DTK (Rare)</a><br>Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged&.*&.*'>FRF</a>&nbsp;&nbsp; Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged.*rare&.*&.*'>FRF (Rare)</a> <br> Only planeswalkers: <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&.*types.*planeswalker.*cardtext.*&.*&[1234]..*'>Planewalkers</a> <br> View by expansion set: <a href='all_sets'>See the sets</a></br> <br> 
+            View EDH lands: <a href='edh_lands'>See EDH lands</a><br>
+            b lands <a href='edh_filter_notw_notu_notr_notg'>b</a>
+            bg lands <a href='edh_filter_notw_notu_notr'>bg</a>
+            bgu lands <a href='edh_filter_notw_notr'>bgu</a>
+            br lands <a href='edh_filter_notw_notu_notg'>br</a><br>
+            brg lands <a href='edh_filter_notw_notu'>brg</a>
+            g lands <a href='edh_filter_notw_notu_notb_notr'>g</a>
+            gu lands <a href='edh_filter_notw_notb_notr'>gu</a>
+            gur lands <a href='edh_filter_notw_notb'>gur</a>
+            gw lands <a href='edh_filter_notu_notb_notr'>gw</a><br>
+            gwu lands <a href='edh_filter_notb_notr'>gwu</a>
+            r lands <a href='edh_filter_notw_notu_notb_notg'>r</a>
+            rg lands <a href='edh_filter_notw_notu_notb'>rg</a>
+            rgw lands <a href='edh_filter_notu_notb'>rgw</a><br>
+            rw lands <a href='edh_filter_notu_notb_notg'>rw</a>
+            rwb lands <a href='edh_filter_notu_notg'>rwb</a>
+            u lands <a href='edh_filter_notw_notb_notr_notg'>u</a>
+            ub lands <a href='edh_filter_notw_notr_notg'>ub</a><br>
+            ubr lands <a href='edh_filter_notw_notg'>ubr</a>
+            ur lands <a href='edh_filter_notw_notb_notg'>ur</a>
+            urw lands <a href='edh_filter_notb_notg'>urw</a>
+            w lands <a href='edh_filter_notu_notb_notr_notg'>w</a><br>
+            wb lands <a href='edh_filter_notu_notr_notg'>wb</a>
+            wbg lands <a href='edh_filter_notu_notr'>wbg</a>
+            wu lands <a href='edh_filter_notb_notr_notg'>wu</a>
+            wub lands <a href='edh_filter_notr_notg'>wub</a><br>
+            not b lands <a href='edh_filter_notw_notu_notr_notg'>not b</a><br>
+            not g lands <a href='edh_filter_notw_notu_notb_notr'>not g</a><br>
+            not r lands <a href='edh_filter_notw_notu_notb_notg'>not r</a><br>
+            not u lands <a href='edh_filter_notw_notb_notr_notg'>not u</a><br>
+            not w lands <a href='edh_filter_notu_notb_notr_notg'>not w</a><br>
+            View non red EDH lands: <a href='edh_filter_notr_notw_notg'>See EDH lands</a><br>
+            $set <br> <p class=\"a\">$txt</p>";
             $txt = $txt . " $set";
             #Example <a href='filter?3&8&1&2&1&1&1&0&creature&nacatl&.*'>Green cool search</a> <br>
 
