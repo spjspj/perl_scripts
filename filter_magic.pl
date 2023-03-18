@@ -750,12 +750,11 @@ sub edh_lands
 
                 $s .= " <font size=-2>$c -- ";
                 my $coled = 0;
-                if ($ol =~ m/\{[^}]*?w[^{]*?\}/img) { $s .= " white, "; $coled = 1; }
-                if ($ol =~ m/\{[^}]*?u[^{]*?\}/img) { $s .= " blue, "; $coled = 1; }
-                if ($ol =~ m/\{[^}]*?b[^{]*?\}/img) { $s .= " black, "; $coled = 1; }
-                if ($ol =~ m/\{[^}]*?r[^{]*?\}/img) { $s .= " red, "; $coled = 1; }
-                if ($ol =~ m/\{[^}]*?g[^{]*?\}/img) { $s .= " green, "; $coled = 1; }
-                if ($ol =~ m/tap.*any.*col/img) { $s .= " all_colors "; $coled = 1; }
+                if ($ol =~ m/\{[^}]*?W[^{]*?\}/im) { $s .= " white, "; $coled = 1; }
+                if ($ol =~ m/\{[^}]*?U[^{]*?\}/im) { $s .= " blue, "; $coled = 1; }
+                if ($ol =~ m/\{[^}]*?B[^{]*?\}/im) { $s .= " black, "; $coled = 1; }
+                if ($ol =~ m/\{[^}]*?R[^{]*?\}/im) { $s .= " red, "; $coled = 1; }
+                if ($ol =~ m/\{[^}]*?G[^{]*?\}/im) { $s .= " green, "; $coled = 1; }
 
                 if ($coled == 0)
                 {
@@ -772,8 +771,8 @@ sub edh_lands
                 }
                 else
                 {
-                    #$s .= " <font size=-2>$ol<\/font><br>";
-                    $s .= " </font><br>1 $c<br>\n";
+                    $s .= "$ol<br>";
+                    $s .= "1 $c<br>\n";
                 }
             }
         }
@@ -781,9 +780,9 @@ sub edh_lands
 
     #$s .= join ("..", sort keys (%original_lines));
     # Return this..
-    while ($filter =~ s/not([wubrg])//)
+    while ($filter =~ s/not([wubrg])//im)
     {
-        my $color = $1;
+        my $color = lc($1);
         if ($color eq "w") { $s =~ s/^.*white.*$//img; }
         if ($color eq "u") { $s =~ s/^.*blue.*$//img; }
         if ($color eq "b") { $s =~ s/^.*black.*$//img; }
@@ -795,8 +794,8 @@ sub edh_lands
         if ($color eq "b") { $s =~ s/^.*swamp.*$//img; }
         if ($color eq "r") { $s =~ s/^.*mountain.*$//img; }
         if ($color eq "g") { $s =~ s/^.*forest.*$//img; }
-
     }
+    #$s =~ s/^.*?<br>//img;
     $s =~ s/\n//img;
     $s .= "<br>Finished!<br>";
     print ("$s<<<");
