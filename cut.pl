@@ -668,7 +668,9 @@ sub work_out_ringing_positions
         print ("\n");
         print ('echo "1" | cut.pl stdin "http://mtgoclientdepot.onlinegaming.wizards.com/Graphics/Cards/Pics/134052_typ_reg_sty_010.jpg" "2XM\Mana Crypt.jpg" wget_image');
         print ("\n");
-        print ('echo "1" | cut.pl stdin 1 "HermanCainAward" get_reddit');
+        print ('echo "1" | cut.pl stdin 1 "HermanCainAward" get_reddit\n');
+        print ("\n");
+        print ('echo "1" | cut.pl stdin "1,2,3,4,5" "stuff?" replace_maths');
         print ("\n");
         exit 0;
     }
@@ -719,6 +721,7 @@ sub work_out_ringing_positions
         $term = $ARGV [1];
         $helper = $ARGV [2];
         $operation = $ARGV [3];
+        #print "Starting incoming operators: $0 >$file< >$term< >$helper< >$operation<\n";
     }
 
     my %combos;
@@ -1069,7 +1072,26 @@ sub work_out_ringing_positions
                 $content =~ s/\s\s/ /gim;
                 $content =~ s/\n//gim;
 
-                print $url, "\n\n\n\n\n", "=================\n", $content, "============\n";
+                print $url, "\n\n\n\n\n", "=========>> $line <<========\n", $content, "============\n";
+            }
+        }
+        
+        if ($operation eq "curl")
+        {
+            my $i;
+            {
+                my $url = $term;
+                $url =~ s/XXX/$line/;
+                print ("Looking at :$url:\n");
+                my $curl_command = "D:\\perl_programs\\curl.exe -L -H \"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36\"  \"$line\"";
+                my $content = `$curl_command`;
+                $content =~ s/\s\s/ /gim;
+                $content =~ s/\s\s/ /gim;
+                $content =~ s/\n//gim;
+                $content =~ s/People who viewed.*//gim;
+                $content =~ s/(address|price|latitude|longitude|locality)/\n$1/gim;
+
+                print $url, "\n\n\n\n\n", "=========>> $line <<========\n", $content, "======>> $curl_command <<======\n";
             }
         }
 
@@ -1412,6 +1434,129 @@ sub work_out_ringing_positions
             }
         }
 
+        if ($operation eq "edh_lands")
+        {
+            my $orig_wubrg = "wubrgwubrg";
+            #wub ubr brg rgw gwu
+            my $wubrg = $orig_wubrg;
+            my $orig_full_txt = " lands <a href='edh_filter_notw_notu_notb_notr_notg_'>";
+            my $full_txt = $orig_full_txt;
+
+            my $i = 0;
+            my $j = 0;
+            my %combos;
+            while ($i < 10)
+            {
+                my $j = $i;
+                while ($j < 10)
+                {
+                    if ($j > $i + 2)
+                    {
+                        $j++;
+                        next;
+                    }
+                    my $k = $j;
+                    while ($k < 10)
+                    {
+                        if ($k > $j + 2)
+                        {
+                            $k++;
+                            next;
+                        }
+                        if ($k - $j > $j - $i)
+                        {
+                            $k++;
+                            next;
+                        }
+                        if ($k - $j < $j - $i && $k != $j)
+                        {
+                            $k++;
+                            next;
+                        }
+
+
+                        $wubrg = $orig_wubrg;
+                        $wubrg =~ m/^.{$i}(.)/;
+                        my $col_one = $1;
+                        $wubrg =~ m/^.{$j}(.)/;
+                        my $col_two = $1;
+                        $wubrg =~ m/^.{$k}(.)/;
+                        my $col_three = $1;
+                        $wubrg =~ s/$col_one//;
+                        $wubrg =~ s/$col_two//;
+                        $wubrg =~ s/$col_three//;
+                        $full_txt = $orig_full_txt;
+                        $full_txt =~ s/not$col_one\_//img;
+                        $full_txt =~ s/not$col_two\_//img;
+                        $full_txt =~ s/not$col_three\_//img;
+
+                        $wubrg = "$col_one$col_two$col_three";
+                        my $this_full_txt = $full_txt;
+                        while ($this_full_txt =~ s/_not([wubrg])//im)
+                        {
+                            my $remove_colour = $1;
+                            $wubrg =~ s/$remove_colour//img; 
+                        }
+
+                        my $this_wubrg = $wubrg;
+                        while ($this_wubrg =~ s/^(...)//im)
+                        {
+                            my $str = $1;
+                            $wubrg =~ s/$str(.*)$str/$str$1/img;
+                        }
+                        $this_wubrg = $wubrg;
+                        while ($this_wubrg =~ s/^(..)//im)
+                        {
+                            my $str = $1;
+                            $wubrg =~ s/$str(.*)$str/$str$1/img;
+                        }
+                        $this_wubrg = $wubrg;
+                        while ($this_wubrg =~ s/^(.)//im)
+                        {
+                            my $str = $1;
+                            $wubrg =~ s/$str(.*)$str/$str$1/img;
+                        }
+
+                        $full_txt =~ s/_'/'/g;
+
+                        if (not defined ($combos {"$wubrg $full_txt$wubrg<\/a><br>"}))
+                        {
+                            $combos {"$wubrg $full_txt$wubrg<\/a><br>"} = 1;
+                            print ("$col_one, $col_two, $col_three >> $wubrg $full_txt$wubrg<\/a><br>\n");
+                        }
+                        $k++;
+                    }
+                    $j++;
+                }
+                $i++;
+            }
+            
+            $i = 0;
+            $j = 0;
+            $orig_wubrg = "wubrg";
+            while ($i < 5)
+            {
+                $wubrg = $orig_wubrg;
+                $wubrg =~ m/^.{$i}(.)/;
+                my $col_one = $1;
+                $wubrg =~ s/$col_one//;
+                $full_txt = $orig_full_txt;
+                $full_txt =~ s/not$col_one\_//img;
+                $full_txt =~ s/_'/'/g;
+
+                $wubrg = "not $col_one";
+                my $this_full_txt = $full_txt;
+                while ($this_full_txt =~ s/_not([wubrg])//im)
+                {
+                    my $remove_colour = $1;
+                    $wubrg =~ s/$remove_colour//img; 
+                }
+
+                print ("$wubrg $full_txt$wubrg<\/a><br>\n");
+                $i++;
+            }
+        }
+
         if ($operation eq "get_strings")
         {
             if ($line =~ m/\/\//i)
@@ -1498,6 +1643,7 @@ sub work_out_ringing_positions
              `del c:\\tmp\\intermediate`;
              `del c:\\tmp\\intermediate2`;
              $term =~ s/"//g;
+             
              print "Now doing: $0 $file \"$term\" xxxxxx egrep > c:\\tmp\\intermediate\n";
              my $egrep = `$0 $file \"$term\" xxxxxx egrep > c:\\tmp\\intermediate`;
              print "Now doing: $0 c:\\tmp\\intermediate \"$term\" -1 grep > c:\\tmp\\intermediate2\n";
@@ -2007,6 +2153,7 @@ sub work_out_ringing_positions
             #$line =~ s/$term/$helper/gi;
             print ("$orig_line\n");
         }
+
         if ($operation eq "dedup_line")
         {
             $line =~ m/::(.*)::/;
@@ -2041,6 +2188,117 @@ sub work_out_ringing_positions
                 }
             }
             $matrix_row ++;
+        }
+
+        if ($operation eq "replace_maths")
+        {
+            my $equation = $term;
+            my $orig_equation = $term;
+
+            my $i = 0;
+            while ($equation =~ s/,//)
+            {
+                $i++;
+            }
+            my $j = 0;
+            my $operations = "";
+            my $num_operations = 1;
+            while ($j < $i)
+            {
+                $j++;
+                $operations .= "0";
+                $num_operations *= 4;
+            }
+            print ("Found $i operations to do.. ($operations)\n");
+            if ($i > 7)
+            {
+                print ("Too many operations..\n");
+            }
+
+            my $num = 0;
+            my $a;
+            my $b;
+            my $c;
+            my $d;
+            my $e;
+            my $f;
+            my $g;
+
+            my %equations;
+            for ($a = 0; $a < 4; $a++)
+            {
+                my $equation = $orig_equation;
+                if ($a == 0) { $equation =~ s/,/+/; }
+                if ($a == 1) { $equation =~ s/,/-/; }
+                if ($a == 2) { $equation =~ s/,/\//; }
+                if ($a == 3) { $equation =~ s/,/*/; }
+                my $a_equation = $equation;
+
+                for ($b = 0; $b < 4; $b++)
+                {
+                    $equation = $a_equation;
+                    if ($b == 0) { $equation =~ s/,/+/; }
+                    if ($b == 1) { $equation =~ s/,/-/; }
+                    if ($b == 2) { $equation =~ s/,/\//; }
+                    if ($b == 3) { $equation =~ s/,/*/; }
+                    my $b_equation = $equation;
+                    for ($c = 0; $c < 4; $c++)
+                    {
+                        $equation = $b_equation;
+                        if ($c == 0) { $equation =~ s/,/+/; }
+                        if ($c == 1) { $equation =~ s/,/-/; }
+                        if ($c == 2) { $equation =~ s/,/\//; }
+                        if ($c == 3) { $equation =~ s/,/*/; }
+                        my $c_equation = $equation;
+                        for ($d = 0; $d < 4; $d++)
+                        {
+                            $equation = $c_equation;
+                            if ($d == 0) { $equation =~ s/,/+/; }
+                            if ($d == 1) { $equation =~ s/,/-/; }
+                            if ($d == 2) { $equation =~ s/,/\//; }
+                            if ($d == 3) { $equation =~ s/,/*/; }
+                            my $d_equation = $equation;
+                            for ($e = 0; $e < 4; $e++)
+                            {
+                                $equation = $d_equation;
+                                if ($e == 0) { $equation =~ s/,/+/; }
+                                if ($e == 1) { $equation =~ s/,/-/; }
+                                if ($e == 2) { $equation =~ s/,/\//; }
+                                if ($e == 3) { $equation =~ s/,/*/; }
+                                my $e_equation = $equation;
+                                for ($f = 0; $f < 4; $f++)
+                                {
+                                    $equation = $e_equation;
+                                    if ($f == 0) { $equation =~ s/,/+/; }
+                                    if ($f == 1) { $equation =~ s/,/-/; }
+                                    if ($f == 2) { $equation =~ s/,/\//; }
+                                    if ($f == 3) { $equation =~ s/,/*/; }
+                                    my $f_equation = $equation;
+                                    for ($g = 0; $g < 4; $g++)
+                                    {
+                                        $equation = $f_equation;
+                                        if ($g == 0) { $equation =~ s/,/+/; }
+                                        if ($g == 1) { $equation =~ s/,/-/; }
+                                        if ($g == 2) { $equation =~ s/,/\//; }
+                                        if ($g == 3) { $equation =~ s/,/*/; }
+                                        $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                                    }
+                                    $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                                }
+                                $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                            }
+                            $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                        }
+                        $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                    }
+                    $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                }
+                $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+            }
+
+            print join ("\n", sort keys(%equations));
+
+            exit;
         }
 
         if ($operation eq "str_condense")
@@ -2117,12 +2375,12 @@ sub work_out_ringing_positions
             print "\n";
         }
         
-        if ($operation eq "sortn")
+        if ($operation eq "sort" || $operation eq "sortn")
         {
             $ulines {$line} = 1;
             $ulines_count ++;
         }
-        
+
         if ($operation eq "wordcombos")
         {
             my @fs = split /$term/, $line;
@@ -2315,53 +2573,28 @@ sub work_out_ringing_positions
         if ($operation eq "calendar_pay")
         {
             $thursday_is_payday = 555;
-            my $month1_string = print_month_w_payday ($term, 1, 3, 26, "Z", "Z", "Z", "Z"); 
+            my $month1_string = print_month_w_payday ($term, 1, 2, 26, "Z", "Z", "Z", "Z"); 
+               $month1_string = add_school_holidays ($month1_string, 1, 30);
+               $month1_string = add_my_school_holidays ($month1_string, 25, 25);
             my $month2_string = print_month_w_payday ($term, 2, "Z", "Z", "Z", "Z"); 
-               $month2_string = add_school_holidays ($month2_string, 18, 18);
-               $month2_string = add_my_school_holidays ($month2_string, 25, 25);
-            my $month3_string = print_month_w_payday ($term, 3, 14, "Z", "Z", "Z", "Z");
-               $month3_string = add_school_holidays ($month3_string, 4, 4);
-               $month3_string = add_my_school_holidays ($month3_string, 11, 11);
-               $month3_string = add_school_holidays ($month3_string, 18, 18);
-               $month3_string = add_my_school_holidays ($month3_string, 25, 25);
+            my $month3_string = print_month_w_payday ($term, 3, 13, "Z", "Z", "Z", "Z");
             print_months_html ($month1_string, $month2_string, $month3_string, $term);
-            $month1_string = print_month_w_payday ($term, 4, 15, 18, 25, "Z", "Z", "Z", "Z");
-               $month1_string = add_school_holidays ($month1_string, 1, 1);
-               $month1_string = possible_school_holidays ($month1_string, 29, 29);
-            $month2_string = print_month_w_payday ($term, 5, 30, "Z", "Z", "Z", "Z");
-               $month2_string = possible_school_holidays ($month2_string, 6, 6);
-               $month2_string = add_my_school_holidays ($month2_string, 13, 13);
-               $month2_string = add_school_holidays ($month2_string, 20, 20);
-               $month2_string = add_my_school_holidays ($month2_string, 27, 27);
-            $month3_string = print_month_w_payday ($term, 6, 13, "Z", "Z", "Z", "Z");
-               $month3_string = add_school_holidays ($month3_string, 3, 3);
-               $month3_string = add_my_school_holidays ($month3_string, 10, 10);
-               $month3_string = add_school_holidays ($month3_string, 17, 17);
-               $month3_string = add_my_school_holidays ($month3_string, 24, 24);
+            $month1_string = print_month_w_payday ($term, 4, 7, 8, 9, 10, 25, "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 7, 23);
+            $month2_string = print_month_w_payday ($term, 5, 29, "Z", "Z", "Z", "Z");
+            $month3_string = print_month_w_payday ($term, 6, 12, "Z", "Z", "Z", "Z");
             print_months_html ($month1_string, $month2_string, $month3_string, 0);
             $month1_string = print_month_w_payday ($term, 7, "Z", "Z", "Z", "Z");
-               $month1_string = add_school_holidays ($month1_string, 29, 29);
+               $month1_string = add_school_holidays ($month1_string, 1, 16);
             $month2_string = print_month_w_payday ($term, 8, "Z", "Z", "Z", "Z");
-               $month2_string = add_my_school_holidays ($month2_string, 5, 5);
-               $month2_string = add_school_holidays ($month2_string, 12, 12);
-               $month2_string = add_my_school_holidays ($month2_string, 19, 19);
-               $month2_string = add_school_holidays ($month2_string, 26, 26);
             $month3_string = print_month_w_payday ($term, 9, "Z", "Z", "Z", "Z");
-               $month3_string = add_my_school_holidays ($month3_string, 2, 2);
-               $month3_string = add_school_holidays ($month3_string, 9, 9);
-               $month3_string = add_my_school_holidays ($month3_string, 16, 16);
+               $month3_string = add_school_holidays ($month3_string, 23, 30);
             print_months_html ($month1_string, $month2_string, $month3_string, 0);
-            $month1_string = print_month_w_payday ($term, 10, 3, "Z", "Z", "Z", "Z");
-               $month1_string = add_school_holidays ($month1_string, 14, 14);
-               $month1_string = add_my_school_holidays ($month1_string, 21, 21);
-               $month1_string = add_school_holidays ($month1_string, 28, 28);
+            $month1_string = print_month_w_payday ($term, 10, 2, "Z", "Z", "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 1, 8);
             $month2_string = print_month_w_payday ($term, 11, "Z", "Z", "Z", "Z");
-               $month2_string = add_my_school_holidays ($month2_string, 4, 4);
-               $month2_string = add_school_holidays ($month2_string, 11, 11);
-               $month2_string = add_my_school_holidays ($month2_string, 18, 18);
-               $month2_string = possible_school_holidays ($month2_string, 25, 25);
-            $month3_string = print_month_w_payday ($term, 12, 25, 26, 27, "Z", "Z", "Z");
-               $month3_string = possible_school_holidays ($month3_string, 2, 2);
+            $month3_string = print_month_w_payday ($term, 12, 25, 26, "Z", "Z", "Z", "Z");
+               $month3_string = add_school_holidays ($month3_string, 16, 31);
             print_months_html ($month1_string, $month2_string, $month3_string, -1);
         }
         
@@ -2732,6 +2965,22 @@ sub work_out_ringing_positions
         if ($helper eq "reverse")
         {
             @lines = reverse sort {$a <=> $b} (keys (%ulines));
+        }
+        foreach $line (@lines)
+        {
+            print  ("$line\n");
+        }
+        print  ("\nTotal lines found were: $ulines_count\n");
+    }
+    
+    if ($operation eq "sort")
+    {
+        my $line;
+        my @lines = sort (keys (%ulines));
+
+        if ($helper eq "reverse")
+        {
+            @lines = reverse sort (keys (%ulines));
         }
         foreach $line (@lines)
         {
