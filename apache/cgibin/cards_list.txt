@@ -1,0 +1,88 @@
+"All Will Be One",already,e,20230225,ronin,red
+"Arcane Adaptation",want,e,,,blue
+"Arcane Lighthouse",want,l,,,colorless
+"Arcum Dagsson",already,c,20220501,ronin,blue
+"Birgi, God of Storytelling",want,c,,,red
+"Bootleggers' Stash",already,a,nodate,ronin,green
+"Bountiful Promenade",want,l,,,colorless
+"Bramble Sovereign",already,c,20221203,ronin,green
+"Buried Ruin",already,l,20221002,ronin,colorless
+"Capsize",want,i,,,blue
+"City of Solitude",e,20211228,plentyofgames,green
+"Crown of Empires",already,a,20220501,ronin,colorless
+"Deserted Beach",already,l,nodate,ronin,colorless
+"Disciple of the Vault",already,c,20230329,endgames,black
+"Druid of Purification",already,c,nodate,ronin,green
+"Elvish Reclaimer",already,c,20230329,endgames,green
+"Empress Galina",already,c,20221009,ronin,blue
+"Esper Sentinel",want,c,,,white
+"Farewell",want,s,,,white
+"Fierce Guardianship",want,i,,,blue
+"Force of Will",want,i,,,blue
+"Fumble",alread,i,20220201,,blue
+"Geth's Grimoire",already,a,nodate,ronin,colorless
+"Giada, Font of Hope",already,c,20220501,ronin,white
+"Head Games",already,s,nodate,ronin,black
+"Homeward Path",already,l,20230329,endgames,colorless
+"Horobi, Death's Wail",already,c,nodate,ronin,black
+"Imperial Recruiter",already,c,20220926,ronin,red
+"Jace Beleren",want,p,,,blue
+"Kodama of the West Tree",already,c,20230218,ronin,green
+"Korvold, Fae-Cursed King",want,c,,,multicolored
+"Lae_Zel_s Acrobatics",already,e,nodate,ronin
+"Library of Leng",a,20211228,plentyofgames,colorless
+"Llawan, Cephalid Empress",c,20211228,plentyofgames,blue
+"Luminous Broodmoth",already,c,20230323,ronin,white
+"Luxior, Giada's Gift",already,a,nodate,ronin,colorless
+"Luxury Suite",want,l,,,colorless
+"Machine God's Effigy",want,a,,,colorless
+"Mana Web",want,a,,,colorless
+"Maskwood Nexus",c,20220105,ronin,blue
+"Morphic Pool",want,l,,,colorless
+"Muldrotha, the Gravetide",already,c,20230329,endgames,multicolored
+"Mystic Sanctuary",already,l,20221002,ronin,colorless
+"Necropotence",want,e,,,black
+"Nevinyrral's Disk",want,a,,,colorless
+"Niv-Mizzet Reborn",c,20211228,plentyofgames,multicolored
+"Ob Nixilis, the Fallen",want,c,,,black
+"Old Gnawbone",already,c,20230329,endgames,green
+"Omniscience",want,e,,,blue
+"Overgrown Farmland",want,l,,,colorless
+"Painter's Servant",want,c,,,colorless
+"Powerleech",want,e,,,green
+"Propaganda",want,e,,,blue
+"Reality Twist",already,e,20230329,endgames,blue
+"Rejuvenating Springs",want,l,,,colorless
+"Reshape the Earth",already,s,nodate,ronin,green
+"Retrofitter Foundry",want,a,,,colorless
+"Rockfall Vale",want,l,,,colorless
+"Root Maze",want,e,,,green
+"Rootpath Purifier",already,c,20230329,endgames,green
+"Roots of Life",already,e,20230329,endgames,green
+"Sapphire Medallion",want,a,,,colorless
+"Scepter of Empires",already,a,20230329,endgames,colorless
+"Sea of Clouds",want,l,,,colorless
+"Seat of the Synod",want,l,,,colorless
+"Shipwreck Marsh",want,l,,,colorless
+"Shorikai, Genesis Engine",already,c,20230218,ronin,multicolored
+"Solemn Simulacrum",want,c,,,colorless
+"Spectator Seating",want,l,,,colorless
+"Stimulus Package",already,e,20230329,endgames,multicolored
+"Storage Matrix",want,a,,,colorless
+"Stranglehold",already,e,20230313,ronin,red
+"Terror of the Peaks",already,c,20230329,endgames,red
+"Thassa, Deep Dwelling",c,20220105,ronin,blue
+"The World Tree ",already,l,<202209,ronin,colorless
+"Thrasios, Triton Hero",want,c,,,multicolored
+"Throne of Empires",already,a,20220501,ronin,colorless
+"Tireless Tracker",c,20211228,plentyofgames,green
+"Tormod's Crypt",already,a,20221002,ronin,colorless
+"Training Center",want,l,,,colorless
+"Tranquil Grove",want,e,,,green
+"Treasure Vault",l,<202209,ronin,colorless
+"Vault of Champions",want,l,,,colorless
+"Vito, Thorn of the Dusk Rose",already,c,20230319,ronin,black
+"War Room",l,<202209,ronin,colorless
+"War Tax",already,e,20230329,endgames,blue
+"Warp World",s,20211228,plentyofgames,red
+"Yorion, Sky Nomad",already,c,20221009,ronin,multicolored
