@@ -7,6 +7,14 @@ use warnings;
 print "Content-type: text/html; charset=iso-8859-1\n\n";
 print "Ronin Games queries<br>\n";
 
+# Read all cards
+my %all_cards;
+my %all_cards_have;
+my %all_cards_card_type;
+my %all_cards_date;
+my %all_cards_place;
+my %all_cards_font;
+
 #https://roningames.com.au/search?type=product&options[prefix]=last&q=Druid+of+Purification
 my %a_cards;
 my %c_cards;
@@ -19,159 +27,127 @@ my %s_cards;
 my %already_bought_a_cards;
 my %already_bought_c_cards;
 my %already_bought_e_cards;
+my %already_bought_i_cards;
 my %already_bought_l_cards;
 my %already_bought_p_cards;
 my %already_bought_s_cards;
 
-$already_bought_a_cards {"Bootleggers' Stash"} = 1;
-$already_bought_a_cards {"Crown of Empires"} = 1; # 20220501
-$already_bought_a_cards {"Geth's Grimoire"} = 1;
-$already_bought_a_cards {"Luxior, Giada's Gift"} = 1;
-$already_bought_a_cards {"Thrown of Empires"} = 1; # 20220501
-$already_bought_c_cards {"Arcum Dagsson"} = 1; # 20220501
-$already_bought_c_cards {"Bramble Sovereign"} = 1; # 20221203
-$already_bought_c_cards {"Druid of Purification"} = 1;
-$already_bought_c_cards {"Empress Galina"} = 1;
-$already_bought_c_cards {"Giada, Font of Hope"} = 1; # 20220501
-$already_bought_c_cards {"Horobi, Death's Wail"} = 1;
-$already_bought_c_cards {"Yorion, Sky Nomad"} = 1;
-$already_bought_l_cards {"Deserted Beach"} = 1;
-$already_bought_l_cards {"The World Tree "} = 1;
-$already_bought_s_cards {"Head Games"} = 1;
 
+sub read_all_cards
+{
+    my $CURRENT_FILE = "D:/D_Downloads/apache_lounge/Apache24/cgibin/cards_list.txt";
+    open ALL, $CURRENT_FILE; 
 
-my %for_blue_edh;
-$for_blue_edh {"Arcane Lighthouse -- Land"} = 1;
-$for_blue_edh {"Buried Ruin -- Land ** "} = 1;
-$for_blue_edh {"Capsize -- Instant ** "} = 1;
-$for_blue_edh {"Fierce Guardianship -- Instant"} = 1;
-$for_blue_edh {"Force of Will -- Instant"} = 1;
-$for_blue_edh {"Homeward Path -- Land"} = 1;
-$for_blue_edh {"Jace Beleren -- Planeswalker"} = 1;
-$for_blue_edh {"Mana Web -- Artifact"} = 1;
-$for_blue_edh {"Mystic Sanctuary -- Land"} = 1;
-$for_blue_edh {"Nevinyrral's Disk -- Artifact"} = 1;
-$for_blue_edh {"Propaganda -- Enchantment"} = 1;
-$for_blue_edh {"Sapphire Medallion -- Artifact"} = 1;
-$for_blue_edh {"Seat of the Synod -- Land"} = 1;
-$for_blue_edh {"Solemn Simulacrum -- Creature **"} = 1;
-$for_blue_edh {"Tormod's Crypt -- Artifact **"} = 1;
+    #"Shorikai, Genesis Engine",already,c,20230218,ronin
 
+    while (<ALL>)
+    {
+        chomp $_;
+        my $line = $_;
+        if ($line =~ m/^"(.+?)",already,(.),/)
+        {
+            my $card = $1;
+            my $card_type = $2;
 
-$a_cards {"Retrofitter Foundry"} = 1;
-$a_cards {"Scepter of Empires"} = 1;
-$a_cards {"Storage Matrix"} = 1;
-$c_cards {"Disciple of the Vault"} = 1;
-$c_cards {"Elvish Reclaimer"} = 1;
-$c_cards {"Esper Sentinel"} = 1;
-$c_cards {"Imperial Recruiter"} = 1;
-$c_cards {"Kodama of the West Tree"} = 1;
-$c_cards {"Korvold, Fae-Cursed King"} = 1;
-$c_cards {"Luminous Broodmoth"} = 1;
-$c_cards {"Ob Nixilis, the Fallen"} = 1;
-$c_cards {"Old Gnawbone"} = 1;
-$c_cards {"Painter's Servant"} = 1;
-$c_cards {"Shorikai, Genesis Engine"} = 1;
-$c_cards {"Terror of the Peaks"} = 1;
-$c_cards {"Thrasios, Triton Hero"} = 1;
-$c_cards {"Vito, Thorn of the Dusk Rose"} = 1;
-$e_cards {"Necropotence"} = 1;
-$e_cards {"Powerleech"} = 1;
-$e_cards {"Reality Twist"} = 1;
-$e_cards {"Roots of Life"} = 1;
-$e_cards {"Stimulus Package"} = 1;
-$e_cards {"Stranglehold"} = 1;
-$e_cards {"Tranquil Grove"} = 1;
-$e_cards {"War Tax"} = 1;
-$i_cards {"Lae'Zel's Acrobatics"} = 1;
-$l_cards {"Bountiful Promenade"} = 1;
-$l_cards {"Luxury Suite"} = 1;
-$l_cards {"Morphic Pool"} = 1;
-$l_cards {"Overgrown Farmland"} = 1;
-$l_cards {"Rejuvenating Springs"} = 1;
-$l_cards {"Rockfall Vale"} = 1;
-$l_cards {"Sea of Clouds"} = 1;
-$l_cards {"Shipwreck Marsh"} = 1;
-$l_cards {"Spectator Seating"} = 1;
-$l_cards {"Training Center"} = 1;
-$l_cards {"Vault of Champions"} = 1;
-$p_cards {"No Planeswalker"} = 1;
-$s_cards {"Farewell"} = 1;
-$s_cards {"Reshape the Earth"} = 1;
+            if (lc($card_type) eq "a") { $already_bought_a_cards {$card} = 1; }
+            if (lc($card_type) eq "c") { $already_bought_c_cards {$card} = 1; }
+            if (lc($card_type) eq "e") { $already_bought_e_cards {$card} = 1; }
+            if (lc($card_type) eq "l") { $already_bought_l_cards {$card} = 1; }
+            if (lc($card_type) eq "p") { $already_bought_p_cards {$card} = 1; }
+        }
+        
+        if ($line =~ m/^"(.+?)",want,(.),/)
+        {
+            my $card = $1;
+            my $card_type = $2;
+
+            if (lc($card_type) eq "a") { $a_cards {$card} = 1; }
+            if (lc($card_type) eq "c") { $c_cards {$card} = 1; }
+            if (lc($card_type) eq "e") { $e_cards {$card} = 1; }
+            if (lc($card_type) eq "l") { $l_cards {$card} = 1; }
+            if (lc($card_type) eq "p") { $p_cards {$card} = 1; }
+        }
+    }
+    close ALL;
+}
+
 
 my $k;
-print ("<h2>For Blue EDH deck..:</h2><br>\n");
-foreach $k (sort keys (%for_blue_edh))
-{
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k\">$k</a><br>\n");
-}
+my $https_games = "https://roningames.com.au/search?type=product&options[prefix]=last&q=";
+
+read_all_cards ();
 print ("<h2>Artifact cards:</h2><br>\n");
 foreach $k (sort keys (%a_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k artifact\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k artifact\">$k</a><br>\n");
 }
 print ("<h2>Creature cards:</h2><br>\n");
 foreach $k (sort keys (%c_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k creature\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k creature\">$k</a><br>\n");
 }
 print ("<h2>Enchantment cards:</h2><br>\n");
 foreach $k (sort keys (%e_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k enchantment\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k enchantment\">$k</a><br>\n");
 }
 print ("<h2>Instant cards:</h2><br>\n");
 foreach $k (sort keys (%i_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k instant\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k instant\">$k</a><br>\n");
 }
 print ("<h2>Land cards:</h2><br>\n");
 foreach $k (sort keys (%l_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k land\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k land\">$k</a><br>\n");
 }
 print ("<h2>Sorcery cards:</h2><br>\n");
 foreach $k (sort keys (%s_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k sorcery\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k sorcery\">$k</a><br>\n");
 }
 
 print ("<h2>Planeswalker cards:</h2><br>\n");
 foreach $k (sort keys (%p_cards))
 {
-    print ("<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k planeswalker\">$k</a><br>\n");
+    print ("<a href=\"$https_games$k planeswalker\">$k</a><br>\n");
 }
 
 print ("<h4><font color=grey>&nbsp;&nbsp;Already bought: Artifact cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_a_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k artifact\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k artifact\">$k</a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Creature cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_c_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k creature\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k creature\">$k</a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Enchantment cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_e_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k enchantment\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k enchantment\">$k</a><br>\n");
+}
+print ("<h4>&nbsp;&nbsp;Already bought Instant cards:</h4><br>\n");
+foreach $k (sort keys (%already_bought_i_cards))
+{
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k instant\">$k</a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Land cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_l_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k land\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k land\">$k</a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Sorcery cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_s_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k sorcery\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k sorcery\">$k</a><br>\n");
 }
 
 print ("<h4>&nbsp;&nbsp;Already bought Planeswalker cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_p_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$k planeswalker\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k planeswalker\">$k</a><br>\n");
 }
 print ("</font>\n");
 
@@ -195,4 +171,5 @@ print ("<a href=\"https://i.imgur.com/wZIV4Al.png\">Boxes1</a><br>");
 print ("<a href=\"https://imgur.com/a/9uj84ka\">Boxes2</a><br>");
 print ("<a href=\"https://imgur.com/a/Bdt159R\">EDH Decklists</a><br>");
 print ("<a href=\"https://www.mtggoldfish.com/deck/3985938#paper\">My Wanted list..</a><br>");
+print ("<h2><a href=\"https://www.mtggoldfish.com/deck_searches/create?utf8=%E2%9C%93&deck_search%5Bname%5D=&deck_search%5Bformat%5D=free_form&deck_search%5Btypes%5D%5B%5D=&deck_search%5Btypes%5D%5B%5D=tournament&deck_search%5Btypes%5D%5B%5D=budget&deck_search%5Btypes%5D%5B%5D=user&deck_search%5Bplayer%5D=spjspj&deck_search%5Bdate_range%5D=12%2F01%2F2017+-+11%2F08%2F2055&deck_search%5Bdeck_search_card_filters_attributes%5D%5B0%5D%5Bcard%5D=&deck_search%5Bdeck_search_card_filters_attributes%5D%5B0%5D%5Bquantity%5D=1&deck_search%5Bdeck_search_card_filters_attributes%5D%5B0%5D%5Btype%5D=maindeck&deck_search%5Bdeck_search_card_filters_attributes%5D%5B1%5D%5Bcard%5D=&deck_search%5Bdeck_search_card_filters_attributes%5D%5B1%5D%5Bquantity%5D=1&deck_search%5Bdeck_search_card_filters_attributes%5D%5B1%5D%5Btype%5D=maindeck&counter=2&commit=Search\">Search my EDH decks</a><br></h2>");
 print ("<br><br>&nbsp;&nbsp;<a href=\"https://rainymood.com/audio1112/0.mp3\">Rainy Mood</a><br>\n");
