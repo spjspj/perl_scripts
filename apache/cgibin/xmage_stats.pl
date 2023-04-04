@@ -2,16 +2,15 @@
 # -T
 use strict;
 use warnings;
-
 open BAR_CHART, "> D:\\D_Downloads\\apache_lounge\\Apache24\\htdocs\\xmage_stats.html";
 
 print BAR_CHART "<!DOCTYPE html>\n";
-print BAR_CHART "<html lang=\"en\"><head>\n";
-print BAR_CHART "<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n";
+print BAR_CHART "<html lang=\"en\">\n";
+print BAR_CHART "<head>\n";
 print BAR_CHART "<meta charset=\"UTF-8\">\n";
 print BAR_CHART "<title>Xmage Users</title>\n";
-print BAR_CHART "<link rel=\"stylesheet\" href=\"Xmage%20Users_weekends_files/normalize.min.css\">\n";
-print BAR_CHART "<link rel=\"stylesheet\" href=\"Xmage%20Users_weekends_files/css.css\">\n";
+print BAR_CHART "<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css\">\n";
+print BAR_CHART "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Khand'>\n";
 print BAR_CHART "    <style>\n";
 print BAR_CHART "        * {\n";
 print BAR_CHART "        box-sizing: border-box;\n";
@@ -42,12 +41,12 @@ print BAR_CHART "    window.parent.postMessage (\"resize\", \"*\");\n";
 print BAR_CHART "}\n";
 print BAR_CHART "</script>\n";
 print BAR_CHART "</head>\n";
-print BAR_CHART "<body translate=\"no\">\n";
+print BAR_CHART "<body translate=\"no\" >\n";
 print BAR_CHART "<h1>Hourly stats for the maximum number of players on xmage.today</h1><br>\n";
 print BAR_CHART "<h3>Hover over one of the bars in the graph below to view that hour's stats</h3><br>\n";
-print BAR_CHART "<canvas id=\"xmage_canvas\" style=\"background: white;\" width=\"500\" height=\"500\"></canvas>\n";
+print BAR_CHART "<canvas id=\"xmage_canvas\" style=\"background: white;\"></canvas>\n";
 print BAR_CHART "<legend for=\"xmage_canvas\"></legend>\n";
-print BAR_CHART "<script id=\"rendered-js\">\n";
+print BAR_CHART "<script id=\"rendered-js\" >\n";
 print BAR_CHART "var canvas = document.getElementById (\"xmage_canvas\");\n";
 print BAR_CHART "canvas.width = 500;\n";
 print BAR_CHART "canvas.height = 500;\n";
