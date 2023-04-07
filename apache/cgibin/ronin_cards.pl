@@ -44,7 +44,7 @@ sub read_all_cards
     {
         chomp $_;
         my $line = $_;
-        if ($line =~ m/^"(.+?)",already,(.),/)
+        if ($line =~ m/^([^;]+?);already;(.);/)
         {
             my $card = $1;
             my $card_type = $2;
@@ -52,11 +52,13 @@ sub read_all_cards
             if (lc($card_type) eq "a") { $already_bought_a_cards {$card} = 1; }
             if (lc($card_type) eq "c") { $already_bought_c_cards {$card} = 1; }
             if (lc($card_type) eq "e") { $already_bought_e_cards {$card} = 1; }
+            if (lc($card_type) eq "i") { $already_bought_i_cards {$card} = 1; }
             if (lc($card_type) eq "l") { $already_bought_l_cards {$card} = 1; }
             if (lc($card_type) eq "p") { $already_bought_p_cards {$card} = 1; }
+            if (lc($card_type) eq "s") { $already_bought_s_cards {$card} = 1; }
         }
         
-        if ($line =~ m/^"(.+?)",want,(.),/)
+        if ($line =~ m/^([^;]+?);want;(.);/)
         {
             my $card = $1;
             my $card_type = $2;
@@ -64,8 +66,10 @@ sub read_all_cards
             if (lc($card_type) eq "a") { $a_cards {$card} = 1; }
             if (lc($card_type) eq "c") { $c_cards {$card} = 1; }
             if (lc($card_type) eq "e") { $e_cards {$card} = 1; }
+            if (lc($card_type) eq "i") { $i_cards {$card} = 1; }
             if (lc($card_type) eq "l") { $l_cards {$card} = 1; }
             if (lc($card_type) eq "p") { $p_cards {$card} = 1; }
+            if (lc($card_type) eq "s") { $s_cards {$card} = 1; }
         }
     }
     close ALL;
@@ -113,41 +117,41 @@ foreach $k (sort keys (%p_cards))
     print ("<a href=\"$https_games$k planeswalker\">$k</a><br>\n");
 }
 
-print ("<h4><font color=grey>&nbsp;&nbsp;Already bought: Artifact cards:</h4><br>\n");
+print ("<h4><br><br><font color=grey>&nbsp;&nbsp;Already bought: Artifact cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_a_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k artifact\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k artifact\"><font size=-2>$k</font></a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Creature cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_c_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k creature\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k creature\"><font size=-2>$k</font></a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Enchantment cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_e_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k enchantment\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k enchantment\"><font size=-2>$k</font></a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Instant cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_i_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k instant\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k instant\"><font size=-2>$k</font></a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Land cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_l_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k land\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k land\"><font size=-2>$k</font></a><br>\n");
 }
 print ("<h4>&nbsp;&nbsp;Already bought Sorcery cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_s_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k sorcery\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k sorcery\"><font size=-2>$k</font></a><br>\n");
 }
 
 print ("<h4>&nbsp;&nbsp;Already bought Planeswalker cards:</h4><br>\n");
 foreach $k (sort keys (%already_bought_p_cards))
 {
-    print ("&nbsp;&nbsp;<a href=\"$https_games$k planeswalker\">$k</a><br>\n");
+    print ("&nbsp;&nbsp;<a href=\"$https_games$k planeswalker\"><font size=-2>$k</font></a><br>\n");
 }
 print ("</font>\n");
 
