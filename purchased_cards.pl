@@ -117,7 +117,8 @@ my %all_cards_have;
 my %all_cards_card_type;
 my %all_cards_date;
 my %all_cards_place;
-my %all_cards_font;
+my %all_cards_color;
+my %all_cards_price;
 sub read_all_cards
 {
     my $CURRENT_FILE = "D:/D_Downloads/apache_lounge/Apache24/cgibin/cards_list.txt";
@@ -137,21 +138,35 @@ sub read_all_cards
     {
         chomp $_;
         my $line = $_;
-        if ($line =~ m/^"(.+?)",(already|want),(.),(.*?),(.*?),(.*)/)
+        if ($line =~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\$\d+\.\d\d|\$\d+|);/)
         {
             my $card = $1;
             my $have = $2;
             my $card_type = $3;
             my $date_of_purchase = $4;
             my $place_of_purchase = $5;
-            my $font = $6;
+            my $color = $6;
+            my $price = $7;
 
             $all_cards {$card} = 1;
             $all_cards_have {$card} = $have;
             $all_cards_card_type {$card} = $card_type;
             $all_cards_date {$card} = $date_of_purchase;
             $all_cards_place {$card} = $place_of_purchase;
-            $all_cards_font {$card} = $font;
+            $all_cards_color {$card} = $color;
+            $all_cards_price {$card} = $price;
+        }
+        if ($line =~ m/^([^;]+?);(want);(.);;;([^;]+?);/)
+        {
+            my $card = $1;
+            my $have = $2;
+            my $card_type = $3;
+            my $color = $4;
+
+            $all_cards {$card} = 1;
+            $all_cards_have {$card} = $have;
+            $all_cards_card_type {$card} = $card_type;
+            $all_cards_color {$card} = $color;
         }
     }
     close ALL;
@@ -267,19 +282,76 @@ sub is_authorized
             copy "d:/perl_programs/aaa.jpg", \*CLIENT;
             next;
         }
-        
-        if ($txt =~ m/\/card\?(.*)\Wplace\?(.*) HTTP/im)
+        # Have got all information?? https://xmage.au/purchasedcards/card_info?card_name=Arcane+Adaptation&purchased=ronin&color=blue&type=enchantment&price=0.00 HTTP/1.1
+        if ($txt =~ m/card_info\?card_name=(.*?)&purchased=(.*?)&color=(.*?)&type=(.*?)&price=((\d+)\.(\d+)|\d+) HTTP/im)
+        {
+            my $card = $1;
+            my $place = $2;
+            my $color = $3;
+            my $card_type = $4;
+            my $price = $5;
+
+            $color =~ m/^(.)/;
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+            my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+            
+            my $card_type_fl = $card_type;
+            my $card_type_fl =~ s/^(.).*/$1/;
+
+            my $card_line = "\"$card\",already,$card_type_fl,$yyyymmdd,$place,$color,$price";
+            open PURCHASES, ">> D:/D_Downloads/apache_lounge/Apache24/cgibin/purchases.txt";
+            print PURCHASES $card_line . "\n";
+            close PURCHASES;
+            my $html_text = "Noted - $card purchased in $place on the date: $yyyymmdd for $price (card color was $color and type was $card_type<br>Return to <a href=\"\/purchasedcards\/\">List here<\/a>\n";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+        elsif ($txt =~ m/\/card\?(.*)\Wplace\?(.*) HTTP/im)
         {
             my $card = $1;
             my $place = $2;
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
             my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
-            my $html_text = "Noted - $card purchased in $place on the date: $yyyymmddhhmmss<br>Return to <a href=\"\/purchasedcards\/\">List here<\/a>\n";
-            open PURCHASES, ">> D:/D_Downloads/apache_lounge/Apache24/cgibin/purchases.txt";
-            print PURCHASES $html_text . " <<< Correct password..\n";
-            close PURCHASES;
-            print "JUST PURCHASED SOMETHING!!!\n";
-            print "$html_text\n";
+            my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+            my $html_text;# = "Noted - $card purchased in $place on the date: $yyyymmddhhmmss<br>Return to <a href=\"\/purchasedcards\/\">List here<\/a>\n";
+            # Example: "War Tax",already,e,20230329,endgames,blue
+                #<input type=\"text\" id=\"color\" name=\"color\" list=value>
+            
+            $html_text = "<font color=red>Card information:</font><br><br>";
+            $card =~ s/%20/ /img;
+            $html_text .= "<form action=\"/purchasedcards/card_info\">
+                <label for=\"card_name\">Card name:</label><br>
+                <input type=\"text\" id=\"card_name\" name=\"card_name\" value=\"$card\"><br><br>
+                <label for=\"card_name\">Purchased:</label><br>
+                <input type=\"text\" id=\"purchased\" name=\"purchased\" value=\"$place\"><br><br>
+                <label for=\"card_name\">color:</label><br>
+                <select id=\"color\" name=\"color\">
+                    <option value=\"Select\">Select....</option>
+                    <option value=\"white\">white</option>
+                    <option value=\"blue\">blue</option>
+                    <option value=\"black\">black</option>
+                    <option value=\"red\">red</option>
+                    <option value=\"green\">green</option>
+                    <option value=\"colorless\">colorless</option>
+                    <option value=\"mulitcolored\">multicolored</option>
+                </select><br><br>
+                <label for=\"card_name\">Type:</label><br>
+                <select id=\"type\" name=\"type\">
+                    <option value=\"Select\">Select....</option>
+                    <option value=\"creature\">creature</option>
+                    <option value=\"enchantment\">enchantment</option>
+                    <option value=\"artifact\">artifact</option>
+                    <option value=\"land\">land</option>
+                    <option value=\"saga\">saga</option>
+                    <option value=\"planewalker\">planewalker</option>
+                    <option value=\"instant\">instant</option>
+                    <option value=\"sorcery\">sorcery</option>
+                    <option value=\"planeswalker\">planeswalker</option>
+                </select><br><br>
+                <label for=\"card_name\">Price (\$):</label><br>
+                <input type=\"text\" id=\"price\" name=\"price\" value=\"0.00\"><br><br>
+                <input type=\"submit\" value=\"Submit\">
+                </form>\n";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
@@ -331,6 +403,11 @@ sub is_authorized
         $txt =~ s/%7D/}/g;
         $txt =~ s/%7E/~/g;
 
+        my $search = ".*";
+        if ($txt =~ m/searchstr=(.*)/im)
+        {
+            $search = "$1";
+        }
         my @strs = split /&/, $txt;
         #print join (',,,', @strs);
 
@@ -339,12 +416,9 @@ sub is_authorized
         $html_text .= "<html lang='en' class=''>\n";
         $html_text .= "<head>\n";
         $html_text .= "  <meta charset='UTF-8'>\n";
-        $html_text .= "  <title>CodePen Demo</title>\n";
+        $html_text .= "  <title>Cards List</title>\n";
         $html_text .= "  <meta name=\"robots\" content=\"noindex\">\n";
-        $html_text .= "  <link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"https://cpwebassets.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico\">\n";
-        $html_text .= "  <link rel=\"mask-icon\" href=\"https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg\" color=\"#111\">\n";
-        $html_text .= "  <link rel=\"canonical\" href=\"https://codepen.io/pen\">\n";
-        $html_text .= "  \n";
+        $html_text .= "  <link rel=\"icon\" href=\"favicon.ico\">\n";
         $html_text .= "<link rel=\"stylesheet\" href=\"https://www.w3.org/content/shared/css/core.css\">\n";
         $html_text .= "<link rel=\"stylesheet\" href=\"https://www.w3.org/StyleSheets/TR/2016/base.css\">\n";
         $html_text .= "<link rel=\"stylesheet\" href=\"https://use.fontawesome.com/releases/v5.1.0/css/all.css\">\n";
@@ -448,6 +522,13 @@ sub is_authorized
         $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
         $html_text .= "<caption>\n";
         $html_text .= "Cards\n";
+
+        $html_text .= "<form action=\"/purchasedcards/search\">
+                <label for=\"searchstr\">Search:</label><br>
+                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
+                <input type=\"submit\" value=\"Submit\">
+                </form>";
+        $html_text .= "<a href=\"https://i.imgur.com/wZIV4Al.png\">Boxes1</a><br>";
         $html_text .= "</caption>\n";
         $html_text .= "<thead>\n";
         $html_text .= "<tr>\n";
@@ -457,10 +538,9 @@ sub is_authorized
         $html_text .= "<th aria-sort=\"ascending\"> <button><font size=-1>Own?<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>When<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Place<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Price<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Ronin<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>EndGames<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>RoninURL<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>EndGamesURL<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>\n";
         $html_text .= "</tr>\n";
         $html_text .= "</thead>\n";
@@ -470,66 +550,58 @@ sub is_authorized
 
         my $card;
         my $even_odd = "even";
+        my $deck;
         foreach $card (sort keys (%all_cards))
         {
-            my $color = $all_cards_font{$card};
+            my $color = $all_cards_color{$card};
             if ($color eq "white") { $color = "darkgrey"; }
             if ($color eq "colorless") { $color = "purple"; }
             if ($color eq "multicolored") { $color = "darkyellow"; }
             #if (lc ($all_cards_have{$card}) eq "want")
             {
-                $html_text .= " <tr class=\"$even_odd\"><td> <font color=\"$color\">$card</font></td>";
-                $html_text .= " <td> <font color=\"$color\">$all_cards_card_type{$card}&nbsp;&nbsp;</a> </font>&nbsp;&nbsp;\n </td>";
-                $html_text .= " <td> <font color=\"$color\">$color</a> </font>\n</td>";
-                $html_text .= " <td> <font color=\"$color\">$all_cards_have{$card}</a> &nbsp;&nbsp;</font>&nbsp;&nbsp;\n </td>";
+                my $row = "";
+                if ($all_cards_have{$card} ne "already")
+                {
+                    $row .= "<tr class=\"$even_odd\"><td> <font color=\"$color\">$card</font></td>\n";
+                    $deck .= "1 $card<br>";
+                }
+                else
+                {
+                    $row .= "<tr class=\"$even_odd\"><td> <font size=-2 color=\"darkred\">zzz $card</font></td>\n";
+                }
+
+                $row .= " <td> <font color=\"$color\">$all_cards_card_type{$card}</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$color\">$color</a> </font>\n</td>\n";
+                $row .= " <td> <font color=\"$color\">$all_cards_have{$card}</a></font></td>\n";
 
                 my $d = $all_cards_date{$card};
-                $html_text .= " <td> <font color=\"$color\">$d</a> </font>&nbsp;&nbsp;\n </td>";
-                $html_text .= " <td> <font color=\"$color\">$all_cards_place{$card}</a> </font>&nbsp;&nbsp;\n </td>";
-                #$html_text .= " <td> <font color=\"$color\"> <a href=\"purchasedcards/card?$card&place?ronin\">$card</a> </font>&nbsp;&nbsp;\n </td>";
-                $html_text .= " <td> <font color=\"$color\"> <font size=-2>not in oz..</font></font>&nbsp;&nbsp;\n </td>";
+                $row .= " <td> <font color=\"$color\">$d</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$color\">$all_cards_place{$card}</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$color\">$all_cards_price{$card}</a> </font>\n </td>\n";
 
                 if ($all_cards_have{$card} ne "already")
                 {
-                    $html_text .= "<td><font color=\"$color\"> <a href=\"/purchasedcards/card?$card&place?end_games\">Bought it</a> </font> <br>\n </td>\n";
+                    $row .= " <td> <font color=\"$color\"> <a href=\"purchasedcards/card?$card&place?ronin\">Bought it</a> </font>\n </td>\n";
                 }
                 else
                 {
-                    $html_text .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
-                }
-                if ($all_cards_have{$card} ne "already")
-                {
-                    #$html_text .= " <td> <font size=-2 color=\"$color\"><a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$card\">$card</a> </font></td>\n";
-                    $html_text .= " <td> <font color=\"$color\"> <font size=-2>not in oz..</font></font>&nbsp;&nbsp;\n </td>";
-                }
-                else
-                {
-                    $html_text .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
+                    $row .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
                 }
 
-                
-                if ($all_cards_have{$card} ne "already")
-                {
-                    $html_text .= "<td> <font size=-2 color=\"$color\"><a href=\"https://www.theendgames.co/products/search?q=$card\">$card</a> </font></td></tr>\n";
-                }
-                else
-                {
-                    $html_text .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
-                }
+                $row .= " <td> <font size=-2 color=\"$color\"><a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$card\">$card</a> </font></td>\n</tr>\n";
 
+                if ($row =~ m/$search/img)
+                {
+                    $html_text .= "$row";
+                }
                 if ($even_odd eq "even") { $even_odd = "odd"; } 
                 else { $even_odd = "even"; } 
             }
-            #if (lc ($all_cards_have{$card}) eq "already")
-            #{
-            #    $already_bought .= " <font color=\"$color\"> $card </font> (Have?=$all_cards_have{$card}), $all_cards_card_type{$card}, $all_cards_date{$card}, $all_cards_place{$card} </font>, $all_cards_font{$card} <br>\n";
-            #}
         }
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
 
-        $html_text .= "<a href=\"https://i.imgur.com/wZIV4Al.png\">Boxes1</a><br>";
         $html_text .= "<a href=\"https://imgur.com/a/9uj84ka\">Boxes2</a><br>";
         $html_text .= "<a href=\"https://imgur.com/a/Bdt159R\">EDH Decklists</a><br>";
         $html_text .= "<a href=\"https://www.mtggoldfish.com/deck/3985938#paper\">My Wanted list..</a><br>";
@@ -539,6 +611,7 @@ sub is_authorized
         {
             $html_text .= "<br>$card";
         }
+        $html_text .= "<br>$deck";
         $html_text .= "</body>\n";
         $html_text .= "</html>\n";
 
