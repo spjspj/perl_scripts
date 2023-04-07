@@ -1,88 +1,748 @@
-"All Will Be One",already,e,20230225,ronin,red
-"Arcane Adaptation",want,e,,,blue
-"Arcane Lighthouse",want,l,,,colorless
-"Arcum Dagsson",already,c,20220501,ronin,blue
-"Birgi, God of Storytelling",want,c,,,red
-"Bootleggers' Stash",already,a,nodate,ronin,green
-"Bountiful Promenade",want,l,,,colorless
-"Bramble Sovereign",already,c,20221203,ronin,green
-"Buried Ruin",already,l,20221002,ronin,colorless
-"Capsize",want,i,,,blue
-"City of Solitude",e,20211228,plentyofgames,green
-"Crown of Empires",already,a,20220501,ronin,colorless
-"Deserted Beach",already,l,nodate,ronin,colorless
-"Disciple of the Vault",already,c,20230329,endgames,black
-"Druid of Purification",already,c,nodate,ronin,green
-"Elvish Reclaimer",already,c,20230329,endgames,green
-"Empress Galina",already,c,20221009,ronin,blue
-"Esper Sentinel",want,c,,,white
-"Farewell",want,s,,,white
-"Fierce Guardianship",want,i,,,blue
-"Force of Will",want,i,,,blue
-"Fumble",alread,i,20220201,,blue
-"Geth's Grimoire",already,a,nodate,ronin,colorless
-"Giada, Font of Hope",already,c,20220501,ronin,white
-"Head Games",already,s,nodate,ronin,black
-"Homeward Path",already,l,20230329,endgames,colorless
-"Horobi, Death's Wail",already,c,nodate,ronin,black
-"Imperial Recruiter",already,c,20220926,ronin,red
-"Jace Beleren",want,p,,,blue
-"Kodama of the West Tree",already,c,20230218,ronin,green
-"Korvold, Fae-Cursed King",want,c,,,multicolored
-"Lae_Zel_s Acrobatics",already,e,nodate,ronin
-"Library of Leng",a,20211228,plentyofgames,colorless
-"Llawan, Cephalid Empress",c,20211228,plentyofgames,blue
-"Luminous Broodmoth",already,c,20230323,ronin,white
-"Luxior, Giada's Gift",already,a,nodate,ronin,colorless
-"Luxury Suite",want,l,,,colorless
-"Machine God's Effigy",want,a,,,colorless
-"Mana Web",want,a,,,colorless
-"Maskwood Nexus",c,20220105,ronin,blue
-"Morphic Pool",want,l,,,colorless
-"Muldrotha, the Gravetide",already,c,20230329,endgames,multicolored
-"Mystic Sanctuary",already,l,20221002,ronin,colorless
-"Necropotence",want,e,,,black
-"Nevinyrral's Disk",want,a,,,colorless
-"Niv-Mizzet Reborn",c,20211228,plentyofgames,multicolored
-"Ob Nixilis, the Fallen",want,c,,,black
-"Old Gnawbone",already,c,20230329,endgames,green
-"Omniscience",want,e,,,blue
-"Overgrown Farmland",want,l,,,colorless
-"Painter's Servant",want,c,,,colorless
-"Powerleech",want,e,,,green
-"Propaganda",want,e,,,blue
-"Reality Twist",already,e,20230329,endgames,blue
-"Rejuvenating Springs",want,l,,,colorless
-"Reshape the Earth",already,s,nodate,ronin,green
-"Retrofitter Foundry",want,a,,,colorless
-"Rockfall Vale",want,l,,,colorless
-"Root Maze",want,e,,,green
-"Rootpath Purifier",already,c,20230329,endgames,green
-"Roots of Life",already,e,20230329,endgames,green
-"Sapphire Medallion",want,a,,,colorless
-"Scepter of Empires",already,a,20230329,endgames,colorless
-"Sea of Clouds",want,l,,,colorless
-"Seat of the Synod",want,l,,,colorless
-"Shipwreck Marsh",want,l,,,colorless
-"Shorikai, Genesis Engine",already,c,20230218,ronin,multicolored
-"Solemn Simulacrum",want,c,,,colorless
-"Spectator Seating",want,l,,,colorless
-"Stimulus Package",already,e,20230329,endgames,multicolored
-"Storage Matrix",want,a,,,colorless
-"Stranglehold",already,e,20230313,ronin,red
-"Terror of the Peaks",already,c,20230329,endgames,red
-"Thassa, Deep Dwelling",c,20220105,ronin,blue
-"The World Tree ",already,l,<202209,ronin,colorless
-"Thrasios, Triton Hero",want,c,,,multicolored
-"Throne of Empires",already,a,20220501,ronin,colorless
-"Tireless Tracker",c,20211228,plentyofgames,green
-"Tormod's Crypt",already,a,20221002,ronin,colorless
-"Training Center",want,l,,,colorless
-"Tranquil Grove",want,e,,,green
-"Treasure Vault",l,<202209,ronin,colorless
-"Vault of Champions",want,l,,,colorless
-"Vito, Thorn of the Dusk Rose",already,c,20230319,ronin,black
-"War Room",l,<202209,ronin,colorless
-"War Tax",already,e,20230329,endgames,blue
-"Warp World",s,20211228,plentyofgames,red
-"Yorion, Sky Nomad",already,c,20221009,ronin,multicolored
+Abundance;already;E;20211203;ronin;green;$10;proposed;
+Academy Manufactor;already;A;20220901;ronin;colorless;$4.89;proposed;
+Academy Rector;already;C;20170711;CardKingdom;white;$25.49;proposed;
+Academy Ruins;already;L;20190704;Starcitygames;colorless;$29.95;proposed;
+Act of Aggression;already;I;20150330;PUCATrade;red;$0.23;proposed;
+Act of Authority;already;E;20170126;ChannelFireball;white;$0.49;proposed;
+Aether Vial;already;A;20190320;GeorgeTrade;colorless;;proposed;
+Aetherize;already;I;20141204;ChannelFireball;blue;$0.25;proposed;
+Ajani Vengeant;already;P;20190211;GeorgeTrade;multicolored;;proposed;
+Alchemist's Refuge;already;L;20170711;CardKingdom;colorless;$1.59;proposed;
+All Is Dust;already;S;20190320;GeorgeTrade;colorless;;proposed;
+All Will Be One;already;e;20230225;ronin;red;$15.00;
+All Will Be One;already;e;20230225;ronin;red;$15.00;proposed;
+Altar of Dementia;already;A;20190211;GeorgeTrade;colorless;;proposed;
+Amulet of Vigor;already;A;20150115;ChannelFireball;colorless;$2.99;proposed;
+Ancestral Vision;already;S;20150115;ChannelFireball;blue;$6.99;proposed;
+Ancient Stirrings;already;S;20170406;Endgames;green;;proposed;
+Animate Dead;already;E;20150115;ChannelFireball;black;$1.99;proposed;
+Anointed Procession;already;E;20170608;CardKingdom;white;$4.79;proposed;
+Apprentice Necromancer;already;C;20170126;ChannelFireball;black;$1.99;proposed;
+Arc Trail;already;S;20150331;PUCATrade;red;$0.24;proposed;
+Arcane Adaptation;already;E;20230406;ronin;blue;$4.50;proposed;
+Arcane Denial;already;I;20170711;CardKingdom;blue;$1.79;proposed;
+Arcane Lighthouse;want;l;;;colorless;
+Arcanum Wings;already;E;20160123;ChannelFireball;blue;$0.39;proposed;
+Archmage Ascension;already;E;20190704;Starcitygames;blue;$0.79;proposed;
+Arcum Dagsson;already;C;20220901;ronin;blue;$5.27;proposed;
+Arcum Dagsson;already;c;20220501;ronin;blue;
+Arid Mesa;already;L;20161110;Starcitygames;colorless;$37.49;proposed;
+Armageddon;already;S;20150115;ChannelFireball;white;$2.49;proposed;
+Armory Automaton;already;A;20190704;Starcitygames;colorless;$2.05;proposed;
+Assemble the Legion;already;E;20151021;PUCATrade;multicolored;$0.79;proposed;
+Astral Slide;already;E;20170608;CardKingdom;white;$0.17;proposed;
+Atalya, Samite Master;already;C;20170126;ChannelFireball;white;$0.49;proposed;
+Athreos, God of Passage;already;E;20150713;PUCATrade;multicolored;$9.51;proposed;
+Augur of Bolas;already;C;20150427;PUCATrade;blue;$0.25;proposed;
+Aura Flux;already;E;20170126;ChannelFireball;blue;$0.25;proposed;
+Aura Shards;already;E;20170406;Endgames;multicolored;;proposed;
+Aura of Silence;already;E;20170406;Endgames;white;;proposed;
+Auramancer's Guise;already;E;20170126;ChannelFireball;blue;$0.49;proposed;
+Aven Mindcensor;already;C;20170608;CardKingdom;white;$0.99;proposed;
+Avenger of Zendikar;already;C;20160123;ChannelFireball;green;$4.49;proposed;
+Awakening Zone;already;E;20151129;PUCATrade;green;$3.49;proposed;
+Azorius Signet;already;A;20150115;ChannelFireball;colorless;$0.49;proposed;
+Badlands;already;L;20210216,;GeorgeTrade;colorless;;proposed;
+Baleful Strix;already;A;20160413;PUCATrade;multicolored;$4.80;proposed;
+Bane of Progress;already;C;20160427;Endgames;green;;proposed;
+Barter in Blood;already;S;20131010;Channelfireball;black;$1.00;proposed;
+Basalt Monolith;already;A;20150115;ChannelFireball;colorless;$0.99;proposed;
+Batterskull;already;A;20170406;Endgames;colorless;;proposed;
+Bayou;already;L;20210216,;GeorgeTrade;colorless;;proposed;
+Beacon of Tomorrows;already;S;20170711;CardKingdom;blue;$2.99;proposed;
+Beastmaster Ascension;already;E;20170608;CardKingdom;green;$1.03;proposed;
+Beetleback Chief;already;C;20150330;PUCATrade;red;$0.28;proposed;
+Belbe's Portal;already;A;20170126;ChannelFireball;colorless;$2.99;proposed;
+Beseech the Queen;already;S;20141203;Channelfireball;black;$3.49;proposed;
+Birgi, God of Storytelling;want;c;;;red;
+Birthing Pod;already;A;20150115;ChannelFireball;green;$8.99;proposed;
+Bitterblossom;already;E;20150730;PUCATrade;black;$27.72;proposed;
+Blade Splicer;already;C;20150506;PUCATrade;white;$2.07;proposed;
+Blatant Thievery;already;S;20170711;CardKingdom;blue;$1.29;proposed;
+Blood Artist;already;C;20131013;Channelfireball;black;$4.47;proposed;
+Blood Tribute;already;S;20131013;Channelfireball;black;$1.96;proposed;
+Bloodbraid Elf;already;C;20170406;Endgames;multicolored;;proposed;
+Bloodflow Connoisseur;already;C;20131010;Channelfireball;black;$0.13;proposed;
+Bloodline Keeper;already;C;20170406;Endgames;black;;proposed;
+Bloom Tender;already;C;20141203;Channelfireball;green;$9.99;proposed;
+Bludgeon Brawl;already;E;20190704;Starcitygames;red;$0.49;proposed;
+Blue Elemental Blast;already;I;20190719;WhiteHorse;blue;;proposed;
+Blue Sun's Zenith;already;I;20160427;Endgames;blue;;proposed;
+Bootleggers' Stash;already;a;20230201;ronin;green;$14.00;proposed;
+Bootleggers' Stash;already;a;nodate;ronin;green;
+Boreal Druid;already;C;20141203;Channelfireball;green;$0.10;proposed;
+Boros Reckoner;already;C;20150115;ChannelFireball;multicolored;$2.49;proposed;
+Boros Signet;already;A;20150115;ChannelFireball;colorless;$0;proposed;
+Boseiju, Who Shelters All;already;L;20161110;Starcitygames;colorless;$13.49;proposed;
+Bountiful Promenade;want;l;;;colorless;
+Brain Freeze;already;I;20150115;ChannelFireball;blue;$1.25;proposed;
+Bramble Sovereign;already;c;20221203;ronin;green;
+Bramble Sovereign;already;c;20221203;ronin;green;$4.00;proposed;
+Brazen Borrower;already;C;20211006;cardkingdom;blue;$16.99;proposed;
+Breakthrough;already;S;20150115;ChannelFireball;blue;$0.71;proposed;
+Bribery;already;S;20170406;Endgames;blue;;proposed;
+Brudiclad, Telchor Engineer;already;A;20220901;ronin;multicolored;$1.68;proposed;
+Bubbling Muck;already;S;20150427;PUCATrade;black;$0.43;proposed;
+Buried Ruin;already;L;20150422;PUCATrade;colorless;$0.30;proposed;
+Buried Ruin;already;l;20221002;ronin;colorless;
+Burst Lightning;already;I;20150330;PUCATrade;red;$0.24;proposed;
+Cabal Ritual;already;I;20150115;ChannelFireball;black;$0.99;proposed;
+Caged Sun;already;A;20150427;PUCATrade;colorless;$3.42;proposed;
+Capsize;already;I;20151022;PUCATrade;blue;$0.73;proposed;
+Cathars' Crusade;already;E;20150422;PUCATrade;white;$0.63;proposed;
+Cauldron of Souls;already;A;20150115;ChannelFireball;colorless;$4.49;proposed;
+Celestial Colonnade;already;L;20190320;GeorgeTrade;colorless;;proposed;
+Cemetery Keeper;already;C;20211230;Pack;red;;proposed;
+Cerulean Wisps;already;I;20151019;PUCATrade;blue;$0.86;proposed;
+Chaos Warp;already;I;20190320;GeorgeTrade;red;;proposed;
+Char;already;I;20151019;PUCATrade;red;$0.44;proposed;
+Chill;already;E;20141203;Channelfireball;blue;$0.49;proposed;
+Chronomantic Escape;already;S;20170406;Endgames;white;;proposed;
+City of Solitude;already;E;20211228;PlentyofGames;green;$39.10;proposed;
+City of Solitude;e;20211228;plentyofgames;green;
+Cleansing Meditation;already;S;20150422;PUCATrade;white;$0.28;proposed;
+Clickslither;already;C;20150415;PUCATrade;red;$0.45;proposed;
+Clifftop Retreat;already;L;20160427;Endgames;colorless;;proposed;
+Clockspinning;already;I;20161110;Starcitygames;blue;$0.29;proposed;
+Cloud of Faeries;already;C;20141203;Channelfireball;blue;$0.99;proposed;
+Cloudgoat Ranger;already;C;20150115;ChannelFireball;white;$0.23;proposed;
+Codex Shredder;already;A;20150422;PUCATrade;colorless;$0.18;proposed;
+Coercive Portal;already;A;20170406;Endgames;colorless;;proposed;
+Coffin Queen;already;C;20141203;Channelfireball;black;$3.99;proposed;
+Cogwork Librarian;already;A;20150728;PUCATrade;colorless;$0.20;proposed;
+Collective Voyage;already;S;20170608;CardKingdom;green;$2.23;proposed;
+Conjurer's Closet;already;A;20141203;Channelfireball;colorless;$0.44;proposed;
+Consecrated Sphinx;already;C;20150115;ChannelFireball;blue;$12.99;proposed;
+Contagion Clasp;already;A;20151202;PUCATrade;colorless;$0.25;proposed;
+Contagion Engine;already;A;20151202;PUCATrade;colorless;$3.44;proposed;
+Contamination;already;E;20141203;Channelfireball;black;$6.99;proposed;
+Counterspell;already;I;20150115;ChannelFireball;blue;$0.49;proposed;
+Craterhoof Behemoth;already;C;20150721;PUCATrade;green;$15.97;proposed;
+Creeping Tar Pit;already;L;20190320;GeorgeTrade;colorless;;proposed;
+Crime // Punishment;already;S;20131010;Channelfireball;multicolored;$3.58;proposed;
+Crimson Wisps;already;I;20151202;PUCATrade;red;$0.43;proposed;
+Crown of Empires;already;A;20220901;ronin;colorless;$0.25;proposed;
+Crown of Empires;already;a;20220501;ronin;colorless;
+Crown of the Ages;already;A;20170126;ChannelFireball;colorless;$0.25;proposed;
+Crucible of Worlds;already;A;20170406;Endgames;colorless;;proposed;
+Cruel Ultimatum;already;S;20151130;PUCATrade;multicolored;$0.60;proposed;
+Crypt Creeper;already;C;20131010;Channelfireball;black;$0.30;proposed;
+Cryptborn Horror;already;C;20131013;Channelfireball;multicolored;$1.00;proposed;
+Crystal Ball;already;A;20170126;ChannelFireball;colorless;$0.25;proposed;
+Culling Scales;already;A;20190719;WhiteHorse;colorless;;proposed;
+Cyclonic Rift;already;I;20141203;Channelfireball;blue;$0.99;proposed;
+Damia, Sage of Stone;already;C;20170126;ChannelFireball;multicolored;$9.99;proposed;
+Damnation;already;S;20170406;Endgames;black;;proposed;
+Damping Engine;already;A;20170126;ChannelFireball;colorless;$0.35;proposed;
+Daretti, Scrap Savant;already;P;20160330;PUCATrade;red;$2.54;proposed;
+Dark Confidant;already;C;20200422;ScottMunroTrade;black;$39.99;proposed;
+Dark Prophecy;already;E;20131010;Channelfireball;black;$3.16;proposed;
+Darksteel Forge;already;A;20170406;Endgames;colorless;;proposed;
+Dash Hopes;already;I;20131013;Channelfireball;black;$1.76;proposed;
+Dawn Charm;already;I;20151102;PUCATrade;white;$0.80;proposed;
+Day of Judgment;already;S;20170711;CardKingdom;white;$2.79;proposed;
+Daze;already;I;20150115;ChannelFireball;blue;$3.99;proposed;
+Deadeye Navigator;already;C;20150930;PUCATrade;blue;$1.10;proposed;
+Death Wind;already;I;20131010;Channelfireball;black;$0.30;proposed;
+Decree of Pain;already;S;20170406;Endgames;black;;proposed;
+Deep Analysis;already;S;20150115;ChannelFireball;blue;$0.23;proposed;
+Delver of Secrets;already;C;20150506;PUCATrade;blue;$1.11;proposed;
+Demonic Tutor;already;S;20151007;PUCATrade;black;$15.36;proposed;
+Deprive;already;I;20131013;Channelfireball;blue;$1.00;proposed;
+Derevi, Empyrial Tactician;already;C;20150330;PUCATrade;multicolored;$1.31;proposed;
+Deserted Beach;already;L;20220901;ronin;colorless;$8.13;proposed;
+Deserted Beach;already;l;20220201;ronin;colorless;$9.00;proposed;
+Deserted Beach;already;l;nodate;ronin;colorless;
+Deserted Temple;already;L;20180509;CardKingdom;colorless;$11.99;proposed;
+Devastation Tide;already;S;20151021;PUCATrade;blue;$0.44;proposed;
+Devour Flesh;already;I;20131010;Channelfireball;black;$1.00;proposed;
+Diabolic Edict;already;I;20150613;PUCATrade;black;$0.73;proposed;
+Diabolic Revelation;already;S;20170406;Endgames;black;;proposed;
+Diabolic Servitude;already;E;20150323;GeorgeTrade;black;;proposed;
+Dimir Aqueduct;already;L;20150917;PUCATrade;colorless;$0.60;proposed;
+Dimir Signet;already;A;20150115;ChannelFireball;colorless;$0.99;proposed;
+Disciple of the Vault;already;C;20230328;Endgames;black;;proposed;
+Disciple of the Vault;already;c;20230329;endgames;black;
+Disciple of the Vault;already;c;20230329;endgames;black;;proposed;
+Dismiss;already;I;20150115;ChannelFireball;blue;$0.25;proposed;
+Donate;already;S;20170711;CardKingdom;blue;$2.79;proposed;
+Doubling Season;already;E;20160711;MagicHothub;green;$59.99;proposed;
+Dovescape;already;E;20170406;Endgames;multicolored;;proposed;
+Dragonlord Silumgar;already;C;20160123;ChannelFireball;multicolored;$4.99;proposed;
+Draining Whelk;already;C;20131013;Channelfireball;blue;$8.96;proposed;
+Dreamroot Cascade;already;L;20211230;Pack;colorless;;proposed;$11.00;
+Dromoka, the Eternal;already;C;20150305;PUCATrade;multicolored;$0.88;proposed;
+Drowned Catacomb;already;L;20160427;Endgames;colorless;;proposed;
+Druid of Purification;already;c;20230201;ronin;green;$13.50;proposed;
+Druid of Purification;already;c;nodate;ronin;green;
+Dungeon Geists;already;C;20150422;PUCATrade;blue;$0.27;proposed;
+Duplicant;already;A;20150323;PUCATrade;colorless;$7.83;proposed;
+Earl of Squirrel;already;C;20190320;GeorgeTrade;green;;proposed;
+Edric, Spymaster of Trest;already;C;20170406;Endgames;multicolored;;proposed;
+Eerie Interlude;already;I;20160323;PUCATrade;white;$2.15;proposed;
+Eerie Ultimatum;already;S;20211006;cardkingdom;multicolored;$2.99;proposed;
+Eight-and-a-Half-Tails;already;C;20170608;CardKingdom;white;$1.59;proposed;
+Eladamri, Lord of Leaves;already;C;20141203;Channelfireball;green;$5.99;proposed;
+Eldrazi Monument;already;A;20160427;Endgames;colorless;;proposed;
+Elvish Piper;already;C;20141203;Channelfireball;green;$5.99;proposed;
+Elvish Reclaimer;already;C;20230328;Endgames;green;;proposed;
+Elvish Reclaimer;already;c;20230329;endgames;green;
+Elvish Reclaimer;already;c;20230329;endgames;green;;proposed;
+Empress Galina;already;C;20221009;ronin;blue;$8.50;proposed;
+Empress Galina;already;c;20221009;ronin;blue;
+Empyrial Armor;already;E;20150323;GeorgeTrade;white;;proposed;
+Enchanted Evening;already;E;20150303;PUCATrade;multicolored;$4.45;proposed;
+Engulf the Shore;already;I;20170126;ChannelFireball;blue;$0.79;proposed;
+Ensnaring Bridge;already;A;20170126;ChannelFireball;colorless;$34.99;proposed;
+Eon Hub;already;A;20170711;CardKingdom;colorless;$0.69;proposed;
+Equilibrium;already;E;20151102;PUCATrade;blue;$1.73;proposed;
+Erebos, God of the Dead;already;E;20131010;Channelfireball;black;$12.58;proposed;
+Esper Sentinel;want;c;;;white;
+Eternal Witness;already;C;20141203;Channelfireball;green;$2.49;proposed;
+Eternity Vessel;already;A;20170406;Endgames;colorless;;proposed;
+Everflowing Chalice;already;A;20150115;ChannelFireball;colorless;$0.49;proposed;
+Executioner's Swing;already;I;20131010;Channelfireball;multicolored;$0.40;proposed;
+Exhume;already;S;20151102;PUCATrade;black;$0.90;proposed;
+Exploration;already;E;20150616;PUCATrade;green;$7.51;proposed;
+Extraplanar Lens;already;A;20150506;PUCATrade;colorless;$10.21;proposed;
+Eye of Singularity;already;E;20170126;ChannelFireball;white;$0.28;proposed;
+Ezuri, Claw of Progress;already;C;20160427;Endgames;multicolored;;proposed;
+Fabricate;already;S;20150323;GeorgeTrade;blue;;proposed;
+Fade Away;already;S;20211006;cardkingdom;blue;$0.23;proposed;
+Faerie Conclave;already;L;20141203;Channelfireball;colorless;$0.99;proposed;
+Faith's Fetters;already;E;20150323;GeorgeTrade;white;;proposed;
+Farewell;want;s;;;white;
+Fastbond;already;E;20151029;PUCATrade;green;$4.62;proposed;
+Fauna Shaman;already;C;20141203;Channelfireball;green;$7;proposed;
+Fierce Empath;already;C;20150323;GeorgeTrade;green;;proposed;
+Fierce Guardianship;want;i;;;blue;
+Fiery Confluence;already;S;20190704;Starcitygames;red;$11.95;proposed;
+Filigree Sages;already;A;20160123;ChannelFireball;blue;$0.25;proposed;
+Fire // Ice;already;I;20150115;ChannelFireball;multicolored;$0.49;proposed;
+Flame Slash;already;S;20150115;ChannelFireball;red;$0.49;proposed;
+Flametongue Kavu;already;C;20150330;PUCATrade;red;$0.27;proposed;
+Flickerwisp;already;C;20150323;GeorgeTrade;white;;proposed;
+Flusterstorm;already;I;20190320;GeorgeTrade;blue;;proposed;
+Forbidden Alchemy;already;I;20150115;ChannelFireball;blue;$0.25;proposed;
+Forbidden Orchard;already;L;20170608;CardKingdom;colorless;$4.19;proposed;
+Force Spike;already;I;20150115;ChannelFireball;blue;$0.71;proposed;
+Force of Will;want;i;;;blue;
+Forced Fruition;already;E;20170711;CardKingdom;blue;$7.59;proposed;
+Frightful Delusion;already;I;20131013;Channelfireball;blue;$0.40;proposed;
+Frost Titan;already;C;20150115;ChannelFireball;blue;$0.99;proposed;
+Frozen AEther;already;E;20170126;ChannelFireball;blue;$1.25;proposed;
+Fumble;already;I;20211006;cardkingdom;blue;$1.18;proposed;
+Fumble;already;i;20220201;;blue;
+Galazeth Prismari;already;C;20220901;Pack;multicolored;$3.38;proposed;
+Galvanic Key;already;A;20160123;ChannelFireball;colorless;$0.15;proposed;
+Garruk Wildspeaker;already;P;20190320;GeorgeTrade;green;;proposed;
+Geth's Grimoire;already;A;20220901;ronin;colorless;$4.00;proposed;
+Geth's Grimoire;already;a;20221101;ronin;colorless;$4.00;proposed;
+Geth's Grimoire;already;a;nodate;ronin;colorless;
+Geth's Verdict;already;I;20131010;Channelfireball;black;$1.00;proposed;
+Ghostly Prison;already;E;20161110;Starcitygames;white;$2.99;proposed;
+Giada, Font of Hope;already;C;20220901;ronin;white;$2.19;proposed;
+Giada, Font of Hope;already;c;20220501;ronin;white;
+Gideon, Ally of Zendikar;already;P;20190211;GeorgeTrade;white;;proposed;
+Gifts Ungiven;already;I;20150115;ChannelFireball;blue;$5.39;proposed;
+Gilded Lotus;already;A;20160427;Endgames;colorless;;proposed;
+Gilder Bairn;already;C;20150330;PUCATrade;multicolored;$3.65;proposed;
+Gitaxian Probe;already;S;20160318;PUCATrade;blue;$3.87;proposed;
+Glacial Chasm;already;L;20170126;ChannelFireball;colorless;$0.99;proposed;
+Glacial Fortress;already;L;20160427;Endgames;colorless;;proposed;
+Glen Elendra Archmage;already;C;20150115;ChannelFireball;blue;$6.99;proposed;
+Go for the Throat;already;I;20150115;ChannelFireball;black;$1.99;proposed;
+Goblin Matron;already;C;20141203;Channelfireball;red;$0.89;proposed;
+Goblin Piledriver;already;C;20170406;Endgames;red;;proposed;
+Goblin Trenches;already;E;20141203;Channelfireball;multicolored;$0.23;proposed;
+Goblin Welder;already;C;20150826;PUCATrade;red;$1.51;proposed;
+Goblin recruiter;already;C;20150323;GeorgeTrade;red;;proposed;
+Godless Shrine;already;L;20160427;Endgames;colorless;;proposed;
+Golgari Signet;already;A;20150115;ChannelFireball;colorless;$0.15;proposed;
+Grand Abolisher;already;C;20170406;Endgames;white;;proposed;
+Grave Pact;already;E;20131010;Channelfireball;black;$21.56;proposed;
+Greater Auramancy;already;E;20161110;Starcitygames;white;$18.75;proposed;
+Green Sun's Zenith;already;S;20141203;Channelfireball;green;$4.99;proposed;
+Grim Discovery;already;S;20150323;GeorgeTrade;black;;proposed;
+Griselbrand;already;C;20170406;Endgames;black;;proposed;
+Gruul Signet;already;A;20150115;ChannelFireball;colorless;$0.23;proposed;
+Gush;already;I;20150504;PUCATrade;blue;$0.46;proposed;
+Hall of Heliod's Generosity;already;L;20190704;Starcitygames;colorless;$12.99;proposed;
+Harmonize;already;S;20150323;GeorgeTrade;green;;proposed;
+Harrow;already;I;20170406;Endgames;green;;proposed;
+Head Games;already;S;20220901;ronin;black;$2.62;proposed;
+Head Games;already;s;nodate;ronin;black;
+Heartbeat of Spring;already;E;20170711;CardKingdom;green;$3.49;proposed;
+Helm of Awakening;already;A;20161110;Starcitygames;colorless;$1.05;proposed;
+Hero of Bladehold;already;C;20160323;PUCATrade;white;$8.39;proposed;
+Hero of Oxid Ridge;already;C;20150407;PUCATrade;red;$1.01;proposed;
+High Market;already;L;20161110;Starcitygames;colorless;$1.99;proposed;
+High Tide;already;I;20141203;Channelfireball;blue;$0.49;proposed;
+Hinterland Harbor;already;L;20160427;Endgames;colorless;;proposed;
+Homeward Path;already;L;20230328;Endgames;colorless;;proposed;
+Homeward Path;already;l;20230329;endgames;colorless;
+Homeward Path;already;l;20230329;endgames;colorless;;proposed;
+Horobi, Death's Wail;already;c;20221001;ronin;black;$4.00;proposed;
+Horobi, Death's Wail;already;c;nodate;ronin;black;
+Hullbreaker Horror;already;C;20211230;Pack;blue;;proposed;
+Human Frailty;already;I;20131010;Channelfireball;black;$0.40;proposed;
+Humility;already;E;20161110;Starcitygames;white;$16.49;proposed;
+Hurkyl's Recall;already;I;20170711;CardKingdom;blue;$2.79;proposed;
+Hypnotic Specter;already;C;20190320;GeorgeTrade;black;;proposed;
+Idyllic Tutor;already;S;20200422;ScottMunroTrade;white;$4.49;proposed;
+Illusionary Terrain;already;E;20170711;CardKingdom;blue;$1.00;proposed;
+Imi Statue;already;A;20190719;WhiteHorse;colorless;;proposed;
+Imperial Recruiter;already;C;20220926;ronin;red;$10;proposed;
+Imperial Recruiter;already;c;20220926;ronin;red;
+Impulse;already;I;20150115;ChannelFireball;blue;$0.49;proposed;
+Impulsive Maneuvers;already;E;20190704;Starcitygames;red;$2.45;proposed;
+Increasing Ambition;already;S;20141203;Channelfireball;black;$0.44;proposed;
+Inferno Titan;already;C;20150115;ChannelFireball;red;$1.25;proposed;
+Intruder Alarm;already;E;20161110;Starcitygames;blue;$4.19;proposed;
+Island Sanctuary;already;E;20170126;ChannelFireball;white;$0.19;proposed;
+Isochron Scepter;already;A;20160427;Endgames;colorless;;proposed;
+Izzet Boilerworks;already;L;20151027;PUCATrade;colorless;$0.29;proposed;
+Izzet Charm;already;I;20150414;PUCATrade;multicolored;$0.69;proposed;
+Izzet Signet;already;A;20150115;ChannelFireball;colorless;$0.49;proposed;
+Jace Beleren;already;p;20150101;TradeGamesCapital;blue;$10.00;proposed;
+Jace's Archivist;already;C;20170126;ChannelFireball;blue;$0.35;proposed;
+Jack-in-the-Mox;already;A;20180509;CardKingdom;colorless;$3.19;proposed;
+Jetmir, Nexus of Revels;already;C;20220901;ronin;multicolored;$4.00;proposed;
+Joraga Treespeaker;already;C;20150115;ChannelFireball;green;$1.34;proposed;
+Journey to Nowhere;already;E;20150420;PUCATrade;white;$0.27;proposed;
+Karador, Ghost Chieftain;already;C;20190211;GeorgeTrade;multicolored;;proposed;
+Karmic Guide;already;C;20150422;PUCATrade;white;$2.55;proposed;
+Karn, Scion of Urza;already;P;20200422;ScottMunroTrade;colorless;$4.99;proposed;
+Karplusan Minotaur;already;C;20190704;Starcitygames;red;$3.25;proposed;
+Kill Switch;already;A;20170126;ChannelFireball;colorless;$0.49;proposed;
+Killing Wave;already;S;20131010;Channelfireball;black;$2.37;proposed;
+Kira, Great Glass-Spinner;already;C;20170406;Endgames;blue;;proposed;
+Kitchen Finks;already;C;20150115;ChannelFireball;multicolored;$3.99;proposed;
+Knight of the White Orchid;already;C;20151130;PUCATrade;white;$1.97;proposed;
+Knowledge Exploitation;already;S;20150323;GeorgeTrade;blue;;proposed;
+Kodama of the West Tree;already;c;20230218;ronin;green;
+Kodama of the West Tree;already;c;20230218;ronin;green;$11.50;proposed;
+Kodama's Reach;already;S;20151028;PUCATrade;green;$0.79;proposed;
+Kolaghan, the Storm's Fury;already;C;20150305;PUCATrade;multicolored;$0.94;proposed;
+Korvold, Fae-Cursed King;want;c;;;multicolored;
+Kozilek, the Great Distortion;already;C;20160107;PUCATrade;colorless;$18.98;proposed;
+Krosan Grip;already;I;20170406;Endgames;green;;proposed;
+Lae'Zel's Acrobatics;already;i;20221001;pack;white;$1.00;proposed;
+Lae_Zel_s Acrobatics;already;i;nodate;opened;
+Lantern of Insight;already;A;20170406;Endgames;colorless;;proposed;
+Last Word;already;I;20131013;Channelfireball;blue;$3.56;proposed;
+Leovold, Emissary of Trest;already;C;20190320;GeorgeTrade;multicolored;;proposed;
+Leyline of Anticipation;already;E;20161110;Starcitygames;blue;$5.59;proposed;
+Leyline of Singularity;already;E;20161110;Starcitygames;blue;$0.55;proposed;
+Leyline of the Void;already;E;20170126;ChannelFireball;black;$15.99;proposed;
+Library of Leng;a;20211228;plentyofgames;colorless;
+Library of Leng;already;A;20211228;PlentyofGames;colorless;$3.10;proposed;
+Lightning Helix;already;I;20160427;Endgames;multicolored;;proposed;
+Lightning greaves;already;A;20150323;GeorgeTrade;colorless;;proposed;
+Liliana Vess;already;P;20141203;Channelfireball;black;$6.99;proposed;
+Linvala, Keeper of Silence;already;C;20170406;Endgames;white;;proposed;
+Living Death;already;S;20141203;Channelfireball;black;$2.49;proposed;
+Llawan, Cephalid Empress;already;C;20211228;PlentyofGames;blue;$2.60;proposed;
+Llawan, Cephalid Empress;c;20211228;plentyofgames;blue;
+Lost in the Mist;already;I;20131013;Channelfireball;blue;$0.40;proposed;
+Luminous Broodmoth;already;c;20230323;ronin;white;
+Luminous Broodmoth;already;c;20230323;ronin;white;$15.50;proposed;
+Luxior, Giada's Gift;already;A;20220901;ronin;colorless;$7.60;proposed;
+Luxior, Giada's Gift;already;a;20230201;ronin;colorless;$10.50;proposed;
+Luxior, Giada's Gift;already;a;nodate;ronin;colorless;
+Luxury Suite;want;l;;;colorless;
+Machine God's Effigy;want;a;;;colorless;
+Magus of the Wheel;already;C;20160309;PUCATrade;red;$3.94;proposed;
+Magus of the future;already;C;20150323;GeorgeTrade;blue;;proposed;
+Mana Reflection;already;E;20160723;PUCATrade;green;$21.08;proposed;
+Mana Tithe;already;I;20190320;GeorgeTrade;white;;proposed;
+Mana Vault;already;A;20180509;CardKingdom;colorless;$26.99;proposed;
+Mana Web;already;A;20170126;ChannelFireball;colorless;$5.99;proposed;
+Manamorphose;already;I;20150115;ChannelFireball;multicolored;$2.49;proposed;
+Maralen of the Mornsong;already;C;20211203;ronin;black;$25.00;proposed;
+Marchesa, the Black Rose;already;C;20180509;CardKingdom;multicolored;$0.49;proposed;
+Marsh Flats;already;L;20161110;Starcitygames;colorless;$29.99;proposed;
+Martial Coup;already;S;20150422;PUCATrade;white;$0.90;proposed;
+Martyr's Bond;already;E;20160502;PUCATrade;white;$5.46;proposed;
+Masked Admirers;already;C;20150323;GeorgeTrade;green;;proposed;
+Maskwood Nexus;already;A;20220105;ronin;colorless;$7.00;proposed;
+Maskwood Nexus;c;20220105;ronin;blue;
+Massacre Wurm;already;C;20170406;Endgames;black;;proposed;
+Meishin, the Mind Cage;already;E;20170126;ChannelFireball;blue;$1.99;proposed;
+Melira, Sylvok Outcast;already;C;20151021;PUCATrade;green;$4.10;proposed;
+Meloku the Clouded Mirror;already;C;20150302;PUCATrade;blue;$0.60;proposed;
+Memory Crystal;already;A;20170711;CardKingdom;colorless;$0.28;proposed;
+Memory Lapse;already;I;20150115;ChannelFireball;blue;$0.15;proposed;
+Mental Misstep;already;I;20151028;PUCATrade;blue;$0.76;proposed;
+Mentor of the Meek;already;C;20150323;GeorgeTrade;white;;proposed;
+Merchant Scroll;already;S;20141203;Channelfireball;blue;$1.34;proposed;
+Meren of Clan Nel Toth;already;C;20160427;Endgames;multicolored;;proposed;
+Mesmeric Orb;already;A;20211203;ronin;colorless;$13;proposed;
+Mikaeus, the Unhallowed;already;C;20141203;Channelfireball;black;$9.99;proposed;
+Mind Stone;already;A;20150427;PUCATrade;colorless;$0.54;proposed;
+Mindslicer;already;C;20211203;ronin;black;$15 (?);proposed;
+Mirari's Wake;already;E;20160427;Endgames;multicolored;;proposed;
+Mirran Crusader;already;C;20160427;Endgames;white;;proposed;
+Mirror Box;already;A;20220901;ronin;colorless;$2.00;proposed;
+Mogg War Marshal;already;C;20150410;PUCATrade;red;$0.42;proposed;
+Morphic Pool;want;l;;;colorless;
+Mortician Beetle;already;C;20131010;Channelfireball;black;$1.32;proposed;
+Mortify;already;I;20131010;Channelfireball;multicolored;$1.58;proposed;
+Muldrotha, the Gravetide;already;C;20230328;Endgames;multicolored;;proposed;
+Muldrotha, the Gravetide;already;c;20230329;endgames;multicolored;
+Muldrotha, the Gravetide;already;c;20230329;endgames;multicolored;;proposed;
+Mulldrifter;already;C;20150115;ChannelFireball;blue;$0.25;proposed;
+Mutavault;already;L;20190211;GeorgeTrade;colorless;;proposed;
+Mycosynth Lattice;already;A;20160415;PUCATrade;colorless;$22.37;proposed;
+Myr Battlesphere;already;A;20150330;PUCATrade;colorless;$0.43;proposed;
+Mystic Confluence;already;I;20170711;CardKingdom;blue;$9.99;proposed;
+Mystic Remora;already;E;20170711;CardKingdom;blue;$7.16;proposed;
+Mystic Sanctuary;already;L;20221002;ronin;colorless;$2.50;proposed;
+Mystic Sanctuary;already;l;20221002;ronin;colorless;
+Mystic Snake;already;C;20170406;Endgames;multicolored;;proposed;
+Mystical Tutor;already;I;20151019;PUCATrade;blue;$7.21;proposed;
+Mystical teachings;already;I;20150323;GeorgeTrade;blue;;proposed;
+Nahiri, the Harbinger;already;P;20190211;GeorgeTrade;multicolored;;proposed;
+Nature's Revolt;already;E;20170126;ChannelFireball;green;$0.39;proposed;
+Nearheath Pilgrim;already;C;20150323;GeorgeTrade;white;;proposed;
+Necromancy;already;E;20200422;ScottMunroTrade;black;$13.99;proposed;
+Necropotence;already;E;20230328;Endgames;black;;proposed;
+Neurok Stealthsuit;already;A;20160123;ChannelFireball;colorless;$0.25;proposed;
+Nevermaker;already;C;20150721;PUCATrade;blue;$0.30;proposed;
+Nevinyrral's Disk;already;A;20221002;ronin;colorless;$0.50;proposed;
+Nin, the Pain Artist;already;C;20160123;ChannelFireball;multicolored;$5.99;proposed;
+Nissa, Voice of Zendikar;already;P;20160123;ChannelFireball;green;$24.99;proposed;
+Nissa, Worldwaker;already;P;20160123;ChannelFireball;green;$7.99;proposed;
+Niv-Mizzet Reborn;already;C;20211228;PlentyofGames;multicolored;$3.80;proposed;
+Niv-Mizzet Reborn;c;20211228;plentyofgames;multicolored;
+Noetic Scales;already;A;20220901;ronin;colorless;$6.10;proposed;
+Notion Thief;already;C;20170406;Endgames;multicolored;;proposed;
+Nullmage Shepherd;already;C;20150323;GeorgeTrade;green;;proposed;
+Nyxbloom Ancient;already;E;20211006;cardkingdom;green;$19.99;proposed;
+Oath of Druids;already;E;20170608;CardKingdom;green;$1.29;proposed;
+Ob Nixilis, the Fallen;want;c;;;black;
+Oblivion Stone;already;A;20170406;Endgames;colorless;;proposed;
+Ojutai, Soul of Winter;already;C;20150305;PUCATrade;multicolored;$0.43;proposed;
+Old Gnawbone;already;C;20230328;Endgames;green;;proposed;
+Old Gnawbone;already;c;20230329;endgames;green;
+Old Gnawbone;already;c;20230329;endgames;green;;proposed;
+Oloro, Ageless Ascetic;already;C;20150302;PUCATrade;multicolored;$1.55;proposed;
+Omen Machine;already;A;20190719;WhiteHorse;colorless;;proposed;
+Omniscience;want;e;;;blue;
+Oona's Prowler;already;C;20150420;PUCATrade;black;$2.45;proposed;
+Oona, Queen of the Fae;already;C;20160427;Endgames;multicolored;;proposed;
+Open the Vaults;already;S;20160123;ChannelFireball;white;$2.49;proposed;
+Ophiomancer;already;C;20160123;ChannelFireball;black;$1.34;proposed;
+Opposition Agent;already;C;20211201;ronin;black;$20.00;proposed;
+Oran-Rief, the Vastwood;already;L;20141203;Channelfireball;colorless;$0.49;proposed;
+Orzhov Basilica;already;L;20150908;PUCATrade;colorless;$0.29;proposed;
+Orzhov Signet;already;A;20150115;ChannelFireball;colorless;$0.49;proposed;
+Otherworld Atlas;already;A;20151022;PUCATrade;colorless;$0.33;proposed;
+Otherworldly Journey;already;I;20150115;ChannelFireball;white;$0.25;proposed;
+Oust;already;S;20160330;PUCATrade;white;$0.20;proposed;
+Overgrown Estate;already;E;20190719;WhiteHorse;multicolored;;proposed;
+Overgrown Farmland;want;l;;;colorless;
+Ovinomancer;already;C;20190719;WhiteHorse;blue;;proposed;
+Pack Rat;already;C;20150302;PUCATrade;black;$1.69;proposed;
+Painter's Servant;want;c;;;colorless;
+Pale Moon;already;I;20220901;ronin;blue;$0.51;proposed;
+Palinchron;already;C;20170711;CardKingdom;blue;$16.79;proposed;
+Paradise Mantle;already;A;20150601;PUCATrade;colorless;$1.32;proposed;
+Paradox Engine;already;A;20170126;ChannelFireball;colorless;$5.99;proposed;
+Parallax Wave;already;E;20150115;ChannelFireball;white;$1.99;proposed;
+Parallel Lives;already;E;20141203;Channelfireball;green;$3.49;proposed;
+Pattern of Rebirth;already;E;20151119;PUCATrade;green;$3.12;proposed;
+Peregrine Drake;already;C;20151216;PUCATrade;blue;$0.78;proposed;
+Pestermite;already;C;20150115;ChannelFireball;blue;$0.49;proposed;
+Phantasmal Image;already;C;20160427;Endgames;blue;;proposed;
+Phelddagrif;already;C;20170608;CardKingdom;multicolored;$2.44;proposed;
+Phyrexian Arena;already;E;20170406;Endgames;black;;proposed;
+Phyrexian Reclamation;already;E;20160123;ChannelFireball;black;$0.44;proposed;
+Phyrexian Revoker;already;A;20190211;GeorgeTrade;colorless;;proposed;
+Plaguebearer;already;C;20150323;GeorgeTrade;black;;proposed;
+Planar Bridge;already;A;20170126;ChannelFireball;colorless;$2.99;proposed;
+Planar Portal;already;A;20160123;ChannelFireball;colorless;$2.49;proposed;
+Plea for Power;already;S;20170711;CardKingdom;blue;$0.99;proposed;
+Pongify;already;I;20170711;CardKingdom;blue;$2.29;proposed;
+Portcullis;already;A;20170126;ChannelFireball;colorless;$0.39;proposed;
+Portent;already;S;20150115;ChannelFireball;blue;$0.25;proposed;
+Powerleech;want;e;;;green;
+Precursor Golem;already;A;20150410;PUCATrade;colorless;$0.30;proposed;
+Preordain;already;S;20150115;ChannelFireball;blue;$1.99;proposed;
+Primal Command;already;S;20151209;PUCATrade;green;$2.40;proposed;
+Primal Order;already;E;20220901;ronin;green;$1.92;proposed;
+Primeval Titan;already;C;20160123;ChannelFireball;green;$7.99;proposed;
+Privileged Position;already;E;20161110;Starcitygames;multicolored;$11.25;proposed;
+Profane Command;already;S;20131010;Channelfireball;black;$5.36;proposed;
+Propaganda;want;e;;;blue;
+Prophetic Bolt;already;I;20150115;ChannelFireball;multicolored;$0.23;proposed;
+Prosperity;already;S;20150115;ChannelFireball;blue;$0.71;proposed;
+Prowess of the Fair;already;E;20141203;Channelfireball;black;$0.10;proposed;
+Psychatog;already;C;20150115;ChannelFireball;multicolored;$0.79;proposed;
+Psychic Intrusion;already;S;20131013;Channelfireball;multicolored;$0.75;proposed;
+Putrid Imp;already;C;20151102;PUCATrade;black;$0.40;proposed;
+Pyromancer's Goggles;already;A;20151209;PUCATrade;colorless;$2.25;proposed;
+Qasali Pridemage;already;C;20151021;PUCATrade;multicolored;$2.39;proposed;
+Quicksilver Amulet;already;A;20141203;Channelfireball;colorless;$5.99;proposed;
+Rakdos Cackler;already;C;20150115;ChannelFireball;multicolored;$0.25;proposed;
+Rakdos Charm;already;I;20150407;PUCATrade;multicolored;$0.26;proposed;
+Rakdos Signet;already;A;20150115;ChannelFireball;colorless;$0.49;proposed;
+Ramunap Excavator;already;C;20170711;CardKingdom;green;$6.99;proposed;
+Rashmi, Eternities Crafter;already;C;20170406;Endgames;multicolored;;proposed;
+Ratchet Bomb;already;A;20131010;Channelfireball;colorless;$5.96;proposed;
+Raven's Crime;already;S;20160701;PUCATrade;black;$1.01;proposed;
+Reach Through Mists;already;I;20150115;ChannelFireball;blue;$0.10;proposed;
+Reality Acid;already;E;20150422;PUCATrade;blue;$0.23;proposed;
+Reality Twist;already;E;20230328;Endgames;blue;;proposed;
+Reality Twist;already;e;20230329;endgames;blue;
+Reality Twist;already;e;20230329;endgames;blue;;proposed;
+Reanimate;already;S;20151027;PUCATrade;black;$6.85;proposed;
+Reaper King;already;A;20211006;cardkingdom;multicolored;$3.84;proposed;
+Reassembling Skeleton;already;C;20131010;Channelfireball;black;$0.40;proposed;
+Reconnaissance;already;E;20160427;Endgames;white;;proposed;
+Reflecting Pool;already;L;20170608;CardKingdom;colorless;$9.59;proposed;
+Rejuvenating Springs;want;l;;;colorless;
+Repeal;already;I;20150115;ChannelFireball;blue;$0.23;proposed;
+Replenish;already;S;20161110;Starcitygames;white;$14.99;proposed;
+Reshape the Earth;already;s;20230201;ronin;green;$8.50;proposed;
+Reshape the Earth;already;s;nodate;ronin;green;
+Restoration Angel;already;C;20160122;PUCATrade;white;$10.13;proposed;
+Retether;already;S;20160309;PUCATrade;white;$1.70;proposed;
+Retrofitter Foundry;want;a;;;colorless;
+Reveillark;already;C;20150115;ChannelFireball;white;$3.99;proposed;
+Rewind;already;I;20131013;Channelfireball;blue;$1.96;proposed;
+Rhystic Study;already;E;20160701;PUCATrade;blue;$4.53;proposed;
+Ring of Three Wishes;already;A;20160123;ChannelFireball;colorless;$2.99;proposed;
+Rings of Brighthearth;already;A;20190704;Starcitygames;colorless;$51.29;proposed;
+Risen Reef;already;C;20220901;ronin;multicolored;$2.29;proposed;
+Rishadan Brigand;already;C;20170608;CardKingdom;blue;$0.74;proposed;
+Rishadan Cutpurse;already;C;20170608;CardKingdom;blue;$0.17;proposed;
+Rishadan Footpad;already;C;20170608;CardKingdom;blue;$0.20;proposed;
+Rite of Replication;already;S;20170711;CardKingdom;blue;$2.79;proposed;
+Rockfall Vale;want;l;;;colorless;
+Roon of the Hidden Realm;already;C;20150414;PUCATrade;multicolored;$0.98;proposed;
+Root Maze;want;e;;;green;
+Rootbound Crag;already;L;20160427;Endgames;colorless;;proposed;
+Rootpath Purifier;already;c;20230329;endgames;green;
+Rootpath Purifier;already;c;20230329;endgames;green;;proposed;
+Rootpath purifier;already;C;20230328;Endgames;green;;proposed;
+Roots of Life;already;E;20230328;Endgames;green;;proposed;
+Roots of Life;already;e;20230329;endgames;green;
+Roots of Life;already;e;20230329;endgames;green;;proposed;
+Rune-Scarred Demon;already;C;20150323;GeorgeTrade;black;;proposed;
+Sadistic Hypnotist;already;C;20150323;GeorgeTrade;black;;proposed;
+Sapphire Medallion;want;a;;;colorless;
+Savannah;already;L;20210216,;GeorgeTrade;colorless;;proposed;
+Savor the Moment;already;S;20200422;ScottMunroTrade;blue;$7.99;proposed;
+Scepter of Empires;already;A;20230328;Endgames;colorless;;proposed;
+Scepter of Empires;already;a;20230329;endgames;colorless;
+Scepter of Empires;already;a;20230329;endgames;colorless;;proposed;
+Scrap Mastery;already;S;20180509;CardKingdom;red;$1.99;proposed;
+Scrivener;already;C;20150613;PUCATrade;blue;$0.19;proposed;
+Scrubland;already;L;20210216,;GeorgeTrade;colorless;;proposed;
+Sea Gate Oracle;already;C;20150422;PUCATrade;blue;$0.15;proposed;
+Sea of Clouds;want;l;;;colorless;
+Searing Spear;already;I;20150330;PUCATrade;red;$0.37;proposed;
+Seat of the Synod;already;L;20180509;CardKingdom;colorless;$1.49;proposed;
+Second Sunrise;already;I;20161110;Starcitygames;white;$1.05;proposed;
+Secure the Wastes;already;I;20160128;PUCATrade;white;$4.45;proposed;
+See Beyond;already;S;20150115;ChannelFireball;blue;$0.25;proposed;
+Selesnya Signet;already;A;20150115;ChannelFireball;colorless;$0.15;proposed;
+Sensei's Divining Top;already;A;20150706;PUCATrade;colorless;$32.24;proposed;
+Serra's Sanctum;already;L;20170608;CardKingdom;colorless;$57.79;proposed;
+Shark Typhoon;already;E;20220901;ronin;blue;$12.88;proposed;
+Shelldock Isle;already;L;20151029;PUCATrade;colorless;$1.22;proposed;
+Shifting Sky;already;E;20170126;ChannelFireball;blue;$0.32;proposed;
+Shipwreck Marsh;want;l;;;colorless;
+Shorikai, Genesis Engine;already;c;20230218;ronin;multicolored;
+Shorikai, Genesis Engine;already;c;20230218;ronin;multicolored;$2.50;proposed;
+Shrieking Drake;already;C;20170126;ChannelFireball;blue;$1.00;proposed;
+Shrine of Burning Rage;already;A;20150115;ChannelFireball;colorless;$0.44;proposed;
+Sidisi, Undead Vizier;already;C;20150609;PUCATrade;black;$2.19;proposed;
+Siege-Gang Commander;already;C;20150506;PUCATrade;red;$1.83;proposed;
+Sigil of the New Dawn;already;E;20151019;PUCATrade;white;$0.35;proposed;
+Silumgar, the Drifting Death;already;C;20150219;PUCATrade;multicolored;$1.18;proposed;
+Simic Signet;already;A;20150115;ChannelFireball;colorless;$0.25;proposed;
+Skinrender;already;C;20150407;PUCATrade;black;$0.20;proposed;
+Skirk Fire Marshal;already;C;20150613;PUCATrade;red;$0.84;proposed;
+Skullclamp;already;A;20150724;PUCATrade;colorless;$2.01;proposed;
+Sleight of Hand;already;S;20150115;ChannelFireball;blue;$2.69;proposed;
+Snap;already;I;20141203;Channelfireball;blue;$0.89;proposed;
+Solemn Simulacrum;already;A;20160309;PUCATrade;colorless;$4.08;proposed;
+Solemnity;already;E;20170711;CardKingdom;white;$6.49;proposed;
+Song of the Dryads;already;E;20190704;Starcitygames;green;$10.25;proposed;
+Soothsaying;already;E;20150601;PUCATrade;blue;$0.91;proposed;
+Spectator Seating;want;l;;;colorless;
+Spectral Procession;already;S;20150115;ChannelFireball;white;$0.25;proposed;
+Spell Snare;already;I;20150115;ChannelFireball;blue;$3.99;proposed;
+Spell Syphon;already;I;20131013;Channelfireball;blue;$0.10;proposed;
+Sphere of Safety;already;E;20170406;Endgames;white;;proposed;
+Sphere of the Suns;already;A;20150115;ChannelFireball;colorless;$0.25;proposed;
+Sphinx of the Steel Wind;already;A;20151021;PUCATrade;multicolored;$1.01;proposed;
+Sphinx's Revelation;already;I;20150508;PUCATrade;multicolored;$7.72;proposed;
+Spike Feeder;already;C;20150613;PUCATrade;green;$0.47;proposed;
+Spine of Ish Sah;already;A;20151130;PUCATrade;colorless;$0.37;proposed;
+Splinter Twin;already;E;20150115;ChannelFireball;red;$15.99;proposed;
+Spore Frog;already;C;20170406;Endgames;green;;proposed;
+Spreading Plague;already;E;20211006;cardkingdom;black;$4.49;proposed;
+Squee, Goblin Nabob;already;C;20150115;ChannelFireball;red;$1.49;proposed;
+Staff of Nin;already;A;20170406;Endgames;colorless;;proposed;
+Staggershock;already;I;20150115;ChannelFireball;red;$0.25;proposed;
+Steel Golem;already;A;20170711;CardKingdom;colorless;$0.39;proposed;
+Steel of the Godhead;already;E;20170126;ChannelFireball;multicolored;$1.99;proposed;
+Stifle;already;I;20170406;Endgames;blue;;proposed;
+Stimulus Package;already;E;20230328;Endgames;multicolored;;proposed;
+Stimulus Package;already;e;20230329;endgames;multicolored;
+Stimulus Package;already;e;20230329;endgames;multicolored;;proposed;
+Stomping Ground;already;L;20160427;Endgames;colorless;;proposed;
+Stonehorn Dignitary;already;C;20150331;PUCATrade;white;$0.21;proposed;
+Storage Matrix;want;a;;;colorless;
+Storm Cauldron;already;A;20170126;ChannelFireball;colorless;$0.79;proposed;
+Storm Crow;already;C;20150422;PUCATrade;blue;$0.22;proposed;
+Stormbreath Dragon;already;C;20150728;PUCATrade;red;$5.28;proposed;
+Stormchaser Mage;already;C;20160427;Endgames;multicolored;;proposed;
+Stranglehold;already;e;20230313;ronin;red;
+Stranglehold;already;e;20230313;ronin;red;$15.00;proposed;
+Stroke of Genius;already;I;20150115;ChannelFireball;blue;$0.79;proposed;
+Sulfuric Vortex;already;E;20150115;ChannelFireball;red;$0.99;proposed;
+Summoning Station;already;A;20161110;Starcitygames;colorless;$0.55;proposed;
+Sunbird's Invocation;already;E;20180509;CardKingdom;red;$1.79;proposed;
+Sundering Titan;already;A;20150407;PUCATrade;colorless;$5.01;proposed;
+Sundial of the Infinite;already;A;20150427;PUCATrade;colorless;$0.48;proposed;
+Sunpetal Grove;already;L;20160427;Endgames;colorless;;proposed;
+Supreme Verdict;already;S;20150115;ChannelFireball;multicolored;$2.99;proposed;
+Surge of Zeal;already;I;20150115;ChannelFireball;red;$0.10;proposed;
+Surrakar Spellblade;already;C;20141203;Channelfireball;blue;$0.25;proposed;
+Sword of Body and Mind;already;A;20190211;GeorgeTrade;colorless;;proposed;
+Sword of Fire and Ice;already;A;20200422;ScottMunroTrade;colorless;$59.99;proposed;
+Sword of War and Peace;already;A;20150721;PUCATrade;colorless;$19.24;proposed;
+Swords to Plowshares;already;I;20150115;ChannelFireball;white;$2.69;proposed;
+Sylvan Scrying;already;S;20141203;Channelfireball;green;$2.99;proposed;
+Syncopate;already;I;20131013;Channelfireball;blue;$1.96;proposed;
+Synod Sanctum;already;A;20160701;PUCATrade;colorless;$0.21;proposed;
+Talrand, Sky Summoner;already;C;20150331;PUCATrade;blue;$1.22;proposed;
+Tamiyo, the Moon Sage;already;P;20160427;Endgames;blue;;proposed;
+Tangle Wire;already;A;20150115;ChannelFireball;colorless;$2.69;proposed;
+Tasigur, the Golden Fang;already;C;20151116;PUCATrade;black;$4.50;proposed;
+Teferi's Care;already;E;20211006;cardkingdom;white;$0.40;proposed;
+Teferi's Moat;already;E;20170126;ChannelFireball;multicolored;$0.49;proposed;
+Teferi's Puzzle Box;already;A;20150115;ChannelFireball;colorless;$2.49;proposed;
+Teferi, Mage of Zhalfir;already;C;20141204;ChannelFireball;blue;$13.99;proposed;
+Teferi, Temporal Archmage;already;P;20170406;Endgames;blue;;proposed;
+Telepathy;already;E;20170126;ChannelFireball;blue;$0.32;proposed;
+Temple Bell;already;A;20170711;CardKingdom;colorless;$0.59;proposed;
+Tempt with Discovery;already;S;20170608;CardKingdom;green;$2.39;proposed;
+Tendrils of Agony;already;S;20150115;ChannelFireball;black;$0.99;proposed;
+Terastodon;already;C;20160427;Endgames;green;;proposed;
+Tergrid, God of Fright;already;C;20210305;Akikambara;black;$10;proposed;
+Terminate;already;I;20150323;GeorgeTrade;multicolored;;proposed;
+Terror of the Peaks;already;C;20230328;Endgames;red;;proposed;
+Terror of the Peaks;already;c;20230329;endgames;red;
+Terror of the Peaks;already;c;20230329;endgames;red;;proposed;
+Tezzeret the Seeker;already;P;20151202;PUCATrade;blue;$9.05;proposed;
+Thada Adel, Acquisitor;already;C;20170406;Endgames;blue;;proposed;
+Thassa, Deep Dwelling;c;20220105;ronin;blue;
+Thassa, Deep-Dwelling;already;E;20220105;ronin;blue;$17;proposed;
+Thassa, God of the Sea;already;C;20131101;TradeGamesCapital;blue;;proposed;
+The First Sliver;already;C;20200422;ScottMunroTrade;multicolored;$7.99;proposed;
+The Hive;already;A;20190719;WhiteHorse;colorless;;proposed;
+The Locust God;already;C;20170711;CardKingdom;multicolored;$8.99;proposed;
+The World Tree;already;L;20220901;ronin;colorless;$5.10;proposed;
+The World Tree;already;l;<202209;ronin;colorless;
+Thespian's Stage;already;L;20151216;PUCATrade;colorless;$2.10;proposed;
+Thief of Blood;already;C;20160123;ChannelFireball;black;$0.49;proposed;
+Thieving Magpie;already;C;20150422;PUCATrade;blue;$0.23;proposed;
+Thirst for Knowledge;already;I;20150115;ChannelFireball;blue;$1.79;proposed;
+Thought Prison;already;A;20190704;Starcitygames;colorless;$0.25;proposed;
+Thought Scour;already;I;20150115;ChannelFireball;blue;$0.79;proposed;
+Thought-Knot Seer;already;C;20170406;Endgames;colorless;;proposed;
+Thousand-Year Storm;already;E;20211006;cardkingdom;multicolored;$12.99;proposed;
+Thran Dynamo;already;A;20150115;ChannelFireball;colorless;$4.99;proposed;
+Thrasios, Triton Hero;want;c;;;multicolored;
+Throne of Empires;already;A;20220901;ronin;colorless;$0.47;proposed;
+Throne of Empires;already;a;20220501;ronin;colorless;
+Throne of the God-Pharaoh;already;A;20170608;CardKingdom;colorless;$0.49;proposed;
+Thundermaw Hellkite;already;C;20160427;Endgames;red;;proposed;
+Tidehollow Sculler;already;A;20150115;ChannelFireball;multicolored;$0.25;proposed;
+Tireless Tracker;already;C;20211228;PlentyofGames;green;$8.70;proposed;
+Tireless Tracker;c;20211228;plentyofgames;green;
+Tolarian Academy;already;L;20170406;Endgames;colorless;;proposed;
+Tooth and Nail;already;S;20200422;ScottMunroTrade;green;$17.99;proposed;
+Torbran, Thane of Red Fell;already;C;20200422;ScottMunroTrade;red;$5.00;proposed;
+Tormod's Crypt;already;A;20221002;ronin;colorless;$1.00;proposed;
+Tormod's Crypt;already;a;20221002;ronin;colorless;
+Torpor Orb;already;A;20161110;Starcitygames;colorless;$1.39;proposed;
+Tradewind Rider;already;C;20150609;PUCATrade;blue;$1.97;proposed;
+Tragic Slip;already;I;20150115;ChannelFireball;black;$0.25;proposed;
+Training Center;want;l;;;colorless;
+Tranquil Grove;want;e;;;green;
+Treachery;already;E;20141203;Channelfireball;blue;$8.99;proposed;
+Treasure Nabber;already;C;20190704;Starcitygames;red;$4.85;proposed;
+Treasure Vault;already;L;20220901;ronin;colorless;$5.69;proposed;
+Treasure Vault;l;<202209;ronin;colorless;
+Trickster Mage;already;C;20160123;ChannelFireball;blue;$0.15;proposed;
+Trinket Mage;already;C;20150115;ChannelFireball;blue;$0.49;proposed;
+Trygon Predator;already;C;20150427;PUCATrade;multicolored;$0.70;proposed;
+Turnabout;already;I;20190320;GeorgeTrade;blue;;proposed;
+Twinning Staff;already;A;20220901;ronin;colorless;$2.04;proposed;
+Ulvenwald Tracker;already;C;20141203;Channelfireball;green;$0.49;proposed;
+Unburial Rites;already;S;20150115;ChannelFireball;black;$0.49;proposed;
+Uncage the Menagerie;already;S;20170711;CardKingdom;green;$3.49;proposed;
+Unexpectedly Absent;already;I;20160427;Endgames;white;;proposed;
+Unhallowed Pact;already;E;20131010;Channelfireball;black;$0.30;proposed;
+Upheaval;already;S;20150115;ChannelFireball;blue;$1.99;proposed;
+Valakut Awakening;already;I;20220901;ronin;red;$6.58;proposed;
+Valorous Stance;already;I;20151119;PUCATrade;white;$1.90;proposed;
+Vampire Hexmage;already;C;20131010;Channelfireball;black;$1.00;proposed;
+Vampire Nighthawk;already;C;20150115;ChannelFireball;black;$0.99;proposed;
+Vapor Snag;already;I;20150115;ChannelFireball;blue;$1.49;proposed;
+Vastwood Hydra;already;C;20131013;Channelfireball;green;$1.96;proposed;
+Vault of Champions;want;l;;;colorless;
+Vedalken Orrery;already;A;20151130;PUCATrade;colorless;$2.86;proposed;
+Vendilion Clique;already;C;20160123;ChannelFireball;blue;$39.99;proposed;
+Venser, Shaper Savant;already;C;20170126;ChannelFireball;blue;$17.99;proposed;
+Venser, the Sojourner;already;P;20150115;ChannelFireball;multicolored;$5.99;proposed;
+Verdant Catacombs;already;L;20170406;Endgames;colorless;;proposed;
+Viashino Heretic;already;C;20150323;GeorgeTrade;red;;proposed;
+Viscera Seer;already;C;20161110;Starcitygames;black;$1.25;proposed;
+Vito, Thorn of the Dusk Rose;already;c;20230319;ronin;black;
+Vito, Thorn of the Dusk Rose;already;c;20230319;ronin;black;$5.00;proposed;
+Voice of Resurgence;already;C;20190320;GeorgeTrade;multicolored;;proposed;
+Void Mirror;already;A;20220901;ronin;colorless;$0.54;proposed;
+Voltaic Key;already;A;20151022;PUCATrade;colorless;$0.70;proposed;
+Vorinclex, Voice of Hunger;already;C;20190211;GeorgeTrade;green;;proposed;
+Vraska's Contempt;already;I;20190328;MattDeCureTrade;black;$10.00;proposed;
+Walking Archive;already;A;20170711;CardKingdom;colorless;$1.43;proposed;
+Walking Atlas;already;A;20170711;CardKingdom;colorless;$0.25;proposed;
+Wall of Blossoms;already;C;20160427;Endgames;green;;proposed;
+Wall of Omens;already;C;20150422;PUCATrade;white;$1.60;proposed;
+War Room;already;L;20220901;ronin;colorless;$2.90;proposed;
+War Room;l;<202209;ronin;colorless;
+War Tax;already;E;20230328;Endgames;blue;;proposed;
+War Tax;already;e;20230329;endgames;blue;
+War Tax;already;e;20230329;endgames;blue;;proposed;
+Ward of Bones;already;A;20170711;CardKingdom;colorless;$4.79;proposed;
+Warp World;already;S;20211228;PlentyofGames;red;$1.10;proposed;
+Warp World;s;20211228;plentyofgames;red;
+Waterfront Bouncer;already;C;20150427;PUCATrade;blue;$0.23;proposed;
+Wave of Reckoning;already;S;20170126;ChannelFireball;white;$0.35;proposed;
+Well of Lost Dreams;already;A;20170711;CardKingdom;colorless;$2.79;proposed;
+Whip of Erebos;already;E;20131010;Channelfireball;black;$8.97;proposed;
+Whisperwood Elemental;already;C;20151027;PUCATrade;green;$4.23;proposed;
+Wildfire;already;S;20170406;Endgames;red;;proposed;
+Windbrisk Heights;already;L;20150115;ChannelFireball;colorless;$0.79;proposed;
+Windfall;already;S;20150115;ChannelFireball;blue;$1.25;proposed;
+Winter Orb;already;A;20150323;GeorgeTrade;colorless;;proposed;
+Wispmare;already;C;20150422;PUCATrade;white;$0.16;proposed;
+Wolfir Silverheart;already;C;20150427;PUCATrade;green;$0.67;proposed;
+Wood Elves;already;C;20160317;PUCATrade;green;$0.25;proposed;
+Woodfall Primus;already;C;20170711;CardKingdom;green;$7.99;proposed;
+Woodland Cemetery;already;L;20160427;Endgames;colorless;;proposed;
+Worn Powerstone;already;A;20150115;ChannelFireball;colorless;$0.79;proposed;
+Wurmcoil Engine;already;A;20160125;PUCATrade;colorless;$19.87;proposed;
+Yavimaya Elder;already;C;20190320;GeorgeTrade;green;;proposed;
+Yavimaya, Cradle of Growth;already;L;20211006;cardkingdom;colorless;$13.99;proposed;
+Yorion, Sky Nomad;already;C;20221009;ronin;multicolored;$2.00;proposed;
+Yorion, Sky Nomad;already;c;20221009;ronin;multicolored;
+Zada, Hedron Grinder;already;C;20151022;PUCATrade;red;$2.86;proposed;
+Zealous Conscripts;already;C;20150115;ChannelFireball;red;$0.49;proposed;
