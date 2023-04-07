@@ -154,6 +154,9 @@ sub read_all_cards
             $all_cards_date {$card} = $date_of_purchase;
             $all_cards_place {$card} = $place_of_purchase;
             $all_cards_color {$card} = $color;
+            #$price =~ s/\$//;
+            #$price =~ s/^(\d)\./0$1./;
+            #$price = "\$$price";
             $all_cards_price {$card} = $price;
         }
         if ($line =~ m/^([^;]+?);(want);(.);;;([^;]+?);/)
@@ -255,22 +258,9 @@ sub is_authorized
             $SUPPLIED_PASSWORD = $1;
         }
 
-        my $ok = is_authorized ($SUPPLIED_PASSWORD);
+        my $authorized = is_authorized ($SUPPLIED_PASSWORD);
 
-        if ($ok != 1)
-        {
-            $SUPPLIED_PASSWORD = "";
-            print ("\n\n\n=======================\n\nCould not find a password in::$txt\n::\n");
-            $txt = "<font color=red>Supply password here:</font><br><br>";
-            $txt .= "
-                <form action=\"/purchasedcards/password\">
-                <label for=\"password\">Password:</label><br>
-                <input type=\"text\" id=\"password\" name=\"password\" value=\"xyz\"><br>
-                <input type=\"submit\" value=\"Supply password to proceed\">
-                </form>";
-            write_to_socket (\*CLIENT, $txt, "", "noredirect");
-            next;
-        }
+        
 
         if ($txt =~ m/.*favico.*/m)
         {
@@ -528,6 +518,19 @@ sub is_authorized
                 <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
                 <input type=\"submit\" value=\"Submit\">
                 </form>";
+                
+        if ($authorized != 1)
+        {
+            $SUPPLIED_PASSWORD = "";
+            $html_text .= "<font color=red>Supply password here:</font><br><br>";
+            $html_text .= "
+                <form action=\"/purchasedcards/password\">
+                <label for=\"password\">Password:</label><br>
+                <input type=\"text\" id=\"password\" name=\"password\" value=\"xyz\"><br>
+                <input type=\"submit\" value=\"Supply password to proceed\">
+                </form>";
+        }
+
         $html_text .= "<a href=\"https://i.imgur.com/wZIV4Al.png\">Boxes1</a><br>";
         $html_text .= "</caption>\n";
         $html_text .= "<thead>\n";
@@ -539,6 +542,7 @@ sub is_authorized
         $html_text .= "<th> <button><font size=-1>When<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Place<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Price<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Goldfish<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Ronin<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>RoninURL<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>\n";
@@ -578,10 +582,18 @@ sub is_authorized
                 $row .= " <td> <font color=\"$color\">$d</a> </font>\n </td>\n";
                 $row .= " <td> <font color=\"$color\">$all_cards_place{$card}</a> </font>\n </td>\n";
                 $row .= " <td> <font color=\"$color\">$all_cards_price{$card}</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$color\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
 
                 if ($all_cards_have{$card} ne "already")
                 {
-                    $row .= " <td> <font color=\"$color\"> <a href=\"purchasedcards/card?$card&place?ronin\">Bought it</a> </font>\n </td>\n";
+                    if ($authorized)
+                    {
+                        $row .= " <td> <font color=\"$color\"> <a href=\"purchasedcards/card?$card&place?ronin\">Bought it</a> </font>\n </td>\n";
+                    }
+                    else
+                    {
+                        $row .= " <td><font color=red size=-2>Not authorized</font></td>\n";
+                    }
                 }
                 else
                 {
@@ -615,6 +627,11 @@ sub is_authorized
         $html_text .= "</body>\n";
         $html_text .= "</html>\n";
 
+        if (!$authorized)
+        {
+            $html_text =~ s/ronin/obscura/img;
+            $html_text =~ s/.com.au/.com/img;
+        }
         write_to_socket (\*CLIENT, $html_text, "", "noredirect");
         $have_to_write_to_socket = 0;
         print ("============================================================\n");
