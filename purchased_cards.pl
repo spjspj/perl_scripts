@@ -154,9 +154,13 @@ sub read_all_cards
             $all_cards_date {$card} = $date_of_purchase;
             $all_cards_place {$card} = $place_of_purchase;
             $all_cards_color {$card} = $color;
-            #$price =~ s/\$//;
-            #$price =~ s/^(\d)\./0$1./;
-            #$price = "\$$price";
+            $price =~ s/\$//;
+            $price =~ s/^(\d)\./00$1./;
+            $price =~ s/^([1-9]\d)\./0$1./;
+            $price = "\$$price";
+            $price =~ s/^\$000/&nbsp;\$00/;
+            $price =~ s/^\$00/&nbsp;&nbsp;\$0/;
+            $price =~ s/^\$0/&nbsp;&nbsp;&nbsp;\$/;
             $all_cards_price {$card} = $price;
         }
         if ($line =~ m/^([^;]+?);(want);(.);;;([^;]+?);/)
@@ -478,6 +482,9 @@ sub is_authorized
         $html_text .= "table.sortable td.num {\n";
         $html_text .= "  text-align: right;\n";
         $html_text .= "}\n";
+        $html_text .= "table.sortable td.price {\n";
+        $html_text .= "  text-align: right;\n";
+        $html_text .= "}\n";
         $html_text .= "table.sortable tbody tr:nth-child(odd) {\n";
         $html_text .= "  background-color: #ddd;\n";
         $html_text .= "}\n";
@@ -499,14 +506,15 @@ sub is_authorized
         $html_text .= "  top: 0;\n";
         $html_text .= "}\n";
         $html_text .= "</style>\n";
-        $html_text .= "<script src=\"https://cpwebassets.codepen.io/assets/editor/iframe/iframeConsoleRunner-6bce046e7128ddf9391ccf7acbecbf7ce0cbd7b6defbeb2e217a867f51485d25.js\"></script>\n";
-        $html_text .= "<script src=\"https://cpwebassets.codepen.io/assets/editor/iframe/iframeRefreshCSS-44fe83e49b63affec96918c9af88c0d80b209a862cf87ac46bc933074b8c557d.js\"></script>\n";
-        $html_text .= "<script src=\"https://cpwebassets.codepen.io/assets/editor/iframe/iframeRuntimeErrors-4f205f2c14e769b448bcf477de2938c681660d5038bc464e3700256713ebe261.js\"></script>\n";
         $html_text .= "</head>\n";
         $html_text .= "<body>\n";
         $html_text .= "<script>\n";
+        $html_text .= "var xyz = 'bbbbbbb';";
+        $html_text .= "xyz = xyz.replace (/b/, 'x');";
+        $html_text .= "</script>\n";
+        $html_text .= "<script>\n";
         $html_text .= "'use strict';\n";
-        $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('num')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('num')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
+        $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber, isPrice) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? -1 : 1; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? 1 : -1; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
         $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
         $html_text .= "</script>\n";
         $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
@@ -534,6 +542,7 @@ sub is_authorized
         $html_text .= "<a href=\"https://i.imgur.com/wZIV4Al.png\">Boxes1</a><br>";
         $html_text .= "</caption>\n";
         $html_text .= "<thead>\n";
+        $html_text .= "<br>Overall price was: \$XXX<br>";
         $html_text .= "<tr>\n";
         $html_text .= "<th> <button><font size=-1>Name<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Type<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -541,7 +550,7 @@ sub is_authorized
         $html_text .= "<th aria-sort=\"ascending\"> <button><font size=-1>Own?<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>When<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Place<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>Price<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th class=td.price> <button><font size=-1>Price<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Goldfish<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Ronin<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>RoninURL<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -555,6 +564,7 @@ sub is_authorized
         my $card;
         my $even_odd = "even";
         my $deck;
+        my $overall_price = 0;
         foreach $card (sort keys (%all_cards))
         {
             my $color = $all_cards_color{$card};
@@ -582,6 +592,7 @@ sub is_authorized
                 $row .= " <td> <font color=\"$color\">$d</a> </font>\n </td>\n";
                 $row .= " <td> <font color=\"$color\">$all_cards_place{$card}</a> </font>\n </td>\n";
                 $row .= " <td> <font color=\"$color\">$all_cards_price{$card}</a> </font>\n </td>\n";
+                my $current_price = $all_cards_price{$card};
                 $row .= " <td> <font color=\"$color\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
 
                 if ($all_cards_have{$card} ne "already")
@@ -601,10 +612,16 @@ sub is_authorized
                 }
 
                 $row .= " <td> <font size=-2 color=\"$color\"><a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$card\">$card</a> </font></td>\n</tr>\n";
+                $row =~ s/\n//img;
 
+                print ("Checking $row vs $search\n");
                 if ($row =~ m/$search/img)
                 {
                     $html_text .= "$row";
+                    if ($current_price =~ m/\$(\d+)\.(\d+)/) 
+                    {
+                        $overall_price += $1 + $2/100;
+                    }
                 }
                 if ($even_odd eq "even") { $even_odd = "odd"; } 
                 else { $even_odd = "even"; } 
@@ -613,6 +630,7 @@ sub is_authorized
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
+        $html_text =~ s/XXX/$overall_price/img;
 
         $html_text .= "<a href=\"https://imgur.com/a/9uj84ka\">Boxes2</a><br>";
         $html_text .= "<a href=\"https://imgur.com/a/Bdt159R\">EDH Decklists</a><br>";
