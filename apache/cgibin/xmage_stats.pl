@@ -35,6 +35,7 @@ print BAR_CHART "        legend {\n";
 print BAR_CHART "        margin: 0 auto;\n";
 print BAR_CHART "        }\n";
 print BAR_CHART "    </style>\n";
+print BAR_CHART "<style> table { border-collapse: collapse; } table.center { margin-left: auto; margin-right: auto; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #cfdfff; } </style>\n";
 print BAR_CHART "<script>\n";
 print BAR_CHART "if (document.location.search.match (/type=embed/gi)) {\n";
 print BAR_CHART "    window.parent.postMessage (\"resize\", \"*\");\n";
@@ -48,8 +49,8 @@ print BAR_CHART "<canvas id=\"xmage_canvas\" style=\"background: white;\"></canv
 print BAR_CHART "<legend for=\"xmage_canvas\"></legend>\n";
 print BAR_CHART "<script id=\"rendered-js\" >\n";
 print BAR_CHART "var canvas = document.getElementById (\"xmage_canvas\");\n";
-print BAR_CHART "canvas.width = 500;\n";
-print BAR_CHART "canvas.height = 500;\n";
+print BAR_CHART "canvas.width = 1200;\n";
+print BAR_CHART "canvas.height = 600;\n";
 print BAR_CHART "var ctx = canvas.getContext (\"2d\");\n";
 print BAR_CHART "var min_gridy;\n";
 print BAR_CHART "var max_gridy;\n";
@@ -240,6 +241,8 @@ print BAR_CHART "        gridColor: \"lightgrey\",\n";
 
 open PROC, "find /I \"People Counter\" c:/xmage_clean/mage/Mage.Client/xmage_users.txt |";
 my %yyyymmddhh;
+my %yyyymmdd_max;
+my %yyyymmdd_max_vals;
 my $lines_read = 0;
 my $found_yyyymmddhh = 0;
 while (<PROC>)
@@ -252,6 +255,7 @@ while (<PROC>)
     if ($line =~ m/(\d\d\d\d).(\d\d).(\d\d) (\d\d).*People counter = (\d+):beta/)
     {
          my $ymdh = "$1-$2-$3 $4";
+         my $ymd = "$1-$2-$3";
          my $people_count = $5;
          if (!defined ($yyyymmddhh {$ymdh}))
          {
@@ -261,6 +265,11 @@ while (<PROC>)
          if ($people_count > $yyyymmddhh {$ymdh})
          {
              $yyyymmddhh {$ymdh} = $people_count;
+         }
+         if ($people_count > $yyyymmdd_max {$ymd})
+         {
+             $yyyymmdd_max {$ymd} = $people_count;
+             $yyyymmdd_max_vals {$people_count} .= "$ymd,";
          }
     }
 }
@@ -362,7 +371,7 @@ print BAR_CHART "</script>\n";
 print BAR_CHART "<canvas id=\"canvas_info\" style=\"background: skyblue;\"></canvas>\n";
 print BAR_CHART "<script>\n";
 print BAR_CHART "var canvas_info = document.getElementById(\"canvas_info\");\n";
-print BAR_CHART "canvas_info.width = 500;\n";
+print BAR_CHART "canvas_info.width = 900;\n";
 print BAR_CHART "canvas_info.height = 100;\n";
 print BAR_CHART "var xmage_canvas = document.getElementById(\"xmage_canvas\");\n";
 print BAR_CHART "var ctx = canvas_info.getContext(\"2d\");\n";
@@ -403,7 +412,32 @@ print BAR_CHART "    oldY = xmage_canvas.height - 50 - myBarchart.multiplier *ba
 print BAR_CHART "    myBarchart.draw ();\n";
 print BAR_CHART "}\n";
 print BAR_CHART "</script>\n";
-print BAR_CHART "<a href=\"https://xmage.au/cgibin/xmage_stats.pl\">Refresh here</a>\n";
+print BAR_CHART "<br><a href=\"https://xmage.au/cgibin/xmage_stats.pl\">Refresh here</a>\n";
+
+
+
+print BAR_CHART "<br><br><font size=+2>Maximum number of users per day:</font><br>";
+print BAR_CHART "<table class=center>";
+#foreach $key (sort { $b <=> $a } values (%yyyymmdd_max))
+#{
+#    print BAR_CHART "$key &nbsp;&nbsp; " . $yyyymmdd_max {$key} . "<br>";
+#}
+foreach $key (sort { $b <=> $a } keys (%yyyymmdd_max_vals))
+{
+    print BAR_CHART "<tr><td>";
+    my $val = $yyyymmdd_max_vals {$key};
+    $yyyymmdd_max_vals {$key} =~ s/,$//;
+    $yyyymmdd_max_vals {$key} =~ s/,/) (and /img;
+    $yyyymmdd_max_vals {$key} =~ s/\)//im;
+    if ($yyyymmdd_max_vals {$key} =~ m/\(/)
+    {
+        $yyyymmdd_max_vals {$key} =~ s/$/)/;
+    }
+    $yyyymmdd_max_vals {$key} =~ s/^/<td>/img;
+    $yyyymmdd_max_vals {$key} =~ s/$/<\/td>/img;
+    print BAR_CHART "<td>$key</td>" . $yyyymmdd_max_vals {$key} . "<\/tr>\n";
+}
+print BAR_CHART "</table>\n";
 print BAR_CHART "</body>\n";
 print BAR_CHART "</html>\n";
 
