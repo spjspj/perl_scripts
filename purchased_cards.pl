@@ -154,13 +154,6 @@ sub read_all_cards
             $all_cards_date {$card} = $date_of_purchase;
             $all_cards_place {$card} = $place_of_purchase;
             $all_cards_color {$card} = $color;
-            $price =~ s/\$//;
-            $price =~ s/^(\d)\./00$1./;
-            $price =~ s/^([1-9]\d)\./0$1./;
-            $price = "\$$price";
-            $price =~ s/^\$000/&nbsp;\$00/;
-            $price =~ s/^\$00/&nbsp;&nbsp;\$0/;
-            $price =~ s/^\$0/&nbsp;&nbsp;&nbsp;\$/;
             $all_cards_price {$card} = $price;
         }
         if ($line =~ m/^([^;]+?);(want);(.);;;([^;]+?);/)
@@ -402,6 +395,13 @@ sub is_authorized
         {
             $search = "$1";
         }
+        
+        my $group = ".*";
+        if ($txt =~ m/groupstr=(.*)/im)
+        {
+            $group = "$1";
+        }
+
         my @strs = split /&/, $txt;
         #print join (',,,', @strs);
 
@@ -512,20 +512,27 @@ sub is_authorized
         $html_text .= "var xyz = 'bbbbbbb';";
         $html_text .= "xyz = xyz.replace (/b/, 'x');";
         $html_text .= "</script>\n";
+        
+        $html_text .= "<table><tr><td>\n";
+        $html_text .= "<form action=\"/purchasedcards/search\">
+                <label for=\"searchstr\">Search:</label><br>
+                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
+                <input type=\"submit\" value=\"Search\">
+                </form></td><td>";
+
+        $html_text .= "<form action=\"/purchasedcards/groupby\">
+                <label for=\"groupstr\">Group by:</label><br>
+                <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
+                <input type=\"submit\" value=\"Groupby\">
+                </form></td></table>";
+        my %groups;
+
         $html_text .= "<script>\n";
         $html_text .= "'use strict';\n";
         $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber, isPrice) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? -1 : 1; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? 1 : -1; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
         $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
         $html_text .= "</script>\n";
         $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
-        $html_text .= "<caption>\n";
-        $html_text .= "Cards\n";
-
-        $html_text .= "<form action=\"/purchasedcards/search\">
-                <label for=\"searchstr\">Search:</label><br>
-                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
-                <input type=\"submit\" value=\"Submit\">
-                </form>";
                 
         if ($authorized != 1)
         {
@@ -539,10 +546,11 @@ sub is_authorized
                 </form>";
         }
 
-        $html_text .= "<a href=\"https://i.imgur.com/wZIV4Al.png\">Boxes1</a><br>";
-        $html_text .= "</caption>\n";
         $html_text .= "<thead>\n";
-        $html_text .= "<br>Overall price was: \$XXX<br>";
+        $html_text .= "<br>Overall price was: \$XXX (from YYY cards)<br>";
+        $html_text .= "<br>QQQ<br>";
+        
+       
         $html_text .= "<tr>\n";
         $html_text .= "<th> <button><font size=-1>Name<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Type<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -552,8 +560,10 @@ sub is_authorized
         $html_text .= "<th> <button><font size=-1>Place<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=td.price> <button><font size=-1>Price<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Goldfish<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>Ronin<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>RoninURL<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Buying?<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>LGS<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>cut.pl<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>\n";
         $html_text .= "</tr>\n";
         $html_text .= "</thead>\n";
@@ -565,41 +575,54 @@ sub is_authorized
         my $even_odd = "even";
         my $deck;
         my $overall_price = 0;
+        my $overall_count = 0;
+        my %group_prices;
+        my %group_counts;
         foreach $card (sort keys (%all_cards))
         {
             my $color = $all_cards_color{$card};
-            if ($color eq "white") { $color = "darkgrey"; }
-            if ($color eq "colorless") { $color = "purple"; }
-            if ($color eq "multicolored") { $color = "darkyellow"; }
+            my $fontcolor = $color;
+            if ($fontcolor eq "white") { $fontcolor = "darkgrey"; }
+            if ($fontcolor eq "colorless") { $fontcolor = "purple"; }
+            if ($fontcolor eq "multicolored") { $fontcolor = "darkyellow"; }
             #if (lc ($all_cards_have{$card}) eq "want")
             {
                 my $row = "";
+                my $fake_row = "";
                 if ($all_cards_have{$card} ne "already")
                 {
-                    $row .= "<tr class=\"$even_odd\"><td> <font color=\"$color\">$card</font></td>\n";
+                    $row .= "<tr class=\"$even_odd\"><td> <font color=\"$fontcolor\">$card</font></td>\n";
+                    $fake_row .= "cardname=$card ; ";
                     $deck .= "1 $card<br>";
                 }
                 else
                 {
                     $row .= "<tr class=\"$even_odd\"><td> <font size=-2 color=\"darkred\">zzz $card</font></td>\n";
+                    $fake_row .= "cardname=$card ; ";
                 }
 
-                $row .= " <td> <font color=\"$color\">$all_cards_card_type{$card}</a> </font>\n </td>\n";
-                $row .= " <td> <font color=\"$color\">$color</a> </font>\n</td>\n";
-                $row .= " <td> <font color=\"$color\">$all_cards_have{$card}</a></font></td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$all_cards_card_type{$card}</a> </font>\n </td>\n";
+                $fake_row .= "type=$all_cards_card_type{$card} ; ";
+                $row .= " <td> <font color=\"$fontcolor\">$color</a> </font>\n</td>\n";
+                $fake_row .= "color=$color ; ";
+                $row .= " <td> <font color=\"$fontcolor\">$all_cards_have{$card}</a></font></td>\n";
+                $fake_row .= "have=$all_cards_have{$card} ; ";
 
                 my $d = $all_cards_date{$card};
-                $row .= " <td> <font color=\"$color\">$d</a> </font>\n </td>\n";
-                $row .= " <td> <font color=\"$color\">$all_cards_place{$card}</a> </font>\n </td>\n";
-                $row .= " <td> <font color=\"$color\">$all_cards_price{$card}</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$d</a> </font>\n </td>\n";
+                $fake_row .= "date=$d ; ";
+                $row .= " <td> <font color=\"$fontcolor\">$all_cards_place{$card}</a> </font>\n </td>\n";
+                $fake_row .= "place=$all_cards_place{$card} ; ";
+                $row .= " <td> <font color=\"$fontcolor\">$all_cards_price{$card}</a> </font>\n </td>\n";
+                $fake_row .= "price=$all_cards_price{$card} ; ";
                 my $current_price = $all_cards_price{$card};
-                $row .= " <td> <font color=\"$color\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
 
                 if ($all_cards_have{$card} ne "already")
                 {
                     if ($authorized)
                     {
-                        $row .= " <td> <font color=\"$color\"> <a href=\"purchasedcards/card?$card&place?ronin\">Bought it</a> </font>\n </td>\n";
+                        $row .= " <td> <font color=\"$fontcolor\"> <a href=\"purchasedcards/card?$card&place?CardKingdom\">Bought it</a> </font>\n </td>\n";
                     }
                     else
                     {
@@ -610,19 +633,79 @@ sub is_authorized
                 {
                     $row .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
                 }
-
-                $row .= " <td> <font size=-2 color=\"$color\"><a href=\"https://roningames.com.au/search?type=product&options[prefix]=last&q=$card\">$card</a> </font></td>\n</tr>\n";
-                $row =~ s/\n//img;
-
-                print ("Checking $row vs $search\n");
-                if ($row =~ m/$search/img)
+                
+                my $url = "https://roningames.com.au/search?type=product&options[prefix]=last&q=$card";
+                if (lc ($all_cards_card_type{$card}) eq "a")
                 {
-                    $html_text .= "$row";
-                    if ($current_price =~ m/\$(\d+)\.(\d+)/) 
+                    $url .= " artifact";
+                    $fake_row .= "cardtype=artifact ; ";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "c")
+                {
+                    $url .= " creature";
+                    $fake_row .= "cardtype=creature; ";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "e")
+                {
+                    $url .= " enchantment";
+                    $fake_row .= "cardtype=enchantment; ";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "i")
+                {
+                    $url .= " instant";
+                    $fake_row .= "cardtype=instant; ";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "p")
+                {
+                    $url .= " planeswalker";
+                    $fake_row .= "cardtype=planeswalker; ";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "s")
+                {
+                    $url .= " sorcery";
+                    $fake_row .= "cardtype=sorcery; ";
+                }
+                $row .= " <td> <font size=-2 color=\"$fontcolor\"><a href=\"$url\">$card</a> </font></td>\n";
+
+                if ($all_cards_price{$card} =~ m/^$/ && $all_cards_have{$card} =~ m/already/)
+                {
+                    $row .= " <td> <font size=-3>echo \"1\" | cut.pl stdin \"https://www.mtggoldfish.com/price/Commander+2013+Edition/$card#paper\" $d mtgfcurl</font></td>\n\n";
+                }
+                else
+                {
+                    $row .= "<td><font size=-3>Already have price</font></td>\n";
+                }
+                $row =~ s/\n//img;
+                if ($fake_row =~ m/($group)/mg && $group ne ".*" && $group ne "")
+                {
+                    my $this_group = $1;
+                    $this_group =~ s/\W/ /mg;
+                    $this_group =~ s/  / /mg;
+                    $this_group =~ s/  / /mg;
+
+                    $group_counts {$this_group}++;
+                    $row .= " <td>$this_group</td> </tr>\n";
+                    if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
                     {
-                        $overall_price += $1 + $2/100;
+                        $group_prices {$this_group} += $1*100 + $2;
                     }
                 }
+                else
+                {
+                    $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                }
+
+                print ("Checking $row vs $search\n");
+                if ($row =~ m/$search/img || $search eq "")
+                {
+                    $overall_count++;
+                    $html_text .= "$row";
+                    if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                    {
+                        $overall_price += $1*100 + $2;
+                    }
+                }
+
                 if ($even_odd eq "even") { $even_odd = "odd"; } 
                 else { $even_odd = "even"; } 
             }
@@ -630,7 +713,29 @@ sub is_authorized
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
-        $html_text =~ s/XXX/$overall_price/img;
+        $overall_price =~ s/(\d\d)$/.$1/;
+        $html_text =~ s/XXX/$overall_price/mg;
+        $html_text =~ s/YYY/$overall_count/mg;
+
+        if ($group =~ m/.../)
+        {
+            my $group_block;
+            my $g;
+            my $total_g_count;
+            my $total_g_price;
+            foreach $g (sort keys (%group_counts))
+            {
+                my $g_price = $group_prices {$g};
+                my $g_count = $group_counts {$g};
+                $g_price =~ s/(\d\d)$/.$1/;
+                $group_block .= "Group $g costed \$$g_price and had $g_count cards<br>";
+                $total_g_count += $g_count;
+                $total_g_price += $g_price;
+            }
+            $group_block .= "Total cost: $total_g_price, Total count: $total_g_count"; 
+            $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/mg;
+                
+        }
 
         $html_text .= "<a href=\"https://imgur.com/a/9uj84ka\">Boxes2</a><br>";
         $html_text .= "<a href=\"https://imgur.com/a/Bdt159R\">EDH Decklists</a><br>";
