@@ -30,7 +30,6 @@ sub read_json_values
     $chunk =~ s/,/,\n/img;
     $chunk =~ s/[\{\}]/\n/img;
 
-
     while ($chunk =~ s/^(.*)\n//im)
     {
         my $json_field = $1;
@@ -472,8 +471,6 @@ sub possible_school_holidays
     return $month_str;
 }
 
- 
-
 sub print_months
 {
     my $month1 = $_ [0];
@@ -584,6 +581,10 @@ sub work_out_ringing_positions
         return "5-6 pos^";
     }
 }
+
+my $allup_x = 0;
+my $allup_y = 0;
+my $allup_z = 0;
 
 # Main
 {
@@ -742,6 +743,7 @@ sub work_out_ringing_positions
             my $found_output = 0;
             #print "cut.pl $file $term $helper $operation |\n";
             open PROC, "cut.pl $file $term $helper $operation |";
+            print "Running: cut.pl $file $term $helper $operation |\n";
             while (<PROC>)
             {
                 if ($found_output == 0)
@@ -858,58 +860,6 @@ sub work_out_ringing_positions
         {
             my $l = $term;
             $l =~ s/XXX/$i/img;
-            print ("$l\n");
-        }
-        exit;
-    }
-    
-    if ($operation eq "allupcount")
-    {
-        my $i = 0;
-        my $num_to_do = 0;
-        my $start_x = "aa";
-        my $start_y = "aa";
-        my $start_z = "aa";
-
-        if ($helper =~ m/^(\d+),(\d+),(\d+)/)
-        {
-            $num_to_do = $1;
-            $start_x = $2;
-        }
-
-        if ($helper =~ m/^(\d+),(\d+),(\d+)/)
-        {
-            $num_to_do = $1;
-            $start_x = $2;
-            $start_y = $3;
-        }
-
-        if ($helper =~ m/^(\d+),(\d+),(\d+),(\d+)/)
-        {
-            $num_to_do = $1;
-            $start_x = $2;
-            $start_y = $3;
-            $start_z = $4;
-        }
-
-        for ($i = 0; $i < $helper; $i ++)
-        {
-            my $l = $term;
-            if ($start_x ne "aa")
-            {
-                $l =~ s/XXX/$start_x/;
-                $start_x++;
-            }
-            if ($start_y ne "aa")
-            {
-                $l =~ s/YYY/$start_y/;
-                $start_y++;
-            }
-            if ($start_z ne "aa")
-            {
-                $l =~ s/ZZZ/$start_z/;
-                $start_z++;
-            }
             print ("$l\n");
         }
         exit;
@@ -1076,7 +1026,41 @@ sub work_out_ringing_positions
             }
         }
         
-        if ($operation eq "curl")
+        if ($operation eq "mtgfcurl" && $term =~ m/https:\/\//)
+        {
+                my $url = $term;
+                print ("==============================\n");
+                print ("Looking at :$url:\n");
+                my $curl_command = "D:\\perl_programs\\curl.exe -L -H \"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36\"  \"$term\"";
+                my $content = `$curl_command`;
+                $content =~ s/\s\s/ /gim;
+                $content =~ s/\s\s/ /gim;
+                $content =~ s/\n//gim;
+                $content =~ s/-//gim;
+                $helper =~ s/-//gim;
+                print "\nChecking for >>$helper<<\n";
+                #print ">>>> Content $content\n";
+                if ($content =~ m/(.............................................$helper..................................)/img)
+                {
+                    print "Found (for $helper for $term) -- $1\n";
+                }
+        }
+        if ($operation eq "curl" && $term =~ m/https:\/\//)
+        {
+            my $i;
+            {
+                my $url = $term;
+                print ("Looking at :$url:\n");
+                my $curl_command = "D:\\perl_programs\\curl.exe -L -H \"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36\"  \"$term\"";
+                print $curl_command;
+                my $content = `$curl_command`;
+                $content =~ s/\s\s/ /gim;
+                $content =~ s/\s\s/ /gim;
+
+                print $url, "\n\n\n\n\n", "=========>> $term <<========\n", $content, "======>> $curl_command <<======\n";
+            }
+        }
+        elsif ($operation eq "curl")
         {
             my $i;
             {
@@ -1189,7 +1173,6 @@ sub work_out_ringing_positions
                 $content =~ s/  / /img;
                 $content =~ s/  / /img;
                 $content =~ s/  / /img;
-                sleep (1);
                 my $yyyymmdd = strftime "%Y%m%d %H", localtime($starttime);
                 print "\n......$yyyymmdd ($url)\n";
                 my $ln = 0;
@@ -1434,6 +1417,21 @@ sub work_out_ringing_positions
             }
         }
 
+        if ($operation eq "allupcount")
+        {
+            my $i = 0;
+            my $num_to_do = 0;
+
+            my $l = $line;
+            $l =~ s/XXX/$allup_x/img;
+            $allup_x++;
+            $l =~ s/YYY/$allup_y/img;
+            $allup_y++;
+            $l =~ s/ZZZ/$allup_z/img;
+            $allup_z++;
+            print ("$l\n");
+        }
+
         if ($operation eq "edh_lands")
         {
             my $orig_wubrg = "wubrgwubrg";
@@ -1634,6 +1632,73 @@ sub work_out_ringing_positions
             {
                 print ("$line\n");
             }
+        }
+        
+        if ($operation eq "mtg_history_line")
+        {
+            my $ok_name_fields = 0;
+            my $ok_already_fields = 0;
+            my $ok_date_fields = 0;
+            my $ok_price_fields = 0;
+            my $ok_type_fields = 0;
+            my $ok_color_fields = 0;
+            my $ok_trade_fields = 0;
+            my $traded = "";
+            my $price = "";
+            my $org_line = $line;
+
+            my $name = "";
+            my $already = "";
+            my $date = "";
+            my $price = "";
+            my $type = "";
+            my $color = "";
+            my $trade = "";
+
+            while ($line =~ s/^([^;]+);//im)
+            {
+                my $field = $1;
+                if ($ok_name_fields == 0)
+                {
+                    $ok_name_fields++;
+                    $name = $field;
+                }
+
+                if ($field =~ m/already/) { $ok_already_fields++; $already = $field; }
+                if ($field =~ m/^\$/) { $ok_price_fields++; $price = $field; $price = $field; }
+                if ($field =~ m/^20\d\d\d\d\d\d/) { $ok_date_fields++; $date = $field; }
+                if ($field =~ m/^[aceispl]$/img) { $ok_type_fields++; $type = $field; }
+                if ($field =~ m/^(white|blue|black|red|green|colorless|multicolored)$/img) { $ok_color_fields++; $color = $field; }
+                if ($field =~ m/^(akikambara|cardkingdom|channelfireball|pack|endgames|georgetrade|magichothub|mattdecuretrade|plentyofgames|pucatrade|ronin|scottmunrotrade|starcitygames|tradegamescapital|tradegeorge|whitehorse)/img) { $ok_trade_fields++; $traded = $field; $trade = $field; }
+            }
+
+            if ($org_line =~ m/want/img) { print ("$org_line\n"); next; }
+
+            #if ($ok_name_fields == 1) { print (" -- ok_name_fields "); }
+            #if ($ok_already_fields == 1) { print (" -- ok_already_fields "); }
+            #if ($ok_date_fields == 1) { print (" -- ok_date_fields "); }
+            #if ($ok_price_fields == 1) { print (" -- ok_price_fields "); }
+            #if ($ok_type_fields == 1) { print (" -- ok_type_fields "); }
+            #if ($ok_color_fields == 1) { print (" -- ok_color_fields "); }
+            #if ($ok_trade_fields == 1) { print (" -- ok_trade_fields "); }
+
+            print ("$name;$already;$type;$date;$trade;$color;$price;proposed;");
+            if ($ok_name_fields != 1) { print (" -- NOT ok_name_fields "); }
+            if ($ok_already_fields != 1) { print (" -- NOT ok_already_fields "); }
+            if ($traded =~ m/whitehorse|george|endgames|pack|gamescap/img)
+            {
+                $ok_price_fields = 1; 
+            }
+            if ($price =~ m/\$\d\d\./)
+            {
+                #print (" -- NOT ok - super high price --- $price ")
+            }
+            if ($ok_price_fields != 1) { print (" -- NOT ok_price_fields --- $traded "); }
+            if ($ok_date_fields != 1) { print (" -- NOT ok_date_fields "); }
+            if ($ok_type_fields != 1) { print (" -- NOT ok_type_fields "); }
+            if ($ok_color_fields != 1) { print (" -- NOT ok_color_fields "); }
+            if ($ok_trade_fields != 1) { print (" -- NOT ok_trade_fields "); }
+            print "\n";
         }
         
         if ($operation eq "search_in_output")
