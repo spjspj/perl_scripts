@@ -12,15 +12,6 @@ use LWP::Simple;
 use Socket;
 use File::Copy;
 
-my %card_names;
-my %original_lines;
-my %original_lines_just_card_names;
-my %card_text;
-my %card_cost;
-my %card_type;
-my %card_converted_cost;
-my %all_cards_abilities;
-my %expansion;
 
 #####
 sub write_to_socket
@@ -135,12 +126,17 @@ sub read_from_socket
 my %csv_data;
 my $max_field_num = 0;
 my $max_rows = 0;
+my %col_types;
+
 sub process_csv_data
 {
     my $block = $_ [0];
     my %new_csv_data;
     %csv_data = %new_csv_data;
+    my %new_col_types;
+    %col_types = %new_col_types;
     $max_field_num = 0;
+    $max_rows = 0;
 
     my $line_num = 0;
     my $field_num = 0;
@@ -214,6 +210,23 @@ sub add_price
     return $initial_price;
 }
 
+sub get_col_type
+{
+    my $col_num = $_ [0];
+    if ($col_num < 10)
+    {
+        $col_num = "0$col_num";
+    }
+    return ($col_types {$col_num});
+}
+
+sub set_col_type
+{
+    my $col_num = $_ [0];
+    my $col_type = $_ [1];
+    $col_types {$col_num} = $col_type;
+}
+
 sub get_col_header
 {
     my $col_num = $_ [0];
@@ -229,6 +242,50 @@ sub get_col_header
         return ($csv_data {$str});
     }
     return ($csv_data {"0.$col_num"});
+}
+
+sub get_num_of_col_header
+{
+    my $col_name = $_ [0];
+    my $i = 0;
+    for ($i = 0; $i < $max_field_num; $i++)
+    {
+        if (get_col_header ($i) eq $col_name)
+        {
+            return $i;
+        }
+    }
+    return -1;
+}
+
+sub get_field_from_col_header
+{
+    my $row_num = $_ [0];
+    my $col_name = $_ [1];
+
+    my $col = get_num_of_col_header ($col_name);
+    if ($col > -1)
+    {
+        return get_field ($row_num, $col);
+    }
+    return "";
+}
+
+sub get_field
+{
+    my $row_num = $_ [0];
+    my $col_num = $_ [1];
+    if ($col_num < 10)
+    {
+        my $str = "$row_num.0$col_num";
+        $str =~ s/00/0/img;
+        if (defined ($csv_data {$str}))
+        {
+            return ($csv_data {$str});
+        }
+        return ($csv_data {$str});
+    }
+    return ("");
 }
 
 # Main
@@ -604,7 +661,7 @@ $//img;
         my $x;
         for ($x = 0; $x < $max_field_num; $x++)
         {
-            $html_text .= "<th> <button><font size=-1>" . get_col_header ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>";
@@ -660,7 +717,6 @@ $//img;
         my $row = "<tr class=\"$even_odd\">";
         my $fake_row;
 
-        my %col_types;
         my %col_calculations;
         my $pot_group_price = "";
 
@@ -682,7 +738,7 @@ $//img;
                     }
                     elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                     {
-                        $col_types {$col_num} = "DATE";
+                        set_col_type ($col_num, "DATE");
                         if ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/)
                         {
                             $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
@@ -735,20 +791,20 @@ $//img;
                     }
                     elsif ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/)
                     {
-                        $col_types {$col_num} = "NUMBER";
+                        set_col_type ($col_num, "NUMBER");
                         $col_calculations {$col_num} = $field;
                         print ("$col_num is now number 'cos >>$field<<\n");
                     }
                     elsif ($field =~ m/^(-|)\$(\d*[\d,])+($|\.\d+)$/)
                     {
-                        $col_types {$col_num} = "PRICE";
+                        set_col_type ($col_num, "PRICE");
                         $col_calculations {$col_num} = add_price ($col_calculations {$col_num}, $field);
                         print ("$col_num is now price 'cos >>$field<<\n");
                     }
                     else
                     {
                         print ("$col_num is now general 'cos >>$field<<\n");
-                        $col_types {$col_num} = "GENERAL";
+                        set_col_type ($col_num, "GENERAL");
                     }
                 }
                 elsif ($col_types {$col_num} ne "GENERAL")
@@ -762,7 +818,7 @@ $//img;
                         if ($col_types {$col_num} ne "DATE")
                         {
                             print ("$col_num is now general (was date) 'cos >>$field<<\n");
-                            $col_types {$col_num} = "GENERAL";
+                            set_col_type ($col_num, "GENERAL");
                         }
                         else
                         {
@@ -822,7 +878,7 @@ $//img;
                         if ($col_types {$col_num} ne "NUMBER")
                         {
                             print ("$col_num is now general (was number) 'cos >>$field<<\n");
-                            $col_types {$col_num} = "GENERAL";
+                            set_col_type ($col_num, "GENERAL");
                         }
                         else
                         {
@@ -834,7 +890,7 @@ $//img;
                         if ($col_types {$col_num} ne "PRICE")
                         {
                             print ("$col_num is now general (was price) 'cos >>$field<<\n");
-                            $col_types {$col_num} = "GENERAL";
+                            set_col_type ($col_num, "GENERAL");
                         }
                         else
                         {
@@ -844,23 +900,18 @@ $//img;
                     else
                     {
                         print ("$col_num is now general 'cos >>$field<<\n");
-                        $col_types {$col_num} = "GENERAL";
+                        set_col_type ($col_num, "GENERAL");
                     }
                 }
 
-                if ($col_types {$col_num} eq "PRICE")
-                {
-                    print ("aaa checkin $col_num vs $chosen_col === (" . get_col_header ($col_num) . ")\n");
-                    if ($col_num < 10) #|| ($col_num >= 10 && (lc($chosen_col) eq lc ($csv_data{"0.$col_num"}))))
-                    {
-                        print (" >> bbb checkin ($col_num) " . lc($chosen_col) . " -- " . lc (get_col_header ($col_num)) . "\n");
-                        if (lc($chosen_col) eq lc (get_col_header ($col_num)))
-                        {
-                            print ("Found PRICE (col $chosen_col == $col_num) (field=$field\n");
-                            $pot_group_price = $field;
-                        }
-                    }
-                }
+                # STILL NEED?? TODO
+                #if ($col_types {$col_num} eq "PRICE")
+                #{
+                #    if (lc($chosen_col) eq lc (get_col_header ($col_num)))
+                #    {
+                #        $pot_group_price = $field;
+                #    }
+                #}
 
                 $field = $csv_data {$field_id};
                 if ($row_num > $old_row_num)
@@ -890,9 +941,10 @@ $//img;
                             $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                             $row =~ s/<\/td>/<\/font><\/td>/img;
                             $group_counts {$this_group}++;
+
+                            $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
-                            print (">>>GPs = $group_prices{$this_group} for $this_group\n");
                         }
                         elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
                         {
@@ -900,9 +952,9 @@ $//img;
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
+                                $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
-                                print (">222>>GPs: $group_prices{$this_group} for $this_group\n");
                                 $row .= " <td>$this_group</td> </tr>\n";
                                 
                                 if (!defined ($group_colours {$this_group}))
@@ -926,9 +978,9 @@ $//img;
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
+                                $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
-                                print (">333>>GPs: $group_prices{$this_group} for $this_group\n");
                                 $row .= " <td>$this_group</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -1056,11 +1108,24 @@ $//img;
             {
                 $col_calculations{$c} = $col_calculations{$c} / 100;
             }
-            $group_block .= "<br>Column $c (" . get_col_header ($col_num) . "): $col_types{$c} ($col_calculations{$c})"; 
+            $group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c})"; 
         }
 
         $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
         $html_text =~ s/QQQ//im;
+        
+        for ($x = 0; $x < $max_field_num; $x++)
+        {
+            if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
+            {
+                $html_text =~ s/XYZ$x/ class=td.price/;
+            }
+            else
+            {
+                my $ccc = get_col_type ($x);
+                $html_text =~ s/XYZ$x//;
+            }
+        }
 
         $html_text .= "<br>$deck";
         $html_text .= "</body>\n";
