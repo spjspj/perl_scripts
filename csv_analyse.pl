@@ -188,6 +188,49 @@ sub process_csv_data
     #print ("Process_data Done Last line:$block\n");
 }
 
+sub add_price
+{
+    my $initial_price = $_ [0];
+    my $field = $_ [1];
+
+    $field =~ s/[\$,]//img;
+
+    if ($field =~ m/^-(\d+)($|\.\d+)$/)
+    {
+        my $whole = $1;
+        my $decimal = $2;
+        $decimal =~ s/\.//;
+        $decimal =~ s/^(\d\d)(\d+)/$1.$2/;
+        $initial_price += -1 * ($whole*100 + $decimal);
+    }
+    elsif ($field =~ m/^(\d+)($|\.\d+)$/)
+    {
+        my $whole = $1;
+        my $decimal = $2;
+        $decimal =~ s/\.//;
+        $decimal =~ s/^(\d\d)(\d+)/$1.$2/;
+        $initial_price += $whole*100 + $decimal;
+    }
+    return $initial_price;
+}
+
+sub get_col_header
+{
+    my $col_num = $_ [0];
+    if ($col_num < 10)
+    {
+        my $str = "0.0$col_num";
+        $str =~ s/00/0/img;
+        if (defined ($csv_data {$str}))
+        {
+            print ("YAY $col_num found for $str\n");
+            return ($csv_data {$str});
+        }
+        return ($csv_data {$str});
+    }
+    return ($csv_data {"0.$col_num"});
+}
+
 # Main
 {
     my $paddr;
@@ -220,7 +263,7 @@ Acid-Spewer Dragon;Dragons of Tarkir [DTK];86;Uncommon;{5}{B};Creature - Dragon;
 Acolyte of Bahamut;Commander Legends: Battle for Baldur's Gate;212;Uncommon;{1}{G};Legendary Enchantment - Background; ; ;Commander creatures you own have \"The first Dragon spell you cast each turn costs {2} less to cast.\";Commander Legends: Battle for Baldur's Gate
 Adult Gold Dragon;Adventures in the Forgotten Realms;216;Rare;{3}{R}{W};Creature - Dragon;4;3;Flying, lifelink, haste;Adventures in the Forgotten Realms
 Advent of the Wurm;Dragon's Maze [DGM];51;Rare;{1}{G}{G}{W};Instant; ; ;Put a 5/5 green Wurm creature token with trample onto the battlefield.;Dragon's Maze [DGM]
-Aetherling;Dragon's Maze [DGM];11;Rare;{4}{U}{U};Creature - Shapeshifter;4;5;{U}: Exile Ætherling. Return it to the battlefield under its owner's control at the beginning of the next end step.\${U}: Ætherling is unblockable this turn.\${1}: Ætherling gets +1/-1 until end of turn.\${1}: Ætherling gets -1/+1 until end of turn.;Dragon's Maze [DGM]
+Aetherling;Dragon's Maze [DGM];11;Rare;{4}{U}{U};Creature - Shapeshifter;4;5;{U}: Exile Ã†therling. Return it to the battlefield under its owner's control at the beginning of the next end step.\${U}: Ã†therling is unblockable this turn.\${1}: Ã†therling gets +1/-1 until end of turn.\${1}: Ã†therling gets -1/+1 until end of turn.;Dragon's Maze [DGM]
 Ainok Artillerist;Dragons of Tarkir [DTK];171;Common;{2}{G};Creature - Hound Arch;4;1;Ainok Artillerist has reach as long as it has a +1/+1 counter on it. (It can block creatures with flying.);Dragons of Tarkir [DTK]
 Ainok Survivalist;Dragons of Tarkir [DTK];172;Uncommon;{1}{G};Creature - Hound Shaman;2;1;Megamorph {1}{G} (You may cast this card face down for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Ainok Survivalist is turned face up, destroy target artifact or enchantment an opponent controls.;Dragons of Tarkir [DTK]
 Akoum Hellkite;Battle for Zendikar [BFZ];139;Rare;{4}{R}{R};Creature - Dragon;4;4;Flying\$Landfall ? Whenever a land enters the battlefield under your control, Akoum Hellkite deals 1 damage to any target. If that land was a Mountain, Akoum Hellkite deals 2 damage to that creature or player instead.;Battle for Zendikar [BFZ]
@@ -241,7 +284,7 @@ Ancient Gold Dragon;Commander Legends: Battle for Baldur's Gate;3;Mythic Rare;{5
 Ancient Hellkite;Game Night: Free-for-All;68;Rare;{4}{R}{R}{R};Creature - Dragon;6;6;Flying\${R}: Ancient Hellkite deals 1 damage to target creature defending player controls. Activate only if Ancient Hellkite is attacking.;Game Night: Free-for-All
 Ancient Silver Dragon;Commander Legends: Battle for Baldur's Gate;56;Mythic Rare;{6}{U}{U};Creature - Elder Dragon;8;8;Flying\$Whenever Ancient Silver Dragon deals combat damage to a player, roll a d20. Draw cards equal to the result. You have no maximum hand size for the rest of the game.;Commander Legends: Battle for Baldur's Gate
 Anticipate;Dragons of Tarkir [DTK];45;Common;{1}{U};Instant; ; ;Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.;Dragons of Tarkir [DTK]
-Ao, the Dawn Sky;Kamigawa: Neon Dynasty;2;Mythic Rare;{3}{W}{W};Legendary Creature - Dragon Spirit;5;4;Flying, vigilance\$When Ao, the Dawn Sky dies, choose one —\$• Look at the top seven cards of your library. Put any number of nonland permanent cards with total mana value 4 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.\$• Put two +1/+1 counters on each permanent you control that's a creature or Vehicle.;Kamigawa: Neon Dynasty
+Ao, the Dawn Sky;Kamigawa: Neon Dynasty;2;Mythic Rare;{3}{W}{W};Legendary Creature - Dragon Spirit;5;4;Flying, vigilance\$When Ao, the Dawn Sky dies, choose one â€”\$â€¢ Look at the top seven cards of your library. Put any number of nonland permanent cards with total mana value 4 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.\$â€¢ Put two +1/+1 counters on each permanent you control that's a creature or Vehicle.;Kamigawa: Neon Dynasty
 Arashin Foremost;Dragons of Tarkir [DTK];3;Rare;{1}{W}{W};Creature - Human Warrior;2;2;Double strike\$Whenever Arashin Foremost enters the battlefield or attacks, another target Warrior creature you control gains double strike until end of turn.;Dragons of Tarkir [DTK]
 Arashin Sovereign;Dragons of Tarkir [DTK];212;Rare;{5}{G}{W};Creature - Dragon;6;6;Flying\$When Arashin Sovereign dies, you may put it on the top or bottom of its owner's library.;Dragons of Tarkir [DTK]
 Arcades Sabboth;Chronicles [CHR];106;Rare;{2}{G}{G}{W}{W}{U}{U};Legendary Creature - Elder Dragon;7;7;Flying\$At the beginning of your upkeep, sacrifice Arcades Sabboth unless you pay {G}{W}{U}.\$Each untapped creature you control gets +0/+2 as long as it's not attacking.\${W}: Arcades Sabboth gets +0/+1 until end of turn.;Chronicles [CHR]
@@ -256,11 +299,11 @@ Artificer's Dragon;The Brothers' War;291;Rare;{6};Artifact Creature - Dragon;4;4
 Ascended Lawmage;Dragon's Maze [DGM];53;Uncommon;{2}{W}{U};Creature - Vedalken Wizard;3;2;Flying, hexproof;Dragon's Maze [DGM]
 Ashmouth Dragon;Innistrad: Midnight Hunt [ISD];159;Rare; ;Creature - Dragon;4;4;Flying\$Whenever you cast an instant or sorcery spell, Ashmouth Dragon deals 2 damage to any target.;Innistrad: Midnight Hunt [ISD]
 Assault Formation;Dragons of Tarkir [DTK];173;Rare;{1}{G};Enchantment; ; ;Each creature you control assigns combat damage equal to its toughness rather than its power.\${G}: Target creature with defender can attack this turn as though it didn't have defender.\${2}{G}: Creatures you control get +0/+1 until end of turn.;Dragons of Tarkir [DTK]
-Astral Dragon;Commander Legends: Battle for Baldur's Gate;664;Rare;{6}{U}{U};Creature - Dragon;4;4;Flying\$Project Image — When Astral Dragon enters the battlefield, create two tokens that are copies of target noncreature permanent, except they're 3/3 Dragon creatures in addition to their other types, and they have flying.;Commander Legends: Battle for Baldur's Gate
-Atarka Beastbreaker;Dragons of Tarkir [DTK];174;Common;{1}{G};Creature - Human Warrior;2;2;Formidable — {4}{G}: Atarka Beastbreaker gets +4/+4 until end of turn. Activate this only if creatures you control have total power 8 or greater.;Dragons of Tarkir [DTK]
+Astral Dragon;Commander Legends: Battle for Baldur's Gate;664;Rare;{6}{U}{U};Creature - Dragon;4;4;Flying\$Project Image â€” When Astral Dragon enters the battlefield, create two tokens that are copies of target noncreature permanent, except they're 3/3 Dragon creatures in addition to their other types, and they have flying.;Commander Legends: Battle for Baldur's Gate
+Atarka Beastbreaker;Dragons of Tarkir [DTK];174;Common;{1}{G};Creature - Human Warrior;2;2;Formidable â€” {4}{G}: Atarka Beastbreaker gets +4/+4 until end of turn. Activate this only if creatures you control have total power 8 or greater.;Dragons of Tarkir [DTK]
 Atarka Efreet;Dragons of Tarkir [DTK];128;Common;{3}{R};Creature - Efreet Shaman;5;1;Megamorph {2}{R} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Atarka Efreet is turned face up, it deals 1 damage to any target.;Dragons of Tarkir [DTK]
 Atarka Monument;Dragons of Tarkir [DTK];235;Uncommon;{3};Artifact; ; ;{T}: Add {R} or {G}.\${4}{R}{G}: Atarka Monument becomes a 4/4 red and green Dragon artifact creature with flying until end of turn.;Dragons of Tarkir [DTK]
-Atarka Pummeler;Dragons of Tarkir [DTK];129;Uncommon;{4}{R};Creature - Ogre Warrior;4;5;Formidable — {3}{R}{R}: Each creature you control can't be blocked this turn except by two or more creatures. Activate this ability only if creature you control have total power 8 or greater,;Dragons of Tarkir [DTK]
+Atarka Pummeler;Dragons of Tarkir [DTK];129;Uncommon;{4}{R};Creature - Ogre Warrior;4;5;Formidable â€” {3}{R}{R}: Each creature you control can't be blocked this turn except by two or more creatures. Activate this ability only if creature you control have total power 8 or greater,;Dragons of Tarkir [DTK]
 Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary Creature - Dragon;6;4;Flying, trample\$Whenever a Dragon you control attacks, it gains double strike until end of turn.;Commander 2017 Edition [C17]
 ");
 
@@ -360,7 +403,8 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
             while ($csv_data =~ s/^(.*?)(\n|$)//im && $discard_header >= 0)
             {
                 my $line = $1;
-                if ($line =~ m/^$/ || $line =~ m/^$/)
+                if ($line =~ m/^$/ || $line =~ m/^
+$/)
                 {
                     $discard_header --;
                 }
@@ -371,7 +415,8 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                 }
             }
 
-            $new_csv_data =~ s/^$//img;
+            $new_csv_data =~ s/^
+$//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^.*newcsv=//img;
@@ -407,7 +452,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         $html_text .= "<html lang='en' class=''>\n";
         $html_text .= "<head>\n";
         $html_text .= "  <meta charset='UTF-8'>\n";
-        $html_text .= "  <title>Cards List</title>\n";
+        $html_text .= "  <title>Analyse CSV</title>\n";
         $html_text .= "  <meta name=\"robots\" content=\"noindex\">\n";
         $html_text .= "  <link rel=\"icon\" href=\"favicon.ico\">\n";
         $html_text .= "  <style id=\"INLINE_PEN_STYLESHEET_ID\">\n";
@@ -503,7 +548,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         $html_text .= "</head>\n";
         $html_text .= "<body>\n";
         $html_text .= "<script>\n";
-        $html_text .= "var xyz = 'bbbbbbb';";
+        $html_text .= "var xyz = 'bbb';";
         $html_text .= "xyz = xyz.replace (/b/, 'x');";
         $html_text .= "</script>\n";
         $html_text .= "<table width=100%><tr><td>\n";
@@ -515,7 +560,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                 </form></td><td>";
 
         $html_text .= "<form action=\"/csv_analyse/groupby\">
-                <label for=\"groupstr\">Group by <font size=-2>(first group only):</font></label><br>
+                <label for=\"groupstr\">Group by <font size=-2>(first group only, eg (..Scott..)#credit):</font></label><br>
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
@@ -559,14 +604,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         my $x;
         for ($x = 0; $x < $max_field_num; $x++)
         {
-            if ($x < 10)
-            {
-                $html_text .= "<th> <button><font size=-1>" . $csv_data{"0.0$x"} . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-            }
-            else
-            {
-                $html_text .= "<th> <button><font size=-1>" . $csv_data{"0.$x"} . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-            }
+            $html_text .= "<th> <button><font size=-1>" . get_col_header ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>";
@@ -579,7 +617,6 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         my $card;
         my $even_odd = "even";
         my $deck;
-        my $overall_price = 0;
         my $overall_count = 0;
         my %group_prices;
         my %group_counts;
@@ -587,9 +624,15 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         my $only_one_group = 1;
         my $first_group_only = 0;
         my $many_groups = 0;
-        my $overall_match = $group;
 
         my $group2 = "";
+        my $chosen_col = "";
+        if ($group =~ s/#(.*)//)
+        {
+            $chosen_col = "$1";
+            print ("WOOT $chosen_col\n");
+        }
+        my $overall_match = $group;
         if ($group =~ m/\((.*)\).*\((.*)\)/)
         {
             $only_one_group = 0;
@@ -619,6 +662,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
 
         my %col_types;
         my %col_calculations;
+        my $pot_group_price = "";
 
         foreach $field_id (sort {$a <=> $b} keys (%csv_data))
         {
@@ -636,10 +680,58 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                     {
                         
                     }
-                    elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/\|]\d\d[\/\|]\d\d$/ || $field =~ m/^\d\d[\/\|]\d\d[\/\|]\d$/ || $field =~ m/^\d[\/\|]\d\d[\/\|]\d\d$/ || $field =~ m/^\d\d[\/\|]\d[\/\|]\d\d$/ || $field =~ m/^\d[\/\|]\d\d[\/\|]\d\d\d\d$/ || $field =~ m/^\d\d[\/\|]\d[\/\|]\d\d\d\d$/)
+                    elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                     {
                         $col_types {$col_num} = "DATE";
-                        print ("$col_num is now date 'cos >>$field<<\n");
+                        if ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/)
+                        {
+                            $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
+                        elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
+                        {
+                            $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
+                        elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
+                        {
+                            $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$1" . "0$2" . "$3";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
+                        elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
+                        {
+                            $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$3" . "$2" . "$1";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
+                        elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
+                        {
+                            $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$3" . "$2" . "0$1";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
+                        elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
+                        {
+                            $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$3" . "0$2" . "$1";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
+                        elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
+                        {
+                            $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
+                            print ("$field_id for $field -- ");
+                            $csv_data {$field_id} = "$3" . "0$2" . "0$1";
+                            print ("now is $csv_data{$field_id}\n");
+                        }
                     }
                     elsif ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/)
                     {
@@ -650,24 +742,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                     elsif ($field =~ m/^(-|)\$(\d*[\d,])+($|\.\d+)$/)
                     {
                         $col_types {$col_num} = "PRICE";
-                        $field =~ s/[\$,]//img;
-
-                        if ($field =~ m/^-(\d+)($|\.\d+)$/)
-                        {
-                            my $whole = $1;
-                            my $decimal = $2;
-                            $decimal =~ s/\.//;
-                            $decimal =~ s/^(\d\d)(\d+)/$1.$2/;
-                            $col_calculations {$col_num} = -1 * ($whole*100 + $decimal);
-                        }
-                        elsif ($field =~ m/^(\d+)($|\.\d+)$/)
-                        {
-                            my $whole = $1;
-                            my $decimal = $2;
-                            $decimal =~ s/\.//;
-                            $decimal =~ s/^(\d\d)(\d+)/$1.$2/;
-                            $col_calculations {$col_num} = $whole*100 + $decimal;
-                        }
+                        $col_calculations {$col_num} = add_price ($col_calculations {$col_num}, $field);
                         print ("$col_num is now price 'cos >>$field<<\n");
                     }
                     else
@@ -682,15 +757,67 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                     {
                         
                     }
-                    elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/\|]\d\d[\/\|]\d\d$/ || $field =~ m/^\d\d[\/\|]\d\d[\/\|]\d$/ || $field =~ m/^\d[\/\|]\d\d[\/\|]\d\d$/ || $field =~ m/^\d\d[\/\|]\d[\/\|]\d\d$/ || $field =~ m/^\d[\/\|]\d\d[\/\|]\d\d\d\d$/ || $field =~ m/^\d\d[\/\|]\d[\/\|]\d\d\d\d$/)
+                    elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                     {
                         if ($col_types {$col_num} ne "DATE")
                         {
                             print ("$col_num is now general (was date) 'cos >>$field<<\n");
                             $col_types {$col_num} = "GENERAL";
                         }
+                        else
+                        {
+                            if ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/)
+                            {
+                                $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                            elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
+                            {
+                                $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                            elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
+                            {
+                                $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$1" . "0$2" . "$3";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                            elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
+                            {
+                                $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$3" . "$2" . "$1";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                            elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
+                            {
+                                $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$3" . "$2" . "0$1";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                            elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
+                            {
+                                $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$3" . "0$2" . "$1";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                            elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
+                            {
+                                $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
+                                print ("$field_id for $field -- ");
+                                $csv_data {$field_id} = "$3" . "0$2" . "0$1";
+                                print ("now is $csv_data{$field_id}\n");
+                            }
+                        }
                     }
-                    elsif ($field =~ m/^\d+($|\.\d+)$/)
+                    elsif ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/)
                     {
                         if ($col_types {$col_num} ne "NUMBER")
                         {
@@ -711,24 +838,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                         }
                         else
                         {
-                            $field =~ s/[\$,]//img;
-                            
-                            if ($field =~ m/^-(\d+)($|\.\d+)$/)
-                            {
-                                my $whole = $1;
-                                my $decimal = $2;
-                                $decimal =~ s/\.//;
-                                $decimal =~ s/^(\d\d)(\d+)/$1.$2/;
-                                $col_calculations {$col_num} += -1 * ($whole*100 + $decimal);
-                            }
-                            elsif ($field =~ m/^(\d+)($|\.\d+)$/)
-                            {
-                                my $whole = $1;
-                                my $decimal = $2;
-                                $decimal =~ s/\.//;
-                                $decimal =~ s/^(\d\d)(\d+)/$1.$2/;
-                                $col_calculations {$col_num} += $whole*100 + $decimal;
-                            }
+                            $col_calculations {$col_num} = add_price ($col_calculations {$col_num}, $field);
                         }
                     }
                     else
@@ -738,6 +848,21 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                     }
                 }
 
+                if ($col_types {$col_num} eq "PRICE")
+                {
+                    print ("aaa checkin $col_num vs $chosen_col === (" . get_col_header ($col_num) . ")\n");
+                    if ($col_num < 10) #|| ($col_num >= 10 && (lc($chosen_col) eq lc ($csv_data{"0.$col_num"}))))
+                    {
+                        print (" >> bbb checkin ($col_num) " . lc($chosen_col) . " -- " . lc (get_col_header ($col_num)) . "\n");
+                        if (lc($chosen_col) eq lc (get_col_header ($col_num)))
+                        {
+                            print ("Found PRICE (col $chosen_col == $col_num) (field=$field\n");
+                            $pot_group_price = $field;
+                        }
+                    }
+                }
+
+                $field = $csv_data {$field_id};
                 if ($row_num > $old_row_num)
                 {
                     # Add row to table if matched 
@@ -765,6 +890,9 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                             $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                             $row =~ s/<\/td>/<\/font><\/td>/img;
                             $group_counts {$this_group}++;
+                            $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
+                            $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
+                            print (">>>GPs = $group_prices{$this_group} for $this_group\n");
                         }
                         elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
                         {
@@ -772,6 +900,9 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
+                                $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
+                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
+                                print (">222>>GPs: $group_prices{$this_group} for $this_group\n");
                                 $row .= " <td>$this_group</td> </tr>\n";
                                 
                                 if (!defined ($group_colours {$this_group}))
@@ -795,6 +926,9 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
+                                $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
+                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
+                                print (">333>>GPs: $group_prices{$this_group} for $this_group\n");
                                 $row .= " <td>$this_group</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -894,8 +1028,6 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
-        $overall_price =~ s/(\d\d)$/.$1/;
-        $html_text =~ s/XXX/$overall_price/mg;
         $html_text =~ s/YYY/$overall_count/mg;
 
         my $group_block;
@@ -908,8 +1040,9 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
             {
                 my $g_price = $group_prices {$g};
                 my $g_count = $group_counts {$g};
+                my $g_calc = $group_prices {$g. "_calc"};
                 $g_price =~ s/(\d\d)$/.$1/;
-                $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows</font><br>";
+                $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (price was $g_price from $g_calc)</font><br>";
                 $total_g_count += $g_count;
                 $total_g_price += $g_price;
             }
@@ -923,7 +1056,7 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
             {
                 $col_calculations{$c} = $col_calculations{$c} / 100;
             }
-            $group_block .= "<br>Column $c (" . $csv_data{"0.$c"} . "): $col_types{$c} ($col_calculations{$c})"; 
+            $group_block .= "<br>Column $c (" . get_col_header ($col_num) . "): $col_types{$c} ($col_calculations{$c})"; 
         }
 
         $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
