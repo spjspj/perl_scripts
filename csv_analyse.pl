@@ -13,6 +13,11 @@ use Socket;
 use File::Copy;
 
 
+my %csv_data;
+my $max_field_num = 0;
+my $max_rows = 0;
+my %col_types;
+
 #####
 sub write_to_socket
 {
@@ -121,12 +126,6 @@ sub read_from_socket
     }
     return $header;
 }
-
-# Read all cards
-my %csv_data;
-my $max_field_num = 0;
-my $max_rows = 0;
-my %col_types;
 
 sub process_csv_data
 {
@@ -288,6 +287,306 @@ sub get_field
     return ("");
 }
 
+sub get_graph_html
+{
+    my $graph_html = "";
+    my $col = $_ [0];
+    my $col_name = $_ [1];
+    $graph_html .= "<!DOCTYPE html>\n";
+    $graph_html .= "<html lang=\"en\">\n";
+    $graph_html .= "<head>\n";
+    $graph_html .= "<meta charset=\"UTF-8\">\n";
+    $graph_html .= "<title>Graph Data</title>\n";
+    $graph_html .= "<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css\">\n";
+    $graph_html .= "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Khand'>\n";
+    $graph_html .= "    <style>\n";
+    $graph_html .= "        * {\n";
+    $graph_html .= "        box-sizing: border-box;\n";
+    $graph_html .= "        padding: 0;\n";
+    $graph_html .= "        margin: 0;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        body {\n";
+    $graph_html .= "        margin: 50px auto;\n";
+    $graph_html .= "        font-family: \"Khand\";\n";
+    $graph_html .= "        font-size: 1.2em;\n";
+    $graph_html .= "        text-align: center;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        ul {\n";
+    $graph_html .= "        padding-top: 20px;\n";
+    $graph_html .= "        display: flex;\n";
+    $graph_html .= "        gap: 2rem;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        li {\n";
+    $graph_html .= "        margin: 0.5rem 0;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        legend {\n";
+    $graph_html .= "        margin: 0 auto;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "    </style>\n";
+    $graph_html .= "<style> table { border-collapse: collapse; } table.center { margin-left: auto; margin-right: auto; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #cfdfff; } </style>\n";
+    $graph_html .= "<script>\n";
+    $graph_html .= "if (document.location.search.match (/type=embed/gi)) {\n";
+    $graph_html .= "    window.parent.postMessage (\"resize\", \"*\");\n";
+    $graph_html .= "}\n";
+    $graph_html .= "</script>\n";
+    $graph_html .= "</head>\n";
+    $graph_html .= "<body translate=\"no\" >\n";
+    $graph_html .= "<h1>Graph for column $col_name</h1><br>\n";
+    $graph_html .= "<canvas id=\"graph_canvas\" style=\"background: white;\"></canvas>\n";
+    $graph_html .= "<legend for=\"graph_canvas\"></legend>\n";
+    $graph_html .= "<script id=\"rendered-js\" >\n";
+    $graph_html .= "var canvas = document.getElementById (\"graph_canvas\");\n";
+    $graph_html .= "canvas.width = 1200;\n";
+    $graph_html .= "canvas.height = 600;\n";
+    $graph_html .= "var ctx = canvas.getContext (\"2d\");\n";
+    $graph_html .= "var min_gridy;\n";
+    $graph_html .= "var max_gridy;\n";
+    $graph_html .= "var barSize;\n";
+    $graph_html .= "function drawActualLine (ctx, startX, startY, endX, endY, color) {\n";
+    $graph_html .= "    ctx.save ();\n";
+    $graph_html .= "    ctx.strokeStyle = color;\n";
+    $graph_html .= "    ctx.beginPath ();\n";
+    $graph_html .= "    ctx.moveTo (startX, startY);\n";
+    $graph_html .= "    ctx.lineTo (endX, endY);\n";
+    $graph_html .= "    ctx.stroke ();\n";
+    $graph_html .= "    ctx.restore ();\n";
+    $graph_html .= "}\n";
+    $graph_html .= "function drawLine (ctx, startX, startY, endX, endY, color, options, canvas) {\n";
+    $graph_html .= "    startX += options.padding;\n";
+    $graph_html .= "    startY += canvas.height - options.padding;\n";
+    $graph_html .= "    endX += options.padding + 2;\n";
+    $graph_html .= "    endY += canvas.height - options.padding;\n";
+    $graph_html .= "    ctx.save ();\n";
+    $graph_html .= "    ctx.strokeStyle = color;\n";
+    $graph_html .= "    ctx.beginPath ();\n";
+    $graph_html .= "    ctx.moveTo (startX, startY);\n";
+    $graph_html .= "    ctx.lineTo (endX, endY);\n";
+    $graph_html .= "    ctx.stroke ();\n";
+    $graph_html .= "    ctx.restore ();\n";
+    $graph_html .= "}\n";
+    $graph_html .= "function drawSquare (ctx, startX, startY, width, color, options, canvas) \n";
+    $graph_html .= "{\n";
+    $graph_html .= "    ctx.save ();\n";
+    $graph_html .= "    ctx.fillStyle = color;\n";
+    $graph_html .= "    ctx.fillRect (startX, startY, width, width);\n";
+    $graph_html .= "    ctx.restore ();\n";
+    $graph_html .= "}\n";
+    $graph_html .= "function drawBar (ctx, upperLeftCornerX, upperLeftCornerY, width, height, color)\n";
+    $graph_html .= "{\n";
+    $graph_html .= "    ctx.save ();\n";
+    $graph_html .= "    ctx.fillStyle = color;\n";
+    $graph_html .= "    ctx.fillRect (upperLeftCornerX, upperLeftCornerY, width, height);\n";
+    $graph_html .= "    ctx.restore ();\n";
+    $graph_html .= "}\n";
+    $graph_html .= "class BarChart \n";
+    $graph_html .= "{\n";
+    $graph_html .= "    constructor (options) {\n";
+    $graph_html .= "        this.options = options;\n";
+    $graph_html .= "        this.canvas = options.canvas;\n";
+    $graph_html .= "        this.ctx = this.canvas.getContext (\"2d\");\n";
+    $graph_html .= "        this.titleOptions = options.titleOptions;\n";
+    $graph_html .= "        this.minValue = Math.min (...Object.values (this.options.data));\n";
+    $graph_html .= "        this.maxValue = Math.max (...Object.values (this.options.data));\n";
+    $graph_html .= "        this.maxValue += 1;\n";
+    $graph_html .= "        this.multiplier = (options.canvas.height - options.padding * 2) / this.maxValue;\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    drawGridLines () {\n";
+    $graph_html .= "        var canvasActualHeight = this.canvas.height - this.options.padding * 2;\n";
+    $graph_html .= "        var canvasActualWidth = this.canvas.width - this.options.padding * 2;\n";
+    $graph_html .= "        var gridValue = this.minValue;\n";
+    $graph_html .= "        max_gridy = 0;\n";
+    $graph_html .= "        min_gridy = 10000000000;\n";
+    $graph_html .= "        this.grid_jump = (this.maxValue - this.minValue) / 10;\n";
+    $graph_html .= "        while (gridValue <= this.maxValue) {\n";
+    $graph_html .= "            var gridY = canvasActualHeight * (1 - gridValue / this.maxValue) + this.options.padding;\n";
+    $graph_html .= "            if (max_gridy < gridY) { max_gridy  = gridY; }\n";
+    $graph_html .= "            if (min_gridy > gridY) { min_gridy  = gridY; }\n";
+    $graph_html .= "            drawActualLine (this.ctx, 0, gridY, this.canvas.width, gridY, this.options.gridColor);\n";
+    $graph_html .= "            // Writing grid markers\n";
+    $graph_html .= "            this.ctx.save ();\n";
+    $graph_html .= "            this.ctx.fillStyle = \"black\";\n";
+    $graph_html .= "            this.ctx.textBaseline = \"bottom\";\n";
+    $graph_html .= "            this.ctx.font = \"bold 10px Arial\";\n";
+    $graph_html .= "            this.ctx.fillText (gridValue, 0, gridY - 5);\n";
+    $graph_html .= "            this.ctx.restore ();\n";
+    $graph_html .= "            gridValue += this.grid_jump;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        min_gridy = canvasActualHeight * (1 - gridValue / this.maxValue) + this.options.padding;\n";
+    $graph_html .= "        drawActualLine (this.ctx, 25, min_gridy, 25, max_gridy, \"red\");\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    getBar = function(x, y) {\n";
+    $graph_html .= "        var canvasActualHeight = this.canvas.height - this.options.padding * 2;\n";
+    $graph_html .= "        var canvasActualWidth = this.canvas.width - this.options.padding * 2;\n";
+    $graph_html .= "        var barIndex = 0;\n";
+    $graph_html .= "        var numberOfBars = Object.keys (this.options.data).length;\n";
+    $graph_html .= "        barSize = canvasActualWidth / numberOfBars;\n";
+    $graph_html .= "        var values = Object.values (this.options.data);\n";
+    $graph_html .= "        \n";
+    $graph_html .= "        for (let thekey of Object.keys (this.options.data)) {\n";
+    $graph_html .= "            if (x > this.options.padding + barIndex * barSize && x < this.options.padding + (barIndex+1) * barSize)\n";
+    $graph_html .= "            {\n";
+    $graph_html .= "                return thekey;\n";
+    $graph_html .= "            }\n";
+    $graph_html .= "            barIndex++;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        return \"\";\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    getKey = function(searchVal) {\n";
+    $graph_html .= "        var barIndex = 0;\n";
+    $graph_html .= "        for (let thekey of Object.keys (this.options.data)) {\n";
+    $graph_html .= "            if (thekey == searchVal)\n";
+    $graph_html .= "            {\n";
+    $graph_html .= "                return barIndex;\n";
+    $graph_html .= "            }\n";
+    $graph_html .= "            barIndex++;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        return 0;\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    getBarValue = function(x, y) {\n";
+    $graph_html .= "        var canvasActualHeight = this.canvas.height - this.options.padding * 2;\n";
+    $graph_html .= "        var canvasActualWidth = this.canvas.width - this.options.padding * 2;\n";
+    $graph_html .= "        var barIndex = 0;\n";
+    $graph_html .= "        var numberOfBars = Object.keys (this.options.data).length;\n";
+    $graph_html .= "        barSize = canvasActualWidth / numberOfBars;\n";
+    $graph_html .= "        var values = Object.values (this.options.data);\n";
+    $graph_html .= "        \n";
+    $graph_html .= "        for (let thekey of Object.keys (this.options.data)) {\n";
+    $graph_html .= "            if (x > this.options.padding + barIndex * barSize && x < this.options.padding + (barIndex+1) * barSize)\n";
+    $graph_html .= "            {\n";
+    $graph_html .= "                var reg = /.*\\((.+)\\)/;\n";
+    $graph_html .= "                if (thekey.match(reg))\n";
+    $graph_html .= "                {\n";
+    $graph_html .= "                    return thekey.match(reg);\n";
+    $graph_html .= "                }\n";
+    $graph_html .= "                return thekey;\n";
+    $graph_html .= "            }\n";
+    $graph_html .= "            barIndex++;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        return \"\";\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    drawBars () {\n";
+    $graph_html .= "        var canvasActualHeight = this.canvas.height - this.options.padding * 2;\n";
+    $graph_html .= "        var canvasActualWidth = this.canvas.width - this.options.padding * 2;\n";
+    $graph_html .= "        var barIndex = 0;\n";
+    $graph_html .= "        var numberOfBars = Object.keys (this.options.data).length;\n";
+    $graph_html .= "        barSize = canvasActualWidth / numberOfBars;\n";
+    $graph_html .= "        var values = Object.values (this.options.data);\n";
+    $graph_html .= "        var oldBarHeight = 0;\n";
+    $graph_html .= "        var barHeight = 0;\n";
+    $graph_html .= "        for (let val of values) {\n";
+    $graph_html .= "            oldBarHeight = barHeight;\n";
+    $graph_html .= "            barHeight = Math.round (canvasActualHeight * val / this.maxValue);\n";
+    $graph_html .= "            if (oldBarHeight > 0 && barHeight > 0) {\n";
+    $graph_html .= "                drawLine (this.ctx, + barIndex * barSize,  -1*oldBarHeight , barIndex * barSize, -1*barHeight , \"skyblue\", this.options, this.canvas);\n";
+    $graph_html .= "            }\n";
+    $graph_html .= "            barIndex++;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    drawLabel () {\n";
+    $graph_html .= "        this.ctx.save ();\n";
+    $graph_html .= "        this.ctx.textBaseline = \"bottom\";\n";
+    $graph_html .= "        this.ctx.textAlign = this.titleOptions.align;\n";
+    $graph_html .= "        this.ctx.fillStyle = this.titleOptions.fill;\n";
+    $graph_html .= "        this.ctx.font = \`\${this.titleOptions.font.weight} \${this.titleOptions.font.size} \${this.titleOptions.font.family}`;\n";
+    $graph_html .= "        let xPos = this.canvas.width / 2;\n";
+    $graph_html .= "        if (this.titleOptions.align == \"left\") {\n";
+    $graph_html .= "            xPos = 10;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        if (this.titleOptions.align == \"right\") {\n";
+    $graph_html .= "            xPos = this.canvas.width - 10;\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        this.ctx.fillText (this.options.seriesName, xPos, this.canvas.height);\n";
+    $graph_html .= "        this.ctx.restore ();\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "    draw () {\n";
+    $graph_html .= "        this.drawGridLines ();\n";
+    $graph_html .= "        this.drawBars ();\n";
+    $graph_html .= "        this.drawLabel ();\n";
+    $graph_html .= "    }\n";
+    $graph_html .= "}\n";
+    $graph_html .= "var myBarchart = new BarChart (\n";
+    $graph_html .= "    {\n";
+    $graph_html .= "        canvas: canvas,\n";
+    $graph_html .= "        seriesName: \"Cell Values\",\n";
+    $graph_html .= "        padding: 50,\n";
+    $graph_html .= "        gridStep: 10,\n";
+    $graph_html .= "        gridColor: \"lightgrey\",\n";
+
+    $graph_html .= "        data: {";
+    my $i;
+    for ($i = 1; $i < $max_rows; $i++)
+    {
+        my $x = get_field ($i, $col);
+        $x =~ s/^$/0/;
+        $x =~ s/,//g;
+        $x =~ s/\$//g;
+        $graph_html .= "\"Row $i,Col $col ($x)\":$x,";
+    }
+    $graph_html .= "\"DONE\": 0 },\n";
+
+    # Print colors line
+    $graph_html .= "        colors: [";
+    for ($i = 1; $i < $max_rows; $i++)
+    {
+        $graph_html .= "\"\#fbfbab\",";
+    }
+    $graph_html .= "],\n";
+
+    $graph_html .= "        titleOptions: { align: \"center\", fill: \"black\", font: { weight: \"bold\", size: \"18px\", family: \"Lato\" } } \n";
+    $graph_html .= "    }\n";
+    $graph_html .= ");\n";
+    $graph_html .= "myBarchart.draw ();\n";
+    $graph_html .= "</script>\n";
+    $graph_html .= "<canvas id=\"canvas_info\" style=\"background: skyblue;\"></canvas>\n";
+    $graph_html .= "<script>\n";
+    $graph_html .= "var canvas_info = document.getElementById(\"canvas_info\");\n";
+    $graph_html .= "canvas_info.width = 900;\n";
+    $graph_html .= "canvas_info.height = 100;\n";
+    $graph_html .= "var graph_canvas = document.getElementById(\"graph_canvas\");\n";
+    $graph_html .= "var ctx = canvas_info.getContext(\"2d\");\n";
+    $graph_html .= "var graph_ctx = graph_canvas.getContext(\"2d\");\n";
+    $graph_html .= "ctx.font = \"bold 20px Arial\";\n";
+    $graph_html .= "var cw = graph_canvas.width;\n";
+    $graph_html .= "var ch = graph_canvas.height;\n";
+    $graph_html .= "function reOffset() {\n";
+    $graph_html .= "  var BB = graph_canvas.getBoundingClientRect();\n";
+    $graph_html .= "  offsetX = BB.left;\n";
+    $graph_html .= "  offsetY = BB.top;\n";
+    $graph_html .= "}\n";
+    $graph_html .= "var offsetX, offsetY;\n";
+    $graph_html .= "reOffset();\n";
+    $graph_html .= "window.onscroll = function (e) {\n";
+    $graph_html .= "  reOffset();\n";
+    $graph_html .= "};\n";
+    $graph_html .= "window.onresize = function (e) {\n";
+    $graph_html .= "  reOffset();\n";
+    $graph_html .= "};\n";
+    $graph_html .= "graph_canvas.addEventListener(\"mousemove\", handleMouseMove, false);\n";
+    $graph_html .= "var oldmouseX;\n";
+    $graph_html .= "var oldY;\n";
+    $graph_html .= "function handleMouseMove(e) {\n";
+    $graph_html .= "    e.preventDefault();\n";
+    $graph_html .= "    e.stopPropagation();\n";
+    $graph_html .= "    mouseX = parseInt(e.clientX - offsetX);\n";
+    $graph_html .= "    mouseY = parseInt(e.clientY - offsetY);\n";
+    $graph_html .= "    ctx.clearRect(0, 0, cw, ch);\n";
+    $graph_html .= "    var bar = myBarchart.getBar (mouseX, mouseY);\n";
+    $graph_html .= "    ctx.fillText(bar, 50, 50);\n";
+    $graph_html .= "    graph_ctx.clearRect(0, 0, 55, 55);\n";
+    $graph_html .= "    var barVal = myBarchart.getBarValue (mouseX, mouseY);\n";
+    $graph_html .= "    drawSquare (graph_ctx, oldmouseX, oldY, 10, \"white\", null, null); \n";
+    $graph_html .= "    drawSquare (graph_ctx, mouseX, graph_canvas.height - 50 - myBarchart.multiplier *barVal[1], 5, \"darkorange\", null, null); \n";
+    $graph_html .= "    oldmouseX = mouseX;\n";
+    $graph_html .= "    oldY = graph_canvas.height - 50 - myBarchart.multiplier *barVal[1];\n";
+    $graph_html .= "    myBarchart.draw ();\n";
+    $graph_html .= "}\n";
+    $graph_html .= "</script>\n";
+    $graph_html .= "</table>\n";
+    $graph_html .= "</body>\n";
+    $graph_html .= "</html>\n";
+    return $graph_html;
+}
+
 # Main
 {
     my $paddr;
@@ -320,7 +619,7 @@ Acid-Spewer Dragon;Dragons of Tarkir [DTK];86;Uncommon;{5}{B};Creature - Dragon;
 Acolyte of Bahamut;Commander Legends: Battle for Baldur's Gate;212;Uncommon;{1}{G};Legendary Enchantment - Background; ; ;Commander creatures you own have \"The first Dragon spell you cast each turn costs {2} less to cast.\";Commander Legends: Battle for Baldur's Gate
 Adult Gold Dragon;Adventures in the Forgotten Realms;216;Rare;{3}{R}{W};Creature - Dragon;4;3;Flying, lifelink, haste;Adventures in the Forgotten Realms
 Advent of the Wurm;Dragon's Maze [DGM];51;Rare;{1}{G}{G}{W};Instant; ; ;Put a 5/5 green Wurm creature token with trample onto the battlefield.;Dragon's Maze [DGM]
-Aetherling;Dragon's Maze [DGM];11;Rare;{4}{U}{U};Creature - Shapeshifter;4;5;{U}: Exile Ætherling. Return it to the battlefield under its owner's control at the beginning of the next end step.\${U}: Ætherling is unblockable this turn.\${1}: Ætherling gets +1/-1 until end of turn.\${1}: Ætherling gets -1/+1 until end of turn.;Dragon's Maze [DGM]
+Aetherling;Dragon's Maze [DGM];11;Rare;{4}{U}{U};Creature - Shapeshifter;4;5;{U}: Exile Aetherling. Return it to the battlefield under its owner's control at the beginning of the next end step.\${U}: Aetherling is unblockable this turn.\${1}: Aetherling gets +1/-1 until end of turn.\${1}: Aetherling gets -1/+1 until end of turn.;Dragon's Maze [DGM]
 Ainok Artillerist;Dragons of Tarkir [DTK];171;Common;{2}{G};Creature - Hound Arch;4;1;Ainok Artillerist has reach as long as it has a +1/+1 counter on it. (It can block creatures with flying.);Dragons of Tarkir [DTK]
 Ainok Survivalist;Dragons of Tarkir [DTK];172;Uncommon;{1}{G};Creature - Hound Shaman;2;1;Megamorph {1}{G} (You may cast this card face down for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Ainok Survivalist is turned face up, destroy target artifact or enchantment an opponent controls.;Dragons of Tarkir [DTK]
 Akoum Hellkite;Battle for Zendikar [BFZ];139;Rare;{4}{R}{R};Creature - Dragon;4;4;Flying\$Landfall ? Whenever a land enters the battlefield under your control, Akoum Hellkite deals 1 damage to any target. If that land was a Mountain, Akoum Hellkite deals 2 damage to that creature or player instead.;Battle for Zendikar [BFZ]
@@ -341,7 +640,7 @@ Ancient Gold Dragon;Commander Legends: Battle for Baldur's Gate;3;Mythic Rare;{5
 Ancient Hellkite;Game Night: Free-for-All;68;Rare;{4}{R}{R}{R};Creature - Dragon;6;6;Flying\${R}: Ancient Hellkite deals 1 damage to target creature defending player controls. Activate only if Ancient Hellkite is attacking.;Game Night: Free-for-All
 Ancient Silver Dragon;Commander Legends: Battle for Baldur's Gate;56;Mythic Rare;{6}{U}{U};Creature - Elder Dragon;8;8;Flying\$Whenever Ancient Silver Dragon deals combat damage to a player, roll a d20. Draw cards equal to the result. You have no maximum hand size for the rest of the game.;Commander Legends: Battle for Baldur's Gate
 Anticipate;Dragons of Tarkir [DTK];45;Common;{1}{U};Instant; ; ;Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.;Dragons of Tarkir [DTK]
-Ao, the Dawn Sky;Kamigawa: Neon Dynasty;2;Mythic Rare;{3}{W}{W};Legendary Creature - Dragon Spirit;5;4;Flying, vigilance\$When Ao, the Dawn Sky dies, choose one —\$• Look at the top seven cards of your library. Put any number of nonland permanent cards with total mana value 4 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.\$• Put two +1/+1 counters on each permanent you control that's a creature or Vehicle.;Kamigawa: Neon Dynasty
+Ao, the Dawn Sky;Kamigawa: Neon Dynasty;2;Mythic Rare;{3}{W}{W};Legendary Creature - Dragon Spirit;5;4;Flying, vigilance\$When Ao, the Dawn Sky dies, choose one -\$* Look at the top seven cards of your library. Put any number of nonland permanent cards with total mana value 4 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.\$* Put two +1/+1 counters on each permanent you control that's a creature or Vehicle.;Kamigawa: Neon Dynasty
 Arashin Foremost;Dragons of Tarkir [DTK];3;Rare;{1}{W}{W};Creature - Human Warrior;2;2;Double strike\$Whenever Arashin Foremost enters the battlefield or attacks, another target Warrior creature you control gains double strike until end of turn.;Dragons of Tarkir [DTK]
 Arashin Sovereign;Dragons of Tarkir [DTK];212;Rare;{5}{G}{W};Creature - Dragon;6;6;Flying\$When Arashin Sovereign dies, you may put it on the top or bottom of its owner's library.;Dragons of Tarkir [DTK]
 Arcades Sabboth;Chronicles [CHR];106;Rare;{2}{G}{G}{W}{W}{U}{U};Legendary Creature - Elder Dragon;7;7;Flying\$At the beginning of your upkeep, sacrifice Arcades Sabboth unless you pay {G}{W}{U}.\$Each untapped creature you control gets +0/+2 as long as it's not attacking.\${W}: Arcades Sabboth gets +0/+1 until end of turn.;Chronicles [CHR]
@@ -356,11 +655,11 @@ Artificer's Dragon;The Brothers' War;291;Rare;{6};Artifact Creature - Dragon;4;4
 Ascended Lawmage;Dragon's Maze [DGM];53;Uncommon;{2}{W}{U};Creature - Vedalken Wizard;3;2;Flying, hexproof;Dragon's Maze [DGM]
 Ashmouth Dragon;Innistrad: Midnight Hunt [ISD];159;Rare; ;Creature - Dragon;4;4;Flying\$Whenever you cast an instant or sorcery spell, Ashmouth Dragon deals 2 damage to any target.;Innistrad: Midnight Hunt [ISD]
 Assault Formation;Dragons of Tarkir [DTK];173;Rare;{1}{G};Enchantment; ; ;Each creature you control assigns combat damage equal to its toughness rather than its power.\${G}: Target creature with defender can attack this turn as though it didn't have defender.\${2}{G}: Creatures you control get +0/+1 until end of turn.;Dragons of Tarkir [DTK]
-Astral Dragon;Commander Legends: Battle for Baldur's Gate;664;Rare;{6}{U}{U};Creature - Dragon;4;4;Flying\$Project Image — When Astral Dragon enters the battlefield, create two tokens that are copies of target noncreature permanent, except they're 3/3 Dragon creatures in addition to their other types, and they have flying.;Commander Legends: Battle for Baldur's Gate
-Atarka Beastbreaker;Dragons of Tarkir [DTK];174;Common;{1}{G};Creature - Human Warrior;2;2;Formidable — {4}{G}: Atarka Beastbreaker gets +4/+4 until end of turn. Activate this only if creatures you control have total power 8 or greater.;Dragons of Tarkir [DTK]
+Astral Dragon;Commander Legends: Battle for Baldur's Gate;664;Rare;{6}{U}{U};Creature - Dragon;4;4;Flying\$Project Image - When Astral Dragon enters the battlefield, create two tokens that are copies of target noncreature permanent, except they're 3/3 Dragon creatures in addition to their other types, and they have flying.;Commander Legends: Battle for Baldur's Gate
+Atarka Beastbreaker;Dragons of Tarkir [DTK];174;Common;{1}{G};Creature - Human Warrior;2;2;Formidable - {4}{G}: Atarka Beastbreaker gets +4/+4 until end of turn. Activate this only if creatures you control have total power 8 or greater.;Dragons of Tarkir [DTK]
 Atarka Efreet;Dragons of Tarkir [DTK];128;Common;{3}{R};Creature - Efreet Shaman;5;1;Megamorph {2}{R} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Atarka Efreet is turned face up, it deals 1 damage to any target.;Dragons of Tarkir [DTK]
 Atarka Monument;Dragons of Tarkir [DTK];235;Uncommon;{3};Artifact; ; ;{T}: Add {R} or {G}.\${4}{R}{G}: Atarka Monument becomes a 4/4 red and green Dragon artifact creature with flying until end of turn.;Dragons of Tarkir [DTK]
-Atarka Pummeler;Dragons of Tarkir [DTK];129;Uncommon;{4}{R};Creature - Ogre Warrior;4;5;Formidable — {3}{R}{R}: Each creature you control can't be blocked this turn except by two or more creatures. Activate this ability only if creature you control have total power 8 or greater,;Dragons of Tarkir [DTK]
+Atarka Pummeler;Dragons of Tarkir [DTK];129;Uncommon;{4}{R};Creature - Ogre Warrior;4;5;Formidable - {3}{R}{R}: Each creature you control can't be blocked this turn except by two or more creatures. Activate this ability only if creature you control have total power 8 or greater,;Dragons of Tarkir [DTK]
 Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary Creature - Dragon;6;4;Flying, trample\$Whenever a Dragon you control attacks, it gains double strike until end of turn.;Commander 2017 Edition [C17]
 ");
 
@@ -405,6 +704,14 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
 </form>
 </body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
+        if ($txt =~ m/GET.*dograph_(\d+)/m)
+        {
+            my $col = $1;
+            my $graph_html = get_graph_html ($1, get_col_header ($1));
+            write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
             next;
         }
         
@@ -495,10 +802,10 @@ $//img;
             $group = "$1";
         }
         
-        my $multi_group = ".*";
-        if ($txt =~ m/multigroup=(.*)/im)
+        my $dual_group = ".*";
+        if ($txt =~ m/dualgroup=(.*)/im)
         {
-            $multi_group = "$1";
+            $dual_group = "$1";
         }
 
         my @strs = split /&/, $txt;
@@ -617,15 +924,15 @@ $//img;
                 </form></td><td>";
 
         $html_text .= "<form action=\"/csv_analyse/groupby\">
-                <label for=\"groupstr\">Group by <font size=-2>(first group only, eg (..Scott..)#credit):</font></label><br>
+                <label for=\"groupstr\">Group by <font size=-2>eg:(Person)#credit</font></label><br>
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
                 
-        $html_text .= "<form action=\"/csv_analyse/multigroupby\">
-                <label for=\"multigroup\">Multi group <font size=-2>(row must match, 2 groups):</font></label><br>
-                <input type=\"text\" id=\"multigroup\" name=\"multigroup\" value=\"$multi_group\">
-                <input type=\"submit\" value=\"Multi Group By\">
+        $html_text .= "<form action=\"/csv_analyse/dualgroupby\">
+                <label for=\"dualgroup\">Dual groups <font size=-2>eg:(rare|common).*(sorcery|instant):</font></label><br>
+                <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\">
+                <input type=\"submit\" value=\"Dual Group By\">
                 </form></td>";
                 
         $html_text .= "<td><form action=\"/csv_analyse/update_csv\">
@@ -664,6 +971,7 @@ $//img;
             $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Group Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>";
         $html_text .= "</tr>\n";
         $html_text .= "</thead>\n";
@@ -680,7 +988,7 @@ $//img;
                 
         my $only_one_group = 1;
         my $first_group_only = 0;
-        my $many_groups = 0;
+        my $dual_groups = 0;
 
         my $group2 = "";
         my $chosen_col = "";
@@ -694,19 +1002,26 @@ $//img;
         {
             $only_one_group = 0;
             $first_group_only = 1;
-            $many_groups = 0;
+            $dual_groups = 0;
             $group = "$1";
             $group2 = "$2";
         }
         
-        if ($multi_group =~ m/\((.*)\).*\((.*)\)/)
+        if ($dual_group =~ m/\((.*)\).*\((.*)\)/)
         {
             $only_one_group = 0;
             $first_group_only = 0;
-            $many_groups = 1;
+            $dual_groups = 1;
             $group = "$1";
             $group2 = "$2";
-            $overall_match = $multi_group;
+            $overall_match = $dual_group;
+        }
+
+        my $valid_regex = eval { qr/$overall_match/ };
+        my $use_regex = 0;
+        if (defined ($valid_regex))
+        {
+            $use_regex = 1;
         }
 
         my $row_num = 0;
@@ -919,19 +1234,23 @@ $//img;
                     # Add row to table if matched 
                     $fake_row = $row;
                     $fake_row =~ s/<[^>]*>//img;
+                    $fake_row =~ s/\n//img;
                     my $force_row = 0;
-                    if ($many_groups)
+                    if ($dual_groups)
                     {
+                        print ("DUAL- checking $overall_match vs $fake_row\n");
                         $force_row = -1;
                     }
                     
-                    if ($fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+                    if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
                     {
                         $force_row = 1;
                         if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
                         {
                             my $this_group = $1;
-                            $row .= " <td>$this_group</td> </tr>\n";
+                            $row .= " <td>$this_group</td>\n";
+                            my $g_price = "GPRICE_$this_group";
+                            $row .= " <td>$g_price</td> </tr>\n";
 
                             if (!defined ($group_colours {$this_group}))
                             {
@@ -955,7 +1274,9 @@ $//img;
                                 $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
-                                $row .= " <td>$this_group</td> </tr>\n";
+                                $row .= " <td>$this_group</td>\n";
+                                my $g_price = "GPRICE_$this_group";
+                                $row .= " <td>$g_price</td> </tr>\n";
                                 
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -968,11 +1289,14 @@ $//img;
                             }
                             else
                             {
-                                $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                                $row .= "<td><font size=-3>No group</font></td>\n";
+                                $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                             }
                         }
-                        elsif ($many_groups && $fake_row =~ m/($group)/im)
+                        elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
                         {
+                            $fake_row =~ m/($group)/im;
+                            print ("DUAL $fake_row\n");
                             my $this_group = $1;
                             if ($fake_row =~ m/($group2)/im)
                             {
@@ -981,7 +1305,9 @@ $//img;
                                 $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
-                                $row .= " <td>$this_group</td> </tr>\n";
+                                $row .= " <td>$this_group</td>\n";
+                                my $g_price = "GPRICE_$this_group";
+                                $row .= " <td>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
                                     $group_colours {$group_cols} = $this_group;
@@ -991,15 +1317,12 @@ $//img;
                                 $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
                             }
-                            else
-                            {
-                                $row .= "<td><font size=-3>No group</font></td></tr>\n";
-                            }
                         }
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                        $row .= "<td><font size=-3>No group</font></td>\n";
+                        $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                     }
 
                     if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -1024,19 +1347,21 @@ $//img;
             $fake_row = $row;
             $fake_row =~ s/<[^>]*>//img;
             my $force_row = 0;
-            if ($many_groups)
+            if ($dual_groups)
             {
                 $force_row = -1;
             }
 
-            if ($fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
             {
                 $force_row = 1;
                 if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
                 {
                     my $this_group = $1;
                     $group_counts {$this_group}++;
-                    $row .= " <td>$this_group</td> </tr>\n";
+                    $row .= " <td>$this_group</td>\n";
+                    my $g_price = "GPRICE_$this_group";
+                    $row .= " <td>$g_price</td> </tr>\n";
                 }
                 elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
                 {
@@ -1044,31 +1369,38 @@ $//img;
                     if ($fake_row =~ m/($group2)/mg)
                     {
                         $group_counts {$this_group}++;
-                        $row .= " <td>$this_group</td> </tr>\n";
+                        $row .= " <td>$this_group</td>\n";
+                        my $g_price = "GPRICE_$this_group";
+                        $row .= " <td>$g_price</td> </tr>\n";
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                        $row .= "<td><font size=-3>No group</font></td>\n";
+                        $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
-                elsif ($many_groups && $fake_row =~ m/($group)/im)
+                elsif ($dual_groups && $fake_row =~ m/($group)/im)
                 {
                     my $this_group = $1;
                     if ($fake_row =~ m/($group2)/im)
                     {
                         $this_group .= " " . $1;
                         $group_counts {$this_group}++;
-                        $row .= " <td>$this_group</td> </tr>\n";
+                        $row .= " <td>$this_group</td>\n";
+                        my $g_price = "GPRICE_$this_group";
+                        $row .= " <td>$g_price</td> </tr>\n";
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                        $row .= "<td><font size=-3>No group</font></td>\n";
+                        $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
             }
             else
             {
-                $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                $row .= "<td><font size=-3>No group</font></td>\n";
+                $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
             }
 
             if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -1080,6 +1412,7 @@ $//img;
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
+        if ($use_regex != 1) { $overall_count .= "&nbsp;&nbsp;<font color=red>NB: Error with regex $overall_match</font>"; }
         $html_text =~ s/YYY/$overall_count/mg;
 
         my $group_block;
@@ -1094,7 +1427,11 @@ $//img;
                 my $g_count = $group_counts {$g};
                 my $g_calc = $group_prices {$g. "_calc"};
                 $g_price =~ s/(\d\d)$/.$1/;
-                $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (price was $g_price from $g_calc)</font><br>";
+                
+                my $replace_g_price = "GPRICE_$g";
+                $html_text =~ s/$replace_g_price/$g_price/img;
+
+                $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (total was $g_price from $g_calc)</font><br>";
                 $total_g_count += $g_count;
                 $total_g_price += $g_price;
             }
@@ -1111,21 +1448,24 @@ $//img;
             $group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c})"; 
         }
 
-        $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
-        $html_text =~ s/QQQ//im;
         
         for ($x = 0; $x < $max_field_num; $x++)
         {
             if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
             {
-                $html_text =~ s/XYZ$x/ class=td.price/;
+                $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
+
+                my $str = "class=td.price";
+                $html_text =~ s/XYZ$x/$str/;
             }
             else
             {
-                my $ccc = get_col_type ($x);
                 $html_text =~ s/XYZ$x//;
             }
         }
+
+        $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
+        $html_text =~ s/QQQ//im;
 
         $html_text .= "<br>$deck";
         $html_text .= "</body>\n";
