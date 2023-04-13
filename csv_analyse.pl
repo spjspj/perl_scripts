@@ -243,6 +243,23 @@ sub get_col_header
     return ($csv_data {"0.$col_num"});
 }
 
+sub get_col_name_of_number_type_col
+{
+    my $i = 0;
+    for ($i = 0; $i < $max_field_num; $i++)
+    {
+        if (get_col_type ($i) eq "NUMBER" || get_col_type ($i) eq "PRICE")
+        {
+            my $ch = get_col_header ($i);
+            if ($ch =~ m/.../)
+            {
+                return "%23" . get_col_header ($i);
+            }
+        }
+    }
+    return "%23NUM_COL";
+}
+
 sub get_num_of_col_header
 {
     my $col_name = $_ [0];
@@ -612,7 +629,7 @@ sub get_graph_html
     my $count;
     my $not_seen_full = 1;
 
-    process_csv_data ("Name;Set;Card Number;Rarity;Casting Cost;Type;Power;Toughness;Text;Set
+    process_csv_data ("Name;Set;Card_Number;Rarity;Casting_Cost;Type;Power;Toughness;Text;Set
 Bribery;Eighth Edition [8ED];64;Rare;{3}{U}{U};Sorcery; ; ;Search taret opponent's library for a creature card and put that card onto the battlefield under your control. Then that player shuffles their library.;Eighth Edition [8ED]
 Harrow;Commander 2014 Edition [C14];199;Common;{2}{G};Instant; ; ;As an additional cost to cast Harrow, sacrifice a land..Search your library for up to two basic land cards and put them onto the battlefield. Then shuffle your library.;Commander 2014 Edition [C14]
 Acid-Spewer Dragon;Dragons of Tarkir [DTK];86;Uncommon;{5}{B};Creature - Dragon;3;3;Flying, deathtouch\$Megamorph {5}{B}{B} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Acid-Spewer Dragon is turned face up, put a +1/+1 counter on each other Dragon creature you control.;Dragons of Tarkir [DTK]
@@ -923,14 +940,26 @@ $//img;
                 <input type=\"submit\" value=\"Search\">
                 </form></td><td>";
 
+        my $example = get_field (2, 3);
+        $example =~ s/...$/.../;
+        $example = "\"/csv_analyse/groupby?groupstr=(" . $example . ")" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/groupby\">
-                <label for=\"groupstr\">Group by <font size=-2>eg:(Person)#credit</font></label><br>
+                <label for=\"groupstr\">Group by <font size=-2><a href=$example>Example</a></font></label><br>
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
                 
+        my $f1 = get_field (2, 3);
+        $f1 =~ s/\W/./img;
+        $f1 =~ s/...$/.../img;
+        my $f2 = get_field (2, 5);
+        $f2 =~ s/\W/./img;
+        $f2 =~ s/...$/.../img;
+        my $dual_example = "($f1).*($f2)";
+
+        $dual_example = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/dualgroupby\">
-                <label for=\"dualgroup\">Dual groups <font size=-2>eg:(rare|common).*(sorcery|instant):</font></label><br>
+                <label for=\"dualgroup\">Dual groups <font size=-2><a href=$dual_example>Example</a></font></label><br>
                 <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\">
                 <input type=\"submit\" value=\"Dual Group By\">
                 </form></td>";
@@ -1190,10 +1219,10 @@ $//img;
                     }
                     elsif ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/)
                     {
-                        if ($col_types {$col_num} ne "NUMBER")
+                        if ($col_types {$col_num} eq "PRICE")
                         {
-                            print ("$col_num is now general (was number) 'cos >>$field<<\n");
-                            set_col_type ($col_num, "GENERAL");
+                            print ("$col_num is now number (was price) 'cos >>$field<<\n");
+                            set_col_type ($col_num, "NUMBER");
                         }
                         else
                         {
@@ -1202,14 +1231,14 @@ $//img;
                     }
                     elsif ($field =~ m/^(-|)\$(\d*[\d,])+($|\.\d+)$/)
                     {
-                        if ($col_types {$col_num} ne "PRICE")
-                        {
-                            print ("$col_num is now general (was price) 'cos >>$field<<\n");
-                            set_col_type ($col_num, "GENERAL");
-                        }
-                        else
+                        if ($col_types {$col_num} eq "PRICE")
                         {
                             $col_calculations {$col_num} = add_price ($col_calculations {$col_num}, $field);
+                        }
+                        elsif ($col_types {$col_num} ne "NUMBER")
+                        {
+                            print ("$col_num is now general (was NUMBER) 'cos >>$field<<\n");
+                            set_col_type ($col_num, "GENERAL");
                         }
                     }
                     else
@@ -1218,15 +1247,6 @@ $//img;
                         set_col_type ($col_num, "GENERAL");
                     }
                 }
-
-                # STILL NEED?? TODO
-                #if ($col_types {$col_num} eq "PRICE")
-                #{
-                #    if (lc($chosen_col) eq lc (get_col_header ($col_num)))
-                #    {
-                #        $pot_group_price = $field;
-                #    }
-                #}
 
                 $field = $csv_data {$field_id};
                 if ($row_num > $old_row_num)
@@ -1466,6 +1486,10 @@ $//img;
 
         $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
         $html_text =~ s/QQQ//im;
+        
+        my $c = get_col_name_of_number_type_col ();
+        $html_text =~ s/%23NUM_COL/$c/im;
+        $html_text =~ s/%23NUM_COL/$c/im;
 
         $html_text .= "<br>$deck";
         $html_text .= "</body>\n";
