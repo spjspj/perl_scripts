@@ -711,9 +711,6 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         {
             $txt =~ m/(........update_csv.......)/im;
             my $matching_text = $1;
-            #my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br> <form action=\"updated_csv\" id=\"update_csv\" method=\"post\">  New CSV Text: <input type=\"submit\"> <textarea id=\"new_csv_id\" rows=\"30\" cols=\"70\" name=\"new_csv\" form=\"update_csv\"> </textarea> </form> GOT HERE in update_csv ($txt) (<font color=red>$matching_text</font>)</body> </html>";
-
-#<form action=\"updated_csv\" id=\"update_csv\" method=\"post\"> New CSV Text: <input type=\"submit\"> <textarea id=\"new_csv_id\" rows=\"30\" cols=\"70\" name=\"new_csv\" form=\"update_csv\"> </textarea> </form> GOT HERE in update_csv ($txt) (<font color=red>$matching_text</font>)
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br> 
 <form action=\"updated_csv\" id=\"newcsv\" name=\"newcsv\" method=\"post\">
 <textarea id=\"newcsv\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newcsv\" name=\"newcsv\"></textarea>
@@ -972,14 +969,21 @@ $//img;
         my %groups;
         my $group_cols = 0;
         my %group_colours;
-        $group_colours {0} = "burntorange";
-        $group_colours {1} = "blue";
-        $group_colours {2} = "green";
-        $group_colours {3} = "darkred";
-        $group_colours {4} = "silver";
-        $group_colours {5} = "purple";
-        $group_colours {6} = "darkyellow";
-        $group_colours {7} = "red";
+        $group_colours {0} = "burntorange"; $group_colours {1} = "blue"; $group_colours {2} = "green"; $group_colours {3} = "darkred"; $group_colours {4} = "mediumaquamarine"; $group_colours {5} = "black"; $group_colours {6} = "darkyellow"; $group_colours {7} = "red"; $group_colours {8} = "skyblue"; $group_colours {9} = "royalblue";
+        $group_colours {11} = "blueviolet"; $group_colours {12} = "darkblue"; $group_colours {13} = "darkcyan"; $group_colours {14} = "darkgoldenrod"; $group_colours {15} = "darkgray"; $group_colours {16} = "darkgreen"; $group_colours {17} = "darkgrey"; $group_colours {18} = "darkkhaki"; $group_colours {19} = "darkmagenta"; $group_colours {20} = "darkolivegreen";
+        $group_colours {21} = "darkorange"; $group_colours {22} = "darkorchid"; $group_colours {23} = "darksalmon"; $group_colours {24} = "darkseagreen"; $group_colours {25} = "darkslateblue"; $group_colours {26} = "darkslategray"; $group_colours {27} = "darkslategrey"; $group_colours {28} = "darkturquoise"; $group_colours {29} = "deeppink"; $group_colours {30} = "deepskyblue";
+        $group_colours {31} = "midnightblue"; $group_colours {32} = "mediumpurple"; $group_colours {33} = "dodgerblue"; $group_colours {34} = "firebrick"; $group_colours {35} = "forestgreen"; $group_colours {36} = "fuchsia"; $group_colours {37} = "slateblue"; $group_colours {38} = "slategray"; $group_colours {39} = "slategrey"; $group_colours {40} = "gainsboro";
+        $group_colours {41} = "gold"; $group_colours {42} = "goldenrod"; $group_colours {43} = "gray"; $group_colours {44} = "saddlebrown"; $group_colours {45} = "grey"; $group_colours {46} = "sandybrown"; $group_colours {47} = "hotpink"; $group_colours {48} = "indianred"; $group_colours {49} = "indigo"; $group_colours {50} = "ivory";
+        $group_colours {51} = "khaki"; $group_colours {52} = "lavender"; $group_colours {53} = "lavenderblush"; $group_colours {54} = "lawngreen"; $group_colours {55} = "lemonchiffon"; $group_colours {56} = "lime"; $group_colours {57} = "limegreen"; $group_colours {58} = "linen"; $group_colours {59} = "magenta"; $group_colours {60} = "maroon";
+        $group_colours {61} = "mediumaquamarine"; $group_colours {62} = "mediumblue"; $group_colours {63} = "mediumorchid"; $group_colours {64} = "dimgrey"; $group_colours {65} = "mediumseagreen"; $group_colours {66} = "mediumslateblue"; $group_colours {67} = "mediumspringgreen"; $group_colours {68} = "mediumturquoise"; $group_colours {69} = "mediumvioletred"; $group_colours {70} = "dimgray";
+        $group_colours {71} = "mintcream"; $group_colours {72} = "mistyrose"; $group_colours {73} = "moccasin"; $group_colours {74} = "navy"; $group_colours {75} = "oldlace"; $group_colours {76} = "olive"; $group_colours {77} = "olivedrab"; $group_colours {78} = "orange"; $group_colours {79} = "orangered"; $group_colours {80} = "orchid";
+        $group_colours {81} = "palegoldenrod"; $group_colours {82} = "palegreen"; $group_colours {83} = "paleturquoise"; $group_colours {84} = "palevioletred"; $group_colours {85} = "papayawhip"; $group_colours {86} = "peachpuff"; $group_colours {87} = "peru"; $group_colours {88} = "pink"; $group_colours {89} = "plum"; $group_colours {90} = "powderblue";
+        $group_colours {91} = "rebeccapurple"; $group_colours {92} = "rosybrown"; $group_colours {93} = "greenyellow"; $group_colours {94} = "salmon"; $group_colours {95} = "honeydew"; $group_colours {96} = "seagreen"; $group_colours {97} = "seashell"; $group_colours {98} = "sienna"; $group_colours {99} = "springgreen"; $group_colours {100} = "steelblue";
+        $group_colours {101} = "tan"; $group_colours {102} = "teal"; $group_colours {103} = "thistle"; $group_colours {104} = "tomato"; $group_colours {105} = "turquoise"; $group_colours {106} = "violet"; $group_colours {107} = "wheat"; $group_colours {108} = "yellow"; $group_colours {109} = "yellowgreen"; $group_colours {110} = "AliceBlue";
+        $group_colours {111} = "aqua"; $group_colours {112} = "aquamarine"; $group_colours {113} = "azure"; $group_colours {114} = "beige"; $group_colours {115} = "bisque"; $group_colours {116} = "purple"; $group_colours {117} = "blanchedalmond"; $group_colours {119} = "brown"; $group_colours {120} = "cadetblue"; $group_colours {121} = "chartreuse";
+        $group_colours {122} = "chocolate"; $group_colours {123} = "coral"; $group_colours {124} = "cornflowerblue"; $group_colours {125} = "cornsilk"; $group_colours {126} = "crimson"; $group_colours {127} = "cyan"; $group_colours {128} = "navajowhite"; $group_colours {129} = "lightblue"; $group_colours {130} = "lightcoral"; $group_colours {131} = "lightcyan";
+        $group_colours {132} = "lightgoldenrodyellow"; $group_colours {133} = "lightgray"; $group_colours {134} = "lightgreen"; $group_colours {135} = "lightgrey"; $group_colours {136} = "lightpink"; $group_colours {137} = "lightsalmon"; $group_colours {138} = "lightseagreen"; $group_colours {139} = "lightskyblue"; $group_colours {140} = "lightslategray"; $group_colours {141} = "lightslategrey";
+        $group_colours {142} = "lightsteelblue"; $group_colours {143} = "lightyellow"; $group_colours {144} = "snow"; $group_colours {145} = "white"; $group_colours {146} = "whitesmoke"; $group_colours {147} = "antiquewhite"; $group_colours {148} = "floralwhite"; $group_colours {149} = "ghostwhite";
 
         $html_text .= "<script>\n";
         $html_text .= "'use strict';\n";
@@ -1026,6 +1030,13 @@ $//img;
             $chosen_col = "$1";
             print ("WOOT $chosen_col\n");
         }
+        
+        if ($dual_group =~ s/#(.*)//)
+        {
+            $chosen_col = "$1";
+            print ("dual WOOT $chosen_col\n");
+        }
+
         my $overall_match = $group;
         if ($group =~ m/\((.*)\).*\((.*)\)/)
         {
@@ -1300,7 +1311,6 @@ $//img;
                                 
                                 if (!defined ($group_colours {$this_group}))
                                 {
-                                    $group_colours {$group_cols} = $this_group;
                                     $group_colours {$this_group} = $group_colours {$group_cols};
                                     $group_cols++;
                                 }
@@ -1330,7 +1340,6 @@ $//img;
                                 $row .= " <td>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
-                                    $group_colours {$group_cols} = $this_group;
                                     $group_colours {$this_group} = $group_colours {$group_cols};
                                     $group_cols++;
                                 }
@@ -1474,6 +1483,11 @@ $//img;
             if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
             {
                 $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
+
+                if ($only_one_group || $first_group_only || $dual_groups)
+                {
+                    $group_block .= "<button onclick=\"location.href='dograph_group'\">Graph groups</button>";
+                }
 
                 my $str = "class=td.price";
                 $html_text =~ s/XYZ$x/$str/;
