@@ -14,6 +14,7 @@ use File::Copy;
 
 
 my %csv_data;
+my %meta_data;
 my $max_field_num = 0;
 my $max_rows = 0;
 my %col_types;
@@ -309,6 +310,21 @@ sub get_graph_html
     my $graph_html = "";
     my $col = $_ [0];
     my $col_name = $_ [1];
+
+    # graph_counts
+    my $graph_counts = 0;
+    if ($col == -1)
+    {
+        $graph_counts = 1;
+    }
+
+    # graph_totals
+    my $graph_totals = 0;
+    if ($col == -2)
+    {
+        $graph_totals = 1;
+    }
+
     $graph_html .= "<!DOCTYPE html>\n";
     $graph_html .= "<html lang=\"en\">\n";
     $graph_html .= "<head>\n";
@@ -494,7 +510,7 @@ sub get_graph_html
     $graph_html .= "            oldBarHeight = barHeight;\n";
     $graph_html .= "            barHeight = Math.round (canvasActualHeight * val / this.maxValue);\n";
     $graph_html .= "            if (oldBarHeight > 0 && barHeight > 0) {\n";
-    $graph_html .= "                drawLine (this.ctx, + barIndex * barSize,  -1*oldBarHeight , barIndex * barSize, -1*barHeight , \"skyblue\", this.options, this.canvas);\n";
+    $graph_html .= "                drawLine (this.ctx, (-0.5 + barIndex) * barSize,  -1*oldBarHeight , (0.5+barIndex) * barSize, -1*barHeight , \"skyblue\", this.options, this.canvas);\n";
     $graph_html .= "            }\n";
     $graph_html .= "            barIndex++;\n";
     $graph_html .= "        }\n";
@@ -531,13 +547,41 @@ sub get_graph_html
 
     $graph_html .= "        data: {";
     my $i;
-    for ($i = 1; $i < $max_rows; $i++)
+    if ($graph_counts == 0 && $graph_totals == 0)
     {
-        my $x = get_field ($i, $col);
-        $x =~ s/^$/0/;
-        $x =~ s/,//g;
-        $x =~ s/\$//g;
-        $graph_html .= "\"Row $i,Col $col ($x)\":$x,";
+        for ($i = 1; $i < $max_rows; $i++)
+        {
+            my $x = get_field ($i, $col);
+            $x =~ s/^$/0/;
+            $x =~ s/,//g;
+            $x =~ s/\$//g;
+            $graph_html .= "\"Row $i,Col $col ($x)\":$x,";
+        }
+    }
+    elsif ($graph_counts == 1 || $graph_totals == 1)
+    {
+        my $k;
+        foreach $k (sort keys (%meta_data))
+        {
+            if ($k =~ m/_count/ && $graph_counts)
+            {
+                my $x = $meta_data {$k};
+                $x =~ s/^$/0/;
+                $x =~ s/,//g;
+                $x =~ s/\$//g;
+                $x =~ s/[^0-9\.]//g;
+                $graph_html .= "\"Group $k ($x)\":$x,";
+            }
+            elsif ($k =~ m/_total/ && $graph_totals)
+            {
+                my $x = $meta_data {$k};
+                $x =~ s/^$/0/;
+                $x =~ s/,//g;
+                $x =~ s/\$//g;
+                $x =~ s/[^0-9\.]//g;
+                $graph_html .= "\"Group $k ($x)\":$x,";
+            }
+        }
     }
     $graph_html .= "\"DONE\": 0 },\n";
 
@@ -725,6 +769,22 @@ Atarka, World Render;Commander 2017 Edition [C17];161;Rare;{5}{R}{G};Legendary C
         {
             my $col = $1;
             my $graph_html = get_graph_html ($1, get_col_header ($1));
+            write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
+            next;
+        }
+
+        if ($txt =~ m/GET.*dograph_group_counts/m)
+        {
+            my $col = $1;
+            my $graph_html = get_graph_html (-1, "graph_counts");
+            write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
+            next;
+        }
+        
+        if ($txt =~ m/GET.*dograph_group_totals/m)
+        {
+            my $col = $1;
+            my $graph_html = get_graph_html (-2, "graph_totals");
             write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
             next;
         }
@@ -1004,7 +1064,7 @@ $//img;
             $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>Group Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>";
         $html_text .= "</tr>\n";
         $html_text .= "</thead>\n";
@@ -1022,7 +1082,6 @@ $//img;
         my $only_one_group = 1;
         my $first_group_only = 0;
         my $dual_groups = 0;
-
         my $group2 = "";
         my $chosen_col = "";
         if ($group =~ s/#(.*)//)
@@ -1059,8 +1118,10 @@ $//img;
 
         my $valid_regex = eval { qr/$overall_match/ };
         my $use_regex = 0;
+        my %new_meta_data;
         if (defined ($valid_regex))
         {
+            %meta_data = %new_meta_data;
             $use_regex = 1;
         }
 
@@ -1292,9 +1353,9 @@ $//img;
                             $row =~ s/<\/td>/<\/font><\/td>/img;
                             $group_counts {$this_group}++;
 
-                            $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
+                            $pot_group_price = get_field ($old_row_num, get_num_of_col_header ($chosen_col));
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
-                            $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
+                            $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                         }
                         elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
                         {
@@ -1302,9 +1363,9 @@ $//img;
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
+                                $pot_group_price = get_field ($old_row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
-                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
+                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $row .= " <td>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
                                 $row .= " <td>$g_price</td> </tr>\n";
@@ -1332,9 +1393,9 @@ $//img;
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field ($row_num, get_num_of_col_header ($chosen_col));
+                                $pot_group_price = get_field ($old_row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
-                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price";
+                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $row .= " <td>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
                                 $row .= " <td>$g_price</td> </tr>\n";
@@ -1461,10 +1522,14 @@ $//img;
                 $html_text =~ s/$replace_g_price/$g_price/img;
 
                 $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (total was $g_price from $g_calc)</font><br>";
+                #$group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (total was $g_price)</font><br>";
                 $total_g_count += $g_count;
                 $total_g_price += $g_price;
+
+                $meta_data {$g . "_total"} = $g_price;
+                $meta_data {$g . "_count"} = $g_count;
             }
-            $group_block .= "Total row count: $total_g_count"; 
+            $group_block .= "Total group row count: $total_g_count"; 
         }
 
         my $c;
@@ -1477,17 +1542,11 @@ $//img;
             $group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c})"; 
         }
 
-        
         for ($x = 0; $x < $max_field_num; $x++)
         {
             if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
             {
                 $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
-
-                if ($only_one_group || $first_group_only || $dual_groups)
-                {
-                    $group_block .= "<button onclick=\"location.href='dograph_group'\">Graph groups</button>";
-                }
 
                 my $str = "class=td.price";
                 $html_text =~ s/XYZ$x/$str/;
@@ -1496,6 +1555,12 @@ $//img;
             {
                 $html_text =~ s/XYZ$x//;
             }
+        }
+
+        if (($only_one_group || $first_group_only || $dual_groups) && $use_regex)
+        {
+            $group_block .= "<button onclick=\"location.href='dograph_group_counts'\">Graph group totals</button>";
+            $group_block .= "<button onclick=\"location.href='dograph_group_totals'\">Graph group counts </button>";
         }
 
         $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
