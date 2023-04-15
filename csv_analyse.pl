@@ -15,6 +15,7 @@ use File::Copy;
 
 my %csv_data;
 my %meta_data;
+my %calculated_data;
 my $max_field_num = 0;
 my $max_rows = 0;
 my %col_types;
@@ -212,7 +213,7 @@ sub process_csv_data
     $max_field_num = 0;
     $max_rows = 0;
 
-    my $line_num = 0;
+    my $line_num = 1;
     my $col_letter = "A";
     while ($block =~ s/^(.*?)\n//im)
     {
@@ -304,7 +305,7 @@ sub get_col_header
     {
         $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
-    return ($csv_data {"$col_letter" . "0"});
+    return ($csv_data {"$col_letter" . "1"});
 }
 
 sub get_col_name_of_number_type_col
@@ -346,15 +347,77 @@ sub get_field_from_col_header
     my $col = get_num_of_col_header ($col_name);
     if ($col > -1)
     {
-        return get_field ($row_num, $col);
+        return get_field_value ($row_num, $col);
     }
     return "";
 }
 
-sub get_field
+sub has_field_id
+{
+    my $field_val = $_ [0]; 
+    print ("    has?? $field_val --= ");
+    if ($field_val =~ m/^=.*([A-Z]+\d+)/)
+    {
+        print ("    yes $1\n");
+        return $1;
+    }
+    print ("    no\n");
+    return "";
+}
+
+sub get_row_num
+{
+    my $field_id = $_ [0];
+    if ($field_id =~ m/(\d+)$/)
+    {
+        return $1;
+    }
+}
+
+sub get_col_letter
+{
+    my $field_id = $_ [0];
+    if ($field_id =~ m/^([A-Z]+)/)
+    {
+        return $1;
+    }
+}
+
+sub calc_field_value
+{
+    my $field_val = $_ [0]; 
+    my $row_num = $_ [1]; 
+    my $col_letter = $_ [2]; 
+    my $indent = $_ [3]; 
+    my $next_field_id = has_field_id ($field_val);
+    while ($next_field_id ne "")
+    {
+        my $rn = get_row_num ($next_field_id);
+        my $cl = get_col_letter ($next_field_id);
+        my $that_field_val = get_field_value ($rn, $cl, $indent);
+        print ("$indent>> found $that_field_val for $next_field_id\n");
+        print (" before - $col_letter$row_num -- $field_val >> ");
+        $field_val =~ s/$next_field_id/$that_field_val/; 
+        print (" after = $field_val\n");
+        $next_field_id = has_field_id ($field_val);
+    }
+    if ($field_val =~ s/^=//)
+    {
+        $field_val =~ s/POWER\(([^|]+)\|(.+)\)/(($1)**($2))/;
+        my $orig_field_val = $field_val;
+        $field_val = eval ($field_val);
+        print ("$field_val from - $orig_field_val\n");
+    }
+    print ("$indent$col_letter$row_num -- >$field_val< done \n");
+    return $field_val;
+}
+
+sub set_field_value
 {
     my $row_num = $_ [0];
     my $col_letter = $_ [1];
+    my $new_val = $_ [2];
+
     if ($col_letter =~ m/^\d+$/)
     {
         $col_letter =  get_field_letter_from_field_num ($col_letter);
@@ -362,8 +425,41 @@ sub get_field
     my $str = "$col_letter" . $row_num;
     if (defined ($csv_data {$str}))
     {
-        return ($csv_data {$str});
+        $csv_data {$str} = $new_val;
     }
+}
+
+sub get_field_value
+{
+    my $row_num = $_ [0];
+    my $col_letter = $_ [1];
+    my $indent = $_ [2];
+    if ($col_letter =~ m/^\d+$/)
+    {
+        $col_letter =  get_field_letter_from_field_num ($col_letter);
+    }
+    my $str = "$col_letter" . $row_num;
+    if (defined ($csv_data {$str}))
+    {
+        my $field_val = $csv_data {$str};
+        my $calc_val = "";
+        if (!defined ($calculated_data {$str}))
+        {
+            if ($csv_data {$str} =~ m/^=/)
+            {
+                $calc_val = calc_field_value ($csv_data {$str}, $row_num, $col_letter, ".$indent");
+            }
+            else
+            {
+                $calc_val = $field_val;
+            }
+            $calculated_data {$str} = $calc_val;
+        }
+        $calc_val = $calculated_data {$str};
+        print (" >> calculated $str as $calc_val\n");
+        return ($calc_val);
+    }
+    print (" >> returning blank for $str<<\n");
     return ("");
 }
 
@@ -611,7 +707,7 @@ sub get_graph_html
     {
         for ($i = 1; $i < $max_rows; $i++)
         {
-            my $x = get_field ($i, $col);
+            my $x = get_field_value ($i, $col);
             $x =~ s/^$/0/;
             $x =~ s/,//g;
             $x =~ s/\$//g;
@@ -736,124 +832,22 @@ sub get_graph_html
     my $count;
     my $not_seen_full = 1;
 
-#    #process_csv_data ("Name;Set;Card_Number;Rarity;Casting_Cost;Type;Power;Toughness;Text;Set
-#Bribery;Eighth Edition [8ED];64;Rare;{3}{U}{U};Sorcery; ; ;Search taret opponent's library for a creature card and put that card onto the battlefield under your control. Then that player shuffles their library.;Eighth Edition [8ED]
-#Harrow;Commander 2014 Edition [C14];199;Common;{2}{G};Instant; ; ;As an additional cost to cast Harrow, sacrifice a land..Search your library for up to two basic land cards and put them onto the battlefield. Then shuffle your library.;Commander 2014 Edition [C14]
-#Acid-Spewer Dragon;Dragons of Tarkir [DTK];86;Uncommon;{5}{B};Creature - Dragon;3;3;Flying, deathtouch\$Megamorph {5}{B}{B} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Acid-Spewer Dragon is turned face up, put a +1/+1 counter on each other Dragon creature you control.;Dragons of Tarkir [DTK]
-#Acolyte of Bahamut;Commander Legends: Battle for Baldur's Gate;212;Uncommon;{1}{G};Legendary Enchantment - Background; ; ;Commander creatures you own have \"The first Dragon spell you cast each turn costs {2} less to cast.\";Commander Legends: Battle for Baldur's Gate
-#Adult Gold Dragon;Adventures in the Forgotten Realms;216;Rare;{3}{R}{W};Creature - Dragon;4;3;Flying, lifelink, haste;Adventures in the Forgotten Realms
-#Advent of the Wurm;Dragon's Maze [DGM];51;Rare;{1}{G}{G}{W};Instant; ; ;Put a 5/5 green Wurm creature token with trample onto the battlefield.;Dragon's Maze [DGM]
-#Aetherling;Dragon's Maze [DGM];11;Rare;{4}{U}{U};Creature - Shapeshifter;4;5;{U}: Exile Aetherling. Return it to the battlefield under its owner's control at the beginning of the next end step.\${U}: Aetherling is unblockable this turn.\${1}: Aetherling gets +1/-1 until end of turn.\${1}: Aetherling gets -1/+1 until end of turn.;Dragon's Maze [DGM]
-#Ainok Artillerist;Dragons of Tarkir [DTK];171;Common;{2}{G};Creature - Hound Arch;4;1;Ainok Artillerist has reach as long as it has a +1/+1 counter on it. (It can block creatures with flying.);Dragons of Tarkir [DTK]
-#Ainok Survivalist;Dragons of Tarkir [DTK];172;Uncommon;{1}{G};Creature - Hound Shaman;2;1;Megamorph {1}{G} (You may cast this card face down for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)\$When Ainok Survivalist is turned face up, destroy target artifact or enchantment an opponent controls.;Dragons of Tarkir [DTK]
-#Akoum Hellkite;Battle for Zendikar [BFZ];139;Rare;{4}{R}{R};Creature - Dragon;4;4;Flying\$Landfall ? Whenever a land enters the battlefield under your control, Akoum Hellkite deals 1 damage to any target. If that land was a Mountain, Akoum Hellkite deals 2 damage to that creature or player instead.;Battle for Zendikar [BFZ]
-#Alabaster Dragon;Portal [POR];163;Rare;{4}{W}{W};Creature - Dragon;4;4;Flying\$When Alabaster Dragon dies, shuffle it into its owner's library.;Portal [POR]
-#Alaborn Cavalier;Duel Decks: Knights vs. Dragons [DDU] [DDG];18;Uncommon;{2}{W}{W};Creature - Human Knight;2;2;Whenever Alaborn Cavalier attacks, you may tap target creature.;Duel Decks: Knights vs. Dragons [DDU] [DDG]
-#Alive;Dragon's Maze [DGM];121;Uncommon;{3}{G};Sorcery; ; ;Put a 3/3 green Centaur creature token onto the battlefield.\$Fuse (You may cast one or both halves of this card from your hand.);Dragon's Maze [DGM]
-#Amareth, the Lustrous;Commander Legends;586;Rare;{3}{G}{W}{U};Legendary Creature - Dragon;6;6;Flying\$Whenever another permanent enters the battlefield under your control, look at the top card of your library. If it shares a card type with that permanent, you may reveal that card and put it into your hand.;Commander Legends
-#Ambitious Dragonborn;Commander Legends: Battle for Baldur's Gate;213;Common;{3}{G};Creature - Dragon Barbarian;0;0;Ambitious Dragonborn enters the battlefield with X +1/+1 counters on it, where X is the greatest power among creatures you control and creature cards in your graveyard.;Commander Legends: Battle for Baldur's Gate
-#Amethyst Dragon;Commander Legends: Battle for Baldur's Gate;160;Uncommon;{4}{R}{R};Creature - Dragon;4;4;Flying, haste;Commander Legends: Battle for Baldur's Gate
-#Anafenza, Kin-Tree Spirit;Dragons of Tarkir [DTK];2;Rare;{W}{W};Legendary Creature - Spirit Soldier;2;2;Whenever another nontoken creature enters the battlefield under your control, bolster 1. (Choose a creature with the least toughness among creatures you control and put a +1/+1 counter on it.);Dragons of Tarkir [DTK]
-#Ancestor Dragon;Global Series: Jiang Yanggu & Mu Yanling;12;Rare;{4}{W}{W};Creature - Dragon;5;6;Flying\$Whenever one or more creatures you control attack, you gain 1 life for each attacking creature.;Global Series: Jiang Yanggu & Mu Yanling
-#Ancestral Statue;Dragons of Tarkir [DTK];234;Common;{4};Artifact Creature - Golem;3;4;When Ancestral Statue enters the battlefield, return a nonland permanent you control to its owner's hand.;Dragons of Tarkir [DTK]
-#Ancient Brass Dragon;Commander Legends: Battle for Baldur's Gate;111;Mythic Rare;{5}{B}{B};Creature - Elder Dragon;7;6;Flying\$Whenever Ancient Brass Dragon deals combat damage to a player, roll a d20. When you do, put any number of target creature cards with total mana value X or less from graveyards onto the battlefield under your control, where X is the result.;Commander Legends: Battle for Baldur's Gate
-#Ancient Bronze Dragon;Commander Legends: Battle for Baldur's Gate;214;Mythic Rare;{5}{G}{G};Creature - Elder Dragon;7;7;Flying\$Whenever Ancient Bronze Dragon deals combat damage to a player, roll a d20. When you do, put X +1/+1 counters on each of up to two target creatures, where X is the result.;Commander Legends: Battle for Baldur's Gate
-#Ancient Carp;Dragons of Tarkir [DTK];44;Common;{4}{U};Creature - Fish;2;5; ;Dragons of Tarkir [DTK]
-#Ancient Copper Dragon;Commander Legends: Battle for Baldur's Gate;161;Mythic Rare;{4}{R}{R};Creature - Elder Dragon;6;5;Flying\$Whenever Ancient Copper Dragon deals combat damage to a player, roll a d20. You create a number of Treasure tokens equal to the result.;Commander Legends: Battle for Baldur's Gate
-#Ancient Gold Dragon;Commander Legends: Battle for Baldur's Gate;3;Mythic Rare;{5}{W}{W};Creature - Elder Dragon;7;10;Flying\$Whenever Ancient Gold Dragon deals combat damage to a player, roll a d20. You create a number of 1/1 blue Faerie Dragon creature tokens with flying equal to the result.;Commander Legends: Battle for Baldur's Gate
-#Ancient Hellkite;Game Night: Free-for-All;68;Rare;{4}{R}{R}{R};Creature - Dragon;6;6;Flying\${R}: Ancient Hellkite deals 1 damage to target creature defending player controls. Activate only if Ancient Hellkite is attacking.;Game Night: Free-for-All
-#Ancient Silver Dragon;Commander Legends: Battle for Baldur's Gate;56;Mythic Rare;{6}{U}{U};Creature - Elder Dragon;8;8;Flying\$Whenever Ancient Silver Dragon deals combat damage to a player, roll a d20. Draw cards equal to the result. You have no maximum hand size for the rest of the game.;Commander Legends: Battle for Baldur's Gate
-#Anticipate;Dragons of Tarkir [DTK];45;Common;{1}{U};Instant; ; ;Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.;Dragons of Tarkir [DTK]
-#Ao, the Dawn Sky;Kamigawa: Neon Dynasty;2;Mythic Rare;{3}{W}{W};Legendary Creature - Dragon Spirit;5;4;Flying, vigilance\$When Ao, the Dawn Sky dies, choose one -\$* Look at the top seven cards of your library. Put any number of nonland permanent cards with total mana value 4 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.\$* Put two +1/+1 counters on each permanent you control that's a creature or Vehicle.;Kamigawa: Neon Dynasty
-#Arashin Foremost;Dragons of Tarkir [DTK];3;Rare;{1}{W}{W};Creature - Human Warrior;2;2;Double strike\$Whenever Arashin Foremost enters the battlefield or attacks, another target Warrior creature you control gains double strike until end of turn.;Dragons of Tarkir [DTK]
-#Arashin Sovereign;Dragons of Tarkir [DTK];212;Rare;{5}{G}{W};Creature - Dragon;6;6;Flying\$When Arashin Sovereign dies, you may put it on the top or bottom of its owner's library.;Dragons of Tarkir [DTK]
-#Arcades Sabboth;Chronicles [CHR];106;Rare;{2}{G}{G}{W}{W}{U}{U};Legendary Creature - Elder Dragon;7;7;Flying\$At the beginning of your upkeep, sacrifice Arcades Sabboth unless you pay {G}{W}{U}.\$Each untapped creature you control gets +0/+2 as long as it's not attacking.\${W}: Arcades Sabboth gets +0/+1 until end of turn.;Chronicles [CHR]
-#Arcades, the Strategist;Core Set 2019 [M19];212;Mythic Rare;{1}{G}{W}{U};Legendary Creature - Elder Dragon;3;5;Flying, vigilance\$Whenever a creature with defender enters the battlefield under your control, draw a card.\$Each creature you control with defender assigns combat damage equal to its toughness rather than its power and can attack as though it didn't have defender.;Core Set 2019 [M19]
-#");
-
+    #process_csv_data ("Tot_Month;Add_Month;Daily_Int;Date;MonDays;Int_Month;Tot_Mon2;Mon_Interest; 3640;0;0.000115068;20230430;30;1.003457821;\$3,652.59;\$0.00; 3652.586467;10;0.000115068;20230531;31;1.003573287;\$3,675.67;\$13.09; 3675.67394;10;0.000115068;20230630;30;1.003457821;\$3,698.42;\$12.74; 3698.41834;10;0.000115068;20230731;31;1.003573287;\$3,721.67;\$13.25; 3721.669583;10;0.000115068;20230831;31;1.003573287;\$3,745.00;\$13.33; 3745.00391;10;0.000115068;20230930;30;1.003457821;\$3,767.99;\$12.98; 3767.988041;10;0.000115068;20231031;31;1.003573287;\$3,791.49;\$13.50; 3791.487876;10;0.000115068;20231130;30;1.003457821;\$3,814.63;\$13.14; 3814.63274;10;0.000115068;20231231;31;1.003573287;\$3,838.30;\$13.67; 3838.299251;10;0.000115068;20240131;31;1.003573287;\$3,862.05;\$13.75; 3862.050329;10;0.000115068;20240228;28;1.003226928;\$3,884.55;\$12.49; 3884.545156;10;0.000115068;20240331;31;1.003573287;\$3,908.46;\$13.92; 3908.461484;10;0.000115068;20240430;30;1.003457821;\$3,932.01;\$13.55; 3932.010821;10;0.000115068;20240531;31;1.003573287;\$3,956.10;\$14.09; 3956.096757;10;0.000115068;20240630;30;1.003457821;\$3,979.81;\$13.71; 3979.810809;10;0.000115068;20240731;31;1.003573287;\$4,004.07;\$14.26; 4004.067548;10;0.000115068;20240831;31;1.003573287;\$4,028.41;\$14.34; 4028.410964;10;0.000115068;20240930;30;1.003457821;\$4,052.38;\$13.96; 4052.375065;10;0.000115068;20241031;31;1.003573287;\$4,076.89;\$14.52; 4076.891098;10;0.000115068;20241130;30;1.003457821;\$4,101.02;\$14.13; 4101.022834;10;0.000115068;20241231;31;1.003573287;\$4,125.71;\$14.69; 4125.712699;10;0.000115068;20250131;31;1.003573287;\$4,150.49;\$14.78; 4150.490788;10;0.000115068;20250228;28;1.003226928;\$4,173.92;\$13.43; 4173.916391;10;0.000115068;20250331;31;1.003573287;\$4,198.87;\$14.95; 4198.866726;10;0.000115068;20250430;30;1.003457821;\$4,223.42;\$14.55; 4223.420232;10;0.000115068;20250531;31;1.003573287;\$4,248.55;\$15.13; 4248.547458;10;0.000115068;20250630;30;1.003457821;\$4,273.27;\$14.73; 4273.272752;10;0.000115068;20250731;31;1.003573287;\$4,298.58;\$15.31; 4298.578115;10;0.000115068;20250831;31;1.003573287;\$4,323.97;\$15.40; 4323.973902;10;0.000115068;20250930;30;1.003457821;\$4,348.96;\$14.99; 4348.960006;10;0.000115068;20251031;31;1.003573287;\$4,374.54;\$15.58; 4374.535822;10;0.000115068;20251130;30;1.003457821;\$4,399.70;\$15.16; 4399.696761;10;0.000115068;20251231;31;1.003573287;\$4,425.45;\$15.76; 4425.453873;10;0.000115068;20260131;31;1.003573287;\$4,451.30;\$15.85; 4451.303023;10;0.000115068;20260228;28;1.003226928;\$4,475.70;\$14.40; 4475.699326;10;0.000115068;20260331;31;1.003573287;\$4,501.73;\$16.03; 4501.728018;10;0.000115068;20260430;30;1.003457821;\$4,527.33;\$15.60; 4527.328764;10;0.000115068;20260531;31;1.003573287;\$4,553.54;\$16.21; 4553.541943;10;0.000115068;20260630;30;1.003457821;\$4,579.32;\$15.78; 4579.321852;10;0.000115068;20260731;31;1.003573287;\$4,605.72;\$16.40; 4605.720817;10;0.000115068;20260831;31;1.003573287;\$4,632.21;\$16.49; 4632.214113;10;0.000115068;20260930;30;1.003457821;\$4,658.27;\$16.05; 4658.266057;10;0.000115068;20261031;31;1.003573287;\$4,684.95;\$16.68; 4684.947112;10;0.000115068;20261130;30;1.003457821;\$4,711.18;\$16.23; 4711.181397;10;0.000115068;20261231;31;1.003573287;\$4,738.05;\$16.87; 4738.051533;10;0.000115068;20270131;31;1.003573287;\$4,765.02;\$16.97; 4765.017685;10;0.000115068;20270228;28;1.003226928;\$4,790.43;\$15.41; 4790.426322;10;0.000115068;20270331;31;1.003573287;\$4,817.58;\$17.15; 4817.579624;10;0.000115068;20270430;30;1.003457821;\$4,844.27;\$16.69; 4844.272528;10;0.000115068;20270531;31;1.003573287;\$4,871.62;\$17.35; 4871.618238;10;0.000115068;20270630;30;1.003457821;\$4,898.50;\$16.88; 4898.497998;10;0.000115068;20270731;31;1.003573287;\$4,926.04;\$17.54; 4926.037471;10;0.000115068;20270831;31;1.003573287;\$4,953.68;\$17.64; 4953.67535;10;0.000115068;20270930;30;1.003457821;\$4,980.84;\$17.16; 4980.838849;10;0.000115068;20271031;31;1.003573287;\$5,008.67;\$17.83; 5008.672549;10;0.000115068;20271130;30;1.003457821;\$5,036.03;\$17.35; 5036.026219;10;0.000115068;20271231;31;1.003573287;\$5,064.06;\$18.03; 5064.05712;10;0.000115068;20280131;31;1.003573287;\$5,092.19;\$18.13; 5092.188183;10;0.000115068;20280228;28;1.003226928;\$5,118.65;\$16.46; 5118.652575;10;0.000115068;20280331;31;1.003573287;\$5,146.98;\$18.33; 5146.978724;10;0.000115068;20280430;30;1.003457821;\$5,174.81;\$17.83; 5174.810631;10;0.000115068;20280531;31;1.003573287;\$5,203.34;\$18.53; 5203.337448;10;0.000115068;20280630;30;1.003457821;\$5,231.36;\$18.03; 5231.364235;10;0.000115068;20280731;31;1.003573287;\$5,260.09;\$18.73; 5260.093134;10;0.000115068;20280831;31;1.003573287;\$5,288.92;\$18.83; 5288.924689;10;0.000115068;20280930;30;1.003457821;\$5,317.25;\$18.32; 5317.247421;10;0.000115068;20281031;31;1.003573287;\$5,346.28;\$19.04; 5346.283205;10;0.000115068;20281130;30;1.003457821;\$5,374.80;\$18.52; 5374.804273;10;0.000115068;20281231;31;1.003573287;\$5,404.05;\$19.24; 5404.045724;10;0.000115068;20290131;31;1.003573287;\$5,433.39;\$19.35; 5433.391664;10;0.000115068;20290228;28;1.003226928;\$5,460.96;\$17.57; 5460.957096;10;0.000115068;20290331;31;1.003573287;\$5,490.51;\$19.55; 5490.506396;10;0.000115068;20290430;30;1.003457821;\$5,519.53;\$19.02; 5519.526161;10;0.000115068;20290531;31;1.003573287;\$5,549.28;\$19.76; 5549.284746;10;0.000115068;20290630;30;1.003457821;\$5,578.51;\$19.22; 5578.507756;10;0.000115068;20290731;31;1.003573287;\$5,608.48;\$19.97; 5608.477098;10;0.000115068;20290831;31;1.003573287;\$5,638.55;\$20.08; 5638.55353;10;0.000115068;20290930;30;1.003457821;\$5,668.09;\$19.53; 5668.085215;10;0.000115068;20291031;31;1.003573287;\$5,698.37;\$20.29; 5698.374644;10;0.000115068;20291130;30;1.003457821;\$5,728.11;\$19.74; 5728.11318;10;0.000115068;20291231;31;1.003573287;\$5,758.62;\$20.50; 5758.617106;10;0.000115068;20300131;31;1.003573287;\$5,789.23;\$20.61");
     process_csv_data ("Tot_Month;Add_Month;Daily_Int;Date;MonDays;Int_Month;Tot_Mon2;Mon_Interest;
-3640;0;0.000115068;20230430;30;1.003457821;\$3,652.59;\$0.00;
-3652.586467;10;0.000115068;20230531;31;1.003573287;\$3,675.67;\$13.09;
-3675.67394;10;0.000115068;20230630;30;1.003457821;\$3,698.42;\$12.74;
-3698.41834;10;0.000115068;20230731;31;1.003573287;\$3,721.67;\$13.25;
-3721.669583;10;0.000115068;20230831;31;1.003573287;\$3,745.00;\$13.33;
-3745.00391;10;0.000115068;20230930;30;1.003457821;\$3,767.99;\$12.98;
-3767.988041;10;0.000115068;20231031;31;1.003573287;\$3,791.49;\$13.50;
-3791.487876;10;0.000115068;20231130;30;1.003457821;\$3,814.63;\$13.14;
-3814.63274;10;0.000115068;20231231;31;1.003573287;\$3,838.30;\$13.67;
-3838.299251;10;0.000115068;20240131;31;1.003573287;\$3,862.05;\$13.75;
-3862.050329;10;0.000115068;20240228;28;1.003226928;\$3,884.55;\$12.49;
-3884.545156;10;0.000115068;20240331;31;1.003573287;\$3,908.46;\$13.92;
-3908.461484;10;0.000115068;20240430;30;1.003457821;\$3,932.01;\$13.55;
-3932.010821;10;0.000115068;20240531;31;1.003573287;\$3,956.10;\$14.09;
-3956.096757;10;0.000115068;20240630;30;1.003457821;\$3,979.81;\$13.71;
-3979.810809;10;0.000115068;20240731;31;1.003573287;\$4,004.07;\$14.26;
-4004.067548;10;0.000115068;20240831;31;1.003573287;\$4,028.41;\$14.34;
-4028.410964;10;0.000115068;20240930;30;1.003457821;\$4,052.38;\$13.96;
-4052.375065;10;0.000115068;20241031;31;1.003573287;\$4,076.89;\$14.52;
-4076.891098;10;0.000115068;20241130;30;1.003457821;\$4,101.02;\$14.13;
-4101.022834;10;0.000115068;20241231;31;1.003573287;\$4,125.71;\$14.69;
-4125.712699;10;0.000115068;20250131;31;1.003573287;\$4,150.49;\$14.78;
-4150.490788;10;0.000115068;20250228;28;1.003226928;\$4,173.92;\$13.43;
-4173.916391;10;0.000115068;20250331;31;1.003573287;\$4,198.87;\$14.95;
-4198.866726;10;0.000115068;20250430;30;1.003457821;\$4,223.42;\$14.55;
-4223.420232;10;0.000115068;20250531;31;1.003573287;\$4,248.55;\$15.13;
-4248.547458;10;0.000115068;20250630;30;1.003457821;\$4,273.27;\$14.73;
-4273.272752;10;0.000115068;20250731;31;1.003573287;\$4,298.58;\$15.31;
-4298.578115;10;0.000115068;20250831;31;1.003573287;\$4,323.97;\$15.40;
-4323.973902;10;0.000115068;20250930;30;1.003457821;\$4,348.96;\$14.99;
-4348.960006;10;0.000115068;20251031;31;1.003573287;\$4,374.54;\$15.58;
-4374.535822;10;0.000115068;20251130;30;1.003457821;\$4,399.70;\$15.16;
-4399.696761;10;0.000115068;20251231;31;1.003573287;\$4,425.45;\$15.76;
-4425.453873;10;0.000115068;20260131;31;1.003573287;\$4,451.30;\$15.85;
-4451.303023;10;0.000115068;20260228;28;1.003226928;\$4,475.70;\$14.40;
-4475.699326;10;0.000115068;20260331;31;1.003573287;\$4,501.73;\$16.03;
-4501.728018;10;0.000115068;20260430;30;1.003457821;\$4,527.33;\$15.60;
-4527.328764;10;0.000115068;20260531;31;1.003573287;\$4,553.54;\$16.21;
-4553.541943;10;0.000115068;20260630;30;1.003457821;\$4,579.32;\$15.78;
-4579.321852;10;0.000115068;20260731;31;1.003573287;\$4,605.72;\$16.40;
-4605.720817;10;0.000115068;20260831;31;1.003573287;\$4,632.21;\$16.49;
-4632.214113;10;0.000115068;20260930;30;1.003457821;\$4,658.27;\$16.05;
-4658.266057;10;0.000115068;20261031;31;1.003573287;\$4,684.95;\$16.68;
-4684.947112;10;0.000115068;20261130;30;1.003457821;\$4,711.18;\$16.23;
-4711.181397;10;0.000115068;20261231;31;1.003573287;\$4,738.05;\$16.87;
-4738.051533;10;0.000115068;20270131;31;1.003573287;\$4,765.02;\$16.97;
-4765.017685;10;0.000115068;20270228;28;1.003226928;\$4,790.43;\$15.41;
-4790.426322;10;0.000115068;20270331;31;1.003573287;\$4,817.58;\$17.15;
-4817.579624;10;0.000115068;20270430;30;1.003457821;\$4,844.27;\$16.69;
-4844.272528;10;0.000115068;20270531;31;1.003573287;\$4,871.62;\$17.35;
-4871.618238;10;0.000115068;20270630;30;1.003457821;\$4,898.50;\$16.88;
-4898.497998;10;0.000115068;20270731;31;1.003573287;\$4,926.04;\$17.54;
-4926.037471;10;0.000115068;20270831;31;1.003573287;\$4,953.68;\$17.64;
-4953.67535;10;0.000115068;20270930;30;1.003457821;\$4,980.84;\$17.16;
-4980.838849;10;0.000115068;20271031;31;1.003573287;\$5,008.67;\$17.83;
-5008.672549;10;0.000115068;20271130;30;1.003457821;\$5,036.03;\$17.35;
-5036.026219;10;0.000115068;20271231;31;1.003573287;\$5,064.06;\$18.03;
-5064.05712;10;0.000115068;20280131;31;1.003573287;\$5,092.19;\$18.13;
-5092.188183;10;0.000115068;20280228;28;1.003226928;\$5,118.65;\$16.46;
-5118.652575;10;0.000115068;20280331;31;1.003573287;\$5,146.98;\$18.33;
-5146.978724;10;0.000115068;20280430;30;1.003457821;\$5,174.81;\$17.83;
-5174.810631;10;0.000115068;20280531;31;1.003573287;\$5,203.34;\$18.53;
-5203.337448;10;0.000115068;20280630;30;1.003457821;\$5,231.36;\$18.03;
-5231.364235;10;0.000115068;20280731;31;1.003573287;\$5,260.09;\$18.73;
-5260.093134;10;0.000115068;20280831;31;1.003573287;\$5,288.92;\$18.83;
-5288.924689;10;0.000115068;20280930;30;1.003457821;\$5,317.25;\$18.32;
-5317.247421;10;0.000115068;20281031;31;1.003573287;\$5,346.28;\$19.04;
-5346.283205;10;0.000115068;20281130;30;1.003457821;\$5,374.80;\$18.52;
-5374.804273;10;0.000115068;20281231;31;1.003573287;\$5,404.05;\$19.24;
-5404.045724;10;0.000115068;20290131;31;1.003573287;\$5,433.39;\$19.35;
-5433.391664;10;0.000115068;20290228;28;1.003226928;\$5,460.96;\$17.57;
-5460.957096;10;0.000115068;20290331;31;1.003573287;\$5,490.51;\$19.55;
-5490.506396;10;0.000115068;20290430;30;1.003457821;\$5,519.53;\$19.02;
-5519.526161;10;0.000115068;20290531;31;1.003573287;\$5,549.28;\$19.76;
-5549.284746;10;0.000115068;20290630;30;1.003457821;\$5,578.51;\$19.22;
-5578.507756;10;0.000115068;20290731;31;1.003573287;\$5,608.48;\$19.97;
-5608.477098;10;0.000115068;20290831;31;1.003573287;\$5,638.55;\$20.08;
-5638.55353;10;0.000115068;20290930;30;1.003457821;\$5,668.09;\$19.53;
-5668.085215;10;0.000115068;20291031;31;1.003573287;\$5,698.37;\$20.29;
-5698.374644;10;0.000115068;20291130;30;1.003457821;\$5,728.11;\$19.74;
-5728.11318;10;0.000115068;20291231;31;1.003573287;\$5,758.62;\$20.50;
-5758.617106;10;0.000115068;20300131;31;1.003573287;\$5,789.23;\$20.61");
+=3640;0;=0.042/365;20230430;30;=POWER(1+C2|E2);=A2*F2;0;
+=G2;10;=0.042/365;20230531;31;=POWER(1+C3|E3);=(G2+B3)*F3;=G3-G2-B3;
+=G3;10;=0.042/365;20230630;30;=POWER(1+C4|E4);=(G3+B4)*F4;=G4-G3-B4;
+=G4;10;=0.042/365;20230731;31;=POWER(1+C5|E5);=(G4+B5)*F5;=G5-G4-B5;
+=G5;10;=0.042/365;20230831;31;=POWER(1+C6|E6);=(G5+B6)*F6;=G6-G5-B6;
+=G6;10;=0.042/365;20230930;30;=POWER(1+C7|E7);=(G6+B7)*F7;=G7-G6-B7;
+=G7;10;=0.042/365;20231031;31;=POWER(1+C8|E8);=(G7+B8)*F8;=G8-G7-B8;
+=G8;10;=0.042/365;20231130;30;=POWER(1+C9|E9);=(G8+B9)*F9;=G9-G8-B9;
+=G9;10;=0.042/365;20231231;31;=POWER(1+C10|E10);=(G9+B10)*F10;=G10-G9-B10;
+=G10;10;=0.042/365;20240131;31;=POWER(1+C11|E11);=(G10+B11)*F11;=G11-G10-B11;
+=G11;10;=0.042/365;20240228;28;=POWER(1+C12|E12);=(G11+B12)*F12;=G12-G11-B12;
+=G12;10;=0.042/365;20240331;31;=POWER(1+C13|E13);=(G12+B13)*F13;=G13-G12-B13;
+=G13;10;=0.042/365;20240430;30;=POWER(1+C14|E14);=(G13+B14)*F14;=G14-G13-B14;
+=G14;10;=0.042/365;20240531;31;=POWER(1+C15|E15);=(G14+B15)*F15;=G15-G14-B15;");
 
     while ($paddr = accept (CLIENT, SERVER))
     {
@@ -997,7 +991,6 @@ $//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^.*newcsv=//img;
-            $new_csv_data =~ s/\+/ /img;
             $new_csv_data =~ s/%0D%0A/\n/img;
             $new_csv_data =~ s/..$//im;
             process_csv_data ($new_csv_data); 
@@ -1136,7 +1129,7 @@ $//img;
                 <input type=\"submit\" value=\"Search\">
                 </form></td><td>";
 
-        my $example = get_field (2, "C");
+        my $example = get_field_value (2, "C");
         $example =~ s/^(...).*$/$1../;
         $example = "\"/csv_analyse/groupby?groupstr=(" . $example . ")" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/groupby\">
@@ -1145,10 +1138,10 @@ $//img;
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
                 
-        my $f1 = get_field (2, "D");
+        my $f1 = get_field_value (2, "D");
         $f1 =~ s/\W/./img;
         $f1 =~ s/^(...)..*$/$1../img;
-        my $f2 = get_field (2, "E");
+        my $f2 = get_field_value (2, "E");
         $f2 =~ s/\W/./img;
         $f2 =~ s/^(...)..*$/$1../img;
         my $dual_example = "($f1).*($f2)";
@@ -1166,7 +1159,7 @@ $//img;
                 </form></td></tr></table>";
 
         my %groups;
-        my $group_cols = 0;
+        my $group_count = 0;
         my %group_colours;
         $group_colours {0} = "burntorange"; $group_colours {1} = "blue"; $group_colours {2} = "green"; $group_colours {3} = "darkred"; $group_colours {4} = "mediumaquamarine"; $group_colours {5} = "black"; $group_colours {6} = "darkyellow"; $group_colours {7} = "red"; $group_colours {8} = "skyblue"; $group_colours {9} = "royalblue";
         $group_colours {11} = "blueviolet"; $group_colours {12} = "darkblue"; $group_colours {13} = "darkcyan"; $group_colours {14} = "darkgoldenrod"; $group_colours {15} = "darkgray"; $group_colours {16} = "darkgreen"; $group_colours {17} = "darkgrey"; $group_colours {18} = "darkkhaki"; $group_colours {19} = "darkmagenta"; $group_colours {20} = "darkolivegreen";
@@ -1259,15 +1252,17 @@ $//img;
         my $valid_regex = eval { qr/$overall_match/ };
         my $use_regex = 0;
         my %new_meta_data;
+        my %new_calculated_data;
         if (defined ($valid_regex))
         {
             %meta_data = %new_meta_data;
+            %calculated_data = %new_calculated_data;
             $use_regex = 1;
         }
 
-        my $row_num = 0;
+        my $row_num = 1;
         my $col_letter = "A";
-        my $old_row_num = 0;
+        my $old_row_num = 2;
         my $old_col_letter = "A";
         my $field_id = 0;
         my $row = "<tr class=\"$even_odd\">";
@@ -1285,10 +1280,11 @@ $//img;
             $col_letter = "A";
             while ($x < $max_field_num)
             {
-                if ($row_num eq "0") { $old_row_num = 1; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
+                if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
-                print ("$field_id >>> " . $csv_data {$field_id} . "\n");
-                my $field = $csv_data {$field_id};
+                print ("\n=============GETTING field of $col_letter$row_num: -- got:"); 
+                my $field = get_field_value ($row_num, $col_letter, "aa");
+                print (">>$field<<:\n"); 
 
                 if (!defined ($col_types {$col_letter}))
                 {
@@ -1303,49 +1299,49 @@ $//img;
                         {
                             $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                            set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
                             print ("now is $csv_data{$field_id}\n");
                         }
                         elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
                         {
                             $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                            set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
                             print ("now is $csv_data{$field_id}\n");
                         }
                         elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
                         {
                             $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$1" . "0$2" . "$3";
+                            set_field_value ($row_num, $col_letter, "$1" . "0$2" . "$3");
                             print ("now is $csv_data{$field_id}\n");
                         }
                         elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
                         {
                             $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$3" . "$2" . "$1";
+                            set_field_value ($row_num, $col_letter, "$3" . "$2" . "$1");
                             print ("now is $csv_data{$field_id}\n");
                         }
                         elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
                         {
                             $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$3" . "$2" . "0$1";
+                            set_field_value ($row_num, $col_letter, "$3" . "$2" . "0$1");
                             print ("now is $csv_data{$field_id}\n");
                         }
                         elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
                         {
                             $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$3" . "0$2" . "$1";
+                            set_field_value ($row_num, $col_letter, "$3" . "0$2" . "$1");
                             print ("now is $csv_data{$field_id}\n");
                         }
                         elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                         {
                             $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
                             print ("$field_id for $field -- ");
-                            $csv_data {$field_id} = "$3" . "0$2" . "0$1";
+                            set_field_value ($row_num, $col_letter, "$3" . "0$2" . "0$1");
                             print ("now is $csv_data{$field_id}\n");
                         }
                     }
@@ -1386,49 +1382,49 @@ $//img;
                             {
                                 $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                                set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                             elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
                             {
                                 $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$1" . "$2" . "0$3";
+                                set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                             elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
                             {
                                 $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$1" . "0$2" . "$3";
+                                set_field_value ($row_num, $col_letter, "$1" . "0$2" . "$3");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                             elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
                             {
                                 $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$3" . "$2" . "$1";
+                                set_field_value ($row_num, $col_letter, "$3" . "$2" . "$1");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                             elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
                             {
                                 $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$3" . "$2" . "0$1";
+                                set_field_value ($row_num, $col_letter, "$3" . "$2" . "0$1");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                             elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
                             {
                                 $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$3" . "0$2" . "$1";
+                                set_field_value ($row_num, $col_letter, "$3" . "0$2" . "$1");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                             elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                             {
                                 $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
                                 print ("$field_id for $field -- ");
-                                $csv_data {$field_id} = "$3" . "0$2" . "0$1";
+                                set_field_value ($row_num, $col_letter, "$3" . "0$2" . "0$1");
                                 print ("now is $csv_data{$field_id}\n");
                             }
                         }
@@ -1464,7 +1460,9 @@ $//img;
                     }
                 }
 
-                $field = $csv_data {$field_id};
+                print ("\n=============GETTING field of $col_letter$row_num: -- got "); 
+                $field = get_field_value ($row_num, $col_letter, "bb");
+                print (">>>>>$field<<<<<:\n"); 
                 if ($row_num > $old_row_num)
                 {
                     # Add row to table if matched 
@@ -1490,14 +1488,14 @@ $//img;
 
                             if (!defined ($group_colours {$this_group}))
                             {
-                                $group_colours {$this_group} = $group_colours {$group_cols};
-                                $group_cols++;
+                                $group_colours {$this_group} = $group_colours {$group_count};
+                                $group_count++;
                             }
                             $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                             $row =~ s/<\/td>/<\/font><\/td>/img;
                             $group_counts {$this_group}++;
 
-                            $pot_group_price = get_field ($old_row_num, get_num_of_col_header ($chosen_col));
+                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col));
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                         }
@@ -1507,7 +1505,7 @@ $//img;
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field ($old_row_num, get_num_of_col_header ($chosen_col));
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $row .= " <td>$this_group</td>\n";
@@ -1516,15 +1514,15 @@ $//img;
                                 
                                 if (!defined ($group_colours {$this_group}))
                                 {
-                                    $group_colours {$this_group} = $group_colours {$group_cols};
-                                    $group_cols++;
+                                    $group_colours {$this_group} = $group_colours {$group_count};
+                                    $group_count++;
                                 }
                                 $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
                             }
                             else
                             {
-                                $row .= "<td><font size=-3>No group</font></td>\n";
+                                $row .= "<td><font size=-3>No group ($row_num A)</font></td>\n";
                                 $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                             }
                         }
@@ -1537,7 +1535,7 @@ $//img;
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field ($old_row_num, get_num_of_col_header ($chosen_col));
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col));
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $row .= " <td>$this_group</td>\n";
@@ -1545,8 +1543,8 @@ $//img;
                                 $row .= " <td>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
-                                    $group_colours {$this_group} = $group_colours {$group_cols};
-                                    $group_cols++;
+                                    $group_colours {$this_group} = $group_colours {$group_count};
+                                    $group_count++;
                                 }
                                 $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
@@ -1555,7 +1553,7 @@ $//img;
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td>\n";
+                        $row .= "<td><font size=-3>No group($row_num B)</font></td>\n";
                         $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                     }
 
@@ -1688,7 +1686,14 @@ $//img;
                 my $g_price = $group_prices {$g};
                 my $g_count = $group_counts {$g};
                 my $g_calc = $group_prices {$g. "_calc"};
-                $g_price =~ s/(\d\d)$/.$1/;
+                if ($g_price =~ m/\./)
+                {
+                    $g_price = $g_price / 100;
+                }
+                else
+                {
+                    $g_price =~ s/(\d\d)$/.$1/;
+                }
                 
                 my $replace_g_price = "GPRICE_$g";
                 $html_text =~ s/$replace_g_price/$g_price/img;
@@ -1701,6 +1706,13 @@ $//img;
                 {
                     $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count row (total was $g_price)</font><br>";
                 }
+
+                if ($get_group_info)
+                {
+                    my $g_calc = $group_prices {$g. "_calc"};
+                    $group_block .= "<font color=$group_colours{$g}>Group $g had calculation of $g_calc</font><br>";
+                }
+
                 $total_g_count += $g_count;
                 $total_g_price += $g_price;
 
@@ -1720,9 +1732,9 @@ $//img;
         
             if ($get_group_info)
             {
-                $group_block .= "<br>" . get_col_header ($c) . ": $col_types{$c} ($col_calculations{$c})"; 
+                #$group_block .= "<br>" . get_col_header ($c) . ": $col_types{$c} ($col_calculations{$c})"; 
+                $group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c})"; 
             }
-            #$group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c})"; 
             #$group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c}";
         }
 
@@ -1734,9 +1746,20 @@ $//img;
             next;
         }
 
+        
+        my $g_url = "No group info to view<br>";
+        if ($group_count == 1)
+        {
+            $g_url = "<a href=\"/csv_analyse$original_url.group_info\">View group information</a><br>";
+        }
+        elsif ($group_count > 1)
+        {
+            $g_url = "<a href=\"/csv_analyse$original_url.group_info\">View all $group_count groups</a><br>";
+        }
         $group_block =~ s/<br>/\n/img;
         $group_block =~ s/^((.*\n){0,7})(.*)\n/$1\nrest truncated../m;
-        $group_block = "<a href=\"/csv_analyse$original_url.group_info\">View all group information</a><br><font size=-1>$1$2</font>";
+        $group_block = "$g_url<font size=-1>$1$2</font>";
+                                    
         $group_block =~ s/\n/<br>/img;
         $group_block = "<div style=\"-webkit-mask-image:linear-gradient(to bottom, black 0%, transparent 100%);mask-image:linear-gradient(to bottom, black 0%, transparent 100%);background-color: skyblue\">" .
                        #"<div style=\"max-width:640px\" class=\"mx-auto mb-6 px-4 md:px-0 text-lg font-n leading-8 text-gray-800\">" .
