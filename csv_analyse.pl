@@ -12,10 +12,11 @@ use LWP::Simple;
 use Socket;
 use File::Copy;
 
-
 my %csv_data;
+my $csv_block;
 my %meta_data;
 my %calculated_data;
+my %col_roundings;
 my $max_field_num = 0;
 my $max_rows = 0;
 my %col_types;
@@ -43,25 +44,14 @@ sub write_to_socket
         $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
     }
 
-    #my $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nAccept-Ranges: bytes\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
-    #my $header = "HTTP/1.1 301 Moved\nLocation: /full0\nLast-Modified: $yyyymmddhhmmss\nAccept-Ranges: bytes\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
-
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body = $header . $msg_body;
     $msg_body =~ s/\.png/\.npg/;
     $msg_body =~ s/img/mgi/;
-    #$msg_body .= chr(13) . chr(10);
     $msg_body .= chr(13) . chr(10) . "0";
-    #print ("\n===========\nWrite to socket: $msg_body\n==========\n");
     print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
-
-    #unless (defined (syswrite ($sock_ref, $msg_body)))
-    #{
-    #    return 0;
-    #}
-    #print ("\n&&&$redirect&&&&&&&&&&&&\n", $msg_body, "\nRRRRRRRRRRRRRR\n");
     syswrite ($sock_ref, $msg_body);
 }
 
@@ -206,6 +196,7 @@ sub get_next_field_letter
 sub process_csv_data
 {
     my $block = $_ [0];
+    $csv_block = $block;
     my %new_csv_data;
     %csv_data = %new_csv_data;
     my %new_col_types;
@@ -240,7 +231,6 @@ sub process_csv_data
         $max_rows++;
     }
     
-    #print ("Process_data Last line:$block\n");
     $col_letter = "A";
     while ($block =~ s/^([^;]+?)(;|$)//)
     {
@@ -347,7 +337,7 @@ sub get_field_from_col_header
     my $col = get_num_of_col_header ($col_name);
     if ($col > -1)
     {
-        return get_field_value ($row_num, $col);
+        return get_field_value ($row_num, $col, 0);
     }
     return "";
 }
@@ -388,14 +378,12 @@ sub calc_field_value
     my $field_val = $_ [0]; 
     my $row_num = $_ [1]; 
     my $col_letter = $_ [2]; 
-    my $indent = $_ [3]; 
     my $next_field_id = has_field_id ($field_val);
     while ($next_field_id ne "")
     {
         my $rn = get_row_num ($next_field_id);
         my $cl = get_col_letter ($next_field_id);
-        my $that_field_val = get_field_value ($rn, $cl, $indent);
-        print ("$indent>> found $that_field_val for $next_field_id\n");
+        my $that_field_val = get_field_value ($rn, $cl, 0);
         print (" before - $col_letter$row_num -- $field_val >> ");
         $field_val =~ s/$next_field_id/$that_field_val/; 
         print (" after = $field_val\n");
@@ -404,11 +392,14 @@ sub calc_field_value
     if ($field_val =~ s/^=//)
     {
         $field_val =~ s/POWER\(([^|]+)\|(.+)\)/(($1)**($2))/;
+        print ("BEFORE($col_letter$row_num): $field_val\n");
+        $field_val =~ s/IF([^=]+)=([^=]+)/IF$1==$2/g;
+        $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/return ($1 ? '$2' : '$3');/;
+        print ("AFTER($col_letter$row_num): $field_val\n");
         my $orig_field_val = $field_val;
         $field_val = eval ($field_val);
-        print ("$field_val from - $orig_field_val\n");
+        print ("VAL=''$field_val'' from - >>$orig_field_val<<\n");
     }
-    print ("$indent$col_letter$row_num -- >$field_val< done \n");
     return $field_val;
 }
 
@@ -433,7 +424,7 @@ sub get_field_value
 {
     my $row_num = $_ [0];
     my $col_letter = $_ [1];
-    my $indent = $_ [2];
+    my $for_display = $_ [2];
     if ($col_letter =~ m/^\d+$/)
     {
         $col_letter =  get_field_letter_from_field_num ($col_letter);
@@ -447,7 +438,7 @@ sub get_field_value
         {
             if ($csv_data {$str} =~ m/^=/)
             {
-                $calc_val = calc_field_value ($csv_data {$str}, $row_num, $col_letter, ".$indent");
+                $calc_val = calc_field_value ($csv_data {$str}, $row_num, $col_letter);
             }
             else
             {
@@ -456,7 +447,11 @@ sub get_field_value
             $calculated_data {$str} = $calc_val;
         }
         $calc_val = $calculated_data {$str};
-        print (" >> calculated $str as $calc_val\n");
+        if ($for_display && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
+        {
+            my $c = sprintf("%.2f", $calc_val);
+            return ($c);
+        }
         return ($calc_val);
     }
     print (" >> returning blank for $str<<\n");
@@ -705,9 +700,9 @@ sub get_graph_html
     my $i;
     if ($graph_counts == 0 && $graph_totals == 0)
     {
-        for ($i = 1; $i < $max_rows; $i++)
+        for ($i = 2; $i < $max_rows; $i++)
         {
-            my $x = get_field_value ($i, $col);
+            my $x = get_field_value ($i, $col, 1);
             $x =~ s/^$/0/;
             $x =~ s/,//g;
             $x =~ s/\$//g;
@@ -832,22 +827,21 @@ sub get_graph_html
     my $count;
     my $not_seen_full = 1;
 
-    #process_csv_data ("Tot_Month;Add_Month;Daily_Int;Date;MonDays;Int_Month;Tot_Mon2;Mon_Interest; 3640;0;0.000115068;20230430;30;1.003457821;\$3,652.59;\$0.00; 3652.586467;10;0.000115068;20230531;31;1.003573287;\$3,675.67;\$13.09; 3675.67394;10;0.000115068;20230630;30;1.003457821;\$3,698.42;\$12.74; 3698.41834;10;0.000115068;20230731;31;1.003573287;\$3,721.67;\$13.25; 3721.669583;10;0.000115068;20230831;31;1.003573287;\$3,745.00;\$13.33; 3745.00391;10;0.000115068;20230930;30;1.003457821;\$3,767.99;\$12.98; 3767.988041;10;0.000115068;20231031;31;1.003573287;\$3,791.49;\$13.50; 3791.487876;10;0.000115068;20231130;30;1.003457821;\$3,814.63;\$13.14; 3814.63274;10;0.000115068;20231231;31;1.003573287;\$3,838.30;\$13.67; 3838.299251;10;0.000115068;20240131;31;1.003573287;\$3,862.05;\$13.75; 3862.050329;10;0.000115068;20240228;28;1.003226928;\$3,884.55;\$12.49; 3884.545156;10;0.000115068;20240331;31;1.003573287;\$3,908.46;\$13.92; 3908.461484;10;0.000115068;20240430;30;1.003457821;\$3,932.01;\$13.55; 3932.010821;10;0.000115068;20240531;31;1.003573287;\$3,956.10;\$14.09; 3956.096757;10;0.000115068;20240630;30;1.003457821;\$3,979.81;\$13.71; 3979.810809;10;0.000115068;20240731;31;1.003573287;\$4,004.07;\$14.26; 4004.067548;10;0.000115068;20240831;31;1.003573287;\$4,028.41;\$14.34; 4028.410964;10;0.000115068;20240930;30;1.003457821;\$4,052.38;\$13.96; 4052.375065;10;0.000115068;20241031;31;1.003573287;\$4,076.89;\$14.52; 4076.891098;10;0.000115068;20241130;30;1.003457821;\$4,101.02;\$14.13; 4101.022834;10;0.000115068;20241231;31;1.003573287;\$4,125.71;\$14.69; 4125.712699;10;0.000115068;20250131;31;1.003573287;\$4,150.49;\$14.78; 4150.490788;10;0.000115068;20250228;28;1.003226928;\$4,173.92;\$13.43; 4173.916391;10;0.000115068;20250331;31;1.003573287;\$4,198.87;\$14.95; 4198.866726;10;0.000115068;20250430;30;1.003457821;\$4,223.42;\$14.55; 4223.420232;10;0.000115068;20250531;31;1.003573287;\$4,248.55;\$15.13; 4248.547458;10;0.000115068;20250630;30;1.003457821;\$4,273.27;\$14.73; 4273.272752;10;0.000115068;20250731;31;1.003573287;\$4,298.58;\$15.31; 4298.578115;10;0.000115068;20250831;31;1.003573287;\$4,323.97;\$15.40; 4323.973902;10;0.000115068;20250930;30;1.003457821;\$4,348.96;\$14.99; 4348.960006;10;0.000115068;20251031;31;1.003573287;\$4,374.54;\$15.58; 4374.535822;10;0.000115068;20251130;30;1.003457821;\$4,399.70;\$15.16; 4399.696761;10;0.000115068;20251231;31;1.003573287;\$4,425.45;\$15.76; 4425.453873;10;0.000115068;20260131;31;1.003573287;\$4,451.30;\$15.85; 4451.303023;10;0.000115068;20260228;28;1.003226928;\$4,475.70;\$14.40; 4475.699326;10;0.000115068;20260331;31;1.003573287;\$4,501.73;\$16.03; 4501.728018;10;0.000115068;20260430;30;1.003457821;\$4,527.33;\$15.60; 4527.328764;10;0.000115068;20260531;31;1.003573287;\$4,553.54;\$16.21; 4553.541943;10;0.000115068;20260630;30;1.003457821;\$4,579.32;\$15.78; 4579.321852;10;0.000115068;20260731;31;1.003573287;\$4,605.72;\$16.40; 4605.720817;10;0.000115068;20260831;31;1.003573287;\$4,632.21;\$16.49; 4632.214113;10;0.000115068;20260930;30;1.003457821;\$4,658.27;\$16.05; 4658.266057;10;0.000115068;20261031;31;1.003573287;\$4,684.95;\$16.68; 4684.947112;10;0.000115068;20261130;30;1.003457821;\$4,711.18;\$16.23; 4711.181397;10;0.000115068;20261231;31;1.003573287;\$4,738.05;\$16.87; 4738.051533;10;0.000115068;20270131;31;1.003573287;\$4,765.02;\$16.97; 4765.017685;10;0.000115068;20270228;28;1.003226928;\$4,790.43;\$15.41; 4790.426322;10;0.000115068;20270331;31;1.003573287;\$4,817.58;\$17.15; 4817.579624;10;0.000115068;20270430;30;1.003457821;\$4,844.27;\$16.69; 4844.272528;10;0.000115068;20270531;31;1.003573287;\$4,871.62;\$17.35; 4871.618238;10;0.000115068;20270630;30;1.003457821;\$4,898.50;\$16.88; 4898.497998;10;0.000115068;20270731;31;1.003573287;\$4,926.04;\$17.54; 4926.037471;10;0.000115068;20270831;31;1.003573287;\$4,953.68;\$17.64; 4953.67535;10;0.000115068;20270930;30;1.003457821;\$4,980.84;\$17.16; 4980.838849;10;0.000115068;20271031;31;1.003573287;\$5,008.67;\$17.83; 5008.672549;10;0.000115068;20271130;30;1.003457821;\$5,036.03;\$17.35; 5036.026219;10;0.000115068;20271231;31;1.003573287;\$5,064.06;\$18.03; 5064.05712;10;0.000115068;20280131;31;1.003573287;\$5,092.19;\$18.13; 5092.188183;10;0.000115068;20280228;28;1.003226928;\$5,118.65;\$16.46; 5118.652575;10;0.000115068;20280331;31;1.003573287;\$5,146.98;\$18.33; 5146.978724;10;0.000115068;20280430;30;1.003457821;\$5,174.81;\$17.83; 5174.810631;10;0.000115068;20280531;31;1.003573287;\$5,203.34;\$18.53; 5203.337448;10;0.000115068;20280630;30;1.003457821;\$5,231.36;\$18.03; 5231.364235;10;0.000115068;20280731;31;1.003573287;\$5,260.09;\$18.73; 5260.093134;10;0.000115068;20280831;31;1.003573287;\$5,288.92;\$18.83; 5288.924689;10;0.000115068;20280930;30;1.003457821;\$5,317.25;\$18.32; 5317.247421;10;0.000115068;20281031;31;1.003573287;\$5,346.28;\$19.04; 5346.283205;10;0.000115068;20281130;30;1.003457821;\$5,374.80;\$18.52; 5374.804273;10;0.000115068;20281231;31;1.003573287;\$5,404.05;\$19.24; 5404.045724;10;0.000115068;20290131;31;1.003573287;\$5,433.39;\$19.35; 5433.391664;10;0.000115068;20290228;28;1.003226928;\$5,460.96;\$17.57; 5460.957096;10;0.000115068;20290331;31;1.003573287;\$5,490.51;\$19.55; 5490.506396;10;0.000115068;20290430;30;1.003457821;\$5,519.53;\$19.02; 5519.526161;10;0.000115068;20290531;31;1.003573287;\$5,549.28;\$19.76; 5549.284746;10;0.000115068;20290630;30;1.003457821;\$5,578.51;\$19.22; 5578.507756;10;0.000115068;20290731;31;1.003573287;\$5,608.48;\$19.97; 5608.477098;10;0.000115068;20290831;31;1.003573287;\$5,638.55;\$20.08; 5638.55353;10;0.000115068;20290930;30;1.003457821;\$5,668.09;\$19.53; 5668.085215;10;0.000115068;20291031;31;1.003573287;\$5,698.37;\$20.29; 5698.374644;10;0.000115068;20291130;30;1.003457821;\$5,728.11;\$19.74; 5728.11318;10;0.000115068;20291231;31;1.003573287;\$5,758.62;\$20.50; 5758.617106;10;0.000115068;20300131;31;1.003573287;\$5,789.23;\$20.61");
-    process_csv_data ("Tot_Month;Add_Month;Daily_Int;Date;MonDays;Int_Month;Tot_Mon2;Mon_Interest;
-=3640;0;=0.042/365;20230430;30;=POWER(1+C2|E2);=A2*F2;0;
-=G2;10;=0.042/365;20230531;31;=POWER(1+C3|E3);=(G2+B3)*F3;=G3-G2-B3;
-=G3;10;=0.042/365;20230630;30;=POWER(1+C4|E4);=(G3+B4)*F4;=G4-G3-B4;
-=G4;10;=0.042/365;20230731;31;=POWER(1+C5|E5);=(G4+B5)*F5;=G5-G4-B5;
-=G5;10;=0.042/365;20230831;31;=POWER(1+C6|E6);=(G5+B6)*F6;=G6-G5-B6;
-=G6;10;=0.042/365;20230930;30;=POWER(1+C7|E7);=(G6+B7)*F7;=G7-G6-B7;
-=G7;10;=0.042/365;20231031;31;=POWER(1+C8|E8);=(G7+B8)*F8;=G8-G7-B8;
-=G8;10;=0.042/365;20231130;30;=POWER(1+C9|E9);=(G8+B9)*F9;=G9-G8-B9;
-=G9;10;=0.042/365;20231231;31;=POWER(1+C10|E10);=(G9+B10)*F10;=G10-G9-B10;
-=G10;10;=0.042/365;20240131;31;=POWER(1+C11|E11);=(G10+B11)*F11;=G11-G10-B11;
-=G11;10;=0.042/365;20240228;28;=POWER(1+C12|E12);=(G11+B12)*F12;=G12-G11-B12;
-=G12;10;=0.042/365;20240331;31;=POWER(1+C13|E13);=(G12+B13)*F13;=G13-G12-B13;
-=G13;10;=0.042/365;20240430;30;=POWER(1+C14|E14);=(G13+B14)*F14;=G14-G13-B14;
-=G14;10;=0.042/365;20240531;31;=POWER(1+C15|E15);=(G14+B15)*F15;=G15-G14-B15;");
+    process_csv_data ("Tot_Month;Add_Month;Daily_Int;Date;MonDays;Int_Month;Tot_Mon2;I_F_calc;Mon_Interest;
+=3640;0;=0.042/365;20230430;30;=POWER(1+C2|E2);=A2*F2;=IF(E2=30|G15-E3|E2);0;
+=G2;10;=0.042/365;20230531;31;=POWER(1+C3|E3);=(G2+B3)*F3;=IF(E3=30|G15-E3|E2);=G3-G2-B3;
+=G3;10;=0.042/365;20230630;30;=POWER(1+C4|E4);=(G3+B4)*F4;=IF(E4=30|G15-E3|E2);=G4-G3-B4;
+=G4;10;=0.042/365;20230731;31;=POWER(1+C5|E5);=(G4+B5)*F5;=IF(E5=30|G15-E3|E2);=G5-G4-B5;
+=G5;10;=0.042/365;20230831;31;=POWER(1+C6|E6);=(G5+B6)*F6;=IF(E6=30|G15-E3|E2);=G6-G5-B6;
+=G6;10;=0.042/365;20230930;30;=POWER(1+C7|E7);=(G6+B7)*F7;=IF(E7=30|G15-E3|E2);=G7-G6-B7;
+=G7;10;=0.042/365;20231031;31;=POWER(1+C8|E8);=(G7+B8)*F8;=IF(E8=30|G15-E3|E2);=G8-G7-B8;
+=G8;10;=0.042/365;20231130;30;=POWER(1+C9|E9);=(G8+B9)*F9;=IF(E9=30|G15-E3|E2);=G9-G8-B9;
+=G9;10;=0.042/365;20231231;31;=POWER(1+C10|E10);=(G9+B10)*F10;=IF(E10=30|G15-E3|E2);=G10-G9-B10;
+=G10;10;=0.042/365;20240131;31;=POWER(1+C11|E11);=(G10+B11)*F11;=IF(E11=30|G15-E3|E2);=G11-G10-B11;
+=G11;10;=0.042/365;20240228;28;=POWER(1+C12|E12);=(G11+B12)*F12;=IF(E12=30|G15-E3|E2);=G12-G11-B12;
+=G12;10;=0.042/365;20240331;31;=POWER(1+C13|E13);=(G12+B13)*F13;=IF(E13=30|G15-E3|E2);=G13-G12-B13;
+=G13;10;=0.042/365;20240430;30;=POWER(1+C14|E14);=(G13+B14)*F14;=IF(E14=30|G15-E3|E2);=G14-G13-B14;
+=G14;10;=0.042/365;20240531;31;=POWER(1+C15|E15);=(G14+B15)*F15;=IF(E15=30|G15-E3|E2);=G15-G14-B15;");
 
     while ($paddr = accept (CLIENT, SERVER))
     {
@@ -890,7 +884,7 @@ sub get_graph_html
             my $matching_text = $1;
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br> 
 <form action=\"updated_csv\" id=\"newcsv\" name=\"newcsv\" method=\"post\">
-<textarea id=\"newcsv\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newcsv\" name=\"newcsv\"></textarea>
+<textarea id=\"newcsv\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newcsv\" name=\"newcsv\">$csv_block</textarea>
 <input type=\"submit\" value=\"New CSV\" class=\"submitButton\">
 </form>
 </body> </html>";
@@ -1033,7 +1027,6 @@ $//img;
         $html_text .= "table.sortable td,\n";
         $html_text .= "table.sortable th {\n";
         $html_text .= "  padding: 0.125em 0.25em;\n";
-        $html_text .= "  width: 8em;\n";
         $html_text .= "}\n";
         $html_text .= "table.sortable th {\n";
         $html_text .= "  font-weight: bold;\n";
@@ -1043,8 +1036,13 @@ $//img;
         $html_text .= "table.sortable th.no-sort {\n";
         $html_text .= "  padding-top: 0.35em;\n";
         $html_text .= "}\n";
-        $html_text .= "table.sortable th:nth-child(5) {\n";
+        $html_text .= "table.sortable th:nth-child(n+2) {\n";
         $html_text .= "  width: 10em;\n";
+        $html_text .= "}\n";
+        $html_text .= "table.sortable td:nth-child(-n+1) {\n";
+        $html_text .= "  border: 2px solid mediumaquamarine;\n";
+        $html_text .= "  background-color: cornflowerblue;\n";
+        $html_text .= "  font-weight: bold;\n";
         $html_text .= "}\n";
         $html_text .= "table.sortable th button {\n";
         $html_text .= "  position: absolute;\n";
@@ -1129,7 +1127,7 @@ $//img;
                 <input type=\"submit\" value=\"Search\">
                 </form></td><td>";
 
-        my $example = get_field_value (2, "C");
+        my $example = get_field_value (2, "C", 1);
         $example =~ s/^(...).*$/$1../;
         $example = "\"/csv_analyse/groupby?groupstr=(" . $example . ")" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/groupby\">
@@ -1138,10 +1136,10 @@ $//img;
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
                 
-        my $f1 = get_field_value (2, "D");
+        my $f1 = get_field_value (2, "D", 1);
         $f1 =~ s/\W/./img;
         $f1 =~ s/^(...)..*$/$1../img;
-        my $f2 = get_field_value (2, "E");
+        my $f2 = get_field_value (2, "E", 1);
         $f2 =~ s/\W/./img;
         $f2 =~ s/^(...)..*$/$1../img;
         my $dual_example = "($f1).*($f2)";
@@ -1179,22 +1177,22 @@ $//img;
 
         $html_text .= "<script>\n";
         $html_text .= "'use strict';\n";
-        $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber, isPrice) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? -1 : 1; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? 1 : -1; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
+        $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber, isPrice) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? -1 : 1; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? 1 : -1; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { rowNode = rowNodes[dataCells[i].index]; rowNode.childNodes[0].innerHTML='<font size=\"-1\">Row:'+(i+1)+'</font>'; tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
         $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
         $html_text .= "</script>\n";
         $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
                 
         $html_text .= "<thead>\n";
-        $html_text .= "<br>Found YYY rows<br>";
         #$html_text .= "<br><textarea style=\"font-family:courier-new;size=-3;white-space:pre-wrap\"\">QQQ</textarea><br>";
         $html_text .= "QQQ";
         
         $html_text .= "<tr>\n";
+        $html_text .= "<th class=\"no-sort\">&#9698;</th>";
 
         my $x;
         for ($x = 0; $x < $max_field_num; $x++)
         {
-            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . " " . get_field_letter_from_field_num ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -1206,7 +1204,6 @@ $//img;
         my $checked = "";
 
         my $card;
-        my $even_odd = "even";
         my $deck;
         my $overall_count = 0;
         my %group_prices;
@@ -1265,7 +1262,7 @@ $//img;
         my $old_row_num = 2;
         my $old_col_letter = "A";
         my $field_id = 0;
-        my $row = "<tr class=\"$even_odd\">";
+        my $row = "<tr><td><font size=-1>Row:$row_num</font></td>";
         my $fake_row;
         my $x = 0;
         my $y = 0;
@@ -1283,7 +1280,7 @@ $//img;
                 if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
                 print ("\n=============GETTING field of $col_letter$row_num: -- got:"); 
-                my $field = get_field_value ($row_num, $col_letter, "aa");
+                my $field = get_field_value ($row_num, $col_letter, "aa", 1);
                 print (">>$field<<:\n"); 
 
                 if (!defined ($col_types {$col_letter}))
@@ -1461,7 +1458,7 @@ $//img;
                 }
 
                 print ("\n=============GETTING field of $col_letter$row_num: -- got "); 
-                $field = get_field_value ($row_num, $col_letter, "bb");
+                $field = get_field_value ($row_num, $col_letter, "bb", 1);
                 print (">>>>>$field<<<<<:\n"); 
                 if ($row_num > $old_row_num)
                 {
@@ -1493,9 +1490,13 @@ $//img;
                             }
                             $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                             $row =~ s/<\/td>/<\/font><\/td>/img;
+
+                            # Leave first td alone..
+                            $row =~ s/<td><font color=$group_colours{$this_group}>/<td>/im;
+                            $row =~ s/<\/font><\/td>/<\/td>/im;
                             $group_counts {$this_group}++;
 
-                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col));
+                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 1);
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                         }
@@ -1505,7 +1506,7 @@ $//img;
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col));
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 1);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $row .= " <td>$this_group</td>\n";
@@ -1519,6 +1520,9 @@ $//img;
                                 }
                                 $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
+                                # Leave first td alone..
+                                $row =~ s/<td><font color=$group_colours{$this_group}>/<td>/im;
+                                $row =~ s/<\/font><\/td>/<\/td>/im;
                             }
                             else
                             {
@@ -1535,7 +1539,7 @@ $//img;
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col));
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 1);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $row .= " <td>$this_group</td>\n";
@@ -1548,12 +1552,16 @@ $//img;
                                 }
                                 $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
+
+                                # Leave first td alone..
+                                $row =~ s/<td><font color=$group_colours{$this_group}>/<td>/im;
+                                $row =~ s/<\/font><\/td>/<\/td>/im;
                             }
                         }
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group($row_num B)</font></td>\n";
+                        $row .= "<td><font size=-3>No group</font></td>\n";
                         $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
                     }
 
@@ -1563,8 +1571,8 @@ $//img;
                         $html_text .= "$row ";
                     }
 
+                    $row = "<tr><td><font size=-1>Row:$old_row_num</font></td><td>$field</td>\n";
                     $old_row_num = $row_num;
-                    $row = "<tr class=\"$even_odd\"><td>$field</td>\n";
                 }
                 else
                 {
@@ -1732,10 +1740,8 @@ $//img;
         
             if ($get_group_info)
             {
-                #$group_block .= "<br>" . get_col_header ($c) . ": $col_types{$c} ($col_calculations{$c})"; 
-                $group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c})"; 
+                $group_block .= "<br> TODO - let edit here! Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c}) Rounding digits:($col_roundings{$c})"; 
             }
-            #$group_block .= "<br>Column $c (" . get_col_header ($c) . "): $col_types{$c}";
         }
 
         if ($get_group_info)
@@ -1746,7 +1752,6 @@ $//img;
             next;
         }
 
-        
         my $g_url = "No group info to view<br>";
         if ($group_count == 1)
         {
@@ -1762,8 +1767,7 @@ $//img;
                                     
         $group_block =~ s/\n/<br>/img;
         $group_block = "<div style=\"-webkit-mask-image:linear-gradient(to bottom, black 0%, transparent 100%);mask-image:linear-gradient(to bottom, black 0%, transparent 100%);background-color: skyblue\">" .
-                       #"<div style=\"max-width:640px\" class=\"mx-auto mb-6 px-4 md:px-0 text-lg font-n leading-8 text-gray-800\">" .
-                       $group_block . #"</div>"
+                       $group_block . 
                        "</div>";
         $html_text =~ s/QQQ/$group_block/im;
         $html_text =~ s/QQQ//im;
