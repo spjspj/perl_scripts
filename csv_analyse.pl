@@ -353,8 +353,11 @@ sub get_field_from_col_header
 sub has_field_id
 {
     my $field_val = $_ [0]; 
+    my $orig_field_id = $_ [1]; 
+
     $field_val =~ s/:[A-Z]+\d+/:/;
     $field_val =~ s/[A-Z]+\d+://;
+    $field_val =~ s/$orig_field_id//;
     print ("    Is there a field id in $field_val ??? >>");
     if ($field_val =~ m/^=.*([A-Z]+\d+)/)
     {
@@ -431,6 +434,12 @@ sub simple_parentheses_only_three_arguments
     return 0;
 }
 
+sub is_number
+{
+    my $field = $_ [0];
+    return ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/ || $field =~ m/^\+\d+($|\.\d+)$/)
+}
+
 sub excel_to_perl_calculation
 {
     # Egs:  =IF(A1<10|SUM(B2:B10)|100-MAX(10|B11))
@@ -444,6 +453,46 @@ sub excel_to_perl_calculation
     $field_val =~ s/([^=]+)=([^=]+)/$1==$2/g;
     my $finished = 1;
 
+    
+    
+    if ($field_val =~ m/SUM\(/)
+    {
+        $field_val = do_sum_expansion ($field_val);
+    }
+    if ($field_val =~ m/CONCATENATE\(/)
+    {
+        $field_val = do_concat_expansion ($field_val);
+    }
+    if ($field_val =~ m/POWER\(/)
+    {
+        $field_val = do_power_expansion ($field_val);
+    }
+    if ($field_val =~ m/(IF\(.*)/)
+    {
+        my $to_check = $1;
+        if (simple_parentheses_only_three_arguments ($to_check, "IF"))
+        {
+            $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/($1 ? $2 : $3)/;
+        }
+        else 
+        {
+            print ("cc Not finished: $field_val\n");
+            $finished = 0;
+        }
+    }
+
+    if (!$finished)
+    {
+        print ("Not finished: $field_val\n");
+        return excel_to_perl_calculation ($field_val, $field_id);
+    }
+    $csv_data {$field_id . "_perl"} = $field_val;
+    return $field_val;
+}
+
+sub do_power_expansion
+{
+    my $field_val = $_ [0];
     if ($field_val =~ m/((POWER)\(.*)/)
     {
         my $to_check = $1;
@@ -451,48 +500,15 @@ sub excel_to_perl_calculation
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/($1)**($2)/;
-        }
-        else
-        {
-            print ("aa Not finished: $field_val\n");
-            $finished = 0;
+            return $field_val; 
         }
     }
-    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
-    {
-        my $first_bit = $1; 
-        my $overall = $2; 
-        my $first_col = $3; 
-        my $first_num = $4; 
-        my $second_col = $5; 
-        my $second_num = $6; 
+    return $field_val; 
+}
 
-
-        my $fc_num = get_field_num_from_field_letter ($first_col);
-        my $sc_num = get_field_num_from_field_letter ($second_col);
-        print (" >> Summing ($field_val) >> $fc_num.$first_num  to  $sc_num.$second_num\n");
-        my $sum_str = "";
-        my $i = $fc_num; 
-        my $j = $first_num; 
-        while ($i <= $sc_num)
-        {
-            print ("  in $i\n");
-            print ("$i $sc_num > $sum_str\n");
-            while ($j <= $second_num)
-            {
-                print ("  in $j\n");
-                $sum_str .= get_field_letter_from_field_num ($i) . "$j+";
-                $j++;
-            }
-            $j = $first_num; 
-            $i++;
-        }
-        $sum_str =~ s/\+$//;
-        $sum_str .= "";
-        $field_val = $first_bit . $sum_str;
-        print (" SUM DONE > $sum_str (now $field_val)\n");
-        $finished = 0;
-    }
+sub do_concat_expansion
+{
+    my $field_val = $_ [0];
     if ($field_val =~ m/(CONCATENATE\(.*)/)
     {
         my $to_check = $1;
@@ -531,30 +547,57 @@ sub excel_to_perl_calculation
         else 
         {
             print ("bb Not finished: $field_val\n");
-            $finished = 0;
             $field_val =~ s/CONCATENATE\(([^\|]+?)|(.+?)\)/$1 . CONCATENATE($2)/;
         }
+        return $field_val;
     }
-    if ($field_val =~ m/(IF\(.*)/)
-    {
-        my $to_check = $1;
-        if (simple_parentheses_only_three_arguments ($to_check, "IF"))
-        {
-            $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/($1 ? $2 : $3)/;
-        }
-        else 
-        {
-            print ("cc Not finished: $field_val\n");
-            $finished = 0;
-        }
-    }
+    return $field_val; 
+}
 
-    if (!$finished)
+sub do_sum_expansion
+{
+    my $field_val = $_ [0];
+
+    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
     {
-        print ("Not finished: $field_val\n");
-        return excel_to_perl_calculation ($field_val, $field_id);
+        my $first_bit = $1; 
+        my $overall = $2; 
+        my $first_col = $3; 
+        my $first_num = $4; 
+        my $second_col = $5; 
+        my $second_num = $6; 
+
+        my $fc_num = get_field_num_from_field_letter ($first_col);
+        my $sc_num = get_field_num_from_field_letter ($second_col);
+        print (" >> Summing ($field_val) >> $fc_num.$first_num  to  $sc_num.$second_num\n");
+        my $sum_str = "";
+        my $i = $fc_num; 
+        my $j = $first_num; 
+        while ($i <= $sc_num)
+        {
+            print ("  in $i\n");
+            print ("$i $sc_num > $sum_str\n");
+            while ($j <= $second_num)
+            {
+                print ("  in $j\n");
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0); 
+                if (is_number ($cv))
+                {
+                    $sum_str .= "$cv+";
+                }
+                else
+                {
+                    $sum_str .= get_field_letter_from_field_num ($i) . "$j+";   
+                }
+                $j++;
+            }
+            $j = $first_num; 
+            $i++;
+        }
+        $sum_str =~ s/\+$//;
+        $sum_str .= "";
+        return $sum_str;
     }
-    $csv_data {$field_id . "_perl"} = $field_val;
     return $field_val;
 }
 
@@ -563,7 +606,7 @@ sub calc_field_value
     my $field_val = $_ [0]; 
     my $row_num = $_ [1]; 
     my $col_letter = $_ [2]; 
-    my $next_field_id = has_field_id ($field_val);
+    my $next_field_id = has_field_id ($field_val, "$col_letter$row_num");
 
     if ($show_formulas)
     {
@@ -579,7 +622,7 @@ sub calc_field_value
         print ("\nBEFORE:$field_val ... changing $next_field_id for $that_field_val\n");
         $field_val =~ s/$next_field_id/$that_field_val/; 
         print ("\nAFTER:$field_val ... changing $next_field_id for $that_field_val\n");
-        $next_field_id = has_field_id ($field_val);
+        $next_field_id = has_field_id ($field_val, "$col_letter$row_num");
     }
 
     if ($field_val =~ s/^=//)
@@ -587,7 +630,7 @@ sub calc_field_value
         my $orig_field_val = $field_val;
         my $fv = excel_to_perl_calculation ($field_val, "$col_letter$row_num");
 
-        my $next_field_id = has_field_id ("=" . $fv);
+        my $next_field_id = has_field_id ("=" . $fv, "$col_letter$row_num");
         if ($next_field_id ne "")
         {
             return calc_field_value ("=" . $fv);
@@ -632,6 +675,200 @@ sub set_field_value
     }
 }
 
+### EXPERIMENTAL
+sub exp_simple_parentheses_only_one_argument 
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\([^(\|]+\)/)
+    {
+        #print ("Checked s1a ($field_val) and ok\n");
+        return 1;
+    }
+    #print ("Checked s1a ($field_val) and NOT ok\n");
+    return 0;
+}
+
+sub exp_simple_parentheses_only_two_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\([^(\|]*\|[^(\|]*?\)/)
+    {
+        #print ("Checked s2a and ok\n");
+        return 1;
+    }
+    #print ("Checked s2a for $field_val and NOT ok\n");
+    return 0;
+}
+
+sub exp_simple_parentheses_only_three_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\([^(\|]+\|/)
+    {
+        #print ("Checked s3a for $field_val aaa\n");
+    }
+    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|/)
+    {
+        #print ("Checked s3a for $field_val bbb\n");
+    }
+    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
+    {
+        #print ("Checked s3a for $field_val ccc\n");
+    }
+    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
+    {
+        #print ("Checked s3a for $field_val and ok\n");
+        return 1;
+    }
+    #print ("Checked s3a for $field_val and NOT ok\n");
+    return 0;
+}
+
+sub exp_simple_parentheses_many_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\(([^(\|]+\|){3,10}[^(\|]+\)/)
+    {
+        #print ("Checked sMa for $field_val and ok\n");
+        return 1;
+    }
+    #print ("Checked sMa for $field_val and NOT ok\n");
+    return 0;
+}
+
+my $count = 0;
+my %each_element;
+my $each_element_count = 0;
+
+sub breakdown_excel
+{
+    my $excel_function = $_ [0];
+    print (">>>>>>>>>=================$excel_function\n");
+    my $i = 0;
+    while ($excel_function =~ s/"([^"]*)"/XXSTRING$each_element_count/) 
+    {
+        $each_element {"XXSTRING$each_element_count"} = $1 . "<< XXSTRING$each_element_count";
+        $each_element {"ZZMAX"} = $each_element_count;
+        $each_element_count++;
+        $i++;
+    }
+    
+    $count ++;
+    if ($count > 500) { print (">>>>>>>>>========GIVING UP =========$excel_function\n"); return "giving up"; }
+    while ($excel_function =~ m/(([A-Z]+)\(.*)/) 
+    {
+        my $test = $1;
+        my $func = $2;
+        #$test =~ s/\.XYZ\./(/;
+        print (" CHECKING >$func< for >$test<\n");
+        if (exp_simple_parentheses_only_one_argument ($test, $func)) 
+        {
+            $excel_function =~ s/($func\([^\)]*\))/ XXONE$each_element_count/; 
+            $each_element {"XXONE$each_element_count"} = $1 . "<< XXONE$each_element_count";
+            $each_element {"ZZMAX"} = $each_element_count;
+            $each_element_count++;
+            print (" Found 1sa func of $1 (Now $excel_function)\n");
+        }
+        elsif (exp_simple_parentheses_only_two_arguments ($test, $func)) 
+        {
+            $excel_function =~ s/($func\([^\|\)]*\|.*?\))/ XXTWO$each_element_count/; 
+            $each_element {"XXTWO$each_element_count"} = $1 . "<< XXTWO$each_element_count";
+            $each_element {"ZZMAX"} = $each_element_count;
+            $each_element_count++;
+            print (" Found 2sa func of $1 (Now $excel_function)\n");
+        }
+        elsif (exp_simple_parentheses_only_three_arguments ($test, $func)) 
+        {
+            $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/ XXTHREE$each_element_count/; 
+            $each_element {"XXTHREE$each_element_count"} = $1 . "<< XXTHREE$each_element_count";
+            $each_element {"ZZMAX"} = $each_element_count;
+            $each_element_count++;
+            print (" Found 3sa func of $1 (Now $excel_function)\n");
+        }
+        elsif (exp_simple_parentheses_many_arguments($test, $func)) 
+        {
+            $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/ XXMANY$each_element_count/; 
+            $each_element {"XXMANY$each_element_count"} = $1 . "<< XXMANY$each_element_count";
+            $each_element {"ZZMAX"} = $each_element_count;
+            $each_element_count++;
+            print (" Found MANYsa func of $1 (Now $excel_function)\n");
+        }
+        else
+        {
+            $excel_function =~ s/$func\(/$func.XYZ./;
+            print (" Do later !! (Now $excel_function)\n");
+        }
+    }
+    if ($excel_function =~ m/\.XYZ\./)
+    {
+        $excel_function =~ s/\.XYZ\./(/g;
+        return breakdown_excel ($excel_function);
+    }
+    print ("\nSUCCESS -- Finally -- >$excel_function<\n");
+    return $excel_function;
+}
+
+sub recreate_excel
+{
+    my $str;
+    my $k;
+    my $v;
+    foreach $k (sort keys (%each_element))
+    {
+        $v = $each_element {$k};
+        print ("recreate - checking >$v<\n");
+        if ($v =~ m/^SUM\(/)
+        {
+            $v = do_sum_expansion ($v);
+            print ("DID $k SUM - $v\n");
+            $each_element {$k} = $v;
+        }
+        elsif ($v =~ m/^CONCATENATE\(/)
+        {
+            $v = do_concat_expansion ($v);
+            print ("DID $k CONCAT - $v\n");
+            $each_element {$k} = $v;
+        }
+        elsif ($v =~ m/^POWER\(/)
+        {
+            $v = do_power_expansion ($v);
+            print ("DID $k POWER - $v\n");
+            $each_element {$k} = $v;
+        }
+    }
+
+    foreach $k (sort keys (%each_element))
+    {
+        my $str = $each_element {$k}; 
+
+        print " mmm doing: $k -- >$str< for $str\n";
+
+        $str =~ s/<< .*//;
+        while ($str =~ m/(XX[A-Z]+\d+)/)
+        {
+            my $k2 = $1;
+            my $str2 = $each_element{$k2};
+            print " zzz doing: $k -- >$str< for $str\n";
+            $str2 =~ s/<< .*//;
+
+            $str =~ s/$k2/$str2/; 
+        }
+        $each_element {$k} = $str; 
+        my $fin_string = "XX[A-Z]+" . $each_element {ZZMAX} . "\$";
+        if ($k =~ m/$fin_string/)
+        {
+            print "Done: $k -- >$str<\n";
+            return $str;
+        }
+        print " not Done yet: $k -- $str\n";
+    }
+}
+### END EXPERIMENTAL
+
 sub get_field_value
 {
     my $row_num = $_ [0];
@@ -650,7 +887,23 @@ sub get_field_value
         {
             if ($csv_data {$field_id} =~ m/^=/)
             {
+                my %new_each_element;
+                %each_element = %new_each_element;
+                $count = 0;
+                $each_element_count = 0;
+                breakdown_excel ($csv_data {$field_id});
+                my $v = recreate_excel ();
+                my $some_val = calc_field_value ("=" . $v, $row_num, $col_letter);
                 $calc_val = calc_field_value ($csv_data {$field_id}, $row_num, $col_letter);
+                print ("RECREATED calc_val $some_val <<< read\n");
+                print ("NOT RECREATED calc_val $calc_val <<< read\n");
+                if ($some_val ne $calc_val)
+                {
+                    if ($calc_val eq "")
+                    {
+                         $calc_val = $some_val;
+                    }
+                }
             }
             else
             {
@@ -666,10 +919,18 @@ sub get_field_value
         }
         elsif ($for_display == 1 && $show_formulas == 2)
         {
+            if (!defined ($csv_data {$field_id . "_perl"}))
+            {
+                return $csv_data {$field_id};
+            }
             return ($csv_data {$field_id . "_perl"});
         }
         elsif ($for_display == 1 && $show_formulas == 1 && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
         {
+            if (!defined ($csv_data {$field_id . "_calc"}))
+            {
+                return $csv_data {$field_id};
+            }
             return ($csv_data {$field_id . "_calc"});
         }
         return ($calc_val);
@@ -1050,90 +1311,20 @@ sub get_graph_html
     #process_csv_data ("Col1;Col2;col3;col4;col5; 1541;=A2*A3;=B2/A3;=POWER(A2|4);=IF(B2=30|B2-B2|B2); 1251253;=A3*A4;=B3/A4;=POWER(A3|4);=IF(B3=30|B3-B3|B3); =A3-A2;=A4*#REF!;=B4/#REF!;=POWER(A4|4);=IF(B4=30|B4-B4|B4);");
     #process_csv_data ("col A;col B;col E; ; ; ; ;col H;col I;col J;col L; ;col M;col N; ; ; ; ; ; ; ;SCOTT; ; ; ; ; ; ; ; ; ; ; ; ; ;1/2 YEAR;CUMULATIVE; ; ; ; ; ; ; ; ; ; ;AGE;ABM ADDITION;ABM;% OF Final Average Salary; ;DIVIDOR; ; ; ; ; ; ; ;18.5; ; ; ; ; ; ; ; ; ; ; ; ;19; ; ; ; ; ; ; ; ; ; ; ; ;19.5; ; ; ; ; ; ; ; ; ; ; ; ;20; ; ; ; ; ; ; ; ; ; ; ; ;20.5; ; ; ; ; ; ; ; ; ; ; ; ;21; ; ; ; ; ; ; ; ; ; ; ; ;21.5; ; ; ; ; ; ; ; ; ; ; ; ;22; ; ; ; ; ; ; ; ; ; ; ; ;22.5; ; ; ; ; ; ; ; ; ; ; ; ;23; ; ; ; ; ; ; ; ; ; ; ; ;23.5; ; ; ; ; ; ; ; ; ; ; ; ;24; ; ; ; ; ; ; ; ; ; ; ; ;24.5; ; ; ; ; ; ; ; ; ; ;Current Salary; ;25; ; ; ; ; ;Years of service.  ; ;5% contribution rate; ;2003; ; ;25.5;0.105;0.105; ; ; ;=H19-25.5 ; ;5% contribution rate; ;=E19+0.5; ; ;26;0.105;0.21; ; ; ;=H20-25.5 ; ;10% contribution rate; ;=E20+0.5; ; ;26.5;0.13;0.34; ; ; ;=H21-25.5 ; ;10% contribution rate; ;=E21+0.5; ; ;27;0.13;0.47; ; ; ;=H22-25.5 ; ;10% contribution rate; ;=E22+0.5; ; ;27.5;0.13;0.6; ; ; ;=H23-25.5 ; ;10% contribution rate; ;=E23+0.5; ; ;28;0.13;0.73; ; ; ;=H24-25.5 ; ;10% contribution rate; ;=E24+0.5; ; ;28.5;0.13;0.86; ; ; ;=H25-25.5 ; ;10% contribution rate; ;=E25+0.5; ; ;29;0.13;0.99; ; ; ;=H26-25.5 ; ;10% contribution rate; ;=E26+0.5; ; ;29.5;0.13;1.12; ; ; ;=H27-25.5 ; ;10% contribution rate; ;=E27+0.5; ; ;30;0.13;1.25; ; ; ;=H28-25.5 ; ;10% contribution rate; ;=E28+0.5; ; ;30.5;0.13;1.38; ; ; ;=H29-25.5 ; ;10% contribution rate; ;=E29+0.5; ; ;31;0.13;1.51; ; ; ;=H30-25.5 ; ;10% contribution rate; ;=E30+0.5; ; ;31.5;0.13;1.64; ; ; ;=H31-25.5 ; ;10% contribution rate; ;=E31+0.5; ; ;32;0.13;1.77; ; ; ;=H32-25.5 ; ;10% contribution rate; ;=E32+0.5; ; ;32.5;0.13;1.9; ; ; ;=H33-25.5 ; ;10% contribution rate; ;=E33+0.5; ; ;33;0.13;2.03; ; ; ;=H34-25.5 ; ;10% contribution rate; ;=E34+0.5; ; ;33.5;0.13;2.16; ; ; ;=H35-25.5 ; ;10% contribution rate; ;=E35+0.5; ; ;34;0.13;2.29; ; ; ;=H36-25.5 ; ;10% contribution rate; ;=E36+0.5; ; ;34.5;0.13;2.42; ; ; ;=H37-25.5 ; ;10% contribution rate; ;=E37+0.5; ; ;35;0.13;2.55; ; ; ;=H38-25.5 ; ;10% contribution rate; ;=E38+0.5; ; ;35.5;0.13;2.68; ; ; ;=H39-25.5 ; ;10% contribution rate; ;=E39+0.5; ; ;36;0.155;2.835; ; ; ;=H40-25.5 ; ;10% contribution rate; ;=E40+0.5; ; ;36.5;0.155;2.99; ; ; ;=H41-25.5 ; ;10% contribution rate; ;=E41+0.5; ; ;37;0.155;3.145; ; ; ;=H42-25.5 ; ;10% contribution rate; ;=E42+0.5; ; ;37.5;0.155;3.3; ; ; ;=H43-25.5 ; ;10% contribution rate; ;=E43+0.5; ; ;38;0.155;3.455; ; ; ;=H44-25.5 ; ;10% contribution rate; ;=E44+0.5; ; ;38.5;0.155;3.61; ; ; ;=H45-25.5 ; ;10% contribution rate; ;=E45+0.5; ; ;39;0.155;3.765; ; ; ;=H46-25.5 ; ;10% contribution rate; ;=E46+0.5; ; ;39.5;0.155;3.92; ; ; ;=H47-25.5 43646;(based on PSS pdf);10% contribution rate; ;=E47+0.5; ; ;40;0.155;4.075; ; ; ;=H48-25.5 4.25076923; ;10% contribution rate; ;=E48+0.5; ; ;40.5;0.155;4.23; ; ; ;=H49-25.5 =A49+0.31/2; ;10% contribution rate; ;=E49+0.5; ; ;41;0.155;4.385; ; ; ;=H50-25.5 =A50+0.31/2; ;10% contribution rate; ;=E50+0.5; ; ;41.5;0.155;4.54; ; ; ;=H51-25.5 =A51+0.31/2; ;10% contribution rate; ;=E51+0.5; ; ;42;0.155;4.695; ; ; ;=H52-25.5 =A52+0.31/2; ;10% contribution rate; ;=E52+0.5; ;FAS;42.5;0.155;4.85; ; ; ;=H53-25.5 =A53+0.31/2; ;10% contribution rate; ;=E53+0.5;131107; ;43;0.155;5.005; ; ; ;=H54-25.5 =A54+0.31/2; ;10% contribution rate; ;=E54+0.5;=(F56+F54)/2; ;43.5;0.155;5.16; ; ; ;=H55-25.5 =A55+0.31/2; ;10% contribution rate; ;=E55+0.5;133729; ;44;0.155;5.315; ; ; ;=H56-25.5 =A56+0.31/2; ;10% contribution rate; ;=E56+0.5;=(F58+F56)/2; ;44.5;0.155;5.47; ; ; ;=H57-25.5 =A57+0.31/2; ;10% contribution rate; ;=E57+0.5;136404;=(F58+F56+F54)/3;45;0.155;5.625; ; ; ;=H58-25.5 =A58+0.31/2; ;10% contribution rate; ;=E58+0.5;=(F60+F58)/2; ;45.5;0.155;5.78; ; ; ;=H59-25.5 =A59+0.31/2; ;10% contribution rate; ;=E59+0.5;=(F58/1.1)*1.3;=(F60+F58+F56)/3;46;0.155;5.935; ; ; ;=H60-25.5 =A60+0.31/2; ;10% contribution rate; ;=E60+0.5;161204.727272727; ;46.5;0.155;6.09; ; ; ;=H61-25.5 =A61+0.31/2; ;10% contribution rate; ;=E61+0.5;161204.727272727;=(F62+F60+F58)/3;47;0.155;6.245; ; ; ;=H62-25.5 =A62+0.31/2; ;10% contribution rate; ;=E62+0.5;161204.727272727; ;47.5;0.155;6.4; ; ; ;=H63-25.5 =A63+0.31/2; ;10% contribution rate; ;=E63+0.5;161204.727272727;=(F64+F62+F60)/3;48;0.155;6.555; ; ; ;=H64-25.5 =A64+0.31/2; ;10% contribution rate; ;=E64+0.5;161204.727272727; ;48.5;0.155;6.71; ; ; ;=H65-25.5 =A65+0.31/2; ;10% contribution rate; ;=E65+0.5;161204.727272727;=(F66+F64+F62)/3;49;0.155;6.865; ; ; ;=H66-25.5 =A66+0.31/2; ;10% contribution rate; ;=E66+0.5;161204.727272727; ;49.5;0.155;7.02; ; ; ;=H67-25.5 =A67+0.31/2; ;10% contribution rate; ;=E67+0.5;161204.727272727;=(F68+F66+F64)/3;50;0.155;7.175; ; ; ;=H68-25.5 =A68+0.31/2; ;10% contribution rate; ;=E68+0.5;161204.727272727; ;50.5;0.155;7.33; ; ; ;=H69-25.5 =A69+0.31/2; ;10% contribution rate; ;=E69+0.5;161204.727272727;=(F70+F68+F66)/3;51;0.155;7.485; ; ; ;=H70-25.5 =A70+0.31/2; ;10% contribution rate; ;=E70+0.5;161204.727272727; ;51.5;0.155;7.64; ; ; ;=H71-25.5 =A71+0.31/2; ;10% contribution rate; ;=E71+0.5;161204.727272727;=(F72+F70+F68)/3;52;0.155;7.795; ; ; ;=H72-25.5 =A72+0.31/2; ;10% contribution rate; ;=E72+0.5;161204.727272727; ;52.5;0.155;7.95; ; ; ;=H73-25.5 =A73+0.31/2; ;10% contribution rate; ;=E73+0.5;161204.727272727;=(F74+F72+F70)/3;53;0.155;8.105; ; ; ;=H74-25.5 =A74+0.31/2; ;10% contribution rate; ;=E74+0.5;161204.727272727; ;53.5;0.155;8.26; ; ; ;=H75-25.5 =A75+0.31/2; ;10% contribution rate; ;=E75+0.5;161204.727272727;=(F76+F74+F72)/3;54;0.155;8.415; ; ; ;=H76-25.5 =A76+0.31/2; ;10% contribution rate; ;=E76+0.5;161204.727272727; ;54.5;0.155;8.57; ; ; ;=H77-25.5 =A77+0.31/2;=A78/M78;10% contribution rate; ;=E77+0.5;161204.727272727;=(F78+F76+F74)/3;55;0.155;8.725;=J78/M78;=J78*G78/M78;=11+(60-H78)/5;Can Retire =A78+0.31/2;=A79/M79;10% contribution rate; ;=E78+0.5;161204.727272727;=(F79+F77+F75)/3;55.5;0.155;8.88;=J79/M79;=J79*G79/M79;=11+(60-H79)/5;Can Retire =A79+0.31/2;=A80/M80;10% contribution rate; ;=E79+0.5;161204.727272727;=(F80+F78+F76)/3;56;0.155;9.035;=J80/M80;=J80*G80/M80;=11+(60-H80)/5;Can Retire =A80+0.31/2;=A81/M81;10% contribution rate; ;=E80+0.5;161204.727272727;=(F81+F79+F77)/3;56.5;0.155;9.19;=J81/M81;=J81*G81/M81;=11+(60-H81)/5;Can Retire =A81+0.31/2;=A82/M82;10% contribution rate; ;=E81+0.5;161204.727272727;=(F82+F80+F78)/3;57;0.155;9.345;=J82/M82;=J82*G82/M82;=11+(60-H82)/5;Can Retire =A82+0.31/2;=A83/M83;10% contribution rate; ;=E82+0.5;161204.727272727;=(F83+F81+F79)/3;57.5;0.155;9.5;=J83/M83;=J83*G83/M83;=11+(60-H83)/5;Can Retire =A83+0.31/2;=A84/M84;10% contribution rate; ;=E83+0.5;161204.727272727;=(F84+F82+F80)/3;58;0.155;9.655;=J84/M84;=J84*G84/M84;=11+(60-H84)/5;Can Retire =A84+0.31/2;=A85/M85;10% contribution rate; ;=E84+0.5;161204.727272727;=(F85+F83+F81)/3;58.5;0.155;9.81;=J85/M85;=J85*G85/M85;=11+(60-H85)/5;Can Retire =A85+0.31/2;=A86/M86;10% contribution rate; ;=E85+0.5;161204.727272727;=(F86+F84+F82)/3;59;0.155;9.965;=J86/M86;=J86*G86/M86;=11+(60-H86)/5;Can Retire =10;=A87/M87;10% contribution rate; ;=E86+0.5;161204.727272727;=(F87+F85+F83)/3;59.5;0.155;10;=J87/M87;=J87*G87/M87;=11+(60-H87)/5;Can Retire =10;=A88/M88;0%contribution; ; ;161204.727272727;=(F88+F86+F84)/3;60;0;10;=J88/M88;=J88*G88/M88;=11+(60-H88)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H88+0.5;0;10;=J89/M89;=J89*G89/M89;=11+(60-H89)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H89+0.5;0;10;=J90/M90;=J90*G90/M90;=11+(60-H90)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H90+0.5;0;10;=J91/M91;=J91*G91/M91;=11+(60-H91)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H91+0.5;0;10;=J92/M92;=J92*G92/M92;=11+(60-H92)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H92+0.5;0;10;=J93/M93;=J93*G93/M93;=11+(60-H93)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H93+0.5;0;10;=J94/M94;=J94*G94/M94;=11+(60-H94)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H94+0.5;0;10;=J95/M95;=J95*G95/M95;=11+(60-H95)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H95+0.5;0;10;=J96/M96;=J96*G96/M96;=11+(60-H96)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H96+0.5;0;10;=J97/M97;=J97*G97/M97;=11+(60-H97)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H97+0.5;0;10;=J98/M98;=J98*G98/M98;=11+(60-H98)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H98+0.5;0;10;=J99/M99;=J99*G99/M99;=11+(60-H99)/5;Can Retire ; ;0%contribution; ; ;161204.727272727; ;=H99+0.5;0;10;=J100/M100;=J100*G100/M100;=11+(60-H100)/5;");
     #process_csv_data ("Col1;Col2;col3;col4;col5; 5.5;=A2*A3;=B2/A3;=POWER(A2|4);=IF(B2=30|B2-B2|B2); 12;=A3*A4;=B3/A4;=POWER(A3|4);=IF(B3=30|B3-B3|B3); =A3-A2;=A4/B4;=POWER(A4|4);=IF(B4=30|B4-B4|B4);");
-    process_csv_data ("Tot_Month;Add_Month;Daily_Interest;Date;Days_in_Month;Interest_for_Month;Total_for_Month;Monthly_Interest;SUM;
-=3640;0;=0.042/365;20230430;30;=POWER(1+C2|E2);=A2*F2;0;SUM;
-=G2;10;=0.042/365;20230531;31;=POWER(1+C3|E3);=(G2+B3)*F3;=G3-G2-B3;SUM;
-=G3;10;=0.042/365;20230630;30;=POWER(1+C4|E4);=(G3+B4)*F4;=G4-G3-B4;SUM;
-=G4;10;=0.042/365;20230731;31;=POWER(1+C5|E5);=(G4+B5)*F5;=G5-G4-B5;SUM;
-=G5;10;=0.042/365;20230831;31;=POWER(1+C6|E6);=(G5+B6)*F6;=G6-G5-B6;SUM;
-=G6;10;=0.042/365;20230930;30;=POWER(1+C7|E7);=(G6+B7)*F7;=G7-G6-B7;=SUM(A2:A4);
-=G7;10;=0.042/365;20231031;31;=POWER(1+C8|E8);=(G7+B8)*F8;=G8-G7-B8;SUM;
-=G8;10;=0.042/365;20231130;30;=POWER(1+C9|E9);=(G8+B9)*F9;=G9-G8-B9;SUM;
-=G9;10;=0.042/365;20231231;31;=POWER(1+C10|E10);=(G9+B10)*F10;=G10-G9-B10;SUM;
-=G10;10;=0.042/365;20240131;31;=POWER(1+C11|E11);=(G10+B11)*F11;=G11-G10-B11;SUM;
-=G11;10;=0.042/365;20240228;28;=POWER(1+C12|E12);=(G11+B12)*F12;=G12-G11-B12;SUM;
-=G12;10;=0.042/365;20240331;31;=POWER(1+C13|E13);=(G12+B13)*F13;=G13-G12-B13;SUM;
-=G13;10;=0.042/365;20240430;30;=POWER(1+C14|E14);=(G13+B14)*F14;=G14-G13-B14;SUM;
-=G14;10;=0.042/365;20240531;31;=POWER(1+C15|E15);=(G14+B15)*F15;=G15-G14-B15;SUM;
-=G15;10;=0.042/365;20240630;30;=POWER(1+C16|E16);=(G15+B16)*F16;=G16-G15-B16;SUM;
-=G16;10;=0.042/365;20240731;31;=POWER(1+C17|E17);=(G16+B17)*F17;=G17-G16-B17;SUM;
-=G17;10;=0.042/365;20240831;31;=POWER(1+C18|E18);=(G17+B18)*F18;=G18-G17-B18;SUM;
-=G18;10;=0.042/365;20240930;30;=POWER(1+C19|E19);=(G18+B19)*F19;=G19-G18-B19;SUM;
-=G19;10;=0.042/365;20241031;31;=POWER(1+C20|E20);=(G19+B20)*F20;=G20-G19-B20;SUM;
-=G20;10;=0.042/365;20241130;30;=POWER(1+C21|E21);=(G20+B21)*F21;=G21-G20-B21;SUM;
-=G21;10;=0.042/365;20241231;31;=POWER(1+C22|E22);=(G21+B22)*F22;=G22-G21-B22;SUM;
-=G22;10;=0.042/365;20250131;31;=POWER(1+C23|E23);=(G22+B23)*F23;=G23-G22-B23;SUM;
-=G23;10;=0.042/365;20250228;28;=POWER(1+C24|E24);=(G23+B24)*F24;=G24-G23-B24;SUM;
-=G24;10;=0.042/365;20250331;31;=POWER(1+C25|E25);=(G24+B25)*F25;=G25-G24-B25;SUM;
-=G25;10;=0.042/365;20250430;30;=POWER(1+C26|E26);=(G25+B26)*F26;=G26-G25-B26;SUM;
-=G26;10;=0.042/365;20250531;31;=POWER(1+C27|E27);=(G26+B27)*F27;=G27-G26-B27;SUM;
-=G27;10;=0.042/365;20250630;30;=POWER(1+C28|E28);=(G27+B28)*F28;=G28-G27-B28;SUM;
-=G28;10;=0.042/365;20250731;31;=POWER(1+C29|E29);=(G28+B29)*F29;=G29-G28-B29;SUM;
-=G29;10;=0.042/365;20250831;31;=POWER(1+C30|E30);=(G29+B30)*F30;=G30-G29-B30;SUM;
-=G30;10;=0.042/365;20250930;30;=POWER(1+C31|E31);=(G30+B31)*F31;=G31-G30-B31;SUM;
-=G31;10;=0.042/365;20251031;31;=POWER(1+C32|E32);=(G31+B32)*F32;=G32-G31-B32;SUM;
-=G32;10;=0.042/365;20251130;30;=POWER(1+C33|E33);=(G32+B33)*F33;=G33-G32-B33;SUM;
-=G33;10;=0.042/365;20251231;31;=POWER(1+C34|E34);=(G33+B34)*F34;=G34-G33-B34;SUM;
-=G34;10;=0.042/365;20260131;31;=POWER(1+C35|E35);=(G34+B35)*F35;=G35-G34-B35;SUM;
-=G35;10;=0.042/365;20260228;28;=POWER(1+C36|E36);=(G35+B36)*F36;=G36-G35-B36;SUM;
-=G36;10;=0.042/365;20260331;31;=POWER(1+C37|E37);=(G36+B37)*F37;=G37-G36-B37;SUM;
-=G37;10;=0.042/365;20260430;30;=POWER(1+C38|E38);=(G37+B38)*F38;=G38-G37-B38;SUM;
-=G38;10;=0.042/365;20260531;31;=POWER(1+C39|E39);=(G38+B39)*F39;=G39-G38-B39;SUM;
-=G39;10;=0.042/365;20260630;30;=POWER(1+C40|E40);=(G39+B40)*F40;=G40-G39-B40;SUM;
-=G40;10;=0.042/365;20260731;31;=POWER(1+C41|E41);=(G40+B41)*F41;=G41-G40-B41;SUM;
-=G41;10;=0.042/365;20260831;31;=POWER(1+C42|E42);=(G41+B42)*F42;=G42-G41-B42;SUM;
-=G42;10;=0.042/365;20260930;30;=POWER(1+C43|E43);=(G42+B43)*F43;=G43-G42-B43;SUM;
-=G43;10;=0.042/365;20261031;31;=POWER(1+C44|E44);=(G43+B44)*F44;=G44-G43-B44;SUM;
-=G44;10;=0.042/365;20261130;30;=POWER(1+C45|E45);=(G44+B45)*F45;=G45-G44-B45;SUM;
-=G45;10;=0.042/365;20261231;31;=POWER(1+C46|E46);=(G45+B46)*F46;=G46-G45-B46;SUM;
-=G46;10;=0.042/365;20270131;31;=POWER(1+C47|E47);=(G46+B47)*F47;=G47-G46-B47;SUM;
-=G47;10;=0.042/365;20270228;28;=POWER(1+C48|E48);=(G47+B48)*F48;=G48-G47-B48;SUM;
-=G48;10;=0.042/365;20270331;31;=POWER(1+C49|E49);=(G48+B49)*F49;=G49-G48-B49;SUM;
-=G49;10;=0.042/365;20270430;30;=POWER(1+C50|E50);=(G49+B50)*F50;=G50-G49-B50;SUM;
-=G50;10;=0.042/365;20270531;31;=POWER(1+C51|E51);=(G50+B51)*F51;=G51-G50-B51;SUM;
-=G51;10;=0.042/365;20270630;30;=POWER(1+C52|E52);=(G51+B52)*F52;=G52-G51-B52;SUM;
-=G52;10;=0.042/365;20270731;31;=POWER(1+C53|E53);=(G52+B53)*F53;=G53-G52-B53;SUM;
-=G53;10;=0.042/365;20270831;31;=POWER(1+C54|E54);=(G53+B54)*F54;=G54-G53-B54;SUM;
-=G54;10;=0.042/365;20270930;30;=POWER(1+C55|E55);=(G54+B55)*F55;=G55-G54-B55;SUM;
-=G55;10;=0.042/365;20271031;31;=POWER(1+C56|E56);=(G55+B56)*F56;=G56-G55-B56;SUM;
-=G56;10;=0.042/365;20271130;30;=POWER(1+C57|E57);=(G56+B57)*F57;=G57-G56-B57;SUM;
-=G57;10;=0.042/365;20271231;31;=POWER(1+C58|E58);=(G57+B58)*F58;=G58-G57-B58;SUM;
-=G58;10;=0.042/365;20280131;31;=POWER(1+C59|E59);=(G58+B59)*F59;=G59-G58-B59;SUM;
-=G59;10;=0.042/365;20280228;28;=POWER(1+C60|E60);=(G59+B60)*F60;=G60-G59-B60;SUM;
-=G60;10;=0.042/365;20280331;31;=POWER(1+C61|E61);=(G60+B61)*F61;=G61-G60-B61;SUM;
-=G61;10;=0.042/365;20280430;30;=POWER(1+C62|E62);=(G61+B62)*F62;=G62-G61-B62;SUM;
-=G62;10;=0.042/365;20280531;31;=POWER(1+C63|E63);=(G62+B63)*F63;=G63-G62-B63;SUM;
-=G63;10;=0.042/365;20280630;30;=POWER(1+C64|E64);=(G63+B64)*F64;=G64-G63-B64;SUM;
-=G64;10;=0.042/365;20280731;31;=POWER(1+C65|E65);=(G64+B65)*F65;=G65-G64-B65;SUM;
-=G65;10;=0.042/365;20280831;31;=POWER(1+C66|E66);=(G65+B66)*F66;=G66-G65-B66;SUM;
-=G66;10;=0.042/365;20280930;30;=POWER(1+C67|E67);=(G66+B67)*F67;=G67-G66-B67;SUM;
-=G67;10;=0.042/365;20281031;31;=POWER(1+C68|E68);=(G67+B68)*F68;=G68-G67-B68;SUM;
-=G68;10;=0.042/365;20281130;30;=POWER(1+C69|E69);=(G68+B69)*F69;=G69-G68-B69;SUM;
-=G69;10;=0.042/365;20281231;31;=POWER(1+C70|E70);=(G69+B70)*F70;=G70-G69-B70;SUM;
-=G70;10;=0.042/365;20290131;31;=POWER(1+C71|E71);=(G70+B71)*F71;=G71-G70-B71;SUM;
-=G71;10;=0.042/365;20290228;28;=POWER(1+C72|E72);=(G71+B72)*F72;=G72-G71-B72;SUM;
-=G72;10;=0.042/365;20290331;31;=POWER(1+C73|E73);=(G72+B73)*F73;=G73-G72-B73;SUM;
-=G73;10;=0.042/365;20290430;30;=POWER(1+C74|E74);=(G73+B74)*F74;=G74-G73-B74;SUM;
-=G74;10;=0.042/365;20290531;31;=POWER(1+C75|E75);=(G74+B75)*F75;=G75-G74-B75;SUM;
-=G75;10;=0.042/365;20290630;30;=POWER(1+C76|E76);=(G75+B76)*F76;=G76-G75-B76;SUM;
-=G76;10;=0.042/365;20290731;31;=POWER(1+C77|E77);=(G76+B77)*F77;=G77-G76-B77;SUM;
-=G77;10;=0.042/365;20290831;31;=POWER(1+C78|E78);=(G77+B78)*F78;=G78-G77-B78;SUM;
-=G78;10;=0.042/365;20290930;30;=POWER(1+C79|E79);=(G78+B79)*F79;=G79-G78-B79;SUM;
-=G79;10;=0.042/365;20291031;31;=POWER(1+C80|E80);=(G79+B80)*F80;=G80-G79-B80;SUM;
-=G80;10;=0.042/365;20291130;30;=POWER(1+C81|E81);=(G80+B81)*F81;=G81-G80-B81;SUM;
-=G81;10;=0.042/365;20291231;31;=POWER(1+C82|E82);=(G81+B82)*F82;=G82-G81-B82;SUM;
-=G82;10;=0.042/365;20300131;31;=POWER(1+C83|E83);=(G82+B83)*F83;=G83-G82-B83;SUM;");
-
+    #process_csv_data ("Tot_Month;Add_Month;Daily_Interest;Date;Days_in_Month;Interest_for_Month;Total_for_Month;Monthly_Interest;SUM; =3640;0;=0.042/365;20230430;30;=POWER(1+C2|E2);=A2*F2;0;SUM; =G2;10;=0.042/365;20230531;31;=POWER(1+C3|E3);=(G2+B3)*F3;=G3-G2-B3;SUM; =G3;10;=0.042/365;20230630;30;=POWER(1+C4|E4);=(G3+B4)*F4;=G4-G3-B4;SUM; =G4;10;=0.042/365;20230731;31;=POWER(1+C5|E5);=(G4+B5)*F5;=G5-G4-B5;SUM; =G5;10;=0.042/365;20230831;31;=POWER(1+C6|E6);=(G5+B6)*F6;=G6-G5-B6;SUM; =G6;10;=0.042/365;20230930;30;=POWER(1+C7|E7);=(G6+B7)*F7;=G7-G6-B7;=SUM(A2:A4); =G7;10;=0.042/365;20231031;31;=POWER(1+C8|E8);=(G7+B8)*F8;=G8-G7-B8;SUM; =G8;10;=0.042/365;20231130;30;=POWER(1+C9|E9);=(G8+B9)*F9;=G9-G8-B9;SUM; =G9;10;=0.042/365;20231231;31;=POWER(1+C10|E10);=(G9+B10)*F10;=G10-G9-B10;SUM; =G10;10;=0.042/365;20240131;31;=POWER(1+C11|E11);=(G10+B11)*F11;=G11-G10-B11;SUM; =G11;10;=0.042/365;20240228;28;=POWER(1+C12|E12);=(G11+B12)*F12;=G12-G11-B12;SUM; =G12;10;=0.042/365;20240331;31;=POWER(1+C13|E13);=(G12+B13)*F13;=G13-G12-B13;SUM; =G13;10;=0.042/365;20240430;30;=POWER(1+C14|E14);=(G13+B14)*F14;=G14-G13-B14;SUM; =G14;10;=0.042/365;20240531;31;=POWER(1+C15|E15);=(G14+B15)*F15;=G15-G14-B15;SUM; =G15;10;=0.042/365;20240630;30;=POWER(1+C16|E16);=(G15+B16)*F16;=G16-G15-B16;SUM; =G16;10;=0.042/365;20240731;31;=POWER(1+C17|E17);=(G16+B17)*F17;=G17-G16-B17;SUM; =G17;10;=0.042/365;20240831;31;=POWER(1+C18|E18);=(G17+B18)*F18;=G18-G17-B18;SUM; =G18;10;=0.042/365;20240930;30;=POWER(1+C19|E19);=(G18+B19)*F19;=G19-G18-B19;SUM; =G19;10;=0.042/365;20241031;31;=POWER(1+C20|E20);=(G19+B20)*F20;=G20-G19-B20;SUM; =G20;10;=0.042/365;20241130;30;=POWER(1+C21|E21);=(G20+B21)*F21;=G21-G20-B21;SUM; =G21;10;=0.042/365;20241231;31;=POWER(1+C22|E22);=(G21+B22)*F22;=G22-G21-B22;SUM; =G22;10;=0.042/365;20250131;31;=POWER(1+C23|E23);=(G22+B23)*F23;=G23-G22-B23;SUM; =G23;10;=0.042/365;20250228;28;=POWER(1+C24|E24);=(G23+B24)*F24;=G24-G23-B24;SUM; =G24;10;=0.042/365;20250331;31;=POWER(1+C25|E25);=(G24+B25)*F25;=G25-G24-B25;SUM; =G25;10;=0.042/365;20250430;30;=POWER(1+C26|E26);=(G25+B26)*F26;=G26-G25-B26;SUM; =G26;10;=0.042/365;20250531;31;=POWER(1+C27|E27);=(G26+B27)*F27;=G27-G26-B27;SUM; =G27;10;=0.042/365;20250630;30;=POWER(1+C28|E28);=(G27+B28)*F28;=G28-G27-B28;SUM; =G28;10;=0.042/365;20250731;31;=POWER(1+C29|E29);=(G28+B29)*F29;=G29-G28-B29;SUM; =G29;10;=0.042/365;20250831;31;=POWER(1+C30|E30);=(G29+B30)*F30;=G30-G29-B30;SUM; =G30;10;=0.042/365;20250930;30;=POWER(1+C31|E31);=(G30+B31)*F31;=G31-G30-B31;SUM; =G31;10;=0.042/365;20251031;31;=POWER(1+C32|E32);=(G31+B32)*F32;=G32-G31-B32;SUM; =G32;10;=0.042/365;20251130;30;=POWER(1+C33|E33);=(G32+B33)*F33;=G33-G32-B33;SUM; =G33;10;=0.042/365;20251231;31;=POWER(1+C34|E34);=(G33+B34)*F34;=G34-G33-B34;SUM; =G34;10;=0.042/365;20260131;31;=POWER(1+C35|E35);=(G34+B35)*F35;=G35-G34-B35;SUM; =G35;10;=0.042/365;20260228;28;=POWER(1+C36|E36);=(G35+B36)*F36;=G36-G35-B36;SUM; =G36;10;=0.042/365;20260331;31;=POWER(1+C37|E37);=(G36+B37)*F37;=G37-G36-B37;SUM; =G37;10;=0.042/365;20260430;30;=POWER(1+C38|E38);=(G37+B38)*F38;=G38-G37-B38;SUM; =G38;10;=0.042/365;20260531;31;=POWER(1+C39|E39);=(G38+B39)*F39;=G39-G38-B39;SUM; =G39;10;=0.042/365;20260630;30;=POWER(1+C40|E40);=(G39+B40)*F40;=G40-G39-B40;SUM; =G40;10;=0.042/365;20260731;31;=POWER(1+C41|E41);=(G40+B41)*F41;=G41-G40-B41;SUM; =G41;10;=0.042/365;20260831;31;=POWER(1+C42|E42);=(G41+B42)*F42;=G42-G41-B42;SUM; =G42;10;=0.042/365;20260930;30;=POWER(1+C43|E43);=(G42+B43)*F43;=G43-G42-B43;SUM; =G43;10;=0.042/365;20261031;31;=POWER(1+C44|E44);=(G43+B44)*F44;=G44-G43-B44;SUM; =G44;10;=0.042/365;20261130;30;=POWER(1+C45|E45);=(G44+B45)*F45;=G45-G44-B45;SUM; =G45;10;=0.042/365;20261231;31;=POWER(1+C46|E46);=(G45+B46)*F46;=G46-G45-B46;SUM; =G46;10;=0.042/365;20270131;31;=POWER(1+C47|E47);=(G46+B47)*F47;=G47-G46-B47;SUM; =G47;10;=0.042/365;20270228;28;=POWER(1+C48|E48);=(G47+B48)*F48;=G48-G47-B48;SUM; =G48;10;=0.042/365;20270331;31;=POWER(1+C49|E49);=(G48+B49)*F49;=G49-G48-B49;SUM; =G49;10;=0.042/365;20270430;30;=POWER(1+C50|E50);=(G49+B50)*F50;=G50-G49-B50;SUM; =G50;10;=0.042/365;20270531;31;=POWER(1+C51|E51);=(G50+B51)*F51;=G51-G50-B51;SUM; =G51;10;=0.042/365;20270630;30;=POWER(1+C52|E52);=(G51+B52)*F52;=G52-G51-B52;SUM; =G52;10;=0.042/365;20270731;31;=POWER(1+C53|E53);=(G52+B53)*F53;=G53-G52-B53;SUM; =G53;10;=0.042/365;20270831;31;=POWER(1+C54|E54);=(G53+B54)*F54;=G54-G53-B54;SUM; =G54;10;=0.042/365;20270930;30;=POWER(1+C55|E55);=(G54+B55)*F55;=G55-G54-B55;SUM; =G55;10;=0.042/365;20271031;31;=POWER(1+C56|E56);=(G55+B56)*F56;=G56-G55-B56;SUM; =G56;10;=0.042/365;20271130;30;=POWER(1+C57|E57);=(G56+B57)*F57;=G57-G56-B57;SUM; =G57;10;=0.042/365;20271231;31;=POWER(1+C58|E58);=(G57+B58)*F58;=G58-G57-B58;SUM; =G58;10;=0.042/365;20280131;31;=POWER(1+C59|E59);=(G58+B59)*F59;=G59-G58-B59;SUM; =G59;10;=0.042/365;20280228;28;=POWER(1+C60|E60);=(G59+B60)*F60;=G60-G59-B60;SUM; =G60;10;=0.042/365;20280331;31;=POWER(1+C61|E61);=(G60+B61)*F61;=G61-G60-B61;SUM; =G61;10;=0.042/365;20280430;30;=POWER(1+C62|E62);=(G61+B62)*F62;=G62-G61-B62;SUM; =G62;10;=0.042/365;20280531;31;=POWER(1+C63|E63);=(G62+B63)*F63;=G63-G62-B63;SUM; =G63;10;=0.042/365;20280630;30;=POWER(1+C64|E64);=(G63+B64)*F64;=G64-G63-B64;SUM; =G64;10;=0.042/365;20280731;31;=POWER(1+C65|E65);=(G64+B65)*F65;=G65-G64-B65;SUM; =G65;10;=0.042/365;20280831;31;=POWER(1+C66|E66);=(G65+B66)*F66;=G66-G65-B66;SUM; =G66;10;=0.042/365;20280930;30;=POWER(1+C67|E67);=(G66+B67)*F67;=G67-G66-B67;SUM; =G67;10;=0.042/365;20281031;31;=POWER(1+C68|E68);=(G67+B68)*F68;=G68-G67-B68;SUM; =G68;10;=0.042/365;20281130;30;=POWER(1+C69|E69);=(G68+B69)*F69;=G69-G68-B69;SUM; =G69;10;=0.042/365;20281231;31;=POWER(1+C70|E70);=(G69+B70)*F70;=G70-G69-B70;SUM; =G70;10;=0.042/365;20290131;31;=POWER(1+C71|E71);=(G70+B71)*F71;=G71-G70-B71;SUM; =G71;10;=0.042/365;20290228;28;=POWER(1+C72|E72);=(G71+B72)*F72;=G72-G71-B72;SUM; =G72;10;=0.042/365;20290331;31;=POWER(1+C73|E73);=(G72+B73)*F73;=G73-G72-B73;SUM; =G73;10;=0.042/365;20290430;30;=POWER(1+C74|E74);=(G73+B74)*F74;=G74-G73-B74;SUM; =G74;10;=0.042/365;20290531;31;=POWER(1+C75|E75);=(G74+B75)*F75;=G75-G74-B75;SUM; =G75;10;=0.042/365;20290630;30;=POWER(1+C76|E76);=(G75+B76)*F76;=G76-G75-B76;SUM; =G76;10;=0.042/365;20290731;31;=POWER(1+C77|E77);=(G76+B77)*F77;=G77-G76-B77;SUM; =G77;10;=0.042/365;20290831;31;=POWER(1+C78|E78);=(G77+B78)*F78;=G78-G77-B78;SUM; =G78;10;=0.042/365;20290930;30;=POWER(1+C79|E79);=(G78+B79)*F79;=G79-G78-B79;SUM; =G79;10;=0.042/365;20291031;31;=POWER(1+C80|E80);=(G79+B80)*F80;=G80-G79-B80;SUM; =G80;10;=0.042/365;20291130;30;=POWER(1+C81|E81);=(G80+B81)*F81;=G81-G80-B81;SUM; =G81;10;=0.042/365;20291231;31;=POWER(1+C82|E82);=(G81+B82)*F82;=G82-G81-B82;SUM; =G82;10;=0.042/365;20300131;31;=POWER(1+C83|E83);=(G82+B83)*F83;=G83-G82-B83;SUM;");
+    process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf
+0.26;0.26;4.25076923;AAA;;;;
+0.26;0.26;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;;
+0.26;0.26;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2)
+=SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2)
+=A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2)
+;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2)
+=POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2)
+;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2)
+;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2)
+;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2)
+;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));;;;=SUM(E4:H11)
+");
     while ($paddr = accept (CLIENT, SERVER))
     {
         print ("\n\nNEW============================================================\n");
@@ -1275,7 +1466,6 @@ sub get_graph_html
         $txt =~ s/%7B/{/g;
         $txt =~ s/%7C/|/g;
         $txt =~ s/%7D/}/g;
-        $txt =~ s/%7E/~/g;
         $txt =~ s/%09/;/g;
 
         if ($txt =~ m/POST.*updated_csv.*/i)
@@ -1305,7 +1495,6 @@ $//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^.*newcsv=//img;
             $new_csv_data =~ s/%0D%0A/\n/img;
-            $new_csv_data =~ s/..$//im;
             process_csv_data ($new_csv_data); 
         }
 
