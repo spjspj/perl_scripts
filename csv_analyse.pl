@@ -1617,13 +1617,10 @@ $//img;
         $html_text .= "</style>\n";
         $html_text .= "</head>\n";
         $html_text .= "<body>\n";
-        $html_text .= "<script>\n";
-        $html_text .= "var xyz = 'bbb';";
-        $html_text .= "xyz = xyz.replace (/b/, 'x');";
-        $html_text .= "</script>\n";
-        $html_text .= "<table width=100%><tr><td>\n";
+        $html_text .= "<table width=100%><tr>\n";
+        $html_text .= "<td width=255px><div id=\"fieldID\"></div></td>";
         
-        $html_text .= "<form action=\"/csv_analyse/search\">
+        $html_text .= "<td><form action=\"/csv_analyse/search\">
                 <label for=\"searchstr\">Search:</label><br>
                 <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
                 <input type=\"submit\" value=\"Search\">
@@ -1697,14 +1694,14 @@ $//img;
         $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber, isPrice) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? -1 : 1; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? 1 : -1; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { rowNode = rowNodes[dataCells[i].index]; rowNode.childNodes[0].innerHTML='<font size=\"-1\">Row:'+(i+1)+'</font>'; tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
         $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
         $html_text .= "</script>\n";
-        $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
+        $html_text .= "<div class=\"table-wrap\"><table id=\"table\" class=\"sortable\">\n";
                 
         $html_text .= "<thead>\n";
         #$html_text .= "<br><textarea style=\"font-family:courier-new;size=-3;white-space:pre-wrap\"\">QQQ</textarea><br>";
         $html_text .= "QQQ";
         
         $html_text .= "<tr>\n";
-        $html_text .= "<th class=\"no-sort\">&#9698;</th>";
+        $html_text .= "<th class=\"no-sort\"><div id=\"field\"/>&#9698;</th>";
 
         my $x;
         for ($x = 0; $x < $max_field_num; $x++)
@@ -2004,11 +2001,11 @@ $//img;
                                 $group_colours {$this_group} = $group_colours {$group_count};
                                 $group_count++;
                             }
-                            $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
+                            $row =~ s/(<td[^>]+>)/$1<font color=$group_colours{$this_group}>/img;
                             $row =~ s/<\/td>/<\/font><\/td>/img;
 
                             # Leave first td alone..
-                            $row =~ s/<td><font color=$group_colours{$this_group}>/<td>/im;
+                            $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
                             $row =~ s/<\/font><\/td>/<\/td>/im;
                             $group_counts {$this_group}++;
 
@@ -2034,10 +2031,10 @@ $//img;
                                     $group_colours {$this_group} = $group_colours {$group_count};
                                     $group_count++;
                                 }
-                                $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
+                                $row =~ s/(<td[^>]+>)/$1<font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
                                 # Leave first td alone..
-                                $row =~ s/<td><font color=$group_colours{$this_group}>/<td>/im;
+                                $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
                                 $row =~ s/<\/font><\/td>/<\/td>/im;
                             }
                             else
@@ -2066,11 +2063,11 @@ $//img;
                                     $group_colours {$this_group} = $group_colours {$group_count};
                                     $group_count++;
                                 }
-                                $row =~ s/<td>/<td><font color=$group_colours{$this_group}>/img;
+                                $row =~ s/(<td[^>]+>)/$1<font color=$group_colours{$this_group}>/img;
                                 $row =~ s/<\/td>/<\/font><\/td>/img;
 
                                 # Leave first td alone..
-                                $row =~ s/<td><font color=$group_colours{$this_group}>/<td>/im;
+                                $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
                                 $row =~ s/<\/font><\/td>/<\/td>/im;
                             }
                         }
@@ -2087,7 +2084,7 @@ $//img;
                         $html_text .= "$row ";
                     }
 
-                    $row = "<tr><td><font size=-1>Row:$old_row_num</font></td><td>$field</td>\n";
+                    $row = "<tr><td><font size=-1>Row:$old_row_num</font></td><td id='$col_letter$row_num'>$field</td>\n";
                     $old_row_num = $row_num;
                 }
                 else
@@ -2293,6 +2290,63 @@ $//img;
         $html_text =~ s/%23NUM_COL/$c/im;
 
         $html_text .= "<br>$deck";
+        
+        $html_text .= "<script>\n";
+        $html_text .= "let currentElem = null;\n";
+        $html_text .= "table.onmouseover = function(event) {\n";
+        $html_text .= "  if (currentElem) return;\n";
+        $html_text .= "  let target = event.target.closest('td');\n";
+        $html_text .= "  if (!target) return;\n";
+        $html_text .= "  if (!table.contains(target)) return;\n";
+        $html_text .= "  currentElem = target;\n";
+        $html_text .= "  onEnter(currentElem);\n";
+        $html_text .= "};\n";
+        $html_text .= "table.onmouseout = function(event) {\n";
+        $html_text .= "  if (!currentElem) return;\n";
+        $html_text .= "  let relatedTarget = event.relatedTarget;\n";
+        $html_text .= "  while (relatedTarget) {\n";
+        $html_text .= "    if (relatedTarget == currentElem) return;\n";
+        $html_text .= "    relatedTarget = relatedTarget.parentNode;\n";
+        $html_text .= "  }\n";
+        $html_text .= "  onLeave(currentElem);\n";
+        $html_text .= "  currentElem = null;\n";
+        $html_text .= "};\n";
+        $html_text .= "function onEnter(elem)\n";
+        $html_text .= "{\n";
+        $html_text .= "    elem.style.background = 'skyblue';\n";
+        $html_text .= "    var re = /([A-Z]+\\d+)/g;\n";
+        $html_text .= "    var s = currentElem.innerText;\n";
+        $html_text .= "    var m;\n";
+        $html_text .= "    do {\n";
+        $html_text .= "        m = re.exec(s);\n";
+        $html_text .= "        if (m) {\n";
+        $html_text .= "            const myElement = document.getElementById(\"A3\");\n";
+        $html_text .= "            document.getElementById(m[0]).style.background = 'mediumpurple';\n";
+        $html_text .= "            console.log(m[0]);\n";
+        $html_text .= "        }\n";
+        $html_text .= "    } while (m);\n";
+        $html_text .= "        \n";
+        $html_text .= "    fieldID.innerHTML = `\${currentElem.id}`;\n";
+        $html_text .= "}\n";
+        $html_text .= "function onLeave(elem) \n";
+        $html_text .= "{\n";
+        $html_text .= "    elem.style.background = '';\n";
+        $html_text .= "    var re = /([A-Z]+\\d+)/g;\n";
+        $html_text .= "    var s = currentElem.innerText;\n";
+        $html_text .= "            console.log(s);\n";
+        $html_text .= "    var m;\n";
+        $html_text .= "    do {\n";
+        $html_text .= "        m = re.exec(s);\n";
+        $html_text .= "        if (m) {\n";
+        $html_text .= "            const myElement = document.getElementById(\"A3\");\n";
+        $html_text .= "            document.getElementById(m[0]).style.background = '';\n";
+        $html_text .= "            console.log(m[0]);\n";
+        $html_text .= "        }\n";
+        $html_text .= "    } while (m);\n";
+        $html_text .= "        \n";
+        $html_text .= "    fieldID.innerHTML = `\${elem.id}`;\n";
+        $html_text .= "}\n";
+        $html_text .= "</script>\n";
         $html_text .= "</body>\n";
         $html_text .= "</html>\n";
 
