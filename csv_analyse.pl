@@ -226,6 +226,31 @@ sub process_csv_data
         while ($line =~ m/./ && $line =~ s/^([^;\t]*)([;\t]|$)//)
         {
             my $field = $1;
+            # Special case of G^ (G+Number one above) G_ (G+number one below) or G> (G+same number)
+            while ($field =~ m/([A-Z])([\^\_>])/)
+            {
+                print ("Found case for $col_letter$line_num of >>$field<<\n");
+                my $col = $1;
+                my $line_mod = $2;
+
+                if ($line_mod eq "\^")
+                {
+                    my $up_field = $col . ($line_num-1);
+                    $field =~ s/([A-Z])([\^\_>])/$up_field/;
+                }
+                elsif ($line_mod eq "\_")
+                {
+                    my $down_field = $col . ($line_num+1);
+                    $field =~ s/([A-Z])([\^\_>])/$down_field/;
+                }
+                elsif ($line_mod eq ">")
+                {
+                    my $same_field = $col . $line_num;
+                    $field =~ s/([A-Z])([\^\_>])/$same_field/;
+                }
+                print ("Done case for $col_letter$line_num of >>$field<<\n");
+            }
+
             $csv_data {"$col_letter" . "$line_num"} = $field;
             print (">>$col_letter$line_num === $field  ($line left)\n");
             $col_letter = get_next_field_letter ($col_letter);
@@ -620,9 +645,9 @@ sub calc_field_value
         my $rn = get_row_num ($next_field_id);
         my $cl = get_col_letter ($next_field_id);
         my $that_field_val = get_field_value ($rn, $cl, 0);
-        print ("\nBEFORE:$field_val ... changing $next_field_id for $that_field_val\n");
+        #print ("\nBEFORE:$field_val ... changing $next_field_id for $that_field_val\n");
         $field_val =~ s/$next_field_id/$that_field_val/; 
-        print ("\nAFTER:$field_val ... changing $next_field_id for $that_field_val\n");
+        #print ("\nAFTER:$field_val ... changing $next_field_id for $that_field_val\n");
         $next_field_id = has_field_id ($field_val, "$col_letter$row_num");
     }
 
@@ -816,23 +841,23 @@ sub recreate_excel
     foreach $k (sort keys (%each_element))
     {
         $v = $each_element {$k};
-        print ("recreate - checking >$v<\n");
+        #print ("recreate - checking >$v<\n");
         if ($v =~ m/^SUM\(/)
         {
             $v = do_sum_expansion ($v);
-            print ("DID $k SUM - $v\n");
+            #print ("DID $k SUM - $v\n");
             $each_element {$k} = $v;
         }
         elsif ($v =~ m/^CONCATENATE\(/)
         {
             $v = do_concat_expansion ($v);
-            print ("DID $k CONCAT - $v\n");
+            #print ("DID $k CONCAT - $v\n");
             $each_element {$k} = $v;
         }
         elsif ($v =~ m/^POWER\(/)
         {
             $v = do_power_expansion ($v);
-            print ("DID $k POWER - $v\n");
+            #print ("DID $k POWER - $v\n");
             $each_element {$k} = $v;
         }
     }
@@ -844,15 +869,15 @@ sub recreate_excel
             next;
         }
         my $str = $each_element {$k}; 
-        print " mmm doing: $k -- >$str<\n";
+        #print " mmm doing: $k -- >$str<\n";
 
         $str =~ s/<<xx.*//;
-        print " mmm2 doing: $k -- >$str<\n";
+        #print " mmm2 doing: $k -- >$str<\n";
         while ($str =~ m/(xx[A-Z]+\d+)/)
         {
             my $k2 = $1;
             my $str2 = $each_element{$k2};
-            print " zzz doing: $k -- >$str< for ($k2) $str\n";
+            #print " zzz doing: $k -- >$str< for ($k2) $str\n";
             $str2 =~ s/<<xx.*//;
 
             $str =~ s/$k2/$str2/; 
@@ -860,10 +885,10 @@ sub recreate_excel
         $each_element {$k} = $str; 
         if ($k =~ m/ZZMAX/)
         {
-            print "Done: $k -- >$str<\n";
+            #print "Done: $k -- >$str<\n";
             return $str;
         }
-        print " not Done yet: $k -- $str\n";
+        #print " not Done yet: $k -- $str\n";
     }
 }
 ### END EXPERIMENTAL
@@ -1367,6 +1392,86 @@ sub get_graph_html
             next;
         }
         
+        if ($txt =~ m/GET.*show_examples.*/m)
+        {
+            $txt =~ m/(........show_examples.......)/im;
+            
+            my $examples = "
+DoW;Increment Series;Months;DaysInMonth;Years;YearMonth;Oneupcounter
+Monday;1;January;31;2001;202301;
+Tuesday;=B1+1;February;28;2002;202302;
+Wednesday;=B2+1;March;31;2003;202303;
+Thursday;=B3+1;April;30;2004;202304;
+Friday;=B4+1;May;31;2005;202305;
+Saturday;=B5+1;June;30;2006;202306;
+Sunday;=B6+1;July;31;2007;202307;
+Monday;=B7+1;August;31;2008;202308;
+Tuesday;=B8+1;September;30;2009;202309;
+Wednesday;=B9+1;October;31;2010;202310;
+Thursday;2;November;30;2011;202311;
+Friday;=B11+1;December;31;2012;202312;
+OneUp
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+YearMon;Days In Month;Left owing;Annual Interest;Daily Interest;Monthly Interest;Total owing;Interest for Month;After payment 
+202301;31;500000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;28;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+100-11;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;28;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+100-11;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;28;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+";
+
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br> 
+<form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
+<textarea id=\"examples\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples\">$examples</textarea>
+<input type=\"submit\" value=\"Done\" class=\"submitButton\">
+</form>
+</body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+        
         if ($txt =~ m/GET.*toggle_calculate_off.*HTTP/m)
         {
             $show_formulas = 1;
@@ -1620,7 +1725,7 @@ $//img;
         
         $html_text .= "<td><form action=\"/csv_analyse/search\">
                 <label for=\"searchstr\">Search:</label><br>
-                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
+                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Search\">
                 </form></td><td>";
 
@@ -1629,7 +1734,7 @@ $//img;
         $example = "\"/csv_analyse/groupby?groupstr=($example)" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/groupby\">
                 <label for=\"groupstr\">Group by <font size=-2><a href=$example>Example</a></font></label><br>
-                <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
+                <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
                 
@@ -1644,13 +1749,14 @@ $//img;
         $dual_example = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/dualgroupby\">
                 <label for=\"dualgroup\">Dual groups <font size=-2><a href=$dual_example>Example</a></font></label><br>
-                <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\">
-                <input type=\"submit\" value=\"Dual Group By\">
+                <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\" style=\"width:210px;\">
+                <input type=\"submit\" value=\"Dual Group By\" >
                 </form></td>";
                 
         $html_text .= "<td><form action=\"/csv_analyse/update_csv\">
                 <label>Update CSV:</label><br>
                 <input type=\"submit\" value=\"Update CSV\">
+                <a href=\"/csv_analyse/show_examples\">Examples</a>
                 </form></td>";
                 
         if ($show_formulas == 0)
@@ -1791,8 +1897,8 @@ $//img;
             {
                 if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
-                print ("\n=============GETTING field of $col_letter$row_num: -- got:"); 
                 my $field = get_field_value ($row_num, $col_letter, 1);
+                print ("\n=============HANDLING field of $col_letter$row_num: -- got >>$field<<"); 
 
                 if (!defined ($col_types {$col_letter}))
                 {
@@ -1984,17 +2090,19 @@ $//img;
                         $force_row = -1;
                     }
                     
+                    my $xrow = $row;
+                    my $current_col_letter = $col_letter;
                     if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
                     {
                         $force_row = 1;
                         if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
                         {
                             my $this_group = $1;
-                            $col_letter = get_next_field_letter ($col_letter); 
-                            $row .= " <td id='$col_letter$row_num'>$this_group</td>\n";
+                            $current_col_letter = get_next_field_letter ($current_col_letter); 
+                            $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                             my $g_price = "GPRICE_$this_group";
-                            $col_letter = get_next_field_letter ($col_letter); 
-                            $row .= " <td id='$col_letter$row_num'>$g_price</td> </tr>\n";
+                            $current_col_letter = get_next_field_letter ($current_col_letter); 
+                            $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
 
                             if (!defined ($group_colours {$this_group}))
                             {
@@ -2022,11 +2130,11 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $col_letter = get_next_field_letter ($col_letter); 
-                                $row .= " <td id='$col_letter$row_num'>$this_group</td>\n";
+                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $col_letter = get_next_field_letter ($col_letter); 
-                                $row .= " <td id='$col_letter$row_num'>$g_price</td> </tr>\n";
+                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
                                 
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -2059,11 +2167,11 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $col_letter = get_next_field_letter ($col_letter); 
-                                $row .= " <td id='$col_letter$row_num'>$this_group</td>\n";
+                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $col_letter = get_next_field_letter ($col_letter); 
-                                $row .= " <td id='$col_letter$row_num'>$g_price</td> </tr>\n";
+                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
                                     $group_colours {$this_group} = $group_colours {$group_count};
@@ -2084,6 +2192,12 @@ $//img;
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter); 
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
+                    }
+                    #if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+                    {
+                        $xrow =~ s/\n//img;
+                        $row =~ s/\n//img;
+                        print ("XROW=::$xrow\nGROUPROW=::$row\n");
                     }
 
                     if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
