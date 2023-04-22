@@ -1617,7 +1617,6 @@ $//img;
         $html_text .= "<body>\n";
         $html_text .= "<div id=\"fieldID\" class=\"field_div\"><div class=\"field_border\"></div></div>";
         $html_text .= "<table width=100%><tr>\n";
-        $html_text .= "<td width=255px></td>";
         
         $html_text .= "<td><form action=\"/csv_analyse/search\">
                 <label for=\"searchstr\">Search:</label><br>
@@ -1991,9 +1990,11 @@ $//img;
                         if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
                         {
                             my $this_group = $1;
-                            $row .= " <td>$this_group</td>\n";
+                            $col_letter = get_next_field_letter ($col_letter); 
+                            $row .= " <td id='$col_letter$row_num'>$this_group</td>\n";
                             my $g_price = "GPRICE_$this_group";
-                            $row .= " <td>$g_price</td> </tr>\n";
+                            $col_letter = get_next_field_letter ($col_letter); 
+                            $row .= " <td id='$col_letter$row_num'>$g_price</td> </tr>\n";
 
                             if (!defined ($group_colours {$this_group}))
                             {
@@ -2021,9 +2022,11 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $row .= " <td>$this_group</td>\n";
+                                $col_letter = get_next_field_letter ($col_letter); 
+                                $row .= " <td id='$col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $row .= " <td>$g_price</td> </tr>\n";
+                                $col_letter = get_next_field_letter ($col_letter); 
+                                $row .= " <td id='$col_letter$row_num'>$g_price</td> </tr>\n";
                                 
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -2038,8 +2041,10 @@ $//img;
                             }
                             else
                             {
-                                $row .= "<td><font size=-3>No group ($row_num A)</font></td>\n";
-                                $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
+                                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                             }
                         }
                         elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
@@ -2054,9 +2059,11 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $row .= " <td>$this_group</td>\n";
+                                $col_letter = get_next_field_letter ($col_letter); 
+                                $row .= " <td id='$col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $row .= " <td>$g_price</td> </tr>\n";
+                                $col_letter = get_next_field_letter ($col_letter); 
+                                $row .= " <td id='$col_letter$row_num'>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
                                     $group_colours {$this_group} = $group_colours {$group_count};
@@ -2073,8 +2080,10 @@ $//img;
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td>\n";
-                        $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
+                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
 
                     if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -2091,6 +2100,7 @@ $//img;
                     $row .= "<td id='$col_letter$row_num'>$field</td>\n";
                 }
                 $x++;
+                $old_col_letter = $col_letter;
                 $col_letter = get_next_field_letter ($col_letter); 
             }
             $row_num++;
@@ -2130,8 +2140,10 @@ $//img;
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td>\n";
-                        $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
+                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
                 elsif ($dual_groups && $fake_row =~ m/($group)/im)
@@ -2147,15 +2159,19 @@ $//img;
                     }
                     else
                     {
-                        $row .= "<td><font size=-3>No group</font></td>\n";
-                        $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
+                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
             }
             else
             {
-                $row .= "<td><font size=-3>No group</font></td>\n";
-                $row .= "<td><font size=-3>No group Total</font></td></tr>\n";
+                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
             }
 
             if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -2331,7 +2347,30 @@ $//img;
         $html_text .= "{\n";
         $html_text .= "    elem.style.background = 'skyblue';\n";
         $html_text .= "    var re = /([A-Z]+\\d+)/g;\n";
+        $html_text .= "    var re_range = /([A-Z]+)(\\d+):([A-Z]+)(\\d+)/g\n";
         $html_text .= "    var s = currentElem.innerText;\n";
+        $html_text .= "    var col = 'AliceBlue';\n";
+        $html_text .= "    m = re_range.exec(s);\n";
+        $html_text .= "    if (m)\n";
+        $html_text .= "    {\n";
+        $html_text .= "        var i = parseInt (m[2]);\n";
+        $html_text .= "        var j = parseInt (m[4]);\n";
+        $html_text .= "        var w = m[1];\n";
+        $html_text .= "        var z = m[3];\n";
+        $html_text .= "        while (i <= j)\n";
+        $html_text .= "        {\n";
+        $html_text .= "            w = m[1];\n";
+        $html_text .= "            while (w <= z)\n";
+        $html_text .= "            {\n";
+        $html_text .= "                if (document.getElementById(w + '' + i) != null)\n";
+        $html_text .= "                {\n";
+        $html_text .= "                    document.getElementById(w + '' + i).style.background = col;\n";
+        $html_text .= "                }\n";
+        $html_text .= "                w = String.fromCharCode(w.charCodeAt(0) + 1);\n";
+        $html_text .= "            }\n";
+        $html_text .= "            i += 1;\n";
+        $html_text .= "        }\n";
+        $html_text .= "    }\n";
         $html_text .= "    var m;\n";
         $html_text .= "    var col = 'mediumpurple';\n";
         $html_text .= "    do {\n";
@@ -2353,13 +2392,36 @@ $//img;
         $html_text .= "    fieldID.style.position = \"absolute\";\n";
         $html_text .= "    fieldID.style.top = rect.bottom - (rect2.height);\n";
         $html_text .= "    fieldID.style.left = rect.right - (rect2.width);\n";
-        $html_text .= "    fade (fieldID, 2500);\n";
+        $html_text .= "    fade (fieldID, 1500);\n";
         $html_text .= "}\n";
         $html_text .= "function onLeave(elem) \n";
         $html_text .= "{\n";
         $html_text .= "    elem.style.background = '';\n";
         $html_text .= "    var re = /([A-Z]+\\d+)/g;\n";
+        $html_text .= "    var re_range = /([A-Z]+)(\\d+):([A-Z]+)(\\d+)/g\n";
+        $html_text .= "    var col = 'AliceBlue';\n";
         $html_text .= "    var s = currentElem.innerText;\n";
+        $html_text .= "    m = re_range.exec(s);\n";
+        $html_text .= "    if (m)\n";
+        $html_text .= "    {\n";
+        $html_text .= "        var i = parseInt (m[2]);\n";
+        $html_text .= "        var j = parseInt (m[4]);\n";
+        $html_text .= "        var w = m[1];\n";
+        $html_text .= "        var z = m[3];\n";
+        $html_text .= "        while (i <= j)\n";
+        $html_text .= "        {\n";
+        $html_text .= "            w = m[1];\n";
+        $html_text .= "            while (w <= z)\n";
+        $html_text .= "            {\n";
+        $html_text .= "                if (document.getElementById(w + '' + i) != null)\n";
+        $html_text .= "                {\n";
+        $html_text .= "                    document.getElementById(w + '' + i).style.background = '';\n";
+        $html_text .= "                }\n";
+        $html_text .= "                w = String.fromCharCode(w.charCodeAt(0) + 1);\n";
+        $html_text .= "            }\n";
+        $html_text .= "            i += 1;\n";
+        $html_text .= "        }\n";
+        $html_text .= "    }\n";
         $html_text .= "            console.log(s);\n";
         $html_text .= "    var m;\n";
         $html_text .= "    do {\n";
