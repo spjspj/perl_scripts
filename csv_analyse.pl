@@ -120,11 +120,6 @@ sub read_from_socket
                 }
             }
         }
-
-        #if ($isPost && $done_expected_content_len )
-        #{
-        #    #print ("$done_expected_content_len ($expected_content_len vs $seen_content_len )SO FAR IN POST: >$header<\n");
-        #}
     }
     return $header;
 }
@@ -188,7 +183,6 @@ sub process_csv_data
 {
     my $block = $_ [0];
     $csv_block = $block;
-    print (">>>$csv_block<<<\n");
     my %new_csv_data;
     %csv_data = %new_csv_data;
     my %new_col_types;
@@ -196,7 +190,7 @@ sub process_csv_data
     $max_field_num = 0;
     $max_rows = 0;
 
-    my $line_num = 1;
+    my $row_num = 1;
     my $col_letter = "A";
     while ($block =~ s/^(.*?)\n//im)
     {
@@ -218,22 +212,22 @@ sub process_csv_data
 
                 if ($line_mod eq "\^")
                 {
-                    my $up_field = $col . ($line_num-1);
+                    my $up_field = $col . ($row_num-1);
                     $field =~ s/([A-Z])([\^\_>])/$up_field/;
                 }
                 elsif ($line_mod eq "\_")
                 {
-                    my $down_field = $col . ($line_num+1);
+                    my $down_field = $col . ($row_num+1);
                     $field =~ s/([A-Z])([\^\_>])/$down_field/;
                 }
                 elsif ($line_mod eq ">")
                 {
-                    my $same_field = $col . $line_num;
+                    my $same_field = $col . $row_num;
                     $field =~ s/([A-Z])([\^\_>])/$same_field/;
                 }
             }
 
-            $csv_data {"$col_letter" . "$line_num"} = $field;
+            set_field_value ($row_num, $col_letter, $field, "");
             $col_letter = get_next_field_letter ($col_letter);
 
             if ($max_field_num < get_field_num_from_field_letter ($col_letter))
@@ -241,7 +235,7 @@ sub process_csv_data
                 $max_field_num = get_field_num_from_field_letter ($col_letter);
             }
         }
-        $line_num++;
+        $row_num++;
         $max_rows++;
     }
 
@@ -249,7 +243,7 @@ sub process_csv_data
     while ($block =~ s/^([^;\t]*)([;\t]|$)// && $block =~ m/./)
     {
         my $field = $1;
-        $csv_data {"$line_num.$col_letter"} = $field;
+        set_field_value ($row_num, $col_letter, $field, "");
         $col_letter = get_next_field_letter ($col_letter);
         if ($max_field_num < get_field_num_from_field_letter ($col_letter))
         {
@@ -387,7 +381,7 @@ sub calc_field_value
     my $col_letter = $_ [2];
     my $iteration_count = $_ [3];
     my $force_calculation = $_ [4];
-    if ($iteration_count > 10) { print ("TOO MANY ITERATIONS\n"); return "ERROR (can't compute)"; }
+    if ($iteration_count > 10) { return "ERROR (can't compute)"; }
 
     if ($show_formulas)
     {
@@ -406,8 +400,6 @@ sub calc_field_value
             return calc_field_value ("=" . $fv, $row_num, $col_letter, $iteration_count+1, 0);
         }
 
-        print ("\nDOING CALCULATIONS: $col_letter$row_num evaluating >>$fv<< from $orig_field_val\n");
-        print ("\nActually DOING CALCULATIONS: $col_letter$row_num evaluating >>$fv<< from $orig_field_val\n");
         if ($fv =~ m/^[<\(]dq\..*.dq[>\)]$/)
         {
             $fv =~ s/.dq./"/img;
@@ -417,11 +409,8 @@ sub calc_field_value
         my $valid_calc = eval { $fv };
         if (!defined ($valid_calc))
         {
-            print ("BROKEN THING ($force_calculation)- $fv, $valid_calc << from $field_val\n");
             if ($force_calculation)
             {
-                # Something's broke
-                print ("BROKEN THING - $fv, $valid_calc << from $field_val\n");
                 return $field_val;
             }
 
@@ -449,13 +438,14 @@ sub set_field_value
     my $row_num = $_ [0];
     my $col_letter = $_ [1];
     my $new_val = $_ [2];
+    my $modifier = $_ [3];
 
     if ($col_letter =~ m/^\d+$/)
     {
         $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
-    my $str = "$col_letter" . $row_num;
-    if (defined ($csv_data {$str}))
+    my $str = "$col_letter" . $row_num . $modifier;
+    if (!defined ($csv_data {$str}))
     {
         $csv_data {$str} = $new_val;
     }
@@ -514,7 +504,7 @@ sub get_field_value
             }
             return ($csv_data {$field_id . "_perl"});
         }
-        elsif ($for_display == 1 && $show_formulas == 1 && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
+        elsif ($for_display == 1 && $show_formulas == 1)
         {
             if (!defined ($csv_data {$field_id . "_calc"}))
             {
@@ -527,7 +517,6 @@ sub get_field_value
     return ("");
 }
 
-#### NEW CALCULATIONS
 sub simple_parentheses_zero_argument
 {
     my $field_val = $_ [0];
@@ -651,7 +640,6 @@ sub breakdown_excel
         return breakdown_excel ($excel_function, $iteration + 1);
     }
     $excel_function =~ s/^=//;
-    #print ("\nSUCCESS -- Finally -- >$excel_function<\n");
     $each_element {"ZZMAX"} = $excel_function;
     return $excel_function;
 }
@@ -1257,13 +1245,13 @@ sub recreate_perl
 
         if ($k eq "ZZMAX")
         {
-            $csv_data {$field_id . "_perl"} = $str;
+            my $col_letter = get_col_letter ($field_id);
+            my $row_num = get_row_num ($field_id);
+            set_field_value ($row_num, $col_letter, $str, "_perl");
             return $output;
         }
-        #$each_element {$k} = $output;
     }
 }
-#### END NEW CALCULATIONS
 
 sub get_graph_html
 {
@@ -2001,14 +1989,7 @@ Friday;=B11+1;December;31;2012;202312;";
             my $fi;
             foreach $fi (sort keys (%csv_data))
             {
-                #if (!($fi =~ m/_perl/))
-                {
-                    $new_csv_data {$fi} = $csv_data {$fi};
-                }
-                #else
-                #{
-                #    $new_csv_data {$fi} = "perl";
-                #}
+                $new_csv_data {$fi} = $csv_data {$fi};
             }
             %csv_data = %new_csv_data;
         }
@@ -2129,7 +2110,6 @@ $//img;
         }
 
         my @strs = split /&/, $txt;
-        #print join (',,,', @strs);
 
         # Sortable table with cards in it..
         my $html_text = "<html>\n";
@@ -2349,13 +2329,11 @@ $//img;
         if ($group =~ s/#(.*)//)
         {
             $chosen_col = "$1";
-            print ("WOOT $chosen_col\n");
         }
 
         if ($dual_group =~ s/#(.*)//)
         {
             $chosen_col = "$1";
-            print ("dual WOOT $chosen_col\n");
         }
 
         my $overall_match = $group;
@@ -2420,24 +2398,21 @@ $//img;
                         if ($field =~ m/^\d{8}$/)
                         {
                             set_col_type ($col_letter, "DATE");
-                            set_field_value ($row_num, $col_letter, $field);
+                            set_field_value ($row_num, $col_letter, $field, "");
                         }
                     }
                     elsif (is_number ($field))
                     {
                         set_col_type ($col_letter, "NUMBER");
                         $col_calculations {$col_letter} = $field;
-                        print ("$col_letter is now number 'cos >>$field<<\n");
                     }
                     elsif (is_price ($field))
                     {
                         set_col_type ($col_letter, "PRICE");
                         $col_calculations {$col_letter} = add_price ($col_calculations {$col_letter}, $field);
-                        print ("$col_letter is now price 'cos >>$field<<\n");
                     }
                     else
                     {
-                        print ("$col_letter is now general 'cos >>$field<<\n");
                         set_col_type ($col_letter, "GENERAL");
                     }
                 }
@@ -2451,7 +2426,6 @@ $//img;
                     {
                         if ($col_types {$col_letter} ne "DATE")
                         {
-                            print ("$col_letter is now general (was date) 'cos >>$field<<\n");
                             set_col_type ($col_letter, "GENERAL");
                         }
                         else
@@ -2460,7 +2434,7 @@ $//img;
                             if ($field =~ m/^\d{8}$/)
                             {
                                 set_col_type ($col_letter, "DATE");
-                                set_field_value ($row_num, $col_letter, $field);
+                                set_field_value ($row_num, $col_letter, $field, "");
                             }
                         }
                     }
@@ -2468,7 +2442,6 @@ $//img;
                     {
                         if ($col_types {$col_letter} eq "PRICE")
                         {
-                            print ("$col_letter is now number (was price) 'cos >>$field<<\n");
                             set_col_type ($col_letter, "NUMBER");
                         }
                         else
@@ -2484,13 +2457,11 @@ $//img;
                         }
                         elsif ($col_types {$col_letter} ne "NUMBER")
                         {
-                            print ("$col_letter is now general (was NUMBER) 'cos >>$field<<\n");
                             set_col_type ($col_letter, "GENERAL");
                         }
                     }
                     else
                     {
-                        print ("$col_letter is now general 'cos >>$field<<\n");
                         set_col_type ($col_letter, "GENERAL");
                     }
                 }
@@ -2505,7 +2476,6 @@ $//img;
                     my $force_row = 0;
                     if ($dual_groups)
                     {
-                        print ("DUAL- checking $overall_match vs $fake_row\n");
                         $force_row = -1;
                     }
 
@@ -2577,7 +2547,6 @@ $//img;
                         elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
                         {
                             $fake_row =~ m/($group)/im;
-                            print ("DUAL $fake_row\n");
                             my $this_group = $1;
                             if ($fake_row =~ m/($group2)/im)
                             {
