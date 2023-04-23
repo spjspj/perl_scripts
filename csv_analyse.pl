@@ -234,11 +234,11 @@ sub process_csv_data
             }
 
             $csv_data {"$col_letter" . "$line_num"} = $field;
-            $col_letter = new_get_next_field_letter ($col_letter);
+            $col_letter = get_next_field_letter ($col_letter);
 
-            if ($max_field_num < new_get_field_num_from_field_letter ($col_letter))
+            if ($max_field_num < get_field_num_from_field_letter ($col_letter))
             {
-                $max_field_num = new_get_field_num_from_field_letter ($col_letter);
+                $max_field_num = get_field_num_from_field_letter ($col_letter);
             }
         }
         $line_num++;
@@ -250,10 +250,10 @@ sub process_csv_data
     {
         my $field = $1;
         $csv_data {"$line_num.$col_letter"} = $field;
-        $col_letter = new_get_next_field_letter ($col_letter);
-        if ($max_field_num < new_get_field_num_from_field_letter ($col_letter))
+        $col_letter = get_next_field_letter ($col_letter);
+        if ($max_field_num < get_field_num_from_field_letter ($col_letter))
         {
-            $max_field_num = new_get_field_num_from_field_letter ($col_letter);
+            $max_field_num = get_field_num_from_field_letter ($col_letter);
         }
     }
     $max_rows++;
@@ -291,7 +291,7 @@ sub get_col_type
     my $col_letter = $_ [0];
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
+        $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
     return ($col_types {$col_letter});
 }
@@ -308,7 +308,7 @@ sub get_col_header
     my $col_letter = $_ [0];
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
+        $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
     return ($csv_data {"$col_letter" . "1"});
 }
@@ -452,7 +452,7 @@ sub set_field_value
 
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
+        $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
     my $str = "$col_letter" . $row_num;
     if (defined ($csv_data {$str}))
@@ -468,7 +468,7 @@ sub get_field_value
     my $for_display = $_ [2];
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
+        $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
 
     my $field_id = "$col_letter" . $row_num;
@@ -484,8 +484,8 @@ sub get_field_value
                 %each_element = %new_each_element;
                 $count = 0;
                 $each_element_count = 0;
-                new_breakdown_excel ($csv_data {$field_id}, 0);
-                my $some_val = new_recreate_perl ($field_id);
+                breakdown_excel ($csv_data {$field_id}, 0);
+                my $some_val = recreate_perl ($field_id);
                 if ($some_val ne $calc_val)
                 {
                     if ($calc_val eq "")
@@ -528,7 +528,17 @@ sub get_field_value
 }
 
 #### NEW CALCULATIONS
-sub new_simple_parentheses_only_one_argument
+sub simple_parentheses_zero_argument
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\(\s*\)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+sub simple_parentheses_only_one_argument
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
@@ -539,7 +549,7 @@ sub new_simple_parentheses_only_one_argument
     return 0;
 }
 
-sub new_simple_parentheses_only_two_arguments
+sub simple_parentheses_only_two_arguments
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
@@ -550,7 +560,7 @@ sub new_simple_parentheses_only_two_arguments
     return 0;
 }
 
-sub new_simple_parentheses_only_three_arguments
+sub simple_parentheses_only_three_arguments
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
@@ -561,7 +571,7 @@ sub new_simple_parentheses_only_three_arguments
     return 0;
 }
 
-sub new_simple_parentheses_many_arguments
+sub simple_parentheses_many_arguments
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
@@ -572,7 +582,7 @@ sub new_simple_parentheses_many_arguments
     return 0;
 }
 
-sub new_breakdown_excel
+sub breakdown_excel
 {
     my $excel_function = $_ [0];
     my $iteration = $_ [1];
@@ -606,25 +616,25 @@ sub new_breakdown_excel
         my $test = $1;
         my $func = $2;
         #$test =~ s/\.XYZ\./(/;
-        if (new_simple_parentheses_only_one_argument ($test, $func))
+        if (simple_parentheses_only_one_argument ($test, $func))
         {
             $excel_function =~ s/($func\([^\)]*\))/xXONE$each_element_count/;
             $each_element {"xXONE$each_element_count"} = $1 . "<< xXONE$each_element_count";
             $each_element_count++;
         }
-        elsif (new_simple_parentheses_only_two_arguments ($test, $func))
+        elsif (simple_parentheses_only_two_arguments ($test, $func))
         {
             $excel_function =~ s/($func\([^\|\)]*\|.*?\))/xXTWO$each_element_count/;
             $each_element {"xXTWO$each_element_count"} = $1 . "<< xXTWO$each_element_count";
             $each_element_count++;
         }
-        elsif (new_simple_parentheses_only_three_arguments ($test, $func))
+        elsif (simple_parentheses_only_three_arguments ($test, $func))
         {
             $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/xXTHREE$each_element_count/;
             $each_element {"xXTHREE$each_element_count"} = $1 . "<< xXTHREE$each_element_count";
             $each_element_count++;
         }
-        elsif (new_simple_parentheses_many_arguments($test, $func))
+        elsif (simple_parentheses_many_arguments($test, $func))
         {
             $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/xXMANY$each_element_count/;
             $each_element {"xXMANY$each_element_count"} = $1 . "<< xXMANY$each_element_count";
@@ -638,7 +648,7 @@ sub new_breakdown_excel
     if ($excel_function =~ m/\.XYZ\./)
     {
         $excel_function =~ s/\.XYZ\./(/g;
-        return new_breakdown_excel ($excel_function, $iteration + 1);
+        return breakdown_excel ($excel_function, $iteration + 1);
     }
     $excel_function =~ s/^=//;
     #print ("\nSUCCESS -- Finally -- >$excel_function<\n");
@@ -646,33 +656,14 @@ sub new_breakdown_excel
     return $excel_function;
 }
 
-sub new_recreate_excel
-{
-    my $str;
-    my $k;
-    foreach $k (sort keys (%each_element))
-    {
-        my $str = $each_element {$k};
-        $str =~ s/<< .*//;
-        while ($str =~ m/(xX[A-Z]+\d+)/)
-        {
-            my $k2 = $1;
-            my $str2 = $each_element{$k2};
-            $str2 =~ s/<< .*//;
-            $str =~ s/$k2/$str2/;
-        }
-        $each_element {$k} = $str;
-    }
-}
-
-sub new_do_power_expansion
+sub do_power_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((POWER)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/($1)**($2)/;
             return $field_val;
@@ -681,13 +672,13 @@ sub new_do_power_expansion
     return $field_val;
 }
 
-sub new_do_concat_expansion
+sub do_concat_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/(CONCATENATE\(.*)/)
     {
         my $to_check = $1;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "CONCATENATE"))
+        if (simple_parentheses_only_two_arguments ($to_check, "CONCATENATE"))
         {
             if ($field_val =~ m/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/)
             {
@@ -723,14 +714,14 @@ sub new_do_concat_expansion
     return $field_val;
 }
 
-sub new_do_mod_expansion
+sub do_mod_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((MOD)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/($1)%($2)/;
             return $field_val;
@@ -739,14 +730,14 @@ sub new_do_mod_expansion
     return $field_val;
 }
 
-sub new_do_max_expansion
+sub do_max_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((MAX)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/($1 > $2 ? $1 | $2)/;
             return $field_val;
@@ -755,14 +746,14 @@ sub new_do_max_expansion
     return $field_val;
 }
 
-sub new_do_min_expansion
+sub do_min_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((MAX)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/($1 <= $2 ? $1 | $2)/;
             return $field_val;
@@ -771,14 +762,14 @@ sub new_do_min_expansion
     return $field_val;
 }
 
-sub new_do_left_expansion
+sub do_left_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((LEFT)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, 0, $2)/;
             return $field_val;
@@ -787,14 +778,93 @@ sub new_do_left_expansion
     return $field_val;
 }
 
-sub new_do_right_expansion
+sub new_do_pi_expansion 
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((PI)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_zero_argument ($to_check, "$func"))
+        {
+
+            $field_val =~ s/$func\(\s*\)/3.14159265358979/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+#sub new_do_sin_expansion 
+#{
+#    my $field_val = $_ [0];
+#    if ($field_val =~ m/((PI)\(.*)/)
+#    {
+#        my $to_check = $1;
+#        my $func = $2;
+#        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+#        {
+#            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, 0, $2)/;
+#            return $field_val;
+#        }
+#    }
+#    return $field_val;
+#}
+#sub new_do_asin_expansion 
+#{
+#    my $field_val = $_ [0];
+#    if ($field_val =~ m/((PI)\(.*)/)
+#    {
+#        my $to_check = $1;
+#        my $func = $2;
+#        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+#        {
+#            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, 0, $2)/;
+#            return $field_val;
+#        }
+#    }
+#    return $field_val;
+#}
+#sub new_do_cos_expansion 
+#{
+#    my $field_val = $_ [0];
+#    if ($field_val =~ m/((PI)\(.*)/)
+#    {
+#        my $to_check = $1;
+#        my $func = $2;
+#        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+#        {
+#            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, 0, $2)/;
+#            return $field_val;
+#        }
+#    }
+#    return $field_val;
+#}
+#sub new_do_acos_expansion 
+#{
+#    my $field_val = $_ [0];
+#    if ($field_val =~ m/((PI)\(.*)/)
+#    {
+#        my $to_check = $1;
+#        my $func = $2;
+#        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+#        {
+#            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, 0, $2)/;
+#            return $field_val;
+#        }
+#    }
+#    return $field_val;
+#}
+
+
+sub do_right_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((LEFT)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, $2)/;
             return $field_val;
@@ -803,7 +873,7 @@ sub new_do_right_expansion
     return $field_val;
 }
 
-sub new_do_textjoin_expansion
+sub do_textjoin_expansion
 {
     my $field_val = $_ [0];
     my $orig_field_val = $_ [0];
@@ -811,7 +881,7 @@ sub new_do_textjoin_expansion
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_three_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_three_arguments ($to_check, "$func"))
         {
             $field_val =~ m/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/;
             my $delimiter = $1;
@@ -823,7 +893,7 @@ sub new_do_textjoin_expansion
             }
             return $field_val;
         }
-        if (new_simple_parentheses_many_arguments ($to_check, "$func"))
+        if (simple_parentheses_many_arguments ($to_check, "$func"))
         {
             my $new_str = "\"\"";
             $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|//;
@@ -845,14 +915,14 @@ sub new_do_textjoin_expansion
     return $field_val;
 }
 
-sub new_do_len_expansion
+sub do_len_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((LEN)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
-        if (new_simple_parentheses_only_one_argument ($to_check, "$func"))
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\)/length($1)/;
             return $field_val;
@@ -861,13 +931,13 @@ sub new_do_len_expansion
     return $field_val;
 }
 
-sub new_do_if_expansion
+sub do_if_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((IF)\(.*)/)
     {
         my $to_check = $1;
-        #if (new_simple_parentheses_only_three_arguments ($to_check, "IF"))
+        #if (simple_parentheses_only_three_arguments ($to_check, "IF"))
         {
             $field_val =~ m/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/;
             my $condition = $1;
@@ -935,48 +1005,98 @@ $field_letters {23} = "X";
 $field_letters {24} = "Y";
 $field_letters {25} = "Z";
 
-sub new_get_field_num_from_field_letter
+sub get_field_num_from_field_letter
 {
     my $letter = $_ [0];
     return ($field_letters {$letter});
 }
 
-sub new_get_field_letter_from_field_num
+sub get_field_letter_from_field_num
 {
     my $num = $_ [0];
     return ($field_letters {$num});
 }
 
-sub new_get_next_field_letter
+sub get_next_field_letter
 {
     my $letter = $_ [0];
-    my $num = new_get_field_num_from_field_letter ($letter);
+    my $num = get_field_num_from_field_letter ($letter);
     return ($field_letters {$num + 1});
 }
 
-sub new_is_number
+sub is_number
 {
     my $field = $_ [0];
-    return ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/ || $field =~ m/^\+\d+($|\.\d+)$/)
+    if ($field =~ m/^([\+\-]|)\d+($|\.\d+)$/)
+    {
+        return 1;
+    }
+    return 0;
 }
 
-#sub new_get_field_value
-#{
-#    my $row_num = $_ [0];
-#    my $col_letter = $_ [1];
-#    my $for_display = $_ [2];
-#    if ($col_letter eq "A")
-#    {
-#        return $row_num;
-#    }
-#    if ($col_letter eq "B")
-#    {
-#        return "$row_num.25";
-#    }
-#    return "zzz";
-#}
+sub is_price
+{
+    my $field = $_ [0];
+    if ($field =~ m/^([\+\-]|)\$\d+($|\.\d+)$/)
+    {
+        return 1;
+    }
+    return 0;
+}
 
-sub new_do_sum_expansion
+sub is_date
+{
+    my $field = $_ [0];
+    if ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+sub fix_date
+{
+    my $field = $_ [0];
+
+    if ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/)
+    {
+        $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
+        return "$1" . "$2" . "0$3";
+    }
+    elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
+    {
+        $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
+        return ("$1" . "$2" . "0$3");
+    }
+    elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
+    {
+        $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
+        return ("$1" . "0$2" . "$3");
+    }
+    elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
+    {
+        $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
+        return ("$3" . "$2" . "$1");
+    }
+    elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
+    {
+        $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
+        reutrn ("$3" . "$2" . "0$1");
+    }
+    elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
+    {
+        $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
+        return ("$3" . "0$2" . "$1");
+    }
+    elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
+    {
+        $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
+        return ("$3" . "0$2" . "0$1");
+    }
+    return ("");
+}
+
+sub do_sum_expansion
 {
     my $field_val = $_ [0];
 
@@ -989,8 +1109,8 @@ sub new_do_sum_expansion
         my $second_col = $5;
         my $second_num = $6;
 
-        my $fc_num = new_get_field_num_from_field_letter ($first_col);
-        my $sc_num = new_get_field_num_from_field_letter ($second_col);
+        my $fc_num = get_field_num_from_field_letter ($first_col);
+        my $sc_num = get_field_num_from_field_letter ($second_col);
         my $sum_str = "";
         my $i = $fc_num;
         my $j = $first_num;
@@ -998,14 +1118,14 @@ sub new_do_sum_expansion
         {
             while ($j <= $second_num)
             {
-                my $cv = get_field_value ($j, new_get_field_letter_from_field_num ($i), 0);
-                if (new_is_number ($cv))
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0);
+                if (is_number ($cv))
                 {
                     $sum_str .= "$cv+";
                 }
                 else
                 {
-                    $sum_str .= new_get_field_letter_from_field_num ($i) . "$j+";
+                    $sum_str .= get_field_letter_from_field_num ($i) . "$j+";
                 }
                 $j++;
             }
@@ -1039,49 +1159,53 @@ sub fix_up_field_vals
     return $field_val;
 }
 
-sub new_perl_expansions
+sub perl_expansions
 {
     my $str = $_ [0];
 
     if ($str =~ m/SUM\(/)
     {
-        $str = new_do_sum_expansion ($str);
+        $str = do_sum_expansion ($str);
     }
     if ($str =~ m/CONCATENATE\(/)
     {
-        $str = new_do_concat_expansion ($str);
+        $str = do_concat_expansion ($str);
     }
     if ($str =~ m/POWER\(/)
     {
-        $str = new_do_power_expansion ($str);
+        $str = do_power_expansion ($str);
     }
     if ($str =~ m/MOD\(/)
     {
-        $str = new_do_mod_expansion ($str);
+        $str = do_mod_expansion ($str);
     }
     if ($str =~ m/MAX\(/)
     {
-        $str = new_do_max_expansion ($str);
+        $str = do_max_expansion ($str);
     }
     if ($str =~ m/MIN\(/)
     {
-        $str = new_do_min_expansion ($str);
+        $str = do_min_expansion ($str);
     }
     if ($str =~ m/LEFT\(/)
     {
-        $str = new_do_left_expansion ($str);
+        $str = do_left_expansion ($str);
     }
     if ($str =~ m/RIGHT\(/)
     {
-        $str = new_do_right_expansion ($str);
+        $str = do_right_expansion ($str);
     }
     if ($str =~ m/TEXTJOIN\(/)
     {
-        $str = new_do_textjoin_expansion ($str);
+        $str = do_textjoin_expansion ($str);
+    }
+    if ($str =~ m/PI\(\)/)
+    {
+        $str = new_do_pi_expansion ($str);
     }
     if ($str =~ m/IF\(/)
     {
-        $str = new_do_if_expansion ($str);
+        $str = do_if_expansion ($str);
     }
 
     # General cleanup..
@@ -1089,7 +1213,7 @@ sub new_perl_expansions
     return $str;
 }
 
-sub new_recreate_perl
+sub recreate_perl
 {
     my $field_id = $_ [0];
     my $str;
@@ -1097,7 +1221,7 @@ sub new_recreate_perl
     foreach $k (sort keys (%each_element))
     {
         my $str = $each_element {$k};
-        $str = new_perl_expansions ($str);
+        $str = perl_expansions ($str);
         $each_element {$k} = $str;
     }
 
@@ -1112,7 +1236,7 @@ sub new_recreate_perl
             $str2 =~ s/<< .*//;
             $str =~ s/$k2/$str2/;
         }
-        $str = new_perl_expansions ($str);
+        $str = perl_expansions ($str);
 
         $str = fix_up_field_vals ($str, $field_id, 0);
         $each_element {$k} = $str;
@@ -1590,18 +1714,58 @@ Wednesday;=B9+1;October;31;2010;202310;
 Thursday;2;November;30;2011;202311;
 Friday;=B11+1;December;31;2012;202312;";
             my$examples_two= "OneUp;OneUpFormula\n1;1\n2;=B^+1\n3;=B^+1\n4;=B^+1\n5;=B^+1\n6;=B^+1\n7;=B^+1\n8;=B^+1\n9;=B^+1\n10;=B^+1\n11;=B^+1\n12;=B^+1";
-            my$examples_three= "BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf
-1;3;4.25076923;AAA;;;;
-2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;;
-12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2)
-=SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2)
-=A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2)
-;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2)
-=POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2)
-;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2)
-;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2)
-;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2)
-;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;;";
+            my$examples_three= "Angle;SinOfAngle;CosOfAngle;SinxCos;NumPoints
+0;=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);50
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
+=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^";
+
             my$examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
 201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
@@ -2160,7 +2324,7 @@ $//img;
         my $x;
         for ($x = 0; $x < $max_field_num; $x++)
         {
-            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . " " . new_get_field_letter_from_field_num ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . " " . get_field_letter_from_field_num ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -2238,84 +2402,34 @@ $//img;
         my %col_calculations;
         my $pot_group_price = "";
 
-        #foreach $field_id (sort {$a <=> $b} keys (%csv_data))
         while ($row_num < $max_rows)
         {
             my $x = 0;
             $col_letter = "A";
             while ($x < $max_field_num)
             {
-                if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = new_get_next_field_letter ($col_letter); next; }
+                if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
                 my $field = get_field_value ($row_num, $col_letter, 1);
-                #print ("\n=============HANDLING field of $col_letter$row_num: -- got >>$field<<");
 
                 if (!defined ($col_types {$col_letter}))
                 {
-                    if ($field =~ m/^\s*$/)
+                    if (is_date ($field))
                     {
-
-                    }
-                    elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
-                    {
-                        set_col_type ($col_letter, "DATE");
-                        if ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/)
+                        $field = fix_date ($field);
+                        if ($field =~ m/^\d{8}$/)
                         {
-                            $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
-                            print ("now is $csv_data{$field_id}\n");
-                        }
-                        elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
-                        {
-                            $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
-                            print ("now is $csv_data{$field_id}\n");
-                        }
-                        elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
-                        {
-                            $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$1" . "0$2" . "$3");
-                            print ("now is $csv_data{$field_id}\n");
-                        }
-                        elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
-                        {
-                            $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$3" . "$2" . "$1");
-                            print ("now is $csv_data{$field_id}\n");
-                        }
-                        elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
-                        {
-                            $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$3" . "$2" . "0$1");
-                            print ("now is $csv_data{$field_id}\n");
-                        }
-                        elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
-                        {
-                            $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$3" . "0$2" . "$1");
-                            print ("now is $csv_data{$field_id}\n");
-                        }
-                        elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
-                        {
-                            $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
-                            print ("$field_id for $field -- ");
-                            set_field_value ($row_num, $col_letter, "$3" . "0$2" . "0$1");
-                            print ("now is $csv_data{$field_id}\n");
+                            set_col_type ($col_letter, "DATE");
+                            set_field_value ($row_num, $col_letter, $field);
                         }
                     }
-                    elsif ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/)
+                    elsif (is_number ($field))
                     {
                         set_col_type ($col_letter, "NUMBER");
                         $col_calculations {$col_letter} = $field;
                         print ("$col_letter is now number 'cos >>$field<<\n");
                     }
-                    elsif ($field =~ m/^(-|)\$(\d*[\d,])+($|\.\d+)$/)
+                    elsif (is_price ($field))
                     {
                         set_col_type ($col_letter, "PRICE");
                         $col_calculations {$col_letter} = add_price ($col_calculations {$col_letter}, $field);
@@ -2333,7 +2447,7 @@ $//img;
                     {
 
                     }
-                    elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
+                    elsif (is_date ($field))
                     {
                         if ($col_types {$col_letter} ne "DATE")
                         {
@@ -2342,58 +2456,15 @@ $//img;
                         }
                         else
                         {
-                            if ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/)
+                            $field = fix_date ($field);
+                            if ($field =~ m/^\d{8}$/)
                             {
-                                $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
-                                print ("now is $csv_data{$field_id}\n");
-                            }
-                            elsif ($field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/)
-                            {
-                                $field =~ m/^(\d\d\d\d)[\/](\d\d)[\/](\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$1" . "$2" . "0$3");
-                                print ("now is $csv_data{$field_id}\n");
-                            }
-                            elsif ($field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/)
-                            {
-                                $field =~ m/^(\d\d\d\d)[\/](\d)[\/](\d\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$1" . "0$2" . "$3");
-                                print ("now is $csv_data{$field_id}\n");
-                            }
-                            elsif ($field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/)
-                            {
-                                $field =~ m/^(\d\d)[\/](\d\d)[\/](\d\d\d\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$3" . "$2" . "$1");
-                                print ("now is $csv_data{$field_id}\n");
-                            }
-                            elsif ($field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/)
-                            {
-                                $field =~ m/^(\d)[\/](\d\d)[\/](\d\d\d\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$3" . "$2" . "0$1");
-                                print ("now is $csv_data{$field_id}\n");
-                            }
-                            elsif ($field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/)
-                            {
-                                $field =~ m/^(\d\d)[\/](\d)[\/](\d\d\d\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$3" . "0$2" . "$1");
-                                print ("now is $csv_data{$field_id}\n");
-                            }
-                            elsif ($field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
-                            {
-                                $field =~ m/^(\d)[\/](\d)[\/](\d\d\d\d)$/;
-                                print ("$field_id for $field -- ");
-                                set_field_value ($row_num, $col_letter, "$3" . "0$2" . "0$1");
-                                print ("now is $csv_data{$field_id}\n");
+                                set_col_type ($col_letter, "DATE");
+                                set_field_value ($row_num, $col_letter, $field);
                             }
                         }
                     }
-                    elsif ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/)
+                    elsif (is_number ($field))
                     {
                         if ($col_types {$col_letter} eq "PRICE")
                         {
@@ -2405,7 +2476,7 @@ $//img;
                             $col_calculations {$col_letter} += $field;
                         }
                     }
-                    elsif ($field =~ m/^(-|)\$(\d*[\d,])+($|\.\d+)$/)
+                    elsif (is_price ($field))
                     {
                         if ($col_types {$col_letter} eq "PRICE")
                         {
@@ -2424,7 +2495,6 @@ $//img;
                     }
                 }
 
-                #print ("\n=============GETTING field of $col_letter$row_num: -- got ");
                 $field = get_field_value ($row_num, $col_letter, 1);
                 if ($row_num > $old_row_num)
                 {
@@ -2447,10 +2517,10 @@ $//img;
                         if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                         {
                             my $this_group = $1;
-                            $current_col_letter = new_get_next_field_letter ($current_col_letter);
+                            $current_col_letter = get_next_field_letter ($current_col_letter);
                             $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                             my $g_price = "GPRICE_$this_group";
-                            $current_col_letter = new_get_next_field_letter ($current_col_letter);
+                            $current_col_letter = get_next_field_letter ($current_col_letter);
                             $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
 
                             if (!defined ($group_colours {$this_group}))
@@ -2479,10 +2549,10 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
+                                $current_col_letter = get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
+                                $current_col_letter = get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
 
                                 if (!defined ($group_colours {$this_group}))
@@ -2498,9 +2568,9 @@ $//img;
                             }
                             else
                             {
-                                $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                                $old_col_letter = get_next_field_letter ($old_col_letter);
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                                $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                                $old_col_letter = get_next_field_letter ($old_col_letter);
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                             }
                         }
@@ -2516,10 +2586,10 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
+                                $current_col_letter = get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
+                                $current_col_letter = get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -2537,9 +2607,9 @@ $//img;
                     }
                     else
                     {
-                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                        $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                        $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                     #if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
@@ -2563,7 +2633,7 @@ $//img;
                 }
                 $x++;
                 $old_col_letter = $col_letter;
-                $col_letter = new_get_next_field_letter ($col_letter);
+                $col_letter = get_next_field_letter ($col_letter);
             }
             $row_num++;
         }
@@ -2602,9 +2672,9 @@ $//img;
                     }
                     else
                     {
-                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                        $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                        $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
@@ -2621,18 +2691,18 @@ $//img;
                     }
                     else
                     {
-                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                        $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                        $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
             }
             else
             {
-                $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                $old_col_letter = get_next_field_letter ($old_col_letter);
                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                $old_col_letter = new_get_next_field_letter ($old_col_letter);
+                $old_col_letter = get_next_field_letter ($old_col_letter);
                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
             }
 
@@ -2655,12 +2725,12 @@ $//img;
             if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
             {
                 $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
-
                 my $str = "class=td.price";
                 $html_text =~ s/XYZ$x/$str/;
             }
             else
             {
+                $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . " (not a detected number column)</button>";
                 $html_text =~ s/XYZ$x//;
             }
         }
@@ -2851,9 +2921,11 @@ $//img;
         $html_text .= "    fieldID.innerHTML = '<div class=\"field_border\"><span style=\"font-family: Arial; font-size: 11\">' + `\${currentElem.id}` + '</span></div>';\n";
         $html_text .= "    var rect = elem.getBoundingClientRect();\n";
         $html_text .= "    var rect2 = fieldID.getBoundingClientRect();\n";
+        $html_text .= "    var scrollLeft = (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft;\n";
+        $html_text .= "    var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;\n";
+        $html_text .= "    fieldID.style.top = rect.bottom - (rect2.height) + (scrollTop);\n";
+        $html_text .= "    fieldID.style.left = rect.right - (rect2.width) + (scrollLeft);\n";
         $html_text .= "    fieldID.style.position = \"absolute\";\n";
-        $html_text .= "    fieldID.style.top = rect.bottom - (rect2.height);\n";
-        $html_text .= "    fieldID.style.left = rect.right - (rect2.width);\n";
         $html_text .= "    fade (fieldID, 1500);\n";
         $html_text .= "}\n";
         $html_text .= "function onLeave(elem) \n";
@@ -2898,9 +2970,11 @@ $//img;
         $html_text .= "    fieldID.innerHTML = '<div class=\"field_border\"><span style=\"font-family: Arial; font-size: 11\">' + `\${currentElem.id}` + '</span></div>';\n";
         $html_text .= "    var rect = elem.getBoundingClientRect();\n";
         $html_text .= "    var rect2 = fieldID.getBoundingClientRect();\n";
+        $html_text .= "    var scrollLeft = (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft;\n";
+        $html_text .= "    var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;\n";
         $html_text .= "    fieldID.style.position = \"absolute\";\n";
-        $html_text .= "    fieldID.style.top = rect.bottom - (rect2.height);\n";
-        $html_text .= "    fieldID.style.left = rect.right - (rect2.width);\n";
+        $html_text .= "    fieldID.style.top = rect.bottom - (rect2.height) + (scrollTop);\n";
+        $html_text .= "    fieldID.style.left = rect.right - (rect2.width) + (scrollLeft);\n";
         $html_text .= "}\n";
         $html_text .= "</script>\n";
         $html_text .= "</body>\n";
