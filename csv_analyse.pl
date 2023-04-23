@@ -22,6 +22,9 @@ my $max_field_num = 0;
 my $max_rows = 0;
 my %col_types;
 my $show_formulas = 0;
+my $count = 0;
+my %each_element;
+my $each_element_count = 0;
 
 #####
 sub write_to_socket
@@ -91,7 +94,7 @@ sub read_from_socket
                 $isPost = 1;
             }
         }
-        
+
         if ($seen_content_len >= -1)
         {
             $seen_content_len ++;
@@ -106,7 +109,7 @@ sub read_from_socket
         {
             if ($header =~ m/Content.Length: (\d+)/im)
             {
-                $expected_content_len = $1; 
+                $expected_content_len = $1;
                 if ($old_expected_content_len < $expected_content_len)
                 {
                     $old_expected_content_len = $expected_content_len;
@@ -117,7 +120,7 @@ sub read_from_socket
                 }
             }
         }
-        
+
         #if ($isPost && $done_expected_content_len )
         #{
         #    #print ("$done_expected_content_len ($expected_content_len vs $seen_content_len )SO FAR IN POST: >$header<\n");
@@ -181,25 +184,6 @@ $field_letters {23} = "X";
 $field_letters {24} = "Y";
 $field_letters {25} = "Z";
 
-sub get_field_num_from_field_letter
-{
-    my $letter = $_ [0];
-    return ($field_letters {$letter});
-}
-
-sub get_field_letter_from_field_num
-{
-    my $num = $_ [0];
-    return ($field_letters {$num});
-}
-
-sub get_next_field_letter 
-{
-    my $letter = $_ [0];
-    my $num = get_field_num_from_field_letter ($letter);
-    return ($field_letters {$num + 1});
-}
-
 sub process_csv_data
 {
     my $block = $_ [0];
@@ -229,7 +213,6 @@ sub process_csv_data
             # Special case of G^ (G+Number one above) G_ (G+number one below) or G> (G+same number)
             while ($field =~ m/([A-Z])([\^\_>])/)
             {
-                print ("Found case for $col_letter$line_num of >>$field<<\n");
                 my $col = $1;
                 my $line_mod = $2;
 
@@ -248,32 +231,29 @@ sub process_csv_data
                     my $same_field = $col . $line_num;
                     $field =~ s/([A-Z])([\^\_>])/$same_field/;
                 }
-                print ("Done case for $col_letter$line_num of >>$field<<\n");
             }
 
             $csv_data {"$col_letter" . "$line_num"} = $field;
-            print (">>$col_letter$line_num === $field  ($line left)\n");
-            $col_letter = get_next_field_letter ($col_letter);
-            
-            if ($max_field_num < get_field_num_from_field_letter ($col_letter))
+            $col_letter = new_get_next_field_letter ($col_letter);
+
+            if ($max_field_num < new_get_field_num_from_field_letter ($col_letter))
             {
-                $max_field_num = get_field_num_from_field_letter ($col_letter);
+                $max_field_num = new_get_field_num_from_field_letter ($col_letter);
             }
         }
         $line_num++;
         $max_rows++;
     }
-    
+
     $col_letter = "A";
     while ($block =~ s/^([^;\t]*)([;\t]|$)// && $block =~ m/./)
     {
         my $field = $1;
         $csv_data {"$line_num.$col_letter"} = $field;
-        print (">> last $col_letter$line_num === $field  ($block left)\n");
-        $col_letter = get_next_field_letter ($col_letter);
-        if ($max_field_num < get_field_num_from_field_letter ($col_letter))
+        $col_letter = new_get_next_field_letter ($col_letter);
+        if ($max_field_num < new_get_field_num_from_field_letter ($col_letter))
         {
-            $max_field_num = get_field_num_from_field_letter ($col_letter);
+            $max_field_num = new_get_field_num_from_field_letter ($col_letter);
         }
     }
     $max_rows++;
@@ -311,7 +291,7 @@ sub get_col_type
     my $col_letter = $_ [0];
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  get_field_letter_from_field_num ($col_letter);
+        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
     }
     return ($col_types {$col_letter});
 }
@@ -328,7 +308,7 @@ sub get_col_header
     my $col_letter = $_ [0];
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  get_field_letter_from_field_num ($col_letter);
+        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
     }
     return ($csv_data {"$col_letter" . "1"});
 }
@@ -364,35 +344,20 @@ sub get_num_of_col_header
     return -1;
 }
 
-sub get_field_from_col_header
-{
-    my $row_num = $_ [0];
-    my $col_name = $_ [1];
-
-    my $col = get_num_of_col_header ($col_name);
-    if ($col > -1)
-    {
-        return get_field_value ($row_num, $col, 0);
-    }
-    return "";
-}
-
 sub has_field_id
 {
-    my $field_val = $_ [0]; 
-    my $orig_field_id = $_ [1]; 
+    my $field_val = $_ [0];
+    my $orig_field_id = $_ [1];
+    my $force_has_field = $_ [2];
 
     $field_val =~ s/:[A-Z]+\d+/:/;
     $field_val =~ s/[A-Z]+\d+://;
     $field_val =~ s/$orig_field_id//;
-    print ("    Is there a field id in $field_val ??? >>");
-    if ($field_val =~ m/^=.*([A-Z]+\d+)/)
+    if ($field_val =~ m/^=.*([A-Z]+\d+)/ || $force_has_field && $field_val =~ m/^.*([A-Z]+\d+)/)
     {
         my $field_id = $1;
-        print ("    yes $field_id\n");
         return $field_id;
     }
-    print ("    no\n");
     return "";
 }
 
@@ -414,257 +379,52 @@ sub get_col_letter
     }
 }
 
-sub simple_parentheses_only_one_argument 
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\([^(\|]+\)/)
-    {
-        return 1;
-    }
-    return 0;
-}
-
-sub simple_parentheses_only_two_arguments
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\([^(\|]*\|[^(\|]*?\)/)
-    {
-        print ("Checked s2a and ok\n");
-        return 1;
-    }
-    print ("Checked s2a for $field_val and NOT ok\n");
-    return 0;
-}
-
-sub simple_parentheses_only_three_arguments
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\([^(\|]+\|/)
-    {
-        print ("Checked s3a for $field_val aaa\n");
-    }
-    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|/)
-    {
-        print ("Checked s3a for $field_val bbb\n");
-    }
-    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
-    {
-        print ("Checked s3a for $field_val ccc\n");
-    }
-    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
-    {
-        return 1;
-    }
-    return 0;
-}
-
-sub is_number
-{
-    my $field = $_ [0];
-    return ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/ || $field =~ m/^\+\d+($|\.\d+)$/)
-}
-
-sub excel_to_perl_calculation
-{
-    # Egs:  =IF(A1<10|SUM(B2:B10)|100-MAX(10|B11))
-    # Egs:  =IF(A2+0.31/2>10|10|A2+0.31/2)
-    # Egs:  =IF(A2+0.31/2>10|BBB|concatenate(B2|"A"))
-
-    my $field_val = $_ [0];
-    my $field_id = $_ [1];
-    print ("\nDOING  ---- excel_to_perl_calculation for >>$field_val<<\n");
-    $field_val =~ s/PI\(\)/3.14159265358979323/img;
-    $field_val =~ s/([^=]+)=([^=]+)/$1==$2/g;
-    my $finished = 1;
-
-    if ($field_val =~ m/SUM\(/)
-    {
-        $field_val = do_sum_expansion ($field_val);
-    }
-    if ($field_val =~ m/CONCATENATE\(/)
-    {
-        $field_val = do_concat_expansion ($field_val);
-    }
-    if ($field_val =~ m/POWER\(/)
-    {
-        $field_val = do_power_expansion ($field_val);
-    }
-    if ($field_val =~ m/(IF\(.*)/)
-    {
-        my $to_check = $1;
-        if (simple_parentheses_only_three_arguments ($to_check, "IF"))
-        {
-            $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/($1 ? $2 : $3)/;
-        }
-        else 
-        {
-            print ("cc Not finished: $field_val\n");
-            $finished = 0;
-        }
-    }
-
-    if (!$finished)
-    {
-        print ("Not finished: $field_val\n");
-        return excel_to_perl_calculation ($field_val, $field_id);
-    }
-    $csv_data {$field_id . "_perl"} = $field_val;
-    print ("NOW finished: $field_id = {$field_val}\n");
-    return $field_val;
-}
-
-sub do_power_expansion
-{
-    my $field_val = $_ [0];
-    if ($field_val =~ m/((POWER)\(.*)/)
-    {
-        my $to_check = $1;
-        my $func = $2;
-        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
-        {
-            $field_val =~ s/$func\((.+)\|(.+)\)/($1)**($2)/;
-            return $field_val; 
-        }
-    }
-    return $field_val; 
-}
-
-sub do_concat_expansion
-{
-    my $field_val = $_ [0];
-    if ($field_val =~ m/(CONCATENATE\(.*)/)
-    {
-        my $to_check = $1;
-        if (simple_parentheses_only_two_arguments ($to_check, "CONCATENATE"))
-        {
-            if ($field_val =~ m/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/)
-            {
-                print ("concat 11: $field_val\n");
-                $field_val =~ s/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/"$1" . "$2"/;
-                $field_val =~ s/""/"/g;
-                $field_val =~ s/""/"/g;
-            }
-            elsif ($field_val =~ m/CONCATENATE\(\s*\|([^\|]+?)\)/)
-            {
-                print ("concat 01: $field_val\n");
-                $field_val =~ s/CONCATENATE\(\s*\|([^\|]+?)\)/"$1"/;
-                $field_val =~ s/""/"/g;
-                $field_val =~ s/""/"/g;
-            }
-            elsif ($field_val =~ m/CONCATENATE\(([^\|]+?)\|\s*\)/)
-            {
-                print ("concat 10: $field_val\n");
-                $field_val =~ s/CONCATENATE\(([^\|]+?)\|\s*\)/"$1"/;
-                $field_val =~ s/""/"/g;
-                $field_val =~ s/""/"/g;
-            }
-            elsif ($field_val =~ m/CONCATENATE\(\s*\|\s*\)/)
-            {
-                print ("concat 00: $field_val\n");
-                $field_val =~ s/CONCATENATE\(\s*\|\s*\)//;
-                $field_val =~ s/""/"/g;
-                $field_val =~ s/""/"/g;
-            }
-            print ("concat fail: $field_val\n");
-        }
-        else 
-        {
-            print ("bb Not finished: $field_val\n");
-            $field_val =~ s/CONCATENATE\(([^\|]+?)|(.+?)\)/$1 . CONCATENATE($2)/;
-        }
-        return $field_val;
-    }
-    return $field_val; 
-}
-
-sub do_sum_expansion
-{
-    my $field_val = $_ [0];
-
-    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
-    {
-        my $first_bit = $1; 
-        my $overall = $2; 
-        my $first_col = $3; 
-        my $first_num = $4; 
-        my $second_col = $5; 
-        my $second_num = $6; 
-
-        my $fc_num = get_field_num_from_field_letter ($first_col);
-        my $sc_num = get_field_num_from_field_letter ($second_col);
-        print (" >> Summing ($field_val) >> $fc_num.$first_num  to  $sc_num.$second_num\n");
-        my $sum_str = "";
-        my $i = $fc_num; 
-        my $j = $first_num; 
-        while ($i <= $sc_num)
-        {
-            print ("  in $i\n");
-            print ("$i $sc_num > $sum_str\n");
-            while ($j <= $second_num)
-            {
-                print ("  in $j\n");
-                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0); 
-                if (is_number ($cv))
-                {
-                    $sum_str .= "$cv+";
-                }
-                else
-                {
-                    $sum_str .= get_field_letter_from_field_num ($i) . "$j+";   
-                }
-                $j++;
-            }
-            $j = $first_num; 
-            $i++;
-        }
-        $sum_str =~ s/\+$//;
-        $sum_str .= "";
-        return $sum_str;
-    }
-    return $field_val;
-}
-
 sub calc_field_value
 {
-    my $field_val = $_ [0]; 
-    my $row_num = $_ [1]; 
-    my $col_letter = $_ [2]; 
-    my $next_field_id = has_field_id ($field_val, "$col_letter$row_num");
+    my $field_val = $_ [0];
+    my $orig_field_val = $_ [0];
+    my $row_num = $_ [1];
+    my $col_letter = $_ [2];
+    my $iteration_count = $_ [3];
+    my $force_calculation = $_ [4];
+    if ($iteration_count > 10) { print ("TOO MANY ITERATIONS\n"); return "ERROR (can't compute)"; }
 
     if ($show_formulas)
     {
-        return $field_val;
+        return "SHOW_FORMULAS:" . $field_val;
     }
 
-    while ($next_field_id ne "")
-    {
-        if ($next_field_id eq "$col_letter$row_num") { return "ERROR (self-ref)"; } 
-        my $rn = get_row_num ($next_field_id);
-        my $cl = get_col_letter ($next_field_id);
-        my $that_field_val = get_field_value ($rn, $cl, 0);
-        #print ("\nBEFORE:$field_val ... changing $next_field_id for $that_field_val\n");
-        $field_val =~ s/$next_field_id/$that_field_val/; 
-        #print ("\nAFTER:$field_val ... changing $next_field_id for $that_field_val\n");
-        $next_field_id = has_field_id ($field_val, "$col_letter$row_num");
-    }
+    $field_val = fix_up_field_vals ($field_val, "$col_letter$row_num", 0);
 
-    if ($field_val =~ s/^=//)
+    if ($field_val =~ s/^=// || $force_calculation)
     {
-        my $orig_field_val = $field_val;
-        my $fv = excel_to_perl_calculation ($field_val, "$col_letter$row_num");
+        my $fv = excel_to_perl_calculation ($field_val, "$col_letter$row_num", $iteration_count);
 
-        my $next_field_id = has_field_id ("=" . $fv, "$col_letter$row_num");
+        my $next_field_id = has_field_id ("=" . $fv, "$col_letter$row_num", $force_calculation);
         if ($next_field_id ne "")
         {
-            return calc_field_value ("=" . $fv);
+            return calc_field_value ("=" . $fv, $row_num, $col_letter, $iteration_count+1, 0);
         }
-        print ("\nDOING CALCULATIONS: $col_letter$row_num evaluating >>$fv<<\n");
+
+        print ("\nDOING CALCULATIONS: $col_letter$row_num evaluating >>$fv<< from $orig_field_val\n");
+        print ("\nActually DOING CALCULATIONS: $col_letter$row_num evaluating >>$fv<< from $orig_field_val\n");
+        if ($fv =~ m/^[<\(]dq\..*.dq[>\)]$/)
+        {
+            $fv =~ s/.dq./"/img;
+            return $fv;
+        }
+
         my $valid_calc = eval { $fv };
         if (!defined ($valid_calc))
         {
+            print ("BROKEN THING ($force_calculation)- $fv, $valid_calc << from $field_val\n");
+            if ($force_calculation)
+            {
+                # Something's broke
+                print ("BROKEN THING - $fv, $valid_calc << from $field_val\n");
+                return $field_val;
+            }
+
             $fv = lc($fv);
             my $valid_calc = eval { $fv };
             if (!defined ($valid_calc))
@@ -672,7 +432,7 @@ sub calc_field_value
                 return "ERROR ($fv invalid)";
             }
             my $valid_calc2 = eval { $valid_calc };
-            
+
             if (!defined ($valid_calc2))
             {
                 return "ERROR ($fv invalid)";
@@ -692,7 +452,7 @@ sub set_field_value
 
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  get_field_letter_from_field_num ($col_letter);
+        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
     }
     my $str = "$col_letter" . $row_num;
     if (defined ($csv_data {$str}))
@@ -701,198 +461,6 @@ sub set_field_value
     }
 }
 
-### EXPERIMENTAL
-sub exp_simple_parentheses_only_one_argument 
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\([^(\|]+\)/)
-    {
-        #print ("Checked s1a ($field_val) and ok\n");
-        return 1;
-    }
-    #print ("Checked s1a ($field_val) and NOT ok\n");
-    return 0;
-}
-
-sub exp_simple_parentheses_only_two_arguments
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\([^(\|]*\|[^(\|]*?\)/)
-    {
-        #print ("Checked s2a and ok\n");
-        return 1;
-    }
-    #print ("Checked s2a for $field_val and NOT ok\n");
-    return 0;
-}
-
-sub exp_simple_parentheses_only_three_arguments
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\([^(\|]+\|/)
-    {
-        #print ("Checked s3a for $field_val aaa\n");
-    }
-    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|/)
-    {
-        #print ("Checked s3a for $field_val bbb\n");
-    }
-    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
-    {
-        #print ("Checked s3a for $field_val ccc\n");
-    }
-    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
-    {
-        #print ("Checked s3a for $field_val and ok\n");
-        return 1;
-    }
-    #print ("Checked s3a for $field_val and NOT ok\n");
-    return 0;
-}
-
-sub exp_simple_parentheses_many_arguments
-{
-    my $field_val = $_ [0];
-    my $func = $_ [1];
-    if ($field_val =~ m/^$func\(([^(\|]+\|){3,10}[^(\|]+\)/)
-    {
-        #print ("Checked sMa for $field_val and ok\n");
-        return 1;
-    }
-    #print ("Checked sMa for $field_val and NOT ok\n");
-    return 0;
-}
-
-my $count = 0;
-my %each_element;
-my $each_element_count = 0;
-
-sub breakdown_excel
-{
-    my $excel_function = $_ [0];
-    print (">>>>>>>>>=================$excel_function\n");
-    my $i = 0;
-    while ($excel_function =~ s/"([^"]*)"/xxSTRING$each_element_count/) 
-    {
-        $each_element {"xxSTRING$each_element_count"} = $1 . "<<xxSTRING$each_element_count";
-        $each_element_count++;
-        $i++;
-    }
-    
-    $count ++;
-    if ($count > 500) { print (">>>>>>>>>========GIVING UP =========$excel_function\n"); return "giving up"; }
-    while ($excel_function =~ m/(([A-Z]+)\(.*)/) 
-    {
-        my $test = $1;
-        my $func = $2;
-        #$test =~ s/\.XYZ\./(/;
-        print (" CHECKING >$func< for >$test<\n");
-        if (exp_simple_parentheses_only_one_argument ($test, $func)) 
-        {
-            $excel_function =~ s/($func\([^\)]*\))/xxONE$each_element_count/; 
-            $each_element {"xxONE$each_element_count"} = $1 . "<<xxONE$each_element_count";
-            $each_element_count++;
-            print (" Found 1sa func of $1 (Now $excel_function)\n");
-        }
-        elsif (exp_simple_parentheses_only_two_arguments ($test, $func)) 
-        {
-            $excel_function =~ s/($func\([^\|\)]*\|.*?\))/xxTWO$each_element_count/; 
-            $each_element {"xxTWO$each_element_count"} = $1 . "<<xxTWO$each_element_count";
-            $each_element_count++;
-            print (" Found 2sa func of $1 (Now $excel_function)\n");
-        }
-        elsif (exp_simple_parentheses_only_three_arguments ($test, $func)) 
-        {
-            $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/xxTHREE$each_element_count/; 
-            $each_element {"xxTHREE$each_element_count"} = $1 . "<<xxTHREE$each_element_count";
-            $each_element_count++;
-            print (" Found 3sa func of $1 (Now $excel_function)\n");
-        }
-        elsif (exp_simple_parentheses_many_arguments($test, $func)) 
-        {
-            $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/xxMANY$each_element_count/; 
-            $each_element {"xxMANY$each_element_count"} = $1 . "<<xxMANY$each_element_count";
-            $each_element_count++;
-            print (" Found MANYsa func of $1 (Now $excel_function)\n");
-        }
-        else
-        {
-            $excel_function =~ s/$func\(/$func.XYZ./;
-            print (" Do later !! (Now $excel_function)\n");
-        }
-    }
-    if ($excel_function =~ m/\.XYZ\./)
-    {
-        $excel_function =~ s/\.XYZ\./(/g;
-        return breakdown_excel ($excel_function);
-    }
-    $each_element {"ZZMAX"} = $excel_function;
-    return $excel_function;
-}
-
-sub recreate_excel
-{
-    my $str;
-    my $k;
-    my $v;
-    foreach $k (sort keys (%each_element))
-    {
-        $v = $each_element {$k};
-        #print ("recreate - checking >$v<\n");
-        if ($v =~ m/^SUM\(/)
-        {
-            $v = do_sum_expansion ($v);
-            #print ("DID $k SUM - $v\n");
-            $each_element {$k} = $v;
-        }
-        elsif ($v =~ m/^CONCATENATE\(/)
-        {
-            $v = do_concat_expansion ($v);
-            #print ("DID $k CONCAT - $v\n");
-            $each_element {$k} = $v;
-        }
-        elsif ($v =~ m/^POWER\(/)
-        {
-            $v = do_power_expansion ($v);
-            #print ("DID $k POWER - $v\n");
-            $each_element {$k} = $v;
-        }
-    }
-
-    foreach $k (sort keys (%each_element))
-    {
-        if ($k ne "ZZMAX")
-        {
-            next;
-        }
-        my $str = $each_element {$k}; 
-        #print " mmm doing: $k -- >$str<\n";
-
-        $str =~ s/<<xx.*//;
-        #print " mmm2 doing: $k -- >$str<\n";
-        while ($str =~ m/(xx[A-Z]+\d+)/)
-        {
-            my $k2 = $1;
-            my $str2 = $each_element{$k2};
-            #print " zzz doing: $k -- >$str< for ($k2) $str\n";
-            $str2 =~ s/<<xx.*//;
-
-            $str =~ s/$k2/$str2/; 
-        }
-        $each_element {$k} = $str; 
-        if ($k =~ m/ZZMAX/)
-        {
-            #print "Done: $k -- >$str<\n";
-            return $str;
-        }
-        #print " not Done yet: $k -- $str\n";
-    }
-}
-### END EXPERIMENTAL
-
 sub get_field_value
 {
     my $row_num = $_ [0];
@@ -900,8 +468,9 @@ sub get_field_value
     my $for_display = $_ [2];
     if ($col_letter =~ m/^\d+$/)
     {
-        $col_letter =  get_field_letter_from_field_num ($col_letter);
+        $col_letter =  new_get_field_letter_from_field_num ($col_letter);
     }
+
     my $field_id = "$col_letter" . $row_num;
     if (defined ($csv_data {$field_id}))
     {
@@ -915,12 +484,8 @@ sub get_field_value
                 %each_element = %new_each_element;
                 $count = 0;
                 $each_element_count = 0;
-                breakdown_excel ($csv_data {$field_id});
-                my $v = recreate_excel ();
-                my $some_val = calc_field_value ($v, $row_num, $col_letter);
-                $calc_val = calc_field_value ($csv_data {$field_id}, $row_num, $col_letter);
-                print ("RECREATED calc_val $some_val <<< read\n");
-                print ("NOT RECREATED calc_val $calc_val <<< read\n");
+                new_breakdown_excel ($csv_data {$field_id}, 0);
+                my $some_val = new_recreate_perl ($field_id);
                 if ($some_val ne $calc_val)
                 {
                     if ($calc_val eq "")
@@ -961,6 +526,620 @@ sub get_field_value
     }
     return ("");
 }
+
+#### NEW CALCULATIONS
+sub new_simple_parentheses_only_one_argument
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\([^(\|]+\)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+sub new_simple_parentheses_only_two_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\([^(\|]*\|[^(\|]*?\)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+sub new_simple_parentheses_only_three_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\([^(\|]+\|[^(\|]+\|[^(\|]+\)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+sub new_simple_parentheses_many_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/^$func\(([^(\|]+\|){3,10}[^(\|]+\)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+sub new_breakdown_excel
+{
+    my $excel_function = $_ [0];
+    my $iteration = $_ [1];
+
+    if ($iteration == 0)
+    {
+        $each_element_count = 0;
+        my %new_each_element;
+        %each_element = %new_each_element;
+    }
+    if ($iteration > 50)
+    {
+        return;
+    }
+    my $i = 0;
+    while ($excel_function =~ s/("[^"]*")/xXSTRING$each_element_count/)
+    {
+        $each_element {"xXSTRING$each_element_count"} = "$1<< xXSTRING$each_element_count";
+        $each_element_count++;
+        $i++;
+    }
+
+    $count ++;
+    if ($count > 500) 
+    {
+        #print (">>>>>>>>>========GIVING UP =========$excel_function\n");
+        return "giving up"; 
+    }
+    while ($excel_function =~ m/(([A-Z]+)\(.*)/)
+    {
+        my $test = $1;
+        my $func = $2;
+        #$test =~ s/\.XYZ\./(/;
+        if (new_simple_parentheses_only_one_argument ($test, $func))
+        {
+            $excel_function =~ s/($func\([^\)]*\))/xXONE$each_element_count/;
+            $each_element {"xXONE$each_element_count"} = $1 . "<< xXONE$each_element_count";
+            $each_element_count++;
+        }
+        elsif (new_simple_parentheses_only_two_arguments ($test, $func))
+        {
+            $excel_function =~ s/($func\([^\|\)]*\|.*?\))/xXTWO$each_element_count/;
+            $each_element {"xXTWO$each_element_count"} = $1 . "<< xXTWO$each_element_count";
+            $each_element_count++;
+        }
+        elsif (new_simple_parentheses_only_three_arguments ($test, $func))
+        {
+            $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/xXTHREE$each_element_count/;
+            $each_element {"xXTHREE$each_element_count"} = $1 . "<< xXTHREE$each_element_count";
+            $each_element_count++;
+        }
+        elsif (new_simple_parentheses_many_arguments($test, $func))
+        {
+            $excel_function =~ s/($func\([^\|\)]*\|[^\|\)]*\|.*?\))/xXMANY$each_element_count/;
+            $each_element {"xXMANY$each_element_count"} = $1 . "<< xXMANY$each_element_count";
+            $each_element_count++;
+        }
+        else
+        {
+            $excel_function =~ s/$func\(/$func.XYZ./;
+        }
+    }
+    if ($excel_function =~ m/\.XYZ\./)
+    {
+        $excel_function =~ s/\.XYZ\./(/g;
+        return new_breakdown_excel ($excel_function, $iteration + 1);
+    }
+    $excel_function =~ s/^=//;
+    #print ("\nSUCCESS -- Finally -- >$excel_function<\n");
+    $each_element {"ZZMAX"} = $excel_function;
+    return $excel_function;
+}
+
+sub new_recreate_excel
+{
+    my $str;
+    my $k;
+    foreach $k (sort keys (%each_element))
+    {
+        my $str = $each_element {$k};
+        $str =~ s/<< .*//;
+        while ($str =~ m/(xX[A-Z]+\d+)/)
+        {
+            my $k2 = $1;
+            my $str2 = $each_element{$k2};
+            $str2 =~ s/<< .*//;
+            $str =~ s/$k2/$str2/;
+        }
+        $each_element {$k} = $str;
+    }
+}
+
+sub new_do_power_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((POWER)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/($1)**($2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_concat_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/(CONCATENATE\(.*)/)
+    {
+        my $to_check = $1;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "CONCATENATE"))
+        {
+            if ($field_val =~ m/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/)
+            {
+                $field_val =~ s/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/"$1" . "$2"/;
+                $field_val =~ s/""/"/g;
+                $field_val =~ s/""/"/g;
+            }
+            elsif ($field_val =~ m/CONCATENATE\(\s*\|([^\|]+?)\)/)
+            {
+                $field_val =~ s/CONCATENATE\(\s*\|([^\|]+?)\)/"$1"/;
+                $field_val =~ s/""/"/g;
+                $field_val =~ s/""/"/g;
+            }
+            elsif ($field_val =~ m/CONCATENATE\(([^\|]+?)\|\s*\)/)
+            {
+                $field_val =~ s/CONCATENATE\(([^\|]+?)\|\s*\)/"$1"/;
+                $field_val =~ s/""/"/g;
+                $field_val =~ s/""/"/g;
+            }
+            elsif ($field_val =~ m/CONCATENATE\(\s*\|\s*\)/)
+            {
+                $field_val =~ s/CONCATENATE\(\s*\|\s*\)//;
+                $field_val =~ s/""/"/g;
+                $field_val =~ s/""/"/g;
+            }
+        }
+        else
+        {
+            $field_val =~ s/CONCATENATE\(([^\|]+?)|(.+?)\)/$1 . CONCATENATE($2)/;
+        }
+        return $field_val;
+    }
+    return $field_val;
+}
+
+sub new_do_mod_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((MOD)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/($1)%($2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_max_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((MAX)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/($1 > $2 ? $1 | $2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_min_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((MAX)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/($1 <= $2 ? $1 | $2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_left_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((LEFT)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, 0, $2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_right_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((LEFT)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, $2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_textjoin_expansion
+{
+    my $field_val = $_ [0];
+    my $orig_field_val = $_ [0];
+    if ($field_val =~ m/((TEXTJOIN)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_three_arguments ($to_check, "$func"))
+        {
+            $field_val =~ m/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/;
+            my $delimiter = $1;
+            my $cond = $2;
+            my $text = $3;
+            if ($cond eq "TRUE")
+            {
+                $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/"$3"/g;
+            }
+            return $field_val;
+        }
+        if (new_simple_parentheses_many_arguments ($to_check, "$func"))
+        {
+            my $new_str = "\"\"";
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|//;
+            my $delimiter = $1;
+            my $cond = $2;
+            while ($field_val =~ s/^([^\(\|]+)\|//)
+            {
+                my $text = $1;
+                $new_str = "$new_str . $delimiter . $text";
+            }
+            if ($field_val =~ s/^([^\(\|]+)\)//)
+            {
+                my $text = $1;
+                $new_str = "$new_str . $delimiter . $text";
+            }
+            $new_str = "($new_str)";
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_len_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((LEN)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (new_simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/length($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub new_do_if_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((IF)\(.*)/)
+    {
+        my $to_check = $1;
+        #if (new_simple_parentheses_only_three_arguments ($to_check, "IF"))
+        {
+            $field_val =~ m/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/;
+            my $condition = $1;
+            my $true_bit = $2;
+            my $false_bit = $3;
+            $condition =~ s/([^=]+)=([^=]+)/$1==$2/g;
+            $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/($condition ? $true_bit : $false_bit)/;
+        }
+    }
+    return $field_val;
+}
+
+my %field_letters;
+$field_letters {"A"} = 0;
+$field_letters {"B"} = 1;
+$field_letters {"C"} = 2;
+$field_letters {"D"} = 3;
+$field_letters {"E"} = 4;
+$field_letters {"F"} = 5;
+$field_letters {"G"} = 6;
+$field_letters {"H"} = 7;
+$field_letters {"I"} = 8;
+$field_letters {"J"} = 9;
+$field_letters {"K"} = 10;
+$field_letters {"L"} = 11;
+$field_letters {"M"} = 12;
+$field_letters {"N"} = 13;
+$field_letters {"O"} = 14;
+$field_letters {"P"} = 15;
+$field_letters {"Q"} = 16;
+$field_letters {"R"} = 17;
+$field_letters {"S"} = 18;
+$field_letters {"T"} = 19;
+$field_letters {"U"} = 20;
+$field_letters {"V"} = 21;
+$field_letters {"W"} = 22;
+$field_letters {"X"} = 23;
+$field_letters {"Y"} = 24;
+$field_letters {"Z"} = 25;
+
+$field_letters {0} = "A";
+$field_letters {1} = "B";
+$field_letters {2} = "C";
+$field_letters {3} = "D";
+$field_letters {4} = "E";
+$field_letters {5} = "F";
+$field_letters {6} = "G";
+$field_letters {7} = "H";
+$field_letters {8} = "I";
+$field_letters {9} = "J";
+$field_letters {10} = "K";
+$field_letters {11} = "L";
+$field_letters {12} = "M";
+$field_letters {13} = "N";
+$field_letters {14} = "O";
+$field_letters {15} = "P";
+$field_letters {16} = "Q";
+$field_letters {17} = "R";
+$field_letters {18} = "S";
+$field_letters {19} = "T";
+$field_letters {20} = "U";
+$field_letters {21} = "V";
+$field_letters {22} = "W";
+$field_letters {23} = "X";
+$field_letters {24} = "Y";
+$field_letters {25} = "Z";
+
+sub new_get_field_num_from_field_letter
+{
+    my $letter = $_ [0];
+    return ($field_letters {$letter});
+}
+
+sub new_get_field_letter_from_field_num
+{
+    my $num = $_ [0];
+    return ($field_letters {$num});
+}
+
+sub new_get_next_field_letter
+{
+    my $letter = $_ [0];
+    my $num = new_get_field_num_from_field_letter ($letter);
+    return ($field_letters {$num + 1});
+}
+
+sub new_is_number
+{
+    my $field = $_ [0];
+    return ($field =~ m/^\d+($|\.\d+)$/ || $field =~ m/^-\d+($|\.\d+)$/ || $field =~ m/^\+\d+($|\.\d+)$/)
+}
+
+#sub new_get_field_value
+#{
+#    my $row_num = $_ [0];
+#    my $col_letter = $_ [1];
+#    my $for_display = $_ [2];
+#    if ($col_letter eq "A")
+#    {
+#        return $row_num;
+#    }
+#    if ($col_letter eq "B")
+#    {
+#        return "$row_num.25";
+#    }
+#    return "zzz";
+#}
+
+sub new_do_sum_expansion
+{
+    my $field_val = $_ [0];
+
+    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
+    {
+        my $first_bit = $1;
+        my $overall = $2;
+        my $first_col = $3;
+        my $first_num = $4;
+        my $second_col = $5;
+        my $second_num = $6;
+
+        my $fc_num = new_get_field_num_from_field_letter ($first_col);
+        my $sc_num = new_get_field_num_from_field_letter ($second_col);
+        my $sum_str = "";
+        my $i = $fc_num;
+        my $j = $first_num;
+        while ($i <= $sc_num)
+        {
+            while ($j <= $second_num)
+            {
+                my $cv = get_field_value ($j, new_get_field_letter_from_field_num ($i), 0);
+                if (new_is_number ($cv))
+                {
+                    $sum_str .= "$cv+";
+                }
+                else
+                {
+                    $sum_str .= new_get_field_letter_from_field_num ($i) . "$j+";
+                }
+                $j++;
+            }
+            $j = $first_num;
+            $i++;
+        }
+        $sum_str =~ s/\+$//;
+        $sum_str .= "";
+        return $sum_str;
+    }
+    return $field_val;
+}
+
+sub fix_up_field_vals
+{
+    my $field_val = $_ [0];
+    my $orig_field_val = $_ [0];
+    my $field_id = $_ [1];
+    my $force_calculation = $_ [2];
+
+    my $next_field_id = has_field_id ($field_val, $field_id, 1);
+    while ($next_field_id ne "")
+    {
+        if ($next_field_id eq $field_id) { return "ERROR (self-ref)"; } 
+        my $rn = get_row_num ($next_field_id);
+        my $cl = get_col_letter ($next_field_id);
+        my $that_field_val = get_field_value ($rn, $cl, 0);
+        $field_val =~ s/$next_field_id/$that_field_val/; 
+        $next_field_id = has_field_id ($field_val, $field_id, 1);
+    }
+    return $field_val;
+}
+
+sub new_perl_expansions
+{
+    my $str = $_ [0];
+
+    if ($str =~ m/SUM\(/)
+    {
+        $str = new_do_sum_expansion ($str);
+    }
+    if ($str =~ m/CONCATENATE\(/)
+    {
+        $str = new_do_concat_expansion ($str);
+    }
+    if ($str =~ m/POWER\(/)
+    {
+        $str = new_do_power_expansion ($str);
+    }
+    if ($str =~ m/MOD\(/)
+    {
+        $str = new_do_mod_expansion ($str);
+    }
+    if ($str =~ m/MAX\(/)
+    {
+        $str = new_do_max_expansion ($str);
+    }
+    if ($str =~ m/MIN\(/)
+    {
+        $str = new_do_min_expansion ($str);
+    }
+    if ($str =~ m/LEFT\(/)
+    {
+        $str = new_do_left_expansion ($str);
+    }
+    if ($str =~ m/RIGHT\(/)
+    {
+        $str = new_do_right_expansion ($str);
+    }
+    if ($str =~ m/TEXTJOIN\(/)
+    {
+        $str = new_do_textjoin_expansion ($str);
+    }
+    if ($str =~ m/IF\(/)
+    {
+        $str = new_do_if_expansion ($str);
+    }
+
+    # General cleanup..
+    $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
+    return $str;
+}
+
+sub new_recreate_perl
+{
+    my $field_id = $_ [0];
+    my $str;
+    my $k;
+    foreach $k (sort keys (%each_element))
+    {
+        my $str = $each_element {$k};
+        $str = new_perl_expansions ($str);
+        $each_element {$k} = $str;
+    }
+
+    foreach $k (sort keys (%each_element))
+    {
+        my $str = $each_element {$k};
+        $str =~ s/<< .*//;
+        while ($str =~ m/(xX[A-Z]+\d+)/)
+        {
+            my $k2 = $1;
+            my $str2 = $each_element{$k2};
+            $str2 =~ s/<< .*//;
+            $str =~ s/$k2/$str2/;
+        }
+        $str = new_perl_expansions ($str);
+
+        $str = fix_up_field_vals ($str, $field_id, 0);
+        $each_element {$k} = $str;
+        my $xx;
+
+        # Print a value into a variable as read from STDOUT that eval prints out
+        my $output;
+        open (my $outputFH, '>', \$output) or die;
+        my $oldFH = select $outputFH;
+        eval ("print ($str);");
+        select $oldFH;
+        close $outputFH;
+
+        if ($k =~ m/xXSTRING/)
+        {
+            $output = $str;
+        }
+
+        if ($k eq "ZZMAX")
+        {
+            $csv_data {$field_id . "_perl"} = $str;
+            return $output;
+        }
+        #$each_element {$k} = $output;
+    }
+}
+#### END NEW CALCULATIONS
 
 sub get_graph_html
 {
@@ -1331,9 +1510,9 @@ sub get_graph_html
     my $not_seen_full = 1;
 
     process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf
-0.26;0.26;4.25076923;AAA;;;;
-0.26;0.26;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;;
-0.26;0.26;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2)
+1;3;4.25076923;AAA;;;;
+2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;;
+12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2)
 =SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2)
 =A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2)
 ;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2)
@@ -1341,7 +1520,7 @@ sub get_graph_html
 ;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2)
 ;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2)
 ;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2)
-;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));;;;=SUM(E4:H11)
+;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;;
 ");
     while ($paddr = accept (CLIENT, SERVER))
     {
@@ -1377,12 +1556,12 @@ sub get_graph_html
             copy "d:/perl_programs/aaa.jpg", \*CLIENT;
             next;
         }
-        
+
         if ($txt =~ m/GET.*update_csv.*/m)
         {
             $txt =~ m/(........update_csv.......)/im;
             my $matching_text = $1;
-            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br> 
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br>
 <form action=\"updated_csv\" id=\"newcsv\" name=\"newcsv\" method=\"post\">
 <textarea id=\"newcsv\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newcsv\" name=\"newcsv\">$csv_block</textarea>
 <input type=\"submit\" value=\"New CSV\" class=\"submitButton\">
@@ -1391,12 +1570,12 @@ sub get_graph_html
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
-        
+
         if ($txt =~ m/GET.*show_examples.*/m)
         {
             $txt =~ m/(........show_examples.......)/im;
-            
-            my $examples = "
+
+            my $examples_one = "
 DoW;Increment Series;Months;DaysInMonth;Years;YearMonth;Oneupcounter
 Monday;1;January;31;2001;202301;
 Tuesday;=B1+1;February;28;2002;202302;
@@ -1409,69 +1588,240 @@ Monday;=B7+1;August;31;2008;202308;
 Tuesday;=B8+1;September;30;2009;202309;
 Wednesday;=B9+1;October;31;2010;202310;
 Thursday;2;November;30;2011;202311;
-Friday;=B11+1;December;31;2012;202312;
-OneUp
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-YearMon;Days In Month;Left owing;Annual Interest;Daily Interest;Monthly Interest;Total owing;Interest for Month;After payment 
-202301;31;500000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;28;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+100-11;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;28;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+100-11;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;28;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;30;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
-=A^+1;31;=I^;0.0500;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;3000
+Friday;=B11+1;December;31;2012;202312;";
+            my$examples_two= "OneUp;OneUpFormula\n1;1\n2;=B^+1\n3;=B^+1\n4;=B^+1\n5;=B^+1\n6;=B^+1\n7;=B^+1\n8;=B^+1\n9;=B^+1\n10;=B^+1\n11;=B^+1\n12;=B^+1";
+            my$examples_three= "BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf
+1;3;4.25076923;AAA;;;;
+2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;;
+12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2)
+=SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2)
+=A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2)
+;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2)
+=POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2)
+;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2)
+;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2)
+;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2)
+;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;;";
+            my$examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
+201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+100-11;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 ";
 
-            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br> 
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
-<textarea id=\"examples\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples\">$examples</textarea>
+<textarea id=\"examples1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples1\">$examples_one</textarea>
+<textarea id=\"examples2\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples2\">$examples_two</textarea>
+<textarea id=\"examples3\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples3\">$examples_three</textarea>
+<textarea id=\"examples4\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples4\">$examples_four</textarea>
 <input type=\"submit\" value=\"Done\" class=\"submitButton\">
 </form>
 </body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
-        
+
         if ($txt =~ m/GET.*toggle_calculate_off.*HTTP/m)
         {
             $show_formulas = 1;
@@ -1514,7 +1864,7 @@ YearMon;Days In Month;Left owing;Annual Interest;Daily Interest;Monthly Interest
             write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
             next;
         }
-        
+
         if ($txt =~ m/GET.*dograph_group_totals/m)
         {
             my $col = $1;
@@ -1522,7 +1872,7 @@ YearMon;Days In Month;Left owing;Annual Interest;Daily Interest;Monthly Interest
             write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
             next;
         }
-        
+
         print ("2- - - - - - -\n");
         my $have_to_write_to_socket = 1;
 
@@ -1593,7 +1943,7 @@ $//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^.*newcsv=//img;
             $new_csv_data =~ s/%0D%0A/\n/img;
-            process_csv_data ($new_csv_data); 
+            process_csv_data ($new_csv_data);
         }
 
         my $search = ".*";
@@ -1601,13 +1951,13 @@ $//img;
         {
             $search = "$1";
         }
-        
+
         my $group = ".*";
         if ($txt =~ m/groupstr=(.*)/im)
         {
             $group = "$1";
         }
-        
+
         my $dual_group = ".*";
         if ($txt =~ m/dualgroup=(.*)/im)
         {
@@ -1722,7 +2072,7 @@ $//img;
         $html_text .= "<body>\n";
         $html_text .= "<div id=\"fieldID\" class=\"field_div\"><div class=\"field_border\"></div></div>";
         $html_text .= "<table width=100%><tr>\n";
-        
+
         $html_text .= "<td><form action=\"/csv_analyse/search\">
                 <label for=\"searchstr\">Search:</label><br>
                 <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\" style=\"width:210px;\">
@@ -1737,7 +2087,7 @@ $//img;
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
-                
+
         my $f1 = get_field_value (2, "D", 1);
         $f1 =~ s/\W/./img;
         $f1 =~ s/^(...)..*$/$1../img;
@@ -1752,13 +2102,13 @@ $//img;
                 <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Dual Group By\" >
                 </form></td>";
-                
+
         $html_text .= "<td><form action=\"/csv_analyse/update_csv\">
                 <label>Update CSV:</label><br>
                 <input type=\"submit\" value=\"Update CSV\">
                 <a href=\"/csv_analyse/show_examples\">Examples</a>
                 </form></td>";
-                
+
         if ($show_formulas == 0)
         {
             $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_off\">
@@ -1799,18 +2149,18 @@ $//img;
         $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
         $html_text .= "</script>\n";
         $html_text .= "<div class=\"table-wrap\"><table id=\"table\" class=\"sortable\">\n";
-                
+
         $html_text .= "<thead>\n";
         #$html_text .= "<br><textarea style=\"font-family:courier-new;size=-3;white-space:pre-wrap\"\">QQQ</textarea><br>";
         $html_text .= "QQQ";
-        
+
         $html_text .= "<tr>\n";
         $html_text .= "<th class=\"no-sort\"><div id=\"field\"/>&#9698;</th>";
 
         my $x;
         for ($x = 0; $x < $max_field_num; $x++)
         {
-            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . " " . get_field_letter_from_field_num ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+            $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . " " . new_get_field_letter_from_field_num ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -1826,7 +2176,7 @@ $//img;
         my $overall_count = 0;
         my %group_prices;
         my %group_counts;
-                
+
         my $only_one_group = 1;
         my $first_group_only = 0;
         my $dual_groups = 0;
@@ -1837,7 +2187,7 @@ $//img;
             $chosen_col = "$1";
             print ("WOOT $chosen_col\n");
         }
-        
+
         if ($dual_group =~ s/#(.*)//)
         {
             $chosen_col = "$1";
@@ -1853,7 +2203,7 @@ $//img;
             $group = "$1";
             $group2 = "$2";
         }
-        
+
         if ($dual_group =~ m/\((.*)\).*\((.*)\)/)
         {
             $only_one_group = 0;
@@ -1895,16 +2245,16 @@ $//img;
             $col_letter = "A";
             while ($x < $max_field_num)
             {
-                if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
+                if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = new_get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
                 my $field = get_field_value ($row_num, $col_letter, 1);
-                print ("\n=============HANDLING field of $col_letter$row_num: -- got >>$field<<"); 
+                #print ("\n=============HANDLING field of $col_letter$row_num: -- got >>$field<<");
 
                 if (!defined ($col_types {$col_letter}))
                 {
                     if ($field =~ m/^\s*$/)
                     {
-                        
+
                     }
                     elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                     {
@@ -1981,7 +2331,7 @@ $//img;
                 {
                     if ($field =~ m/^\s*$/)
                     {
-                        
+
                     }
                     elsif ($field =~ m/^\d\d\d\d\d\d\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d$/ || $field =~ m/^\d\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d\d[\/]\d\d\d\d$/ || $field =~ m/^\d\d[\/]\d[\/]\d\d\d\d$/ || $field =~ m/^\d[\/]\d[\/]\d\d\d\d$/)
                     {
@@ -2074,12 +2424,11 @@ $//img;
                     }
                 }
 
-                print ("\n=============GETTING field of $col_letter$row_num: -- got "); 
+                #print ("\n=============GETTING field of $col_letter$row_num: -- got ");
                 $field = get_field_value ($row_num, $col_letter, 1);
-                print (">>>>>$field<<<<<:\n"); 
                 if ($row_num > $old_row_num)
                 {
-                    # Add row to table if matched 
+                    # Add row to table if matched
                     $fake_row = $row;
                     $fake_row =~ s/<[^>]*>//img;
                     $fake_row =~ s/\n//img;
@@ -2089,19 +2438,19 @@ $//img;
                         print ("DUAL- checking $overall_match vs $fake_row\n");
                         $force_row = -1;
                     }
-                    
+
                     my $xrow = $row;
                     my $current_col_letter = $col_letter;
-                    if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+                    if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                     {
                         $force_row = 1;
-                        if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
+                        if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                         {
                             my $this_group = $1;
-                            $current_col_letter = get_next_field_letter ($current_col_letter); 
+                            $current_col_letter = new_get_next_field_letter ($current_col_letter);
                             $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                             my $g_price = "GPRICE_$this_group";
-                            $current_col_letter = get_next_field_letter ($current_col_letter); 
+                            $current_col_letter = new_get_next_field_letter ($current_col_letter);
                             $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
 
                             if (!defined ($group_colours {$this_group}))
@@ -2130,12 +2479,12 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
-                                
+
                                 if (!defined ($group_colours {$this_group}))
                                 {
                                     $group_colours {$this_group} = $group_colours {$group_count};
@@ -2149,9 +2498,9 @@ $//img;
                             }
                             else
                             {
-                                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                                $old_col_letter = new_get_next_field_letter ($old_col_letter);
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                                $old_col_letter = new_get_next_field_letter ($old_col_letter);
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                             }
                         }
@@ -2167,10 +2516,10 @@ $//img;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
-                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
-                                $current_col_letter = get_next_field_letter ($current_col_letter); 
+                                $current_col_letter = new_get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -2188,16 +2537,15 @@ $//img;
                     }
                     else
                     {
-                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
-                    #if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+                    #if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                     {
                         $xrow =~ s/\n//img;
                         $row =~ s/\n//img;
-                        print ("XROW=::$xrow\nGROUPROW=::$row\n");
                     }
 
                     if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -2215,14 +2563,14 @@ $//img;
                 }
                 $x++;
                 $old_col_letter = $col_letter;
-                $col_letter = get_next_field_letter ($col_letter); 
+                $col_letter = new_get_next_field_letter ($col_letter);
             }
             $row_num++;
         }
-        
+
         # Handle last row..
         {
-            # Add row to table if matched 
+            # Add row to table if matched
             $fake_row = $row;
             $fake_row =~ s/<[^>]*>//img;
             my $force_row = 0;
@@ -2231,10 +2579,10 @@ $//img;
                 $force_row = -1;
             }
 
-            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
             {
                 $force_row = 1;
-                if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
+                if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                 {
                     my $this_group = $1;
                     $group_counts {$this_group}++;
@@ -2254,9 +2602,9 @@ $//img;
                     }
                     else
                     {
-                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
@@ -2273,18 +2621,18 @@ $//img;
                     }
                     else
                     {
-                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                        $old_col_letter = get_next_field_letter ($old_col_letter); 
+                        $old_col_letter = new_get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
                     }
                 }
             }
             else
             {
-                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                $old_col_letter = new_get_next_field_letter ($old_col_letter);
                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
-                $old_col_letter = get_next_field_letter ($old_col_letter); 
+                $old_col_letter = new_get_next_field_letter ($old_col_letter);
                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
             }
 
@@ -2301,7 +2649,7 @@ $//img;
         $html_text =~ s/YYY/$overall_count/mg;
 
         my $group_block;
-        
+
         for ($x = 0; $x < $max_field_num; $x++)
         {
             if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
@@ -2322,7 +2670,7 @@ $//img;
             $group_block .= "<button onclick=\"location.href='dograph_group_counts'\">Graph group counts</button>";
             $group_block .= "<button onclick=\"location.href='dograph_group_totals'\">Graph group totals</button>";
         }
-        
+
         $group_block .= "<br>";
 
         if ($group =~ m/.../)
@@ -2330,7 +2678,7 @@ $//img;
             my $g;
             my $total_g_count;
             my $total_g_price;
-            
+
             foreach $g (sort keys (%group_counts))
             {
                 my $g_price = $group_prices {$g};
@@ -2344,7 +2692,7 @@ $//img;
                 {
                     $g_price =~ s/(\d\d)$/.$1/;
                 }
-                
+
                 my $replace_g_price = "GPRICE_$g";
                 $html_text =~ s/$replace_g_price/$g_price/img;
 
@@ -2369,7 +2717,7 @@ $//img;
                 $meta_data {$g . "_total"} = $g_price;
                 $meta_data {$g . "_count"} = $g_count;
             }
-            $group_block .= "Total group row count: $total_g_count"; 
+            $group_block .= "Total group row count: $total_g_count";
         }
 
         my $c;
@@ -2379,10 +2727,10 @@ $//img;
             {
                 $col_calculations{$c} = $col_calculations{$c} / 100;
             }
-        
+
             if ($get_group_info)
             {
-                $group_block .= "<br> TODO - let edit here! Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c}) Rounding digits:($col_roundings{$c})"; 
+                $group_block .= "<br> TODO - let edit here! Column $c (" . get_col_header ($c) . "): $col_types{$c} ($col_calculations{$c}) Rounding digits:($col_roundings{$c})";
             }
         }
 
@@ -2406,20 +2754,20 @@ $//img;
         $group_block =~ s/<br>/\n/img;
         $group_block =~ s/^((.*\n){0,7})(.*)\n/$1\nrest truncated../m;
         $group_block = "$g_url<font size=-1>$1$2</font>";
-                                    
+
         $group_block =~ s/\n/<br>/img;
         $group_block = "<div style=\"-webkit-mask-image:linear-gradient(to bottom, black 0%, transparent 100%);mask-image:linear-gradient(to bottom, black 0%, transparent 100%);background-color: skyblue\">" .
-                       $group_block . 
+                       $group_block .
                        "</div>";
         $html_text =~ s/QQQ/$group_block/im;
         $html_text =~ s/QQQ//im;
-        
+
         my $c = get_col_name_of_number_type_col ();
         $html_text =~ s/%23NUM_COL/$c/im;
         $html_text =~ s/%23NUM_COL/$c/im;
 
         $html_text .= "<br>$deck";
-        
+
         $html_text .= "<script>\n";
         $html_text .= "let currentElem = null;\n";
         $html_text .= "table.onmouseover = function(event) {\n";
