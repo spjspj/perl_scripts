@@ -189,6 +189,7 @@ sub process_csv_data
     %col_types = %new_col_types;
     $max_field_num = 0;
     $max_rows = 0;
+    print (">>$csv_block<<\n");
 
     my $row_num = 1;
     my $col_letter = "A";
@@ -597,7 +598,6 @@ sub breakdown_excel
     $count ++;
     if ($count > 500) 
     {
-        #print (">>>>>>>>>========GIVING UP =========$excel_function\n");
         return "giving up"; 
     }
     while ($excel_function =~ m/(([A-Z]+)\(.*)/)
@@ -605,7 +605,13 @@ sub breakdown_excel
         my $test = $1;
         my $func = $2;
         #$test =~ s/\.XYZ\./(/;
-        if (simple_parentheses_only_one_argument ($test, $func))
+        if (simple_parentheses_zero_argument ($test, $func))
+        {
+            $excel_function =~ s/($func\([^\)]*\))/xXNIL$each_element_count/;
+            $each_element {"xXNIL$each_element_count"} = $1 . "<< xXNIL$each_element_count";
+            $each_element_count++;
+        }
+        elsif (simple_parentheses_only_one_argument ($test, $func))
         {
             $excel_function =~ s/($func\([^\)]*\))/xXONE$each_element_count/;
             $each_element {"xXONE$each_element_count"} = $1 . "<< xXONE$each_element_count";
@@ -734,6 +740,41 @@ sub do_max_expansion
     return $field_val;
 }
 
+sub do_standard_expansion 
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if ($field_val =~ m/(($func)\(.*)/)
+    {
+        my $to_check = $1;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/$func ($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_regex_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((REGEXPREPLACE)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_three_arguments ($to_check, "$func"))
+        {
+            $field_val =~ m/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/;
+            my $value = $1;
+            my $first = $2;
+            my $second = $3;
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/(\$v = "$value"; \$v =~ s\/$first\/$second\/;)/g;
+        }
+    }
+    return $field_val;
+}
+
 sub do_min_expansion
 {
     my $field_val = $_ [0];
@@ -766,7 +807,7 @@ sub do_left_expansion
     return $field_val;
 }
 
-sub new_do_pi_expansion 
+sub do_pi_expansion 
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((PI)\(.*)/)
@@ -1171,6 +1212,14 @@ sub perl_expansions
     {
         $str = do_max_expansion ($str);
     }
+    if ($str =~ m/SQRT\(/)
+    {
+        $str = do_standard_expansion ($str, "SQRT");
+    }
+    if ($str =~ m/REGEXPREPLACE\(/)
+    {
+        $str = do_regex_expansion ($str);
+    }
     if ($str =~ m/MIN\(/)
     {
         $str = do_min_expansion ($str);
@@ -1189,7 +1238,7 @@ sub perl_expansions
     }
     if ($str =~ m/PI\(\)/)
     {
-        $str = new_do_pi_expansion ($str);
+        $str = do_pi_expansion ($str);
     }
     if ($str =~ m/IF\(/)
     {
@@ -1225,7 +1274,6 @@ sub recreate_perl
             $str =~ s/$k2/$str2/;
         }
         $str = perl_expansions ($str);
-
         $str = fix_up_field_vals ($str, $field_id, 0);
         $each_element {$k} = $str;
         my $xx;
@@ -1247,6 +1295,7 @@ sub recreate_perl
         {
             my $col_letter = get_col_letter ($field_id);
             my $row_num = get_row_num ($field_id);
+            print "$field_id) FINAL OUTPUT FROM PERL was >>$output<< from evaluating >$str<) for $field_id!\n";
             set_field_value ($row_num, $col_letter, $str, "_perl");
             return $output;
         }
@@ -1621,19 +1670,18 @@ sub get_graph_html
     my $count;
     my $not_seen_full = 1;
 
-    process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf
-1;3;4.25076923;AAA;;;;
-2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;;
-12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2)
-=SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2)
-=A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2)
-;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2)
-=POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2)
-;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2)
-;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2)
-;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2)
-;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;;
-");
+    #process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf 1;3;4.25076923;AAA;;;; 2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;; 12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2) =SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2) =A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2) ;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2) =POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2) ;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2) ;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2) ;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2) ;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;; ");
+    process_csv_data ("X;Y;Z
+12;9;10
+5;6;13
+1;12;13
+12;2;7
+14;13;7
+15;14;2
+15;6;9
+13;2;10
+8;5;10
+11;5;5");
     while ($paddr = accept (CLIENT, SERVER))
     {
         print ("\n\nNEW============================================================\n");
@@ -1702,57 +1750,59 @@ Wednesday;=B9+1;October;31;2010;202310;
 Thursday;2;November;30;2011;202311;
 Friday;=B11+1;December;31;2012;202312;";
             my$examples_two= "OneUp;OneUpFormula\n1;1\n2;=B^+1\n3;=B^+1\n4;=B^+1\n5;=B^+1\n6;=B^+1\n7;=B^+1\n8;=B^+1\n9;=B^+1\n10;=B^+1\n11;=B^+1\n12;=B^+1";
-            my$examples_three= "Angle;SinOfAngle;CosOfAngle;SinxCos;NumPoints
-0;=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);50
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^
-=A^+(PI()/25);=sin(A>)+0.5;=cos(A>)+0.5;=sin(A>)*cos(A>);=E^";
+
+            my$examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));1;=E>;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
+=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
 
             my$examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
 201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
@@ -1960,13 +2010,19 @@ Friday;=B11+1;December;31;2012;202312;";
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 ";
-
+            my$examples_five= "CHANGE;REGEX;
+123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);
+B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6);
+B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);
+B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6);
+B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
 <textarea id=\"examples1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples1\">$examples_one</textarea>
 <textarea id=\"examples2\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples2\">$examples_two</textarea>
 <textarea id=\"examples3\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples3\">$examples_three</textarea>
 <textarea id=\"examples4\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples4\">$examples_four</textarea>
+<textarea id=\"examples5\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples5\">$examples_five</textarea>
 <input type=\"submit\" value=\"Done\" class=\"submitButton\">
 </form>
 </body> </html>";
@@ -2223,8 +2279,8 @@ $//img;
                 <input type=\"submit\" value=\"Search\">
                 </form></td><td>";
 
-        my $example = get_field_value (2, "C", 1);
-        $example = "20[23]\\d";
+        #my $example = get_field_value (2, "C", 1);
+        my $example = "20[23]\\d";
         $example = "\"/csv_analyse/groupby?groupstr=($example)" . get_col_name_of_number_type_col () . "\"";
         $html_text .= "<form action=\"/csv_analyse/groupby\">
                 <label for=\"groupstr\">Group by <font size=-2><a href=$example>Example</a></font></label><br>
@@ -2232,10 +2288,12 @@ $//img;
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
 
-        my $f1 = get_field_value (2, "D", 1);
+        #my $f1 = get_field_value (2, "D", 1);
+        my $f1 =~ "20230401";
         $f1 =~ s/\W/./img;
         $f1 =~ s/^(...)..*$/$1../img;
-        my $f2 = get_field_value (2, "E", 1);
+        #my $f2 = get_field_value (2, "E", 1);
+        my $f2 =~ "AABBCCDD";
         $f2 =~ s/\W/./img;
         $f2 =~ s/^(...)..*$/$1../img;
         my $dual_example = "(20[123]\\d).*($f2)";
@@ -2251,6 +2309,7 @@ $//img;
                 <label>Update CSV:</label><br>
                 <input type=\"submit\" value=\"Update CSV\">
                 <a href=\"/csv_analyse/show_examples\">Examples</a>
+                <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
                 </form></td>";
 
         if ($show_formulas == 0)
@@ -2948,6 +3007,86 @@ $//img;
         $html_text .= "</script>\n";
         $html_text .= "</body>\n";
         $html_text .= "</html>\n";
+
+        if ($txt =~ m/GET.*show_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m)
+        {
+            my $col1 = $1;
+            my $col2 = $2;
+            my $col3 = $3;
+
+            my $col_header1 = get_col_header ($col1);
+            my $col_header2 = get_col_header ($col2);
+            my $col_header3 = get_col_header ($col3);
+
+            my $mesh;
+            my $rn = 2;
+            my $rn2 = 2;
+
+            my %lookup_1;
+            my %lookup_2;
+            my %val_lookup1;
+
+            while ($rn < $max_rows)
+            {
+                my $field1 = get_field_value ($rn, $col1, 1);
+                my $field2 = get_field_value ($rn, $col2, 1);
+                my $field3 = get_field_value ($rn, $col3, 1);
+
+
+                if (!defined ($lookup_2 {$field2}))
+                {
+                    $lookup_2 {$field2} = 1;
+                }
+                if (!defined ($val_lookup1 {"$field1,$field2"}))
+                {
+                    $val_lookup1 {"$field1,$field2"} = $field3;
+                }
+                $rn++;
+            }
+
+            $rn = 2;
+            while ($rn < $max_rows)
+            {
+                my $field1 = get_field_value ($rn, $col1, 1);
+                my $field2 = get_field_value ($rn, $col2, 1);
+                my $field3 = get_field_value ($rn, $col3, 1);
+
+                if (!defined ($lookup_1 {$field1}))
+                {
+                    $lookup_1 {$field1} = 1;
+                }
+                if (!defined ($val_lookup1 {"$field1,$field2"}))
+                {
+                    $val_lookup1 {"$field1,$field2"} = $field3;
+                }
+                $rn++;
+            }
+            $mesh .= "\n";
+
+            $rn = 2;
+            $rn2 = 2;
+            my $k;
+            my $k2;
+            foreach $k (sort { $a<=>$b } keys (%lookup_1))
+            {
+                foreach $k2 (sort { $a<=>$b } keys (%lookup_2))
+                {
+                    if (!defined ($val_lookup1{"$k,$k2"}))
+                    {
+                        $mesh .= "MISSING($k;$k2),";
+                    }
+                    else
+                    {
+                        $mesh .= $val_lookup1{"$k,$k2"} . ",";
+                    }
+                }
+                $mesh .= "\n";
+            }
+
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Mesh</h1> <br> <form action=\"mesh\" id=\"mesh\" name=\"mesh\" method=\"post\"> <textarea id=\"mesh1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"mesh\" name=\"mesh1\">$mesh</textarea>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
 
         write_to_socket (\*CLIENT, $html_text, "", "noredirect");
         $have_to_write_to_socket = 0;
