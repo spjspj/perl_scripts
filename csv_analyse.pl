@@ -446,6 +446,7 @@ sub set_field_value
         $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
     my $str = "$col_letter" . $row_num . $modifier;
+    #print ("Setting $str to be of values $new_val\n");
     if (!defined ($csv_data {$str}))
     {
         $csv_data {$str} = $new_val;
@@ -585,6 +586,7 @@ sub breakdown_excel
     }
     if ($iteration > 50)
     {
+        #print ("  fff failed to tear down $excel_function\n");
         return;
     }
     my $i = 0;
@@ -598,6 +600,7 @@ sub breakdown_excel
     $count ++;
     if ($count > 500) 
     {
+        #print (">>>>>>>>>========GIVING UP =========$excel_function\n");
         return "giving up"; 
     }
     while ($excel_function =~ m/(([A-Z]+)\(.*)/)
@@ -609,6 +612,7 @@ sub breakdown_excel
         {
             $excel_function =~ s/($func\([^\)]*\))/xXNIL$each_element_count/;
             $each_element {"xXNIL$each_element_count"} = $1 . "<< xXNIL$each_element_count";
+            #print ("Found $excel_function ($1)\n");
             $each_element_count++;
         }
         elsif (simple_parentheses_only_one_argument ($test, $func))
@@ -647,6 +651,7 @@ sub breakdown_excel
     }
     $excel_function =~ s/^=//;
     $each_element {"ZZMAX"} = $excel_function;
+    #print (" .. ZZMAX was $excel_function\n");
     return $excel_function;
 }
 
@@ -740,6 +745,9 @@ sub do_max_expansion
     return $field_val;
 }
 
+
+
+
 sub do_standard_expansion 
 {
     my $field_val = $_ [0];
@@ -759,6 +767,7 @@ sub do_standard_expansion
 sub do_regex_expansion
 {
     my $field_val = $_ [0];
+    #print ("Handling REGEX with $field_val\n");
     if ($field_val =~ m/((REGEXPREPLACE)\(.*)/)
     {
         my $to_check = $1;
@@ -770,6 +779,27 @@ sub do_regex_expansion
             my $first = $2;
             my $second = $3;
             $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/(\$v = "$value"; \$v =~ s\/$first\/$second\/;)/g;
+        }
+    }
+    #print ("DONE Handling REGEX with $field_val\n");
+    return $field_val;
+}
+
+sub do_pmt_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((PMT)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_three_arguments ($to_check, "$func"))
+        {
+            $field_val =~ m/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/;
+            my $rate = $1;
+            my $times = $2;
+            my $principal = $3;
+            my $str = "$principal * $rate * (((1+$rate) ** $times) / (((1+$rate) ** $times) - 1))";
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/$str/g;
         }
     }
     return $field_val;
@@ -814,12 +844,14 @@ sub do_pi_expansion
     {
         my $to_check = $1;
         my $func = $2;
+        #print ("WOOT FOUND PI for $field_val\n");
         if (simple_parentheses_zero_argument ($to_check, "$func"))
         {
 
             $field_val =~ s/$func\(\s*\)/3.14159265358979/;
             return $field_val;
         }
+        #print ("DID PI for $field_val\n");
     }
     return $field_val;
 }
@@ -1191,6 +1223,7 @@ sub fix_up_field_vals
 sub perl_expansions
 {
     my $str = $_ [0];
+    #print ("\nMY PERL EXPANSION for $str was ... ");
 
     if ($str =~ m/SUM\(/)
     {
@@ -1211,6 +1244,10 @@ sub perl_expansions
     if ($str =~ m/MAX\(/)
     {
         $str = do_max_expansion ($str);
+    }
+    if ($str =~ m/PMT\(/)
+    {
+        $str = do_pmt_expansion ($str);
     }
     if ($str =~ m/SQRT\(/)
     {
@@ -1247,6 +1284,7 @@ sub perl_expansions
 
     # General cleanup..
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
+    #print (" >$str<\n");
     return $str;
 }
 
@@ -1273,8 +1311,10 @@ sub recreate_perl
             $str2 =~ s/<< .*//;
             $str =~ s/$k2/$str2/;
         }
+        #print (" >>> Doing recreate on $str --");
         $str = perl_expansions ($str);
         $str = fix_up_field_vals ($str, $field_id, 0);
+        #print (" got >>$str<< --\n");
         $each_element {$k} = $str;
         my $xx;
 
@@ -1417,7 +1457,12 @@ sub get_graph_html
     $graph_html .= "        this.minValue = Math.min (...Object.values (this.options.data));\n";
     $graph_html .= "        this.maxValue = Math.max (...Object.values (this.options.data));\n";
     $graph_html .= "        this.maxValue += 1;\n";
-    $graph_html .= "        this.multiplier = (options.canvas.height - options.padding * 2) / this.maxValue;\n";
+    $graph_html .= "        this.total_span = (this.maxValue + this.minValue);\n";
+    $graph_html .= "        if (this.maxValue - this.minValue > this.total_span)\n";
+    $graph_html .= "        {\n";
+    $graph_html .= "            this.total_span = (this.maxValue - this.minValue);\n";
+    $graph_html .= "        }\n";
+    $graph_html .= "        this.multiplier = (options.canvas.height - options.padding * 2) / this.total_span;\n";
     $graph_html .= "    }\n";
     $graph_html .= "    drawGridLines () {\n";
     $graph_html .= "        var canvasActualHeight = this.canvas.height - this.options.padding * 2;\n";
@@ -1425,9 +1470,9 @@ sub get_graph_html
     $graph_html .= "        var gridValue = this.minValue;\n";
     $graph_html .= "        max_gridy = 0;\n";
     $graph_html .= "        min_gridy = 10000000000;\n";
-    $graph_html .= "        this.grid_jump = (this.maxValue - this.minValue) / 10;\n";
+    $graph_html .= "        this.grid_jump = this.total_span / 12;\n";
     $graph_html .= "        while (gridValue <= this.maxValue) {\n";
-    $graph_html .= "            var gridY = canvasActualHeight * (1 - gridValue / this.maxValue) + this.options.padding;\n";
+    $graph_html .= "            var gridY = canvasActualHeight * (1 - (gridValue - this.minValue) / this.total_span) + this.options.padding;\n";
     $graph_html .= "            if (max_gridy < gridY) { max_gridy  = gridY; }\n";
     $graph_html .= "            if (min_gridy > gridY) { min_gridy  = gridY; }\n";
     $graph_html .= "            drawActualLine (this.ctx, 0, gridY, this.canvas.width, gridY, this.options.gridColor);\n";
@@ -1504,7 +1549,7 @@ sub get_graph_html
     $graph_html .= "        var barHeight = 0;\n";
     $graph_html .= "        for (let val of values) {\n";
     $graph_html .= "            oldBarHeight = barHeight;\n";
-    $graph_html .= "            barHeight = Math.round (canvasActualHeight * val / this.maxValue);\n";
+    $graph_html .= "            barHeight = Math.round (canvasActualHeight * (val - this.minValue) / (this.total_span));\n";
     $graph_html .= "            drawLine (this.ctx, (-0.5 + barIndex) * barSize,  -1*oldBarHeight , (0.5+barIndex) * barSize, -1*barHeight , \"skyblue\", this.options, this.canvas);\n";
     $graph_html .= "            barIndex++;\n";
     $graph_html .= "        }\n";
@@ -1571,10 +1616,11 @@ sub get_graph_html
             elsif ($k =~ m/_total/ && $graph_totals)
             {
                 my $x = $meta_data {$k};
+                print ("LOOKING at $x for $k\n");
                 $x =~ s/^$/0/;
                 $x =~ s/,//g;
                 $x =~ s/\$//g;
-                $x =~ s/[^0-9\.]//g;
+                $x =~ s/[^0-9\.\-]//g;
                 $x =~ s/^ *$/0/g;
                 $graph_html .= "\"Group $k ($x)\":$x,";
             }
@@ -1633,9 +1679,9 @@ sub get_graph_html
     $graph_html .= "    graph_ctx.clearRect(0, 0, 55, 55);\n";
     $graph_html .= "    var barVal = myBarchart.getBarValue (mouseX, mouseY);\n";
     $graph_html .= "    drawSquare (graph_ctx, oldmouseX, oldY, 10, \"white\", null, null); \n";
-    $graph_html .= "    drawSquare (graph_ctx, mouseX, graph_canvas.height - 50 - myBarchart.multiplier *barVal[1], 5, \"darkorange\", null, null); \n";
+    $graph_html .= "    drawSquare (graph_ctx, mouseX, graph_canvas.height - myBarchart.multiplier * (barVal[1] - myBarchart.minValue) - myBarchart.options.padding, 5, \"darkorange\", null, null);\n";
     $graph_html .= "    oldmouseX = mouseX;\n";
-    $graph_html .= "    oldY = graph_canvas.height - 50 - myBarchart.multiplier *barVal[1];\n";
+    $graph_html .= "    oldY = graph_canvas.height - myBarchart.multiplier * (barVal[1] - myBarchart.minValue) - myBarchart.options.padding;\n";
     $graph_html .= "    myBarchart.draw ();\n";
     $graph_html .= "}\n";
     $graph_html .= "</script>\n";
@@ -2010,12 +2056,29 @@ Friday;=B11+1;December;31;2012;202312;";
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 ";
-            my$examples_five= "CHANGE;REGEX;
-123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);
-B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6);
-B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);
-B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6);
-B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
+            #my$examples_five= "CHANGE;REGEX; 123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
+            my $examples_five= "Date;HouseOffset;HouseVariable;HouseMonthsToGo;HouseIntRate;HouseRepayment;HouseInt;HouseOffsetInt;2HouseOffset;NumDaysInMonth;BalanceInOffset;NegOffset;OtherLoan;OtherIntRate;OtherInterest;ActualInterestPaid
+202304;400672.53;481862.69;314;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+100-11;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
+=A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;";
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
 <textarea id=\"examples1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples1\">$examples_one</textarea>
@@ -3032,14 +3095,17 @@ $//img;
                 my $field2 = get_field_value ($rn, $col2, 1);
                 my $field3 = get_field_value ($rn, $col3, 1);
 
+                #print (" >> first Doing $field1, $field2, $field3 for $rn\n");
 
                 if (!defined ($lookup_2 {$field2}))
                 {
                     $lookup_2 {$field2} = 1;
+                    #print (" $mesh <<mesh\n");
                 }
                 if (!defined ($val_lookup1 {"$field1,$field2"}))
                 {
                     $val_lookup1 {"$field1,$field2"} = $field3;
+                    #$mesh .= "key($field1,$field2)";
                 }
                 $rn++;
             }
@@ -3051,14 +3117,18 @@ $//img;
                 my $field2 = get_field_value ($rn, $col2, 1);
                 my $field3 = get_field_value ($rn, $col3, 1);
 
+                #print (" >> second Doing $field1, $field2, $field3 for $rn\n");
                 if (!defined ($lookup_1 {$field1}))
                 {
                     $lookup_1 {$field1} = 1;
+                    #print (" >> Added to lookup $field1 for $rn\n");
                 }
                 if (!defined ($val_lookup1 {"$field1,$field2"}))
                 {
                     $val_lookup1 {"$field1,$field2"} = $field3;
+                    #$mesh .= "key($field1,$field2)";
                 }
+                #$mesh .= "key($field1,$field2)";
                 $rn++;
             }
             $mesh .= "\n";
@@ -3073,6 +3143,7 @@ $//img;
                 {
                     if (!defined ($val_lookup1{"$k,$k2"}))
                     {
+                        #print ("Not defined - $k,$k2 ??\n");
                         $mesh .= "MISSING($k;$k2),";
                     }
                     else
