@@ -26,7 +26,6 @@ my $count = 0;
 my %each_element;
 my $each_element_count = 0;
 
-#####
 sub write_to_socket
 {
     my $sock_ref = $_ [0];
@@ -446,7 +445,6 @@ sub set_field_value
         $col_letter =  get_field_letter_from_field_num ($col_letter);
     }
     my $str = "$col_letter" . $row_num . $modifier;
-    #print ("Setting $str to be of values $new_val\n");
     if (!defined ($csv_data {$str}))
     {
         $csv_data {$str} = $new_val;
@@ -586,7 +584,6 @@ sub breakdown_excel
     }
     if ($iteration > 50)
     {
-        #print ("  fff failed to tear down $excel_function\n");
         return;
     }
     my $i = 0;
@@ -600,7 +597,6 @@ sub breakdown_excel
     $count ++;
     if ($count > 500) 
     {
-        #print (">>>>>>>>>========GIVING UP =========$excel_function\n");
         return "giving up"; 
     }
     while ($excel_function =~ m/(([A-Z]+)\(.*)/)
@@ -612,7 +608,6 @@ sub breakdown_excel
         {
             $excel_function =~ s/($func\([^\)]*\))/xXNIL$each_element_count/;
             $each_element {"xXNIL$each_element_count"} = $1 . "<< xXNIL$each_element_count";
-            #print ("Found $excel_function ($1)\n");
             $each_element_count++;
         }
         elsif (simple_parentheses_only_one_argument ($test, $func))
@@ -651,7 +646,6 @@ sub breakdown_excel
     }
     $excel_function =~ s/^=//;
     $each_element {"ZZMAX"} = $excel_function;
-    #print (" .. ZZMAX was $excel_function\n");
     return $excel_function;
 }
 
@@ -767,7 +761,6 @@ sub do_standard_expansion
 sub do_regex_expansion
 {
     my $field_val = $_ [0];
-    #print ("Handling REGEX with $field_val\n");
     if ($field_val =~ m/((REGEXPREPLACE)\(.*)/)
     {
         my $to_check = $1;
@@ -781,7 +774,6 @@ sub do_regex_expansion
             $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/(\$v = "$value"; \$v =~ s\/$first\/$second\/;)/g;
         }
     }
-    #print ("DONE Handling REGEX with $field_val\n");
     return $field_val;
 }
 
@@ -844,14 +836,12 @@ sub do_pi_expansion
     {
         my $to_check = $1;
         my $func = $2;
-        #print ("WOOT FOUND PI for $field_val\n");
         if (simple_parentheses_zero_argument ($to_check, "$func"))
         {
 
             $field_val =~ s/$func\(\s*\)/3.14159265358979/;
             return $field_val;
         }
-        #print ("DID PI for $field_val\n");
     }
     return $field_val;
 }
@@ -1223,7 +1213,6 @@ sub fix_up_field_vals
 sub perl_expansions
 {
     my $str = $_ [0];
-    #print ("\nMY PERL EXPANSION for $str was ... ");
 
     if ($str =~ m/SUM\(/)
     {
@@ -1284,7 +1273,6 @@ sub perl_expansions
 
     # General cleanup..
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
-    #print (" >$str<\n");
     return $str;
 }
 
@@ -1311,10 +1299,8 @@ sub recreate_perl
             $str2 =~ s/<< .*//;
             $str =~ s/$k2/$str2/;
         }
-        #print (" >>> Doing recreate on $str --");
         $str = perl_expansions ($str);
         $str = fix_up_field_vals ($str, $field_id, 0);
-        #print (" got >>$str<< --\n");
         $each_element {$k} = $str;
         my $xx;
 
@@ -1691,6 +1677,225 @@ sub get_graph_html
     return $graph_html;
 }
 
+sub max 
+{
+    my ($max, @vars) = @_;
+    for (@vars) {
+        $max = $_ if $_ > $max;
+    }
+    return $max;
+}
+
+sub get_3dgraph_html
+{
+    my $shape_data = $_ [0];
+    my $title = $_ [1];
+    my $max_x = $_ [2];
+    my $min_x = $_ [3];
+    my $max_y = $_ [4];
+    my $min_y = $_ [5];
+    my $max_z = $_ [6];
+    my $min_z = $_ [7];
+    my $world_x = $_ [8];
+    my $world_y = $_ [9];
+    my $world_z = $_ [10];
+    my $use_user_set = $_ [11];
+
+    my $xmult = $world_x;
+    my $ymult = $world_y;
+    my $zmult = $world_z;
+
+    my $x_span = abs ($max_x - $min_x);
+    my $y_span = abs ($max_y - $min_y);
+
+    my $graph3d_html = "    <!DOCTYPE html>\n";
+    $graph3d_html .= "    <html lang=\"en\"><head>\n";
+    $graph3d_html .= "    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n";
+    $graph3d_html .= "      <title>Rotateable 3D Graph</title>\n";
+    $graph3d_html .= "    <style>\n";
+    $graph3d_html .= "    .canvasEg\n";
+    $graph3d_html .= "    {\n";
+    $graph3d_html .= "      margin: 0;\n";
+    $graph3d_html .= "      background-color: antiquewhite;\n";
+    $graph3d_html .= "      border: 1px solid white;\n";
+    $graph3d_html .= "    }\n";
+    $graph3d_html .= "    </style>\n";
+    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Cango3D-13v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://xmage.au/cango/CanvasStack-2v01.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Graph3D-3v00.js\"></script>\n";
+    $graph3d_html .= "    <script>\n";
+    $graph3d_html .= "        function generateTopography (xmin, xmax, ymin, ymax, rows, columns)\n";
+    $graph3d_html .= "        {\n";
+    $graph3d_html .= "            const nRws = rows || 20;\n";
+    $graph3d_html .= "            const nCls = columns || 20;\n";
+    $graph3d_html .= "            const xstep = (xmax-xmin)/nRws;\n";
+    $graph3d_html .= "            const ystep = (ymax-ymin)/nCls;\n";
+    $graph3d_html .= "            const shape_data = [];\n";
+    $graph3d_html .= "            for (let r=0, yVal=ymin; yVal<=ymax; r++, yVal+=ystep)\n";
+    $graph3d_html .= "            {\n";
+    $graph3d_html .= "                shape_data[r] = [];\n";
+    $graph3d_html .= "                for (let c=0, xVal=xmin; xVal<=xmax; c++, xVal+=xstep)\n";
+    $graph3d_html .= "                {\n";
+    $graph3d_html .= "                    shape_data[r][c] = {x: xVal, y: yVal, z: 0.0};\n";
+    $graph3d_html .= "                }\n";
+    $graph3d_html .= "            }\n";
+    $graph3d_html .= $shape_data;
+    $graph3d_html .= "            return shape_data;\n";
+    $graph3d_html .= "        }\n";
+    $graph3d_html .= "        function generateSurface(canvasID)\n";
+    $graph3d_html .= "        {\n";
+    $graph3d_html .= "            const gc = new Cango3D(canvasID);\n";
+    $graph3d_html .= "            gc.clearCanvas();\n";
+    # Ok, after working stuff out..
+    # It looks like a cone of about 32 degrees in both directions (got about 13.5 degrees in other direction..) or 27degrees
+    # tan(13.5/180*3.14159265358979323) = OPPOSITE (aka 1/2 of x span on screen) / ADJACENT(aka the Z it has to be in front of the screen)
+    # 13.5/180*3.14159265358979323 = atan(OPPOSITE / ADJACENT)
+    # adjacent = opposite / tan(13.5/180*3.14159265358979323)
+    my $tan_val = tan (13.5/180*3.14159265358979323);
+    my $proper_z_offset = ($x_span / 2) / $tan_val;
+    my $max_dim = max ($max_x,$max_y, $max_z); 
+    if ($max_z < $max_dim / 4)
+    {
+        $max_z = $max_dim / 4;
+    }
+    elsif ($max_z < $max_dim / 2)
+    {
+        $max_z = $max_dim / 2;
+    }
+
+    $graph3d_html .= "            const xmin = 0, xmax = $max_dim,\n";
+    $graph3d_html .= "                  ymin = 0, ymax = $max_dim,\n";
+    $graph3d_html .= "                  zmin = 0, zmax = $max_z;\n";
+    $graph3d_html .= "            const blobData = generateTopography(xmin, xmax, ymin, ymax, $max_y, $max_x);\n";
+    $graph3d_html .= "            const grf = new Graph3D(xmin, xmax, ymin, ymax, zmin, zmax,\n";
+    $graph3d_html .= "            {\n";
+    $graph3d_html .= "                xLabel: \"X\",\n";
+    $graph3d_html .= "                yLabel: \"Y\",\n";
+    $graph3d_html .= "                zLabel: \"Z\",\n";
+    $graph3d_html .= "                xunits: \"\",\n";
+    $graph3d_html .= "                yUnits: \"\",\n";
+    $graph3d_html .= "                zUnits: \"\",\n";
+    $graph3d_html .= "                gridColor:\"darkgrey\",\n";
+    $graph3d_html .= "                fontSize: 12\n";
+    $graph3d_html .= "            });\n";
+    $graph3d_html .= "            grf.surfacePlot(blobData, {fillColor: \"colormap\", meshColor: \"colormap\" });\n";
+    $graph3d_html .= "            grf.surfacePlot(blobData, {fillColor: \"colormap\", meshColor: \"colormap\" });\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"pink\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [10, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [20, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [30, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [40, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [50, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [60, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [70, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [80, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [90, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([100, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-10, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-20, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-30, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-40, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-50, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-60, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-70, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-80, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-90, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-92, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-94, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-96, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-98, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-100, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-102, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-104, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-106, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([-108, 0, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 10, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 20, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 30, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 40, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 50, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 60, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 70, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 80, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 90, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 100, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -10, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -20, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -30, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -40, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -50, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -60, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -70, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -80, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -90, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"green\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -100, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -110, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"black\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -120, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -130, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"black\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -140, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"red\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -145, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"black\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -150, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"orange\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -152, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"black\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -154, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"cyan\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -156, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"black\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, -158, 0], {symbol:\"cube\", symbolSize: 6, fillColor:\"cyan\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 10], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 20], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 30], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 40], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 50], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 60], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 70], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 80], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 90], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot( [0, 0, 100], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -10], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -20], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -30], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -40], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -50], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -60], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -70], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -80], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -90], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+#    $graph3d_html .= "            grf.pointsPlot([0, 0, -100], {symbol:\"cube\", symbolSize: 6, fillColor:\"blue\"});\n";
+    #$graph3d_html .= "            const pp = new Point (0,0,0); alert (pp.fx + \"...\" + pp.fy);\n";
+    $graph3d_html .= "            console.warn (\"DOING INITZOOM\");\n";
+    $graph3d_html .= "            gc.initZoomTurn(grf);\n";
+    $graph3d_html .= "            console.warn (\"DONE INITZOOM\");\n";
+    #$graph3d_html .= "            gc.autosetWorldCoords3D();   // put the origin in center of canvas\n";
+    
+    if ($use_user_set)
+    {
+        $graph3d_html .= "            gc.setWorldCoords3D(" . $max_x*$xmult . "," . $max_y*$ymult . "," . ((abs($max_z) + abs($min_z)) * $zmult) . ");   // put the origin in center of canvas NOAUTO=$use_user_set\n";
+    }
+    else
+    {
+        $graph3d_html .= "            gc.autosetWorldCoords3D();   // put the origin in center of canvas - AUTO SET AUTO=$use_user_set\n";
+    }
+
+    $graph3d_html .= "            gc.initZoomTurn(grf);\n";
+    $graph3d_html .= "        }\n";
+    $graph3d_html .= "        window.addEventListener(\"load\", function()\n";
+    $graph3d_html .= "        {\n";
+    $graph3d_html .= "            console.warn (\"DOING SURFACE\");\n";
+    $graph3d_html .= "            generateSurface('thecanvas');\n";
+    $graph3d_html .= "            console.warn (\"DONE SURFACE\");\n";
+    $graph3d_html .= "        });\n";
+    $graph3d_html .= "      </script>\n";
+    $graph3d_html .= "    </head>\n";
+    $graph3d_html .= "    <body>\n";
+
+    my $stats = " x: $max_x , $min_x, y: $max_y, $min_y, z: $max_z, $min_z<br>";
+ 
+    $graph3d_html .= "    <h1>3D Graph for $title</h1><br>\n";
+    $graph3d_html .= "    <div class=\"figHolder\" style=\"width: 430px; margin:20px 0px; float: center;\">\n";
+    $graph3d_html .= "      <canvas id=\"thecanvas\" class=\"canvasEg\" width=\"700\" height=\"700\"></canvas>\n";
+    $graph3d_html .= "    </div>\n";
+    $graph3d_html .= "    </body></html>\n";
+    return $graph3d_html;
+}
+
 # Main
 {
     my $paddr;
@@ -1717,17 +1922,31 @@ sub get_graph_html
     my $not_seen_full = 1;
 
     #process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf 1;3;4.25076923;AAA;;;; 2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;; 12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2) =SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2) =A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2) ;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2) =POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2) ;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2) ;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2) ;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2) ;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;; ");
-    process_csv_data ("X;Y;Z
-12;9;10
-5;6;13
-1;12;13
-12;2;7
-14;13;7
-15;14;2
-15;6;9
-13;2;10
-8;5;10
-11;5;5");
+    #process_csv_data ("X;Y;Z 12;9;10 5;6;13 1;12;13 12;2;7 14;13;7 15;14;2 15;6;9 13;2;10 8;5;10 11;5;5");
+    
+    my $examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal\n" . 
+        "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));1;=E>;=MOD(F>|24);=cos(C>);=H>*D>\n";
+    my $ord_line  = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
+    my $last_line = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
+    my $build_e3 = 0;
+    for ($build_e3 = 0; $build_e3 < 22; $build_e3++) 
+    {
+        $examples_three .= "$ord_line\n";
+    }
+
+    my $num_times;
+    for ($num_times = 0; $num_times < 23; $num_times++) 
+    {
+        $examples_three .= "$last_line\n";
+        for ($build_e3 = 0; $build_e3 < 23; $build_e3++) 
+        {
+            $examples_three .= "$ord_line\n";
+        }
+    }
+ 
+    process_csv_data ($examples_three);
+
+
     while ($paddr = accept (CLIENT, SERVER))
     {
         print ("\n\nNEW============================================================\n");
@@ -1795,60 +2014,7 @@ Tuesday;=B8+1;September;30;2009;202309;
 Wednesday;=B9+1;October;31;2010;202310;
 Thursday;2;November;30;2011;202311;
 Friday;=B11+1;December;31;2012;202312;";
-            my$examples_two= "OneUp;OneUpFormula\n1;1\n2;=B^+1\n3;=B^+1\n4;=B^+1\n5;=B^+1\n6;=B^+1\n7;=B^+1\n8;=B^+1\n9;=B^+1\n10;=B^+1\n11;=B^+1\n12;=B^+1";
-
-            my$examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));1;=E>;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>
-=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
+            my $examples_two= "OneUp;OneUpFormula\n1;1\n2;=B^+1\n3;=B^+1\n4;=B^+1\n5;=B^+1\n6;=B^+1\n7;=B^+1\n8;=B^+1\n9;=B^+1\n10;=B^+1\n11;=B^+1\n12;=B^+1";
 
             my$examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
 201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
@@ -2373,6 +2539,7 @@ $//img;
                 <input type=\"submit\" value=\"Update CSV\">
                 <a href=\"/csv_analyse/show_examples\">Examples</a>
                 <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
+                <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">3D</a>
                 </form></td>";
 
         if ($show_formulas == 0)
@@ -3071,7 +3238,7 @@ $//img;
         $html_text .= "</body>\n";
         $html_text .= "</html>\n";
 
-        if ($txt =~ m/GET.*show_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m)
+        if ($txt =~ m/GET.*show_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m || $txt =~ m/GET.*graph_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m)
         {
             my $col1 = $1;
             my $col2 = $2;
@@ -3082,6 +3249,7 @@ $//img;
             my $col_header3 = get_col_header ($col3);
 
             my $mesh;
+            my $shape_data;
             my $rn = 2;
             my $rn2 = 2;
 
@@ -3095,17 +3263,14 @@ $//img;
                 my $field2 = get_field_value ($rn, $col2, 1);
                 my $field3 = get_field_value ($rn, $col3, 1);
 
-                #print (" >> first Doing $field1, $field2, $field3 for $rn\n");
 
                 if (!defined ($lookup_2 {$field2}))
                 {
                     $lookup_2 {$field2} = 1;
-                    #print (" $mesh <<mesh\n");
                 }
                 if (!defined ($val_lookup1 {"$field1,$field2"}))
                 {
                     $val_lookup1 {"$field1,$field2"} = $field3;
-                    #$mesh .= "key($field1,$field2)";
                 }
                 $rn++;
             }
@@ -3117,18 +3282,14 @@ $//img;
                 my $field2 = get_field_value ($rn, $col2, 1);
                 my $field3 = get_field_value ($rn, $col3, 1);
 
-                #print (" >> second Doing $field1, $field2, $field3 for $rn\n");
                 if (!defined ($lookup_1 {$field1}))
                 {
                     $lookup_1 {$field1} = 1;
-                    #print (" >> Added to lookup $field1 for $rn\n");
                 }
                 if (!defined ($val_lookup1 {"$field1,$field2"}))
                 {
                     $val_lookup1 {"$field1,$field2"} = $field3;
-                    #$mesh .= "key($field1,$field2)";
                 }
-                #$mesh .= "key($field1,$field2)";
                 $rn++;
             }
             $mesh .= "\n";
@@ -3137,26 +3298,93 @@ $//img;
             $rn2 = 2;
             my $k;
             my $k2;
+            my $x = 0;
+            my $y = 0;
+            my $max_x = 0;
+            my $max_y = 0;
+            my $max_z = -100000;
+            my $min_z = 100000;
             foreach $k (sort { $a<=>$b } keys (%lookup_1))
             {
                 foreach $k2 (sort { $a<=>$b } keys (%lookup_2))
                 {
                     if (!defined ($val_lookup1{"$k,$k2"}))
                     {
-                        #print ("Not defined - $k,$k2 ??\n");
                         $mesh .= "MISSING($k;$k2),";
                     }
                     else
                     {
+                        #$mesh .= ">$k,$k2>>" . $val_lookup1{"$k,$k2"} . "<<,";
                         $mesh .= $val_lookup1{"$k,$k2"} . ",";
+                        my $r = $k;
+                        my $c = $k2;
+                        
+                        my $val = 0;
+                        if (defined ($val_lookup1{"$k,$k2"}))
+                        {
+                            $val = $val_lookup1{"$k,$k2"};
+                            if ($val =~ m/e-0[1-9][0-9]+/)
+                            {
+                                $val = 0.0;
+                            }
+                            if ($val =~ m/e+[0-9]+/)
+                            {
+                                $val = $max_z;
+                            }
+                        }
+
+                        $shape_data .= "shape_data[$x][$y] = {x:$x, y:$y, z:$val}; //$k,$k2\n"; 
+                        if  ($max_z < $val_lookup1{"$k,$k2"})
+                        {
+                            $max_z = $val_lookup1{"$k,$k2"};
+                        }
+                        if  ($min_z > $val_lookup1{"$k,$k2"})
+                        {
+                            $min_z = $val_lookup1{"$k,$k2"};
+                        }
+                        $y++;
+                        if  ($max_y < $y)
+                        {
+                            $max_y = $y;
+                        }
                     }
                 }
                 $mesh .= "\n";
+                $x++;
+                if  ($max_x < $x)
+                {
+                    $max_x = $x;
+                }
+                $y = 0;
             }
 
-            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Mesh</h1> <br> <form action=\"mesh\" id=\"mesh\" name=\"mesh\" method=\"post\"> <textarea id=\"mesh1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"mesh\" name=\"mesh1\">$mesh</textarea>";
-            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
-            next;
+            if ($txt =~ m/GET.*show_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m)
+            {
+                my $title = $col_header1 . " x " . $col_header2 . " x " . $col_header3;
+                my $other_html = get_3dgraph_html ($shape_data, $title, $max_x, 0, $max_y, 0, $max_z, $min_z, -10, -10, 50, 0);
+                my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Mesh</h1> <br> <form action=\"mesh\" id=\"mesh\" name=\"mesh\" method=\"post\"> <textarea id=\"mesh1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"mesh\" name=\"mesh1\">$mesh</textarea><textarea id=\"3dhtml\" class=\"text\" cols=\"86\" rows =\"20\" form=\"mesh\" name=\"3dhtml\">$other_html</textarea>";
+                write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+                next;
+            }
+            elsif ($txt =~ m/GET.*graph_mesh/m)
+            {
+                my $world_x = -10;
+                my $world_y = -10;
+                my $world_z = 50;
+                my $use_auto = 0;
+                if ($txt =~ m/GET.*graph_mesh.*xworld=((-|)[0-9]+).*yworld=((-|)[0-9]+).*zworld=((-|)[0-9]+)/m)
+                {
+                    $world_x = $1;
+                    $world_y = $3;
+                    $world_z = $5;
+                    $use_auto = 1;
+                    print $world_x . ">>" . $world_y . ">>" . $world_z;
+                }
+                my $title = $col_header1 . " x " . $col_header2 . " x " . $col_header3;
+                my $html_text = get_3dgraph_html ($shape_data, $title, $max_x, 0, $max_y, 0, $max_z, $min_z, $world_x, $world_y, $world_z, $use_auto);
+                write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+                next;
+            }
         }
 
         write_to_socket (\*CLIENT, $html_text, "", "noredirect");
