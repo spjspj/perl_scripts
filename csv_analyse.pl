@@ -1731,10 +1731,10 @@ sub get_3dgraph_html
     $graph3d_html .= "            const xstep = (xmax-xmin)/nRws;\n";
     $graph3d_html .= "            const ystep = (ymax-ymin)/nCls;\n";
     $graph3d_html .= "            const shape_data = [];\n";
-    $graph3d_html .= "            for (let r=0, yVal=ymin; yVal<=ymax; r++, yVal+=ystep)\n";
+    $graph3d_html .= "            for (let r=0, yVal=ymin; yVal<ymax; r++, yVal+=ystep)\n";
     $graph3d_html .= "            {\n";
     $graph3d_html .= "                shape_data[r] = [];\n";
-    $graph3d_html .= "                for (let c=0, xVal=xmin; xVal<=xmax; c++, xVal+=xstep)\n";
+    $graph3d_html .= "                for (let c=0, xVal=xmin; xVal<xmax; c++, xVal+=xstep)\n";
     $graph3d_html .= "                {\n";
     $graph3d_html .= "                    shape_data[r][c] = {x: xVal, y: yVal, z: 0.0};\n";
     $graph3d_html .= "                }\n";
@@ -1929,7 +1929,7 @@ sub get_3dgraph_html
     my $ord_line  = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
     my $last_line = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
     my $build_e3 = 0;
-    for ($build_e3 = 0; $build_e3 < 22; $build_e3++) 
+    for ($build_e3 = 0; $build_e3 < 23; $build_e3++) 
     {
         $examples_three .= "$ord_line\n";
     }
@@ -2539,6 +2539,7 @@ $//img;
                 <input type=\"submit\" value=\"Update CSV\">
                 <a href=\"/csv_analyse/show_examples\">Examples</a>
                 <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
+                <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
                 <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">3D</a>
                 </form></td>";
 
