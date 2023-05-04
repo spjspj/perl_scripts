@@ -1786,9 +1786,9 @@ sub get_3dgraph_html
         $max_z = 2;
     }
 
-    $graph3d_html .= "            const xmin = 0, xmax = $max_z,\n";
-    $graph3d_html .= "                  ymin = 0, ymax = $max_z,\n";
-    $graph3d_html .= "                  zmin = $min_z, zmax = $max_z;\n";
+    $graph3d_html .= "            const xmin = -$max_z, xmax = $max_z,\n";
+    $graph3d_html .= "                  ymin = -$max_z, ymax = $max_z,\n";
+    $graph3d_html .= "                  zmin = -$max_z, zmax = $max_z;\n";
     #$graph3d_html .= "                  zmin = 0, zmax = $max_dim;\n";
     $graph3d_html .= "            const blobData = generateTopography(xmin, xmax, ymin, ymax, $max_y, $max_x);\n";
     $graph3d_html .= "            const grf = new Graph3D(xmin, xmax, ymin, ymax, zmin, zmax,\n";
@@ -3290,33 +3290,20 @@ $//img;
             my $lookup2_counter = 0;
             my %val_lookup1;
             my %row_lookup;
-
+            my %has_shape_data;
+            
+            
             while ($rn < $max_rows)
             {
                 my $field1 = get_field_value ($rn, $col1, 0);
                 my $field2 = get_field_value ($rn, $col2, 0);
                 my $field3 = get_field_value ($rn, $col3, 0);
-
 
                 if (!defined ($lookup_2 {$field2}))
                 {
                     $lookup_2 {$field2} = $lookup2_counter;
                     $lookup2_counter ++;
                 }
-                if (!defined ($val_lookup1 {"$field1,$field2"}))
-                {
-                    $val_lookup1 {"$field1,$field2"} = $field3;
-                }
-                $rn++;
-            }
-
-            $rn = 2;
-            while ($rn < $max_rows)
-            {
-                my $field1 = get_field_value ($rn, $col1, 0);
-                my $field2 = get_field_value ($rn, $col2, 0);
-                my $field3 = get_field_value ($rn, $col3, 0);
-
                 if (!defined ($lookup_1 {$field1}))
                 {
                     $lookup_1 {$field1} = $lookup1_counter;
@@ -3330,6 +3317,7 @@ $//img;
                 my $row_x = $lookup_1 {$field1};
                 my $row_y = $lookup_2 {$field2};
                 $row_lookup {"$rn.row"} = "$field1,$field2:$field3;$row_x,$row_y";
+                $has_shape_data {"[$row_x][$row_y]"} = 1;
                 $rn++;
             }
             $mesh .= "\n";
@@ -3381,11 +3369,11 @@ $//img;
                             }
                         }
 
-                        if  ($max_z < $val_lookup1{"$k,$k2"})
+                        if ($max_z < $val_lookup1{"$k,$k2"})
                         {
                             $max_z = $val_lookup1{"$k,$k2"};
                         }
-                        if  ($min_z > $val_lookup1{"$k,$k2"})
+                        if ($min_z > $val_lookup1{"$k,$k2"})
                         {
                             $min_z = $val_lookup1{"$k,$k2"};
                         }
@@ -3398,15 +3386,30 @@ $//img;
                 }
                 $mesh .= "\n";
                 $x++;
-                if  ($max_x < $x)
+                if ($max_x < $x)
                 {
                     $max_x = $x;
                 }
                 $y = 0;
             }
             
+            my $i;
+            my $j;
+            for ($i = 0; $i < $max_x; $i++)
+            {
+                for ($j = 0; $j < $max_y; $j++)
+                {
+                    if (!defined ($has_shape_data {"[$i][$j]"}))
+                    {
+                        $has_shape_data {"[$i][$j]"} = 0;
+                    }
+                }
+            }
+
+            
             my $r;
             my $row_shape_data;
+            
             foreach $r (sort { $a<=>$b } keys (%row_lookup))
             {
                 my $val = 0;
@@ -3421,11 +3424,23 @@ $//img;
                         my $x = $4;
                         my $y = $5;
                         $row_shape_data .= "shape_data[$x][$y] = {x:$field1, y:$field2, z:$field3}; // Explicit Row from $val\n"; 
+                        $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
                     }
                     else
                     {
-                        $row_shape_data .= "// >>$val<< - didn't match row_index,col_index:any_val\n"; 
+                        #$row_shape_data .= "// >>$val<< - didn't match row_index,col_index:any_val\n"; 
+                        #$shape_data .= "shape_data[$x][$y] = $last_good_data_point // using last known good val\n"; 
                     }
+                }
+            }
+
+            my $bsr;
+            foreach $bsr (sort keys (%has_shape_data))
+            {
+                if ($has_shape_data {$bsr} == 0) 
+                {
+                    #$row_shape_data .= "//delete shape_data$bsr;\n";
+                    $row_shape_data .= "shape_data$bsr = $last_good_data_point // using last known good val\n"; 
                 }
             }
 
