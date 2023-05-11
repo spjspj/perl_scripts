@@ -4,6 +4,8 @@
 #   Date : 23/Mar/2023
 #   Author : spjspj
 #   Purpose : Record which cards I've purchased..
+#   Files: D:/D_Downloads/apache_lounge/Apache24/cgibin/cards_list.txt
+#          D:/D_Downloads/apache_lounge/Apache24/cgibin/purchases.txt
 ##
 
 use strict;
@@ -119,6 +121,76 @@ my %all_cards_date;
 my %all_cards_place;
 my %all_cards_color;
 my %all_cards_price;
+
+sub add_new_card
+{
+    my $line = $_ [0];
+    $line = fix_url_code ($line);
+    if ($line =~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\$*\d+\.\d\d|\$\d+|)(;|$)/)
+    {
+        my $card = $1;
+        my $have = $2;
+        my $card_type = $3;
+        my $date_of_purchase = $4;
+        my $place_of_purchase = $5;
+        my $color = $6;
+        my $price = $7;
+        $card =~ s/\+/ /g;
+
+        $all_cards {$card} = 1;
+        $all_cards_have {$card} = $have;
+        $all_cards_card_type {$card} = uc($card_type);
+        $all_cards_date {$card} = $date_of_purchase;
+        $all_cards_place {$card} = $place_of_purchase;
+        $all_cards_color {$card} = $color;
+        $all_cards_price {$card} = $price;
+    }
+    elsif ($line =~ m/^([^;]+?);(want);(.); *; *;([^;]+?);/)
+    {
+        my $card = $1;
+        my $have = $2;
+        my $card_type = $3;
+        my $color = $4;
+
+        $all_cards {$card} = 1;
+        $all_cards_have {$card} = $have;
+        $all_cards_card_type {$card} = uc($card_type);
+        $all_cards_color {$card} = $color;
+    }
+    else
+    {
+        print ("Found error with: $line\n");
+        if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\d+\.\d\d|\$*\d+|)(;|$)/)
+        {
+            print ("1 failed ($line) here\n");
+        }
+        if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\$\d+\.\d\d|\$*\d+|)/)
+        {
+            print ("2 failed ($line) here\n");
+        }
+        if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);/)
+        {
+            print ("3 failed ($line) here\n");
+        }
+        if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);/)
+        {
+            print ("4 failed ($line) here\n");
+        }
+        if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);/)
+        {
+            print ("5 failed ($line) here\n");
+        }
+        if ($line !~ m/^([^;]+?);(already);(.);([^;]+?)/)
+        {
+            print ("6 failed ($line) here\n");
+        }
+        if ($line !~ m/^([^;]+?);(already);(.);/)
+        {
+            print ("7 failed ($line) here\n");
+        }
+    }
+}
+
 sub read_all_cards
 {
     my $CURRENT_FILE = "D:/D_Downloads/apache_lounge/Apache24/cgibin/cards_list.txt";
@@ -137,37 +209,7 @@ sub read_all_cards
     while (<ALL>)
     {
         chomp $_;
-        my $line = $_;
-        if ($line =~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\$\d+\.\d\d|\$\d+|);/)
-        {
-            my $card = $1;
-            my $have = $2;
-            my $card_type = $3;
-            my $date_of_purchase = $4;
-            my $place_of_purchase = $5;
-            my $color = $6;
-            my $price = $7;
-
-            $all_cards {$card} = 1;
-            $all_cards_have {$card} = $have;
-            $all_cards_card_type {$card} = $card_type;
-            $all_cards_date {$card} = $date_of_purchase;
-            $all_cards_place {$card} = $place_of_purchase;
-            $all_cards_color {$card} = $color;
-            $all_cards_price {$card} = $price;
-        }
-        if ($line =~ m/^([^;]+?);(want);(.);;;([^;]+?);/)
-        {
-            my $card = $1;
-            my $have = $2;
-            my $card_type = $3;
-            my $color = $4;
-
-            $all_cards {$card} = 1;
-            $all_cards_have {$card} = $have;
-            $all_cards_card_type {$card} = $card_type;
-            $all_cards_color {$card} = $color;
-        }
+        add_new_card ($_);
     }
     close ALL;
 }
@@ -184,6 +226,9 @@ sub read_all_purchased_cards
         chomp $_;
         my $line = $_;
         $purchased_cards {$line} = 1;
+        $line =~ s/"//g;
+        $line =~ s/,/;/g;
+        add_new_card ($line);
     }
     close ALL;
 }
@@ -197,6 +242,44 @@ sub is_authorized
         return 1;
     }
     return 0;
+}
+
+sub fix_url_code
+{
+    my $txt = $_ [0];
+    $txt =~ s/%21/!/g;
+    $txt =~ s/%22/"/g;
+    $txt =~ s/%23/#/g;
+    $txt =~ s/%24/\$/g;
+    $txt =~ s/%25/%/g;
+    $txt =~ s/%26/&/g;
+    $txt =~ s/%27/'/g;
+    $txt =~ s/%28/(/g;
+    $txt =~ s/%29/)/g;
+    $txt =~ s/%2A/*/g;
+    $txt =~ s/%2B/+/g;
+    $txt =~ s/%2C/,/g;
+    $txt =~ s/%2D/-/g;
+    $txt =~ s/%2E/./g;
+    $txt =~ s/%2F/\//g;
+    $txt =~ s/%3A/:/g;
+    $txt =~ s/%3B/;/g;
+    $txt =~ s/%3C/</g;
+    $txt =~ s/%3D/=/g;
+    $txt =~ s/%3E/>/g;
+    $txt =~ s/%3F/?/g;
+    $txt =~ s/%40/@/g;
+    $txt =~ s/%5B/[/g;
+    $txt =~ s/%5C/\\/g;
+    $txt =~ s/%5D/]/g;
+    $txt =~ s/%5E/\^/g;
+    $txt =~ s/%5F/_/g;
+    $txt =~ s/%60/`/g;
+    $txt =~ s/%7B/{/g;
+    $txt =~ s/%7C/|/g;
+    $txt =~ s/%7D/}/g;
+    $txt =~ s/%7E/~/g;
+    return $txt;
 }
 
 # Main
@@ -269,6 +352,24 @@ sub is_authorized
             copy "d:/perl_programs/aaa.jpg", \*CLIENT;
             next;
         }
+        
+        if ($txt =~ m/.*get_list.*/m)
+        {
+            my $html_text;
+            my $card;
+            foreach $card (sort keys (%all_cards))
+            {
+                $html_text .= "$card;";
+                $html_text .= $all_cards_have {$card} . ";";
+                $html_text .= $all_cards_card_type {$card} . ";";
+                $html_text .= $all_cards_date {$card} . ";";
+                $html_text .= $all_cards_place {$card} . ";";
+                $html_text .= $all_cards_color {$card} . ";";
+                $html_text .= $all_cards_price {$card} . ";<br>\n";
+            }
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
         # Have got all information?? https://xmage.au/purchasedcards/card_info?card_name=Arcane+Adaptation&purchased=ronin&color=blue&type=enchantment&price=0.00 HTTP/1.1
         if ($txt =~ m/card_info\?card_name=(.*?)&purchased=(.*?)&color=(.*?)&type=(.*?)&price=((\d+)\.(\d+)|\d+) HTTP/im)
         {
@@ -283,9 +384,11 @@ sub is_authorized
             my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
             
             my $card_type_fl = $card_type;
-            my $card_type_fl =~ s/^(.).*/$1/;
+            $card_type_fl =~ s/^(.).*/$1/;
 
-            my $card_line = "\"$card\",already,$card_type_fl,$yyyymmdd,$place,$color,$price";
+
+            # name;have;type;date;place;color;price;currency;
+            my $card_line = "$card;already;$card_type_fl;$yyyymmdd;$place;$color;$price";
             open PURCHASES, ">> D:/D_Downloads/apache_lounge/Apache24/cgibin/purchases.txt";
             print PURCHASES $card_line . "\n";
             close PURCHASES;
@@ -330,6 +433,7 @@ sub is_authorized
                     <option value=\"artifact\">artifact</option>
                     <option value=\"land\">land</option>
                     <option value=\"saga\">saga</option>
+                    <option value=\"battle\">battle</option>
                     <option value=\"planewalker\">planewalker</option>
                     <option value=\"instant\">instant</option>
                     <option value=\"sorcery\">sorcery</option>
@@ -356,40 +460,9 @@ sub is_authorized
         $txt =~ s/.*filter\?//;
         $txt =~ s/.*stats\?//;
         $txt =~ s/ http.*//i;
+        $txt = fix_url_code ($txt);
 
-        $txt =~ s/%21/!/g;
-        $txt =~ s/%22/"/g;
-        $txt =~ s/%23/#/g;
-        $txt =~ s/%24/\$/g;
-        $txt =~ s/%25/%/g;
-        $txt =~ s/%26/&/g;
-        $txt =~ s/%27/'/g;
-        $txt =~ s/%28/(/g;
-        $txt =~ s/%29/)/g;
-        $txt =~ s/%2A/*/g;
-        $txt =~ s/%2B/+/g;
-        $txt =~ s/%2C/,/g;
-        $txt =~ s/%2D/-/g;
-        $txt =~ s/%2E/./g;
-        $txt =~ s/%2F/\//g;
-        $txt =~ s/%3A/:/g;
-        $txt =~ s/%3B/;/g;
-        $txt =~ s/%3C/</g;
-        $txt =~ s/%3D/=/g;
-        $txt =~ s/%3E/>/g;
-        $txt =~ s/%3F/?/g;
-        $txt =~ s/%40/@/g;
-        $txt =~ s/%5B/[/g;
-        $txt =~ s/%5C/\\/g;
-        $txt =~ s/%5D/]/g;
-        $txt =~ s/%5E/\^/g;
-        $txt =~ s/%5F/_/g;
-        $txt =~ s/%60/`/g;
-        $txt =~ s/%7B/{/g;
-        $txt =~ s/%7C/|/g;
-        $txt =~ s/%7D/}/g;
-        $txt =~ s/%7E/~/g;
-
+        
         my $search = ".*";
         if ($txt =~ m/searchstr=(.*)/im)
         {
@@ -400,6 +473,12 @@ sub is_authorized
         if ($txt =~ m/groupstr=(.*)/im)
         {
             $group = "$1";
+        }
+        
+        my $multi_group = ".*";
+        if ($txt =~ m/multigroup=(.*)/im)
+        {
+            $multi_group = "$1";
         }
 
         my @strs = split /&/, $txt;
@@ -521,10 +600,17 @@ sub is_authorized
                 </form></td><td>";
 
         $html_text .= "<form action=\"/purchasedcards/groupby\">
-                <label for=\"groupstr\">Group by:</label><br>
+                <label for=\"groupstr\">Group by (first group only):</label><br>
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
-                <input type=\"submit\" value=\"Groupby\">
-                </form></td></table>";
+                <input type=\"submit\" value=\"Group By\">
+                </form></td><td>";
+                
+        $html_text .= "<form action=\"/purchasedcards/multigroupby\">
+                <label for=\"multigroup\">Multi group (row must match, 2 groups):</label><br>
+                <input type=\"text\" id=\"multigroup\" name=\"multigroup\" value=\"$multi_group\">
+                <input type=\"submit\" value=\"Multi Group By\">
+                </form><a href=\"/purchasedcards/get_list\"><font size=-2>View CSV</font></a></td></tr></table>";
+
         my %groups;
 
         $html_text .= "<script>\n";
@@ -578,6 +664,32 @@ sub is_authorized
         my $overall_count = 0;
         my %group_prices;
         my %group_counts;
+                
+        my $only_one_group = 1;
+        my $first_group_only = 0;
+        my $many_groups = 0;
+        my $overall_match = $group;
+
+        my $group2 = "";
+        if ($group =~ m/\((.*)\).*\((.*)\)/)
+        {
+            $only_one_group = 0;
+            $first_group_only = 1;
+            $many_groups = 0;
+            $group = "$1";
+            $group2 = "$2";
+        }
+        
+        if ($multi_group =~ m/\((.*)\).*\((.*)\)/)
+        {
+            $only_one_group = 0;
+            $first_group_only = 0;
+            $many_groups = 1;
+            $group = "$1";
+            $group2 = "$2";
+            $overall_match = $multi_group;
+        }
+
         foreach $card (sort keys (%all_cards))
         {
             my $color = $all_cards_color{$card};
@@ -601,7 +713,41 @@ sub is_authorized
                     $fake_row .= "cardname=$card ; ";
                 }
 
-                $row .= " <td> <font color=\"$fontcolor\">$all_cards_card_type{$card}</a> </font>\n </td>\n";
+                my $card_type;
+                if (lc ($all_cards_card_type{$card}) eq "a")
+                {
+                    $card_type = "artifact";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "c")
+                {
+                    $card_type = "creature";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "e")
+                {
+                    $card_type = "enchantment";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "l")
+                {
+                    $card_type = "land";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "i")
+                {
+                    $card_type = "instant";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "p")
+                {
+                    $card_type = "planeswalker";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "s")
+                {
+                    $card_type = "sorcery";
+                }
+                elsif (lc ($all_cards_card_type{$card}) eq "b")
+                {
+                    $card_type = "battle";
+                }
+
+                $row .= " <td> <font color=\"$fontcolor\">$card_type</a> </font>\n </td>\n";
                 $fake_row .= "type=$all_cards_card_type{$card} ; ";
                 $row .= " <td> <font color=\"$fontcolor\">$color</a> </font>\n</td>\n";
                 $fake_row .= "color=$color ; ";
@@ -634,37 +780,8 @@ sub is_authorized
                     $row .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
                 }
                 
-                my $url = "https://roningames.com.au/search?type=product&options[prefix]=last&q=$card";
-                if (lc ($all_cards_card_type{$card}) eq "a")
-                {
-                    $url .= " artifact";
-                    $fake_row .= "cardtype=artifact ; ";
-                }
-                elsif (lc ($all_cards_card_type{$card}) eq "c")
-                {
-                    $url .= " creature";
-                    $fake_row .= "cardtype=creature; ";
-                }
-                elsif (lc ($all_cards_card_type{$card}) eq "e")
-                {
-                    $url .= " enchantment";
-                    $fake_row .= "cardtype=enchantment; ";
-                }
-                elsif (lc ($all_cards_card_type{$card}) eq "i")
-                {
-                    $url .= " instant";
-                    $fake_row .= "cardtype=instant; ";
-                }
-                elsif (lc ($all_cards_card_type{$card}) eq "p")
-                {
-                    $url .= " planeswalker";
-                    $fake_row .= "cardtype=planeswalker; ";
-                }
-                elsif (lc ($all_cards_card_type{$card}) eq "s")
-                {
-                    $url .= " sorcery";
-                    $fake_row .= "cardtype=sorcery; ";
-                }
+                my $url = "https://roningames.com.au/search?type=product&options[prefix]=last&q=$card $card_type";
+                $fake_row .= "cardtype=$card_type ; ";
                 $row .= " <td> <font size=-2 color=\"$fontcolor\"><a href=\"$url\">$card</a> </font></td>\n";
 
                 if ($all_cards_price{$card} =~ m/^$/ && $all_cards_have{$card} =~ m/already/)
@@ -676,18 +793,62 @@ sub is_authorized
                     $row .= "<td><font size=-3>Already have price</font></td>\n";
                 }
                 $row =~ s/\n//img;
-                if ($fake_row =~ m/($group)/mg && $group ne ".*" && $group ne "")
-                {
-                    my $this_group = $1;
-                    $this_group =~ s/\W/ /mg;
-                    $this_group =~ s/  / /mg;
-                    $this_group =~ s/  / /mg;
 
-                    $group_counts {$this_group}++;
-                    $row .= " <td>$this_group</td> </tr>\n";
-                    if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                my $force_row = 0;
+                if ($many_groups)
+                {
+                    $force_row = -1;
+                }
+
+                $fake_row = $row;
+                $fake_row =~ s/<[^>]*>//img;
+                if ($fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+                {
+                    $force_row = 1;
+                    if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
                     {
-                        $group_prices {$this_group} += $1*100 + $2;
+                        my $this_group = $1;
+                        $group_counts {$this_group}++;
+                        $row .= " <td>$this_group</td> </tr>\n";
+                        if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                        {
+                            $group_prices {$this_group} += $1*100 + $2;
+                        }
+                    }
+                    elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
+                    {
+                        my $this_group = $1;
+                        if ($fake_row =~ m/($group2)/mg)
+                        {
+                            $group_counts {$this_group}++;
+                            $row .= " <td>$this_group</td> </tr>\n";
+                            if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                            {
+                                $group_prices {$this_group} += $1*100 + $2;
+                            }
+                        }
+                        else
+                        {
+                            $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                        }
+                    }
+                    elsif ($many_groups && $fake_row =~ m/($group)/im)
+                    {
+                        my $this_group = $1;
+                        if ($fake_row =~ m/($group2)/im)
+                        {
+                            $this_group .= " " . $1;
+                            $group_counts {$this_group}++;
+                            $row .= " <td>$this_group</td> </tr>\n";
+                            if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                            {
+                                $group_prices {$this_group} += $1*100 + $2;
+                            }
+                        }
+                        else
+                        {
+                            $row .= "<td><font size=-3>No group</font></td></tr>\n";
+                        }
                     }
                 }
                 else
@@ -695,8 +856,7 @@ sub is_authorized
                     $row .= "<td><font size=-3>No group</font></td></tr>\n";
                 }
 
-                print ("Checking $row vs $search\n");
-                if ($row =~ m/$search/img || $search eq "")
+                if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
                 {
                     $overall_count++;
                     $html_text .= "$row";
@@ -733,9 +893,9 @@ sub is_authorized
                 $total_g_price += $g_price;
             }
             $group_block .= "Total cost: $total_g_price, Total count: $total_g_count"; 
-            $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/mg;
-                
+            $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
         }
+        $html_text =~ s/QQQ//im;
 
         $html_text .= "<a href=\"https://imgur.com/a/9uj84ka\">Boxes2</a><br>";
         $html_text .= "<a href=\"https://imgur.com/a/Bdt159R\">EDH Decklists</a><br>";
