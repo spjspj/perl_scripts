@@ -204,8 +204,27 @@ sub process_csv_data
         while ($line =~ m/./ && $line =~ s/^([^;\t]*)([;\t]|$)//)
         {
             my $field = $1;
-            # Special case of G^ (G+Number one above) G_ (G+number one below) or G> (G+same number)
-            while ($field =~ m/([A-Z])([\^\_>])/)
+            # Special case of G^^ (G+Number two above) G__ (G+number two below)  
+            while ($field =~ m/([A-Z])([\^\_])([\^\_])/ && $row_num > 1)
+            {
+                my $col = $1;
+                my $line_mod = $2;
+                my $line_mod_2 = $3;
+                
+                if ($line_mod eq "\^" && $line_mod eq $line_mod_2)
+                {
+                    my $up_field = $col . ($row_num-2);
+                    $field =~ s/([A-Z])([\^])([\^])/$up_field/;
+                }
+                elsif ($line_mod eq "\_" && $line_mod eq $line_mod_2)
+                {
+                    my $down_field = $col . ($row_num+2);
+                    $field =~ s/([A-Z])([\_>])([\_>])/$down_field/;
+                }
+            }
+
+            # Special case of G^ (G+Number one above) G^^ (G+Number two above) G_ (G+number one below) or G> (G+same number) or G!(G+thethingabovebutincrementedownum..)
+            while ($field =~ m/([A-Z])([\^\_>!])/ && $row_num > 1)
             {
                 my $col = $1;
                 my $line_mod = $2;
@@ -224,6 +243,21 @@ sub process_csv_data
                 {
                     my $same_field = $col . $row_num;
                     $field =~ s/([A-Z])([\^\_>])/$same_field/;
+                }
+                elsif ($line_mod eq "!")
+                {
+                    my $fv = get_field_value ($row_num-1, $col_letter, 1, 1);
+                    while ($field =~ m/([A-Z])!/)
+                    {
+                        my $cf = $1;
+                        $fv =~ m/([A-Z])(\d+)/;
+                        my $cc = $1;
+                        my $rr = $2;
+                        my $f1 = "$cf!";
+                        $rr++;
+                        my $f2 = $cc . $rr;
+                        $field =~ s/$f1/$f2/g;
+                    }
                 }
             }
 
@@ -456,6 +490,7 @@ sub get_field_value
     my $row_num = $_ [0];
     my $col_letter = $_ [1];
     my $for_display = $_ [2];
+    my $show_formulas = $_ [3];
     if ($col_letter =~ m/^\d+$/)
     {
         $col_letter =  get_field_letter_from_field_num ($col_letter);
@@ -508,9 +543,9 @@ sub get_field_value
         {
             if (!defined ($csv_data {$field_id . "_calc"}))
             {
-                return $csv_data {$field_id};
+                return "<font color=\"rebeccapurple\">$csv_data{$field_id}</font>";
             }
-            return ($csv_data {$field_id . "_calc"});
+            return ($csv_data {$field_id . "_calc"} . "&nbsp;<font size=-1 color=\"darkgray\">$csv_data{$field_id}<\/font>");
         }
         return ($calc_val);
     }
@@ -723,10 +758,10 @@ sub do_mod_expansion
     return $field_val;
 }
 
-sub do_div_expansion
+sub do_int_expansion
 {
     my $field_val = $_ [0];
-    if ($field_val =~ m/((DIV)\(.*)/)
+    if ($field_val =~ m/((INT)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
@@ -1185,7 +1220,7 @@ sub do_sum_expansion
         {
             while ($j <= $second_num)
             {
-                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0);
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas);
                 if (is_number ($cv))
                 {
                     $sum_str .= "$cv+";
@@ -1219,7 +1254,7 @@ sub fix_up_field_vals
         if ($next_field_id eq $field_id) { return "ERROR (self-ref)"; } 
         my $rn = get_row_num ($next_field_id);
         my $cl = get_col_letter ($next_field_id);
-        my $that_field_val = get_field_value ($rn, $cl, 0);
+        my $that_field_val = get_field_value ($rn, $cl, 0, $show_formulas);
         $field_val =~ s/$next_field_id/$that_field_val/; 
         $next_field_id = has_field_id ($field_val, $field_id, 1);
     }
@@ -1246,9 +1281,9 @@ sub perl_expansions
     {
         $str = do_mod_expansion ($str);
     }
-    if ($str =~ m/DIV\(/)
+    if ($str =~ m/INT\(/)
     {
-        $str = do_div_expansion ($str);
+        $str = do_int_expansion ($str);
     }
     if ($str =~ m/MAX\(/)
     {
@@ -1595,7 +1630,7 @@ sub get_graph_html
     {
         for ($i = 2; $i < $max_rows; $i++)
         {
-            my $x = get_field_value ($i, $col, 1);
+            my $x = get_field_value ($i, $col, 1, $show_formulas);
             $x =~ s/^$/0/;
             $x =~ s/,//g;
             $x =~ s/\$//g;
@@ -1719,6 +1754,7 @@ sub get_3dgraph_html
     my $world_y = $_ [9];
     my $world_z = $_ [10];
     my $use_user_set = $_ [11];
+    my $is_mesh = $_ [12];
 
     my $xmult = $world_x;
     my $ymult = $world_y;
@@ -1746,17 +1782,22 @@ sub get_3dgraph_html
     $graph3d_html .= "        function generateTopography (xmin, xmax, ymin, ymax, rows, columns)\n";
     $graph3d_html .= "        {\n";
     $graph3d_html .= "            const nRws = rows || 20;\n";
+    $graph3d_html .= "            row_num = 0;\n";
+    $graph3d_html .= "            col_num = 0;\n";
     $graph3d_html .= "            const nCls = columns || 20;\n";
     $graph3d_html .= "            const xstep = (xmax-xmin)/nRws;\n";
     $graph3d_html .= "            const ystep = (ymax-ymin)/nCls;\n";
     $graph3d_html .= "            const shape_data = [];\n";
-    $graph3d_html .= "            for (let r=0, yVal=ymin; yVal<ymax; r++, yVal+=ystep)\n";
+    $graph3d_html .= "            for (let r=0, yVal=ymin; row_num < rows; r++, yVal+=ystep)\n";
     $graph3d_html .= "            {\n";
-    $graph3d_html .= "                shape_data[r] = [];\n";
-    $graph3d_html .= "                for (let c=0, xVal=xmin; xVal<xmax; c++, xVal+=xstep)\n";
+    $graph3d_html .= "                shape_data[row_num] = [];\n";
+    $graph3d_html .= "                for (let c=0, xVal=xmin, col_num = 0; col_num < columns; c++, xVal+=xstep)\n";
     $graph3d_html .= "                {\n";
-    $graph3d_html .= "                    shape_data[r][c] = {x: xVal, y: yVal, z: 0.0};\n";
+    $graph3d_html .= "                    shape_data[row_num][col_num] = {x: xVal, y: yVal, z: -12.0};\n";
+    $graph3d_html .= "                    col_num++;\n";
     $graph3d_html .= "                }\n";
+    $graph3d_html .= "                console.warn (\"Done col \" + col_num + \" for columns=\" + columns);\n";
+    $graph3d_html .= "                row_num++;\n";
     $graph3d_html .= "            }\n";
     $graph3d_html .= $shape_data;
     $graph3d_html .= "            return shape_data;\n";
@@ -1765,32 +1806,17 @@ sub get_3dgraph_html
     $graph3d_html .= "        {\n";
     $graph3d_html .= "            const gc = new Cango3D(canvasID);\n";
     $graph3d_html .= "            gc.clearCanvas();\n";
-    # Ok, after working stuff out..
-    # It looks like a cone of about 32 degrees in both directions (got about 13.5 degrees in other direction..) or 27degrees
-    # tan(13.5/180*3.14159265358979323) = OPPOSITE (aka 1/2 of x span on screen) / ADJACENT(aka the Z it has to be in front of the screen)
-    # 13.5/180*3.14159265358979323 = atan(OPPOSITE / ADJACENT)
-    # adjacent = opposite / tan(13.5/180*3.14159265358979323)
     my $tan_val = tan (13.5/180*3.14159265358979323);
     my $proper_z_offset = ($x_span / 2) / $tan_val;
     my $max_dim = max ($max_x,$max_y, $max_z); 
-    #if ($max_z < $max_dim / 4)
-    #{
-    #    $max_z = $max_dim / 4;
-    #}
-    #elsif ($max_z < $max_dim / 2)
-    #{
-    #    $max_z = $max_dim / 2;
-    #}
-    if ($max_z  < 2)
+    if ($max_z  < 1.2)
     {
-        $max_z = 2;
+        $max_z = 1.25;
     }
-
     $graph3d_html .= "            const xmin = -$max_z, xmax = $max_z,\n";
     $graph3d_html .= "                  ymin = -$max_z, ymax = $max_z,\n";
     $graph3d_html .= "                  zmin = -$max_z, zmax = $max_z;\n";
-    #$graph3d_html .= "                  zmin = 0, zmax = $max_dim;\n";
-    $graph3d_html .= "            const blobData = generateTopography(xmin, xmax, ymin, ymax, $max_y, $max_x);\n";
+    $graph3d_html .= "            const blobData = generateTopography(xmin, xmax, ymin, ymax, $max_x, $max_y);\n";
     $graph3d_html .= "            const grf = new Graph3D(xmin, xmax, ymin, ymax, zmin, zmax,\n";
     $graph3d_html .= "            {\n";
     $graph3d_html .= "                xLabel: \"X\",\n";
@@ -1831,7 +1857,14 @@ sub get_3dgraph_html
 
     my $stats = " x: $max_x , $min_x, y: $max_y, $min_y, z: $max_z, $min_z<br>";
  
-    $graph3d_html .= "    <h1>3D Graph for $title</h1><br>\n";
+    if ($is_mesh)
+    {
+        $graph3d_html .= "    <h1>Mesh 3D Graph for $title</h1><br>\n";
+    }
+    else
+    {
+        $graph3d_html .= "    <h1>3D Graph for $title</h1><br>\n";
+    }
     $graph3d_html .= "    <div class=\"figHolder\" style=\"width: 430px; margin:20px 0px; float: center;\">\n";
     $graph3d_html .= "      <canvas id=\"thecanvas\" class=\"canvasEg\" width=\"700\" height=\"700\"></canvas>\n";
     $graph3d_html .= "    </div>\n";
@@ -1955,7 +1988,6 @@ sub get_3dgraph_html
 0.5801;0;-0.81;-0.81\n0.5801;0.08;-0.81;-0.81\n0.5801;0.17;-0.79;-0.79\n0.5801;0.25;-0.77;-0.77\n0.5801;0.33;-0.74;-0.74\n0.5801;0.42;-0.70;-0.70\n0.5801;0.50;-0.64;-0.64\n0.5801;0.58;-0.57;-0.57\n0.5801;0.67;-0.46;-0.46\n0.5801;0.75;-0.31;-0.31\n0.6701;0;-0.75;-0.75\n0.6701;0.08;-0.74;-0.74\n0.6701;0.17;-0.73;-0.73\n0.6701;0.25;-0.70;-0.70\n0.6701;0.33;-0.67;-0.67\n0.6701;0.42;-0.62;-0.62\n
 0.6701;0.50;-0.55;-0.55\n0.6701;0.58;-0.46;-0.46\n0.6701;0.67;-0.33;-0.33\n0.7501;0;-0.66;-0.66\n0.7501;0.08;-0.66;-0.66\n0.7501;0.17;-0.64;-0.64\n0.7501;0.25;-0.61;-0.61\n0.7501;0.33;-0.57;-0.57\n0.7501;0.42;-0.51;-0.51\n0.7501;0.50;-0.43;-0.43\n0.7501;0.58;-0.31;-0.31\n0.8301;0;-0.55;-0.55\n0.8301;0.08;-0.55;-0.55\n0.8301;0.17;-0.53;-0.53\n0.8301;0.25;-0.49;-0.49\n0.8301;0.33;-0.44;-0.44\n0.8301;0.42;-0.36;-0.36\n0.8301;0.50;-0.24;-0.24\n0.9201;0;-0.40;-0.40\n0.9201;0.08;-0.39;-0.39\n0.9201;0.17;-0.36;-0.36\n0.9201;0.25;-0.31;-0.31\n0.9201;0.33;-0.22;-0.22";
 
-
     my $examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal\n" . 
         "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));1;=E>;=MOD(F>|24);=cos(C>);=H>*D>\n";
     my $ord_line  = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
@@ -1975,9 +2007,47 @@ sub get_3dgraph_html
             $examples_three .= "$ord_line\n";
         }
     }
- 
-    process_csv_data ($examples_two);
 
+    my $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN\n";
+#/*
+# Double ball..
+#    my $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN
+#=D>/12;=E>/12;-280;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)\n";
+#    my $l = "=D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)\n";
+#    my $zzz = 0;
+#    for ($zzz = 0; $zzz < 24*24; $zzz++)
+#    {
+#        $examples_six .= $l;
+#    }
+#
+#    $l = "=A2+0.01;=E2/12;=C^+1;=D2;=E2;=F2;=-G2;=-H2;=I2;=J2\n";
+#    $examples_six .= $l;
+#    $l = "=A!+0.01;=E!/12;=C^+1;=D!;=E!;=F!;=-G!;=-H!;=I!;=J!\n";
+#    $zzz = 0;
+#    for ($zzz = 0; $zzz < 24*24; $zzz++)
+#    {
+#        $examples_six .= $l;
+#    }
+#    $l = "=A2+2;=E2/12;=C^+1;=D2;=E2;=F2;=G2;=H2;=I2;=J2\n";
+#    $examples_six .= $l;
+#    $zzz = 0;
+#    $l = "=A!+2;=E!/12;=C^+1;=D!;=E!;=F!;=G!;=H!;=I!;=J!\n";
+#    for ($zzz = 0; $zzz < 24*24*2; $zzz++)
+#    {
+#        $examples_six .= $l;
+#    }
+#*/
+
+    my $zzz = 0;
+    my $l = "=cos(E>);=sin(E>);=-280;=INT(C>|24)+C>/25;=MOD(C>|24)-12+C>/25;0;=(D>+12)*0.2;=J^\n";
+    $examples_six .= $l;
+    $l = "=cos(E>);=sin(E>);=C^+1;=INT(C>|24)+C>/25;=MOD(C>|24)-12+C>/25;0;=(D>+12)*0.2;=J^\n";
+    for ($zzz = 0; $zzz < 50*12; $zzz++)
+    {
+        $examples_six .= $l;
+    } 
+
+    process_csv_data ($examples_six);
 
     while ($paddr = accept (CLIENT, SERVER))
     {
@@ -2032,22 +2102,56 @@ sub get_3dgraph_html
         {
             $txt =~ m/(........show_examples.......)/im;
 
-            my $examples_one = "
-DoW;Increment Series;Months;DaysInMonth;Years;YearMonth;Oneupcounter
-Monday;1;January;31;2001;202301;
-Tuesday;=B1+1;February;28;2002;202302;
-Wednesday;=B2+1;March;31;2003;202303;
-Thursday;=B3+1;April;30;2004;202304;
-Friday;=B4+1;May;31;2005;202305;
-Saturday;=B5+1;June;30;2006;202306;
-Sunday;=B6+1;July;31;2007;202307;
-Monday;=B7+1;August;31;2008;202308;
-Tuesday;=B8+1;September;30;2009;202309;
-Wednesday;=B9+1;October;31;2010;202310;
-Thursday;2;November;30;2011;202311;
-Friday;=B11+1;December;31;2012;202312;";
+#            my $examples_one = "
+#DoW;Increment Series;Months;DaysInMonth;Years;YearMonth;Oneupcounter
+#Monday;1;January;31;2001;202301;
+#Tuesday;=B1+1;February;28;2002;202302;
+#Wednesday;=B2+1;March;31;2003;202303;
+#Thursday;=B3+1;April;30;2004;202304;
+#Friday;=B4+1;May;31;2005;202305;
+#Saturday;=B5+1;June;30;2006;202306;
+#Sunday;=B6+1;July;31;2007;202307;
+#Monday;=B7+1;August;31;2008;202308;
+#Tuesday;=B8+1;September;30;2009;202309;
+#Wednesday;=B9+1;October;31;2010;202310;
+#Thursday;2;November;30;2011;202311;
+#Friday;=B11+1;December;31;2012;202312;";
 
-            my$examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
+            my $examples_one = "X_val	Y_yal	Row	DivRow	ModRow	??	Z_val_cylinder
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=-280	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2";
+
+            my $examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
 201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
@@ -2251,9 +2355,10 @@ Friday;=B11+1;December;31;2012;202312;";
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
-=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
-";
-            #my$examples_five= "CHANGE;REGEX; 123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
+=A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>";
+
+            #my $examples_five= "CHANGE;REGEX; 123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
+
             my $examples_five= "Date;HouseOffset;HouseVariable;HouseMonthsToGo;HouseIntRate;HouseRepayment;HouseInt;HouseOffsetInt;2HouseOffset;NumDaysInMonth;BalanceInOffset;NegOffset;OtherLoan;OtherIntRate;OtherInterest;ActualInterestPaid
 202304;400672.53;481862.69;314;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
@@ -2276,6 +2381,21 @@ Friday;=B11+1;December;31;2012;202312;";
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;";
+
+            my $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN
+=D>/12;=E>/12;-280;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
+=D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
+=D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
+=D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
+=D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
+=D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
+=A2+0.01;=B2+0.01;=C2;=D2;=E2;=F2;=-G2;=H2;=I2;=J2
+=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
+=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
+=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
+=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
+=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!";
+
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
 <textarea id=\"examples1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples1\">$examples_one</textarea>
@@ -2283,6 +2403,7 @@ Friday;=B11+1;December;31;2012;202312;";
 <textarea id=\"examples3\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples3\">$examples_three</textarea>
 <textarea id=\"examples4\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples4\">$examples_four</textarea>
 <textarea id=\"examples5\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples5\">$examples_five</textarea>
+<textarea id=\"examples6\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples6\">$examples_six</textarea>
 <input type=\"submit\" value=\"Done\" class=\"submitButton\">
 </form>
 </body> </html>";
@@ -2571,7 +2692,8 @@ $//img;
                 <a href=\"/csv_analyse/show_examples\">Examples</a>
                 <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
                 <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
-                <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">3D</a>
+                <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">Mesh 3D</a>
+                <a href=\"/csv_analyse/3dgraph?col1=A&col2=B&col3=C\">3D</a>
                 </form></td>";
 
         if ($show_formulas == 0)
@@ -2709,7 +2831,7 @@ $//img;
             {
                 if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
-                my $field = get_field_value ($row_num, $col_letter, 1);
+                my $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
 
                 if (!defined ($col_types {$col_letter}))
                 {
@@ -2787,7 +2909,7 @@ $//img;
                     }
                 }
 
-                $field = get_field_value ($row_num, $col_letter, 1);
+                $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
                 if ($row_num > $old_row_num)
                 {
                     # Add row to table if matched
@@ -2827,7 +2949,7 @@ $//img;
                             $row =~ s/<\/font><\/td>/<\/td>/im;
                             $group_counts {$this_group}++;
 
-                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
+                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                         }
@@ -2837,7 +2959,7 @@ $//img;
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
@@ -2873,7 +2995,7 @@ $//img;
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0);
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
@@ -3270,7 +3392,7 @@ $//img;
         $html_text .= "</body>\n";
         $html_text .= "</html>\n";
 
-        if ($txt =~ m/GET.*show_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m || $txt =~ m/GET.*graph_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m)
+        if ($txt =~ m/GET.*show_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m || $txt =~ m/GET.*graph_mesh.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m || $txt =~ m/GET.*3dgraph.*col1=([A-Z]).*col2=([A-Z]).*col3=([A-Z])/m)
         {
             my $col1 = $1;
             my $col2 = $2;
@@ -3282,6 +3404,11 @@ $//img;
 
             my $mesh;
             my $shape_data;
+            my $straight_shape_data;
+            my $straight_rn = 0;
+            my $straight_max_row_num = 0;
+            my $straight_last_mod_2 = 0;
+            my %straight_row_lookup;
             my $rn = 2;
 
             my %lookup_1;
@@ -3290,14 +3417,15 @@ $//img;
             my $lookup2_counter = 0;
             my %val_lookup1;
             my %row_lookup;
-            my %has_shape_data;
-            
-            
+            my %hash_shape_data;
+
             while ($rn < $max_rows)
             {
-                my $field1 = get_field_value ($rn, $col1, 0);
-                my $field2 = get_field_value ($rn, $col2, 0);
-                my $field3 = get_field_value ($rn, $col3, 0);
+                my $field1 = get_field_value ($rn, $col1, 0, $show_formulas);
+                my $field2 = get_field_value ($rn, $col2, 0, $show_formulas);
+                my $field3 = get_field_value ($rn, $col3, 0, $show_formulas);
+
+                $straight_row_lookup {$straight_rn} = "$field1,$field2:$field3;$straight_rn";
 
                 if (!defined ($lookup_2 {$field2}))
                 {
@@ -3317,9 +3445,10 @@ $//img;
                 my $row_x = $lookup_1 {$field1};
                 my $row_y = $lookup_2 {$field2};
                 $row_lookup {"$rn.row"} = "$field1,$field2:$field3;$row_x,$row_y";
-                $has_shape_data {"[$row_x][$row_y]"} = 1;
+                $straight_rn++;
                 $rn++;
             }
+            
             $mesh .= "\n";
 
             $rn = 2;
@@ -3395,27 +3524,36 @@ $//img;
             
             my $i;
             my $j;
+            my $has_shape_data;
+            my $count = 0;
+            my $mc = 0;
             for ($i = 0; $i < $max_x; $i++)
             {
                 for ($j = 0; $j < $max_y; $j++)
                 {
-                    if (!defined ($has_shape_data {"[$i][$j]"}))
+                    if (!defined ($hash_shape_data {"[$i][$j]"}))
                     {
-                        $has_shape_data {"[$i][$j]"} = 0;
+                        $hash_shape_data {"[$i][$j]"} = 0;
+                        $count ++;
+                    }
+                    else
+                    {
+                        $has_shape_data .= "// [$i][$j] -- matched\n";
+                        $mc ++;
                     }
                 }
             }
-
             
+            $has_shape_data .= "// Overall count = $count ($max_x * $max_y) - matched $mc\n";
             my $r;
             my $row_shape_data;
             
             foreach $r (sort { $a<=>$b } keys (%row_lookup))
             {
                 my $val = 0;
-                if (defined ($row_lookup{"$r"}))
+                if (defined ($row_lookup{$r}))
                 {
-                    $val = $row_lookup{"$r"};
+                    $val = $row_lookup{$r};
                     if ($val =~ m/^([0-9\.\-]+),([0-9\.\-]+):([0-9\.\-]+);(\d+),(\d+)$/)
                     {
                         my $field1 = $1;
@@ -3424,23 +3562,63 @@ $//img;
                         my $x = $4;
                         my $y = $5;
                         $row_shape_data .= "shape_data[$x][$y] = {x:$field1, y:$field2, z:$field3}; // Explicit Row from $val\n"; 
+                        $hash_shape_data {"[$x][$y]"} = 1;
+                        #$has_shape_data .= "//[$x][$y] = ok\n";
                         $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
                     }
-                    else
+                }
+            }
+            
+            foreach $r (sort { $a<=>$b } keys (%straight_row_lookup))
+            {
+                my $val = 0;
+                if (defined ($straight_row_lookup{$r}))
+                {
+                    $val = $straight_row_lookup{$r};
+                    if ($val =~ m/^([0-9\.\-]+),([0-9\.\-]+):([0-9\.\-]+);(\d+)$/)
                     {
-                        #$row_shape_data .= "// >>$val<< - didn't match row_index,col_index:any_val\n"; 
-                        #$shape_data .= "shape_data[$x][$y] = $last_good_data_point // using last known good val\n"; 
+                        my $field1 = $1;
+                        my $field2 = $2;
+                        my $field3 = $3;
+                        my $rn = $4;
+                        my $col_number = $rn % 2;
+                        my $row_number = int ($rn / 2);
+                        $straight_last_mod_2 = $col_number;
+                        if ($col_number == 0)
+                        {
+                            if ($straight_max_row_num < $row_number)
+                            {
+                                $straight_max_row_num = $row_number; 
+                            }
+                            $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
+                        }
+                        else
+                        {
+                            $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
+                            if ($straight_max_row_num < $row_number)
+                            {
+                                $straight_max_row_num = $row_number; 
+                            }
+                            $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
+                        }
                     }
                 }
             }
 
-            my $bsr;
-            foreach $bsr (sort keys (%has_shape_data))
+            while ($straight_last_mod_2 == 0)
             {
-                if ($has_shape_data {$bsr} == 0) 
+                $straight_last_mod_2++; 
+                $straight_shape_data .= "shape_data[$straight_max_row_num][$straight_last_mod_2] = $last_good_data_point; // Adding in last one..\n"; 
+            }
+
+            my $bsr;
+            foreach $bsr (sort keys (%hash_shape_data))
+            {
+                if ($hash_shape_data {$bsr} == 0) 
                 {
                     #$row_shape_data .= "//delete shape_data$bsr;\n";
-                    $row_shape_data .= "shape_data$bsr = $last_good_data_point // using last known good val\n"; 
+                    $row_shape_data .= "shape_data$bsr = $last_good_data_point // aslkdjasd using last known good val\n"; 
+                    #$has_shape_data .= "//$bsr = AA NOT ok\n";
                 }
             }
 
@@ -3466,8 +3644,20 @@ $//img;
                     $use_auto = 1;
                     print $world_x . ">>" . $world_y . ">>" . $world_z;
                 }
+                $row_shape_data .= "\n\n" . $has_shape_data;
                 my $title = $col_header1 . " x " . $col_header2 . " x " . $col_header3;
-                my $html_text = get_3dgraph_html ($row_shape_data, $title, $max_x, 0, $max_y, 0, $max_z, $min_z, $world_x, $world_y, $world_z, $use_auto);
+                my $html_text = get_3dgraph_html ($row_shape_data, $title, $max_x, 0, $max_y, 0, $max_z, $min_z, $world_x, $world_y, $world_z, $use_auto, 1);
+                write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+                next;
+            }
+            elsif ($txt =~ m/GET.*3dgraph/m)
+            {
+                my $world_x = -10;
+                my $world_y = -10;
+                my $world_z = 50;
+                my $use_auto = 0;
+                my $title = $col_header1 . " x " . $col_header2 . " x " . $col_header3;
+                my $html_text = get_3dgraph_html ($straight_shape_data, $title, $straight_max_row_num+1, 0, 2, 0, $max_z, $min_z, $world_x, $world_y, $world_z, $use_auto, 0);
                 write_to_socket (\*CLIENT, $html_text, "", "noredirect");
                 next;
             }
