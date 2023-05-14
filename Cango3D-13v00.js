@@ -151,10 +151,6 @@
       this.x = this.tx;
       this.y = this.ty;
       this.z = this.tz;
-      //if (max_x_seen < this.x ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); max_x_seen = this.x }
-      //if (max_y_seen < this.y ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); max_y_seen = this.y }
-      //if (min_x_seen > this.x ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); min_x_seen = this.x }
-      //if (min_y_seen > this.y ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); min_y_seen = this.y }
       if (max_x_seen < this.x ) { max_x_seen = this.x }
       if (max_y_seen < this.y ) { max_y_seen = this.y }
       if (min_x_seen > this.x ) { min_x_seen = this.x }
@@ -168,10 +164,6 @@
       this.tx = v0;
       this.ty = v1;
       this.tz = v2;
-      //if (max_x_seen < this.tx ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); max_x_seen = this.tx }
-      //if (max_y_seen < this.ty ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); max_y_seen = this.ty }
-      //if (min_x_seen > this.tx ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); min_x_seen = this.tx }
-      //if (min_y_seen > this.ty ) { console.warn(max_x_seen + "," + max_y_seen + " : " + min_x_seen + "," + min_y_seen); min_y_seen = this.ty }
       if (max_x_seen < this.tx ) { max_x_seen = this.tx }
       if (max_y_seen < this.ty ) { max_y_seen = this.ty }
       if (min_x_seen > this.tx ) { min_x_seen = this.tx }
@@ -206,7 +198,7 @@
     //   - arcToCubicCurves() by Dmitry Baranovskiy (MIT License)
     //     https://github.com/DmitryBaranovskiy/raphael/blob/v2.1.1/raphael.core.js#L1837
     // @author
-    //   Jarosław Foksa
+    //   JarosÅ‚aw Foksa
     // @source
     //   https://github.com/jarek-foksa/path-data-polyfill.js/
     // @license
@@ -3826,6 +3818,10 @@
         // apply the matrix for each transform to all the drawCmds coordinates
         for (let i=0; i<tfmAry.length; i++)
         {
+            if (p.z < -11.0)
+            {
+                console.warn (" spjspj Found an origin point.. " + i); 
+            }
             p.softTransform(tfmAry[i].mat);
         }
     }
@@ -4160,7 +4156,7 @@
             this.yoffset += cy - cy/z;
             this.xscl /= z;
             this.yscl /= z;
-            console.warn(" zoom out >>> xscl:" + this.xscl + " yscl:" + this.yscl + " xoffset:" + this.xoffset + " yoffset: ... " + this.yoffset + " rrr " + this.rawspjWidth + " == rawspjWidth");
+            console.warn (" spjspj zoom out >>> xscl:" + this.xscl + " yscl:" + this.yscl + " xoffset:" + this.xoffset + " yoffset: ... " + this.yoffset + " rrr " + this.rawspjWidth + " == rawspjWidth");
             redraw();
         };
         const pan = (sx, sy)=>
@@ -4184,7 +4180,7 @@
             this.yoffset = this.savWC.yoffset;
             xRot = 20;
             yRot = 15;
-            console.warn(" reset stuff >>> xscl:" + this.xscl + " yscl:" + this.yscl + " xoffset:" + this.xoffset + " yoffset: ... " + this.yoffset + " rrr " + this.rawspjWidth + " == rawspjWidth");
+            console.warn (" spjspj reset stuff >>> xscl:" + this.xscl + " yscl:" + this.yscl + " xoffset:" + this.xoffset + " yoffset: ... " + this.yoffset + " rrr " + this.rawspjWidth + " == rawspjWidth");
             redraw();
         };
         const cvsStk = new CanvasStack(this.cId);
@@ -4241,6 +4237,11 @@
         const panL = new Path3D(arw, {rotZ:+90, y:0, x:-122, strokeColor:"grey", lineWidth:2});
         const panU = new Path3D(arw, {y:22, x:-100, strokeColor:"grey", lineWidth:2});
         const panD = new Path3D(arw, {rotZ:180, y:-22, x:-100, strokeColor:"grey", lineWidth:2});
+
+        //const panRU = new Path3D(arw, {rotZ:-45, y:0, x:-78, strokeColor:"grey", lineWidth:2});
+        //const panLD = new Path3D(arw, {rotZ:+45, y:0, x:-122, strokeColor:"grey", lineWidth:2});
+        //const panUL = new Path3D(arw, {rotZ:-45, y:22, x:-100, strokeColor:"grey", lineWidth:2});
+        //const panDR = new Path3D(arw, {rotZ:135, y:-22, x:-100, strokeColor:"grey", lineWidth:2});
 
         zGrp.addObj(bkg, rst, rgt, panrgt, up, panup, lft, panlft, dn, pandn, zin, zout, arwU, arwR, arwL, arwD, plsObj, mnsObj, crsObj, panR, panL, panU, panD);
         zpGC.render(zGrp, "noclear");
