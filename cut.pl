@@ -16,6 +16,12 @@ use DateTime;
 
 my $PI = 3.14159265358979323;
 my %all_json_fields;
+my $last_statement_date = "";
+my $last_statement_total = "";
+my $credit_line_length = "";
+my $running_total;
+my $last_statement_details = "";
+my $statement_eq = "";
 
 sub read_json_values
 {
@@ -2814,6 +2820,94 @@ my $allup_z = 0;
             print "$line\n";
         }
 
+        if ($operation eq "do_nab_statement")
+        {
+            my $print_line = 0;
+            $line =~ s/,//g;
+            my $og = $line;
+            if ($line =~ m/^\s+(\d{1,2}  *[A-Z][a-z][a-z]  *20\d\d)/)
+            {
+                $last_statement_date = $1;
+                $print_line = 1;
+            }
+            $credit_line_length = length ($line);
+            if ($line =~ m/(\d+\.\d\d)  *Cr/)
+            {
+                $last_statement_total = "$1$2";
+                print ("\nSetting statement to $last_statement_total for $last_statement_date (from $statement_eq)");
+                $statement_eq = "$last_statement_total ";
+                $print_line = 1;
+            }
+            $line =~ s/\s+/ /g;
+            $last_statement_details .= "$line";
+            if ($line =~ m/\.\.\.\. \d/ || $print_line)
+            {
+                my $transaction_val;
+                $print_line = 0;
+                if ($line =~ m/\.\.\.\. (\d+.\d\d)/)
+                {
+                    $transaction_val = -1 * $1;
+                    $print_line = 1;
+                }
+                if ($line =~ m/^\s*\.+\.\.\. (\d+.\d\d)/)
+                {
+                    $transaction_val = $1;
+                    $print_line = 1;
+                }
+                $last_statement_details =~ s/\n//img;
+                if ($print_line)
+                {
+                    my $trans_type = "??";
+                    if ($last_statement_details =~ m/\.\. \.\./)
+                    {
+                        $transaction_val = abs ($transaction_val);
+                        $trans_type = "CR1";
+                    }
+                    $transaction_val = abs ($transaction_val);
+                    if ($credit_line_length < 183)
+                    {
+                        $transaction_val = -1 * $transaction_val;
+                        $trans_type = "DR1";
+                    }
+                    elsif ($og =~ m/.*\.\d\d            *\d+\.\d\d  *Cr/)
+                    {
+                        $transaction_val = -1 * $transaction_val;
+                        $trans_type = "DR3";
+                    }
+                    elsif ($credit_line_length < 210)
+                    {
+                        $transaction_val = $transaction_val;
+                        $trans_type = "CR2";
+                    }
+
+                    $running_total += $transaction_val;
+                    #print ("\n$last_statement_date (latest_total = $last_statement_total ($running_total) -- $transaction_val ** ll=$credit_line_length type=$trans_type)>>> $line ($last_statement_details)");
+                    print ("\n$last_statement_date (latest_total = $last_statement_total ($running_total) -- $transaction_val ** ll=$credit_line_length type=$trans_type)>>> $og ($last_statement_details)");
+                    #print ("\n$last_statement_date (ll=$credit_line_length) $og");
+                    #print ("\n(ll=$credit_line_length) $transaction_val");
+                    $last_statement_details = "";
+                    $statement_eq .= " + $transaction_val ";
+                    if ($line =~ m/(\d+\.\d\d) Cr/)
+                    {
+                        $running_total =~ s/\.(\d+)0*$/.$1/;
+                        $last_statement_total =~ s/\.(\d+)0*$/.$1/;
+                        $running_total =~ s/\.00//;
+                        $last_statement_total =~ s/\.00//;
+                        if ($running_total == $last_statement_total || $running_total eq $last_statement_total)
+                        {
+                            print ("\n *** $last_statement_date (matches $running_total)");
+                        }
+                        else
+                        {
+                            print ("\n ### $last_statement_date (no matches running=$running_total vs last=$last_statement_total ( $statement_eq != $last_statement_total ))");
+                        }
+                        $running_total = $last_statement_total;
+                        $statement_eq = "$last_statement_total ";
+                    }
+                }
+            }
+        }
+        
         if ($operation eq "uniquelines")
         {
             if (!defined ($ulines {$line}))
