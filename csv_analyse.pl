@@ -1126,11 +1126,37 @@ sub get_next_field_letter
     return ($field_letters {$num + 1});
 }
 
+sub is_exponent
+{
+    my $field = $_ [0];
+    if ($field =~ m/^([\+\-]|)\d+($|\.\d+)E([+\-]|)\d+$/i)
+    {
+        print ("Small exp - $field found\n");
+        return 1;
+    }
+    return 0;
+}
+
 sub is_number
 {
     my $field = $_ [0];
     if ($field =~ m/^([\+\-]|)\d+($|\.\d+)$/)
     {
+        return 1;
+    }
+    if (is_exponent ($field))
+    {
+        return 1;
+    }
+    return 0;
+}
+
+sub is_small_exponent
+{
+    my $field = $_ [0];
+    if ($field =~ m/^([\+\-]|)\d+($|\.\d+)E-\d+$/i)
+    {
+        print ("Small exp - $field found\n");
         return 1;
     }
     return 0;
@@ -1872,35 +1898,49 @@ sub get_3dgraph_html
     return $graph3d_html;
 }
 
-# Main
+my $examples_one;
+my $examples_two;
+my $examples_three;
+my $examples_four;
+my $examples_five;
+my $examples_six;
+my $examples_seven;
+sub set_examples
 {
-    my $paddr;
-    my $proto = "TCP";
-    my $iaddr;
-    my $client_port;
-    my $client_addr;
-    my $pid;
-    my $SERVER;
-    my $port = 3867;
-    my $trusted_client;
-    my $data_from_client;
-    $|=1;
-
-    socket (SERVER, PF_INET, SOCK_STREAM, $proto) or die "Failed to create a socket: $!";
-    setsockopt (SERVER, SOL_SOCKET, SO_REUSEADDR, 1) or die "setsocketopt: $!";
-
-    # bind to a port, then listen
-    bind (SERVER, sockaddr_in ($port, INADDR_ANY)) or die "Can't bind to port $port! \n";
-
-    listen (SERVER, 10) or die "listen: $!";
-    print ("Listening on port: $port\n");
-    my $count;
-    my $not_seen_full = 1;
-
-    #process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf 1;3;4.25076923;AAA;;;; 2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;; 12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2) =SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2) =A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2) ;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2) =POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2) ;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2) ;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2) ;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2) ;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;; ");
-    #process_csv_data ("X;Y;Z 12;9;10 5;6;13 1;12;13 12;2;7 14;13;7 15;14;2 15;6;9 13;2;10 8;5;10 11;5;5");
-
-    my $examples_two= "X;Y;SPHERE_Z;D?\n-1;0;0\n-0.92;-0.33;0.22\n-0.92;-0.25;0.31\n-0.92;-0.17;0.36\n-0.92;-0.08;0.39\n-0.92;0;0.40\n-0.92;0.08;0.39\n-0.92;0.17;0.36\n-0.92;0.25;0.31\n-0.92;0.33;0.22\n-0.83;-0.50;0.24\n-0.83;-0.42;0.36\n-0.83;-0.33;0.44\n-0.83;-0.25;0.49\n-0.83;-0.17;0.53\n-0.83;-0.08;0.55\n
+    $examples_one = "X_val	Y_yal	Row	DivRow	ModRow	??	Z_val_cylinder
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=-280	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
+=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
+=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2";
+    $examples_two= "X;Y;SPHERE_Z;D?\n-1;0;0\n-0.92;-0.33;0.22\n-0.92;-0.25;0.31\n-0.92;-0.17;0.36\n-0.92;-0.08;0.39\n-0.92;0;0.40\n-0.92;0.08;0.39\n-0.92;0.17;0.36\n-0.92;0.25;0.31\n-0.92;0.33;0.22\n-0.83;-0.50;0.24\n-0.83;-0.42;0.36\n-0.83;-0.33;0.44\n-0.83;-0.25;0.49\n-0.83;-0.17;0.53\n-0.83;-0.08;0.55\n
 -0.83;0;0.55\n-0.83;0.08;0.55\n-0.83;0.17;0.53\n-0.83;0.25;0.49\n-0.83;0.33;0.44\n-0.83;0.42;0.36\n-0.83;0.50;0.24\n-0.75;-0.58;0.31\n-0.75;-0.50;0.43\n-0.75;-0.42;0.51\n-0.75;-0.33;0.57\n-0.75;-0.25;0.61\n-0.75;-0.17;0.64\n-0.75;-0.08;0.66\n-0.75;0;0.66\n-0.75;0.08;0.66\n-0.75;0.17;0.64\n
 -0.75;0.25;0.61\n-0.75;0.33;0.57\n-0.75;0.42;0.51\n-0.75;0.50;0.43\n-0.75;0.58;0.31\n-0.67;-0.67;0.33\n-0.67;-0.58;0.46\n-0.67;-0.50;0.55\n-0.67;-0.42;0.62\n-0.67;-0.33;0.67\n-0.67;-0.25;0.70\n-0.67;-0.17;0.73\n-0.67;-0.08;0.74\n-0.67;0;0.75\n-0.67;0.08;0.74\n-0.67;0.17;0.73\n
 -0.67;0.25;0.70\n-0.67;0.33;0.67\n-0.67;0.42;0.62\n-0.67;0.50;0.55\n-0.67;0.58;0.46\n-0.67;0.67;0.33\n-0.58;-0.75;0.31\n-0.58;-0.67;0.46\n-0.58;-0.58;0.57\n-0.58;-0.50;0.64\n-0.58;-0.42;0.70\n-0.58;-0.33;0.74\n-0.58;-0.25;0.77\n-0.58;-0.17;0.79\n-0.58;-0.08;0.81\n-0.58;0;0.81\n
@@ -1988,7 +2028,7 @@ sub get_3dgraph_html
 0.5801;0;-0.81;-0.81\n0.5801;0.08;-0.81;-0.81\n0.5801;0.17;-0.79;-0.79\n0.5801;0.25;-0.77;-0.77\n0.5801;0.33;-0.74;-0.74\n0.5801;0.42;-0.70;-0.70\n0.5801;0.50;-0.64;-0.64\n0.5801;0.58;-0.57;-0.57\n0.5801;0.67;-0.46;-0.46\n0.5801;0.75;-0.31;-0.31\n0.6701;0;-0.75;-0.75\n0.6701;0.08;-0.74;-0.74\n0.6701;0.17;-0.73;-0.73\n0.6701;0.25;-0.70;-0.70\n0.6701;0.33;-0.67;-0.67\n0.6701;0.42;-0.62;-0.62\n
 0.6701;0.50;-0.55;-0.55\n0.6701;0.58;-0.46;-0.46\n0.6701;0.67;-0.33;-0.33\n0.7501;0;-0.66;-0.66\n0.7501;0.08;-0.66;-0.66\n0.7501;0.17;-0.64;-0.64\n0.7501;0.25;-0.61;-0.61\n0.7501;0.33;-0.57;-0.57\n0.7501;0.42;-0.51;-0.51\n0.7501;0.50;-0.43;-0.43\n0.7501;0.58;-0.31;-0.31\n0.8301;0;-0.55;-0.55\n0.8301;0.08;-0.55;-0.55\n0.8301;0.17;-0.53;-0.53\n0.8301;0.25;-0.49;-0.49\n0.8301;0.33;-0.44;-0.44\n0.8301;0.42;-0.36;-0.36\n0.8301;0.50;-0.24;-0.24\n0.9201;0;-0.40;-0.40\n0.9201;0.08;-0.39;-0.39\n0.9201;0.17;-0.36;-0.36\n0.9201;0.25;-0.31;-0.31\n0.9201;0.33;-0.22;-0.22";
 
-    my $examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal\n" . 
+    $examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal\n" . 
         "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));1;=E>;=MOD(F>|24);=cos(C>);=H>*D>\n";
     my $ord_line  = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
     my $last_line = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
@@ -2008,7 +2048,7 @@ sub get_3dgraph_html
         }
     }
 
-    my $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN\n";
+    $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN\n";
 #/*
 # Double ball..
 #    my $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN
@@ -2047,111 +2087,7 @@ sub get_3dgraph_html
         $examples_six .= $l;
     } 
 
-    process_csv_data ($examples_six);
-
-    while ($paddr = accept (CLIENT, SERVER))
-    {
-        print ("\n\nNEW============================================================\n");
-        print ("New connection\n");
-        ($client_port, $iaddr) = sockaddr_in ($paddr);
-        $client_addr = inet_ntoa ($iaddr);
-        print ("\n$client_addr\n");
-
-        my $lat;
-        my $long;
-        my $txt = read_from_socket (\*CLIENT);
-        print ("Raw data was $txt\n");
-        $txt =~ s/csv_data\/csv_data/csv_data\//img;
-        $txt =~ s/csv_data\/csv_data/csv_data\//img;
-        $txt =~ s/csv_data\/csv_data/csv_data\//img;
-        my $get_group_info = 0;
-        if ($txt =~ m/GET.*\.group_info/)
-        {
-            $get_group_info = 1;
-            $txt =~ s/\.group_info//;
-        }
-        $txt =~ m/GET (.*) HTTP/;
-        my $original_url = $1;
-
-        if ($txt =~ m/.*favico.*/m)
-        {
-            my $size = -s ("d:/perl_programs/aaa.jpg");
-            print (">>>>> size = $size\n");
-            my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
-            print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
-            syswrite (\*CLIENT, $h);
-            copy "d:/perl_programs/aaa.jpg", \*CLIENT;
-            next;
-        }
-
-        if ($txt =~ m/GET.*update_csv.*/m)
-        {
-            $txt =~ m/(........update_csv.......)/im;
-            my $matching_text = $1;
-            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br>
-<form action=\"updated_csv\" id=\"newcsv\" name=\"newcsv\" method=\"post\">
-<textarea id=\"newcsv\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newcsv\" name=\"newcsv\">$csv_block</textarea>
-<input type=\"submit\" value=\"New CSV\" class=\"submitButton\">
-</form>
-</body> </html>";
-            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
-            next;
-        }
-
-        if ($txt =~ m/GET.*show_examples.*/m)
-        {
-            $txt =~ m/(........show_examples.......)/im;
-
-#            my $examples_one = "
-#DoW;Increment Series;Months;DaysInMonth;Years;YearMonth;Oneupcounter
-#Monday;1;January;31;2001;202301;
-#Tuesday;=B1+1;February;28;2002;202302;
-#Wednesday;=B2+1;March;31;2003;202303;
-#Thursday;=B3+1;April;30;2004;202304;
-#Friday;=B4+1;May;31;2005;202305;
-#Saturday;=B5+1;June;30;2006;202306;
-#Sunday;=B6+1;July;31;2007;202307;
-#Monday;=B7+1;August;31;2008;202308;
-#Tuesday;=B8+1;September;30;2009;202309;
-#Wednesday;=B9+1;October;31;2010;202310;
-#Thursday;2;November;30;2011;202311;
-#Friday;=B11+1;December;31;2012;202312;";
-
-            my $examples_one = "X_val	Y_yal	Row	DivRow	ModRow	??	Z_val_cylinder
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=-280	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2";
-
-            my $examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
+    $examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
 201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
@@ -2357,9 +2293,9 @@ sub get_3dgraph_html
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>
 =A^+1;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));=I^;=D^;=D>/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;=J^;=K^+H>";
 
-            #my $examples_five= "CHANGE;REGEX; 123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
+        #my $examples_five= "CHANGE;REGEX; 123456;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$1\$3\$2\$5\$4\$6); B^;=REGEXPREPLACE(A>|^(.)(.)(.)(.)(.)(.)\$|\$2\$1\$4\$3\$6\$5);";
 
-            my $examples_five= "Date;HouseOffset;HouseVariable;HouseMonthsToGo;HouseIntRate;HouseRepayment;HouseInt;HouseOffsetInt;2HouseOffset;NumDaysInMonth;BalanceInOffset;NegOffset;OtherLoan;OtherIntRate;OtherInterest;ActualInterestPaid
+        $examples_five= "Date;HouseOffset;HouseVariable;HouseMonthsToGo;HouseIntRate;HouseRepayment;HouseInt;HouseOffsetInt;2HouseOffset;NumDaysInMonth;BalanceInOffset;NegOffset;OtherLoan;OtherIntRate;OtherInterest;ActualInterestPaid
 202304;400672.53;481862.69;314;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
@@ -2382,7 +2318,7 @@ sub get_3dgraph_html
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;
 =A^+1;=B^+I^-F^-O^-200;=C^+G^-H^-F^;=D^-1;0.0534;=PMT(E>/12|D>|C>);=C>*(POWER(1+E>/365|J>))-C>;=B>*(POWER(1+E>/365|J>))-B>;=IF(MOD(A>|100)>10|6000|4000);=IF(MOD(A>|100)=1|31|IF(MOD(A>|100)=2|28|IF(MOD(A>|100)=3|31|IF(MOD(A>|100)=4|30|IF(MOD(A>|100)=5|31|IF(MOD(A>|100)=6|30|IF(MOD(A>|100)=7|31|IF(MOD(A>|100)=8|31|IF(MOD(A>|100)=9|30|IF(MOD(A>|100)=10|31|IF(MOD(A>|100)=11|30|IF(MOD(A>|100)=12|31|30))))))))))));=C^-B^;=B^-C^;150000;0.0501;=M>*(POWER(1+E>/365|J>))-M>;=G>-H>+O>;";
 
-            my $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN
+    $examples_six= "X;Y;COL;X_FACTOR;Y_FACTOR;IN_CIRCLE;Z_VAL;XY_LEN
 =D>/12;=E>/12;-280;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
 =D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
 =D>/12;=E>/12;=C^+1;=INT(C>|24);=MOD(C>|24)-12;=IF(J>>1|0|1);=sqrt(1 - I>);=IF(F><0.5|-100|G>+0);=A>*A>+B>*B>;=sqrt(A>*A>+B>*B>)
@@ -2396,7 +2332,7 @@ sub get_3dgraph_html
 =A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
 =A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!";
 
-            my $examples_seven= "SPHERE_X;SPHERE_Y;QUARTER_SPHERE_Z
+    $examples_seven= "SPHERE_X;SPHERE_Y;QUARTER_SPHERE_Z
 1;0;0
 0.991444861;0.130526192;0
 0.991444861;0;0.130526192
@@ -3069,7 +3005,96 @@ sub get_3dgraph_html
 -0.256604812;0.957662197;0.130526192
 -0.130526192;0.991444861;0
 -0.258819045;0.965925826;0";
+}
 
+# Main
+{
+    my $paddr;
+    my $proto = "TCP";
+    my $iaddr;
+    my $client_port;
+    my $client_addr;
+    my $pid;
+    my $SERVER;
+    my $port = 3867;
+    my $trusted_client;
+    my $data_from_client;
+    my $use_regex = 0;
+    $|=1;
+
+    socket (SERVER, PF_INET, SOCK_STREAM, $proto) or die "Failed to create a socket: $!";
+    setsockopt (SERVER, SOL_SOCKET, SO_REUSEADDR, 1) or die "setsocketopt: $!";
+
+    # bind to a port, then listen
+    bind (SERVER, sockaddr_in ($port, INADDR_ANY)) or die "Can't bind to port $port! \n";
+
+    listen (SERVER, 10) or die "listen: $!";
+    print ("Listening on port: $port\n");
+    my $count;
+    my $not_seen_full = 1;
+
+    #process_csv_data ("BOB;BOB;CALCULATION;STR_CALCULATION;sadf;asdf;asdf;asdfasdf 1;3;4.25076923;AAA;;;; 2;5;=IF(C2+0.31/2>10|10|C2+0.31/2);=IF(C2+0.31/2>10|\"BBB\"|CONCATENATE(D2|\"A\"));;;; 12;15;=IF(C3+0.31/2>10|10|C3+0.31/2);=IF(C3+0.31/2>10|\"BBB\"|CONCATENATE(D3|\"B\"));=IF(F3+0.31/2>10|10|F3+0.31/2);=IF(G3+0.31/2>10|10|G3+0.31/2);=IF(H3+0.31/2>10|10|H3+0.31/2);=IF(I3+0.31/2>10|10|I3+0.31/2) =SUM(A2:A4);=SUM(B2:B4);=IF(C4+0.31/2>10|10|C4+0.31/2);=IF(C4+0.31/2>10|\"BBB\"|CONCATENATE(D4|\"B\"));=IF(E4+0.31/2>10|10|E4+0.31/2);=IF(F4+0.31/2>10|10|F4+0.31/2);=IF(G4+0.31/2>10|10|G4+0.31/2);=IF(H4+0.31/2>10|10|H4+0.31/2) =A2+A3+A4;=B2+B3+B4;=IF(C5+0.31/2>10|10|C5+0.31/2);=IF(C5+0.31/2>10|\"BBB\"|CONCATENATE(D5|\"B\"));=IF(E5+0.31/2>10|10|E5+0.31/2);=IF(F5+0.31/2>10|10|F5+0.31/2);=IF(G5+0.31/2>10|10|G5+0.31/2);=IF(H5+0.31/2>10|10|H5+0.31/2) ;;=IF(C6+0.31/2>10|10|C6+0.31/2);=IF(C6+0.31/2>10|\"BBB\"|CONCATENATE(D6|\"B\"));=IF(E6+0.31/2>10|10|E6+0.31/2);=IF(F6+0.31/2>10|10|F6+0.31/2);=IF(G6+0.31/2>10|10|G6+0.31/2);=IF(H6+0.31/2>10|10|H6+0.31/2) =POWER(SUM(A2:B4)|SUM(A2:A4));;=IF(C7+0.31/2>10|10|C7+0.31/2);=IF(C7+0.31/2>10|\"BBB\"|CONCATENATE(D7|\"B\"));=IF(E7+0.31/2>10|10|E7+0.31/2);=IF(F7+0.31/2>10|10|F7+0.31/2);=IF(G7+0.31/2>10|10|G7+0.31/2);=IF(H7+0.31/2>10|10|H7+0.31/2) ;;=IF(C8+0.31/2>10|10|C8+0.31/2);=IF(C8+0.31/2>10|\"BBB\"|CONCATENATE(D8|\"B\"));=IF(E8+0.31/2>10|10|E8+0.31/2);=IF(F8+0.31/2>10|10|F8+0.31/2);=IF(G8+0.31/2>10|10|G8+0.31/2);=IF(H8+0.31/2>10|10|H8+0.31/2) ;;=IF(C9+0.31/2>10|10|C9+0.31/2);=IF(C9+0.31/2>10|\"BBB\"|CONCATENATE(D9|\"B\"));=IF(E9+0.31/2>10|10|E9+0.31/2);=IF(F9+0.31/2>10|10|F9+0.31/2);=IF(G9+0.31/2>10|10|G9+0.31/2);=IF(H9+0.31/2>10|10|H9+0.31/2) ;;=IF(C10+0.31/2>10|10|C10+0.31/2);=IF(C10+0.31/2>10|\"BBB\"|CONCATENATE(D10|\"B\"));=IF(E10+0.31/2>10|10|E10+0.31/2);=IF(F10+0.31/2>10|10|F10+0.31/2);=IF(G10+0.31/2>10|10|G10+0.31/2);=IF(H10+0.31/2>10|10|H10+0.31/2) ;;=IF(C11+0.31/2>10|10|C11+0.31/2);=IF(C11+0.31/2>10|\"BBB\"|CONCATENATE(D11|\"B\"));=SUM(E4:H11);=IF(MOD(A3|100)=1|\"JANUARY\"|IF(MOD(A3|100)=2|\"FEB\"|\"HHHH\"));;; ");
+    #process_csv_data ("X;Y;Z 12;9;10 5;6;13 1;12;13 12;2;7 14;13;7 15;14;2 15;6;9 13;2;10 8;5;10 11;5;5");
+
+    set_examples ();
+
+    process_csv_data ($examples_six);
+
+    while ($paddr = accept (CLIENT, SERVER))
+    {
+        print ("\n\nNEW============================================================\n");
+        print ("New connection\n");
+        ($client_port, $iaddr) = sockaddr_in ($paddr);
+        $client_addr = inet_ntoa ($iaddr);
+        print ("\n$client_addr\n");
+
+        my $lat;
+        my $long;
+        my $txt = read_from_socket (\*CLIENT);
+        print ("Raw data was $txt\n");
+        $txt =~ s/csv_data\/csv_data/csv_data\//img;
+        $txt =~ s/csv_data\/csv_data/csv_data\//img;
+        $txt =~ s/csv_data\/csv_data/csv_data\//img;
+        my $get_group_info = 0;
+        if ($txt =~ m/GET.*\.group_info/)
+        {
+            $get_group_info = 1;
+            $txt =~ s/\.group_info//;
+        }
+        $txt =~ m/GET (.*) HTTP/;
+        my $original_url = $1;
+
+        if ($txt =~ m/.*favico.*/m)
+        {
+            my $size = -s ("d:/perl_programs/aaa.jpg");
+            print (">>>>> size = $size\n");
+            my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
+            print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
+            syswrite (\*CLIENT, $h);
+            copy "d:/perl_programs/aaa.jpg", \*CLIENT;
+            next;
+        }
+
+        if ($txt =~ m/GET.*update_csv.*/m)
+        {
+            $txt =~ m/(........update_csv.......)/im;
+            my $matching_text = $1;
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refresh CSV </h1> <br>
+<form action=\"updated_csv\" id=\"newcsv\" name=\"newcsv\" method=\"post\">
+<textarea id=\"newcsv\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newcsv\" name=\"newcsv\">$csv_block</textarea>
+<input type=\"submit\" value=\"New CSV\" class=\"submitButton\">
+</form>
+</body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
+        if ($txt =~ m/GET.*show_examples.*/m)
+        {
+            $txt =~ m/(........show_examples.......)/im;
+
+
+            
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
 <textarea id=\"examples1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples1\">$examples_one</textarea>
@@ -3424,36 +3449,11 @@ $//img;
         {
             $html_text .= "<th XYZ$x> <button><font size=-1>" . get_col_header ($x) . " " . get_field_letter_from_field_num ($x) . "<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         }
-        $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
-        $html_text .= "<th class=\"no-sort\">*</th>";
-        $html_text .= "</tr>\n";
-        $html_text .= "</thead>\n";
-        $html_text .= "<tbody><font size=-2>\n";
-
-        my $checked = "";
-
-        my $card;
-        my $deck;
-        my $overall_count = 0;
-        my %group_prices;
-        my %group_counts;
-
         my $only_one_group = 1;
         my $first_group_only = 0;
         my $dual_groups = 0;
         my $group2 = "";
         my $chosen_col = "";
-        if ($group =~ s/#(.*)//)
-        {
-            $chosen_col = "$1";
-        }
-
-        if ($dual_group =~ s/#(.*)//)
-        {
-            $chosen_col = "$1";
-        }
-
         my $overall_match = $group;
         if ($group =~ m/\((.*)\).*\((.*)\)/)
         {
@@ -3474,7 +3474,6 @@ $//img;
             $overall_match = $dual_group;
         }
 
-        my $use_regex = 0;
         my %new_meta_data;
         my %new_calculated_data;
         my $valid_regex = eval { qr/$overall_match/ };
@@ -3483,6 +3482,41 @@ $//img;
             %meta_data = %new_meta_data;
             %calculated_data = %new_calculated_data;
             $use_regex = 1;
+        }
+
+        if ($overall_match eq ".*" || $overall_match eq "")
+        {
+            $use_regex = 0;
+        }
+
+        if ($use_regex)
+        {
+            $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+            $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        }
+        $html_text .= "<th class=\"no-sort\">*</th>";
+        $html_text .= "</tr>\n";
+        $html_text .= "</thead>\n";
+        $html_text .= "<tbody><font size=-2>\n";
+
+        my $checked = "";
+
+        my $card;
+        my $deck;
+        my $overall_count = 0;
+        my %group_prices;
+        my %group_counts;
+
+        if ($group =~ s/#(.*)//)
+        {
+            $chosen_col = "$1";
+            $overall_match = $group;
+        }
+
+        if ($dual_group =~ s/#(.*)//)
+        {
+            $chosen_col = "$1";
+            $overall_match = $group;
         }
 
         my $row_num = 1;
@@ -3599,9 +3633,23 @@ $//img;
 
                     my $xrow = $row;
                     my $current_col_letter = $col_letter;
+                    if ($use_regex)
+                    {
+                        print ("\nAA INSIDE HERE 3633 - $use_regex $fake_row (vs $overall_match)");
+                        
+                        if ($use_regex && $fake_row =~ m/$overall_match/im)
+                        {
+                            print ("\nBB INSIDE HERE 3633 - $use_regex $fake_row ");
+                            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
+                            {
+                                print ("\nCC INSIDE HERE 3633 - $use_regex $fake_row ");
+                            }
+                        }
+                    }
                     if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                     {
                         $force_row = 1;
+                        print (" INSIDE HERE 3636 - ");
                         if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                         {
                             my $this_group = $1;
@@ -3627,6 +3675,7 @@ $//img;
                             $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
+                            print ("$this_group --- $pot_group_price\n");
                         }
                         elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
                         {
@@ -3654,12 +3703,12 @@ $//img;
                                 $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
                                 $row =~ s/<\/font><\/td>/<\/td>/im;
                             }
-                            else
+                            elsif ($use_regex)
                             {
                                 $old_col_letter = get_next_field_letter ($old_col_letter);
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                                 $old_col_letter = get_next_field_letter ($old_col_letter);
-                                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
+                                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No aaa group Total</font></td></tr>\n";
                             }
                         }
                         elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
@@ -3692,12 +3741,12 @@ $//img;
                             }
                         }
                     }
-                    else
+                    elsif ($use_regex)
                     {
                         $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No bbb group Total</font></td></tr>\n";
                     }
                     #if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                     {
@@ -3762,7 +3811,7 @@ $//img;
                         $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No ccc group Total</font></td></tr>\n";
                     }
                 }
                 elsif ($dual_groups && $fake_row =~ m/($group)/im)
@@ -3781,16 +3830,16 @@ $//img;
                         $old_col_letter = get_next_field_letter ($old_col_letter);
                         $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
+                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No ddd group Total</font></td></tr>\n";
                     }
                 }
             }
-            else
+            elsif ($use_regex)
             {
                 $old_col_letter = get_next_field_letter ($old_col_letter);
                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                 $old_col_letter = get_next_field_letter ($old_col_letter);
-                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group Total</font></td></tr>\n";
+                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No eee group Total</font></td></tr>\n";
             }
 
             if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -4250,31 +4299,39 @@ $//img;
                 if (defined ($straight_row_lookup{$r}))
                 {
                     $val = $straight_row_lookup{$r};
-                    if ($val =~ m/^([0-9\.\-]+),([0-9\.\-]+):([0-9\.\-]+);(\d+)$/)
+                    if ($val =~ m/^([^,]+),([^:]+):([^;]+);(\d+)$/)
                     {
                         my $field1 = $1;
                         my $field2 = $2;
                         my $field3 = $3;
-                        my $rn = $4;
-                        my $col_number = $rn % 2;
-                        my $row_number = int ($rn / 2);
-                        $straight_last_mod_2 = $col_number;
-                        if ($col_number == 0)
+
+                        if ((is_number ($field1) && is_number ($field2) && is_number ($field3)))
                         {
-                            if ($straight_max_row_num < $row_number)
+                            my $rn = $4;
+                            my $col_number = $rn % 2;
+                            my $row_number = int ($rn / 2);
+                            $straight_last_mod_2 = $col_number;
+                            if ($col_number == 0)
                             {
-                                $straight_max_row_num = $row_number; 
+                                if ($straight_max_row_num < $row_number)
+                                {
+                                    $straight_max_row_num = $row_number; 
+                                }
+                                if (is_small_exponent ($field1)) { $field1 = 0; }
+                                if (is_small_exponent ($field2)) { $field2 = 0; }
+                                if (is_small_exponent ($field3)) { $field3 = 0; }
+
+                                $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
                             }
-                            $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
-                        }
-                        else
-                        {
-                            $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
-                            if ($straight_max_row_num < $row_number)
+                            else
                             {
-                                $straight_max_row_num = $row_number; 
+                                $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
+                                if ($straight_max_row_num < $row_number)
+                                {
+                                    $straight_max_row_num = $row_number; 
+                                }
+                                $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
                             }
-                            $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
                         }
                     }
                 }
