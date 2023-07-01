@@ -1,4 +1,4 @@
-name;have;type;date;place;color;price;currency;
+AAname;have;type;date;place;color;price;currency;
 Abundance;already;E;20211203;Ronin;green;$10.00;proposed;
 Academy Manufactor;already;A;20220901;Ronin;colorless;$4.89;proposed;
 Academy Rector;already;C;20170711;CardKingdom;white;$25.49;proposed;
@@ -87,6 +87,7 @@ Bubbling Muck;already;S;20150427;PUCATrade;black;$0.43;proposed;
 Burst Lightning;already;I;20150330;PUCATrade;red;$0.24;proposed;
 Cabal Ritual;already;I;20150115;ChannelFireball;black;$0.99;proposed;
 Caged Sun;already;A;20150427;PUCATrade;colorless;$3.42;proposed;
+Campus Renovation;already;S;20230601;Pack;mulitcolored;$0.35;proposed
 Capsize;already;I;20151022;PUCATrade;blue;$0.73;proposed;
 Cathars' Crusade;already;E;20150422;PUCATrade;white;$0.63;proposed;
 Cauldron Haze;already;I;20140429;ChannelFireball;multicoloured;$1.76;proposed
@@ -148,6 +149,7 @@ Daze;already;I;20150115;ChannelFireball;blue;$3.99;proposed;
 Deadeye Navigator;already;C;20150930;PUCATrade;blue;$1.10;proposed;
 Death Wind;already;I;20131010;ChannelFireball;black;$0.30;proposed;
 Decree of Pain;already;S;20170406;Endgames;black;$3.00;USD_mtgf;
+Decree of Silence;already;E;20210906;Ronin;blue;$12.00;USD_mtgf;
 Deep Analysis;already;S;20150115;ChannelFireball;blue;$0.23;proposed;
 Delver of Secrets;already;C;20150506;PUCATrade;blue;$1.11;proposed;
 Demigod of Revenge;already;C;20140429;ChannelFireball;multicoloured;$13.96;proposed
@@ -172,6 +174,7 @@ Doubling Season;already;E;20160711;MagicHothub;green;$59.99;proposed;
 Dovescape;already;E;20170406;Endgames;multicolored;$3.26;USD_mtggf;
 Dragonlord Silumgar;already;C;20160123;ChannelFireball;multicolored;$4.99;proposed;
 Draining Whelk;already;C;20131013;ChannelFireball;blue;$8.96;proposed;
+Dream Halls;want;E; ; ;blue;$0.00;proposed;
 Dreamroot Cascade;already;L;20211230;Pack;colorless;$5.61;USD_mtgf;
 Drivnod, Carnage Dominus;already;C;20230507;Pack;black;$8.50;fromcsv
 Dromoka, the Eternal;already;C;20150305;PUCATrade;multicolored;$0.88;proposed;
@@ -180,6 +183,7 @@ Druid of Purification;already;C;20230201;Ronin;green;$13.50;proposed;
 Dungeon Geists;already;C;20150422;PUCATrade;blue;$0.27;proposed;
 Duplicant;already;A;20150323;PUCATrade;colorless;$7.83;proposed;
 Earl of Squirrel;already;C;20190320;GeorgeTrade;green;$3.00;proposed;
+Echo of Eons;want;S; ; ;blue;$0.00;proposed;
 Edric, Spymaster of Trest;already;C;20170406;Endgames;multicolored;$0.57;USD_mtgf;
 Eerie Interlude;already;I;20160323;PUCATrade;white;$2.15;proposed;
 Eerie Ultimatum;already;S;20211006;CardKingdom;multicolored;$2.99;proposed;
@@ -193,12 +197,14 @@ Elvish Reclaimer;already;C;20230328;Endgames;green;$7.99;proposed;
 Empress Galina;already;C;20221009;Ronin;blue;$8.50;proposed;
 Empyrial Armor;already;E;20150323;GeorgeTrade;white;$0.20;USD_mtggf;
 Enchanted Evening;already;E;20150303;PUCATrade;multicolored;$4.45;proposed;
+Endbringer's Revel;want;E; ; ;black;$0.00;proposed;
 Engulf the Shore;already;I;20170126;ChannelFireball;blue;$0.79;proposed;
 Ensnaring Bridge;already;A;20170126;ChannelFireball;colorless;$34.99;proposed;
 Eon Hub;already;A;20170711;CardKingdom;colorless;$0.69;proposed;
 Equilibrium;already;E;20151102;PUCATrade;blue;$1.73;proposed;
 Erebos, God of the Dead;already;E;20131010;ChannelFireball;black;$12.58;proposed;
 Esper Sentinel;want;C; ; ;white;$0.00;proposed;
+Etali, Primal Conqueror;want;C; ; ;red;$0.00;proposed;
 Eternal Witness;already;C;20141203;ChannelFireball;green;$2.49;proposed;
 Eternity Vessel;already;A;20170406;Endgames;colorless;$2.04;USD_mtggf;
 Everflowing Chalice;already;A;20150115;ChannelFireball;colorless;$0.49;proposed;
@@ -216,13 +222,16 @@ Farewell;already;S;20230410;CardKingdom;white;$14.99;proposed;
 Fastbond;already;E;20151029;PUCATrade;green;$4.62;proposed;
 Fated Infatuation;already;I;20140429;ChannelFireball;blue;$0.98;proposed
 Fauna Shaman;already;C;20141203;ChannelFireball;green;$7.00;proposed;
+Field of the Dead;want;L; ; ;colorless;$0.00;proposed;
 Fierce Empath;already;C;20150323;GeorgeTrade;green;$0.29;USD_mtggf;
 Fierce Guardianship;want;I; ; ;blue;$0.00;proposed;
 Fiery Confluence;already;S;20190704;Starcitygames;red;$11.95;proposed;
 Filigree Sages;already;A;20160123;ChannelFireball;blue;$0.25;proposed;
+Filter Out;want;I; ; ;blue;$0.00;proposed;
 Fire // Ice;already;I;20150115;ChannelFireball;multicolored;$0.49;proposed;
 Flame Slash;already;S;20150115;ChannelFireball;red;$0.49;proposed;
 Flametongue Kavu;already;C;20150330;PUCATrade;red;$0.27;proposed;
+Flickering Ward;want;E; ; ;white;$0.00;proposed;
 Flickerwisp;already;C;20150323;GeorgeTrade;white;$0.85;USD_mtggf;
 Flusterstorm;already;I;20190320;GeorgeTrade;blue;$17.00;proposed;
 Forbidden Alchemy;already;I;20150115;ChannelFireball;blue;$0.25;proposed;
@@ -254,6 +263,7 @@ Glen Elendra Archmage;already;C;20150115;ChannelFireball;blue;$6.99;proposed;
 Glistening Dawn;already;S;20230422;Pack;green;$0.29;proposed;
 Gloagir Signet;already;A;20150115;ChannelFireball;colorless;$0.15;proposed;
 Go for the Throat;already;I;20150115;ChannelFireball;black;$1.99;proposed;
+Go-Shintai of Life's Origin;want;C; ; ;multicolored;$0.00;proposed;
 Goblin Matron;already;C;20141203;ChannelFireball;red;$0.89;proposed;
 Goblin Piledriver;already;C;20170406;Endgames;red;$4.49;USD_mtggf;
 Goblin Recruiter;already;C;20150323;GeorgeTrade;red;$1.56;USD_mtgf;
@@ -270,6 +280,7 @@ Griselbrand;already;C;20170406;Endgames;black;$11.74;USD_mtgf;
 Gruul Signet;already;A;20150115;ChannelFireball;colorless;$0.23;proposed;
 Gush;already;I;20150504;PUCATrade;blue;$0.46;proposed;
 Hall of Heliod's Generosity;already;L;20190704;Starcitygames;colorless;$12.99;proposed;
+Hall of the Bandit Lord;already;l;20230624;Ronin;colorless;11.50
 Harmless Offering;already;S;20160825;GeorgeTrade;red;$1.00;proposed;
 Harmonize;already;S;20150323;GeorgeTrade;green;$1.44;USD_mtgf;
 Harrow;already;I;20170406;Endgames;green;$0.16;USD_mtggf;
@@ -283,6 +294,7 @@ High Market;already;L;20161110;Starcitygames;colorless;$1.99;proposed;
 High Tide;already;I;20141203;ChannelFireball;blue;$0.49;proposed;
 Hinterland Harbor;already;L;20160427;Endgames;colorless;$5.55;USD_mtggf;
 Homeward Path;already;L;20230328;Endgames;colorless;$18.04;proposed;
+Horn of the Mark;already;a;20230623;Pack;colorless;2.50
 Horobi, Death's Wail;already;C;20221001;Ronin;black;$4.00;proposed;
 Hullbreaker Horror;already;C;20211230;Pack;blue;$7.99;USD_mtgf;
 Human Frailty;already;I;20131010;ChannelFireball;black;$0.40;proposed;
@@ -301,6 +313,7 @@ Inferno Titan;already;C;20150115;ChannelFireball;red;$1.25;proposed;
 Insidious Dreams;already;I;20160825;GeorgeTrade;black;$2.70;proposed;
 Intruder Alarm;already;E;20161110;Starcitygames;blue;$4.19;proposed;
 Invasion of Gobakhan;already;B;20230422;Pack;white;$2.50;proposed;
+Invasion of Gobakhan;already;B;20230601;Pack;white;$10.80;proposed;
 Invisible Stalker;already;C;20140429;ChannelFireball;blue;$0.99;proposed
 Island Sanctuary;already;E;20170126;ChannelFireball;white;$0.19;proposed;
 Isochron Scepter;already;A;20160427;Endgames;colorless;$5.40;USD_mtggf;
@@ -378,8 +391,8 @@ Mentor of the Meek;already;C;20150323;GeorgeTrade;white;$0.65;USD_mtgf;
 Merchant Scroll;already;S;20141203;ChannelFireball;blue;$1.34;proposed;
 Meren of Clan Nel Toth;already;C;20160427;Endgames;multicolored;$7.82;USD_mtgf;
 Mesmeric Orb;already;A;20211203;Ronin;colorless;$13.00;proposed;
-Mikaeus, the Unhallowed;already;C;20141203;ChannelFireball;black;$9.99;proposed;
 Mikaeus, the Lunarch;already;C;20140429;ChannelFireball;white;$5.38;proposed
+Mikaeus, the Unhallowed;already;C;20141203;ChannelFireball;black;$9.99;proposed;
 Mind Stone;already;A;20150427;PUCATrade;colorless;$0.54;proposed;
 Mindslicer;already;C;20211203;Ronin;black;$15.00;proposed;
 Mirari's Wake;already;E;20160427;Endgames;multicolored;$7.27;USD_mtgf;
@@ -465,6 +478,7 @@ Phyrexian Tower;want;L; ; ;colorless;$0.00;proposed;
 Plaguebearer;already;C;20150323;GeorgeTrade;black;$0.85;USD_mtggf;
 Planar Bridge;already;A;20170126;ChannelFireball;colorless;$2.99;proposed;
 Planar Portal;already;A;20160123;ChannelFireball;colorless;$2.49;proposed;
+Plargg and Nassari;already;c;20230624;Pack;red;1.00
 Plea for Power;already;S;20170711;CardKingdom;blue;$0.99;proposed;
 Pollen Lullaby;already;I;20140429;ChannelFireball;white;$1.96;proposed
 Pongify;already;I;20170711;CardKingdom;blue;$2.29;proposed;
@@ -503,6 +517,7 @@ Reanimate;already;S;20151027;PUCATrade;black;$6.85;proposed;
 Reaper King;already;A;20211006;CardKingdom;multicolored;$3.84;proposed;
 Reassembling Skeleton;already;C;20131010;ChannelFireball;black;$0.40;proposed;
 Rebuild the City;want;S; ; ;multicolored;$0.00;proposed;
+Reckless Handling;already;S;20230601;Pack;red;$0.20;proposed
 Reconnaissance;already;E;20160427;Endgames;white;$2.04;USD_mtggf;
 Recurring Nightmare;already;E;20230414;Ronin;black;$7.00;proposed;
 Redeem;already;I;20140429;ChannelFireball;white;$0.40;proposed
@@ -548,6 +563,7 @@ Seat of the Synod;already;L;20180509;CardKingdom;colorless;$1.49;proposed;
 Second Sunrise;already;I;20161110;Starcitygames;white;$1.05;proposed;
 Secure the Wastes;already;I;20160128;PUCATrade;white;$4.45;proposed;
 See Beyond;already;S;20150115;ChannelFireball;blue;$0.25;proposed;
+See Double;already;i;20230618;Ronin;blue;2.50
 Selesnya Signet;already;A;20150115;ChannelFireball;colorless;$0.15;proposed;
 Sensei's Divining Top;already;A;20150706;PUCATrade;colorless;$32.24;proposed;
 Serra's Sanctum;already;L;20170608;CardKingdom;colorless;$57.79;proposed;
@@ -623,6 +639,7 @@ Talrand, Sky Summoner;already;C;20150331;PUCATrade;blue;$1.22;proposed;
 Tamiyo, the Moon Sage;already;P;20160427;Endgames;blue;$19.13;USD_mtgf;
 Tangle Wire;already;A;20150115;ChannelFireball;colorless;$2.69;proposed;
 Tasigur, the Golden Fang;already;C;20151116;PUCATrade;black;$4.50;proposed;
+Tazri, Stalwart Survivor;already;C;20230601;Pack;white;$0.30;proposed
 Teferi's Care;already;E;20211006;CardKingdom;white;$0.40;proposed;
 Teferi's Moat;already;E;20170126;ChannelFireball;multicolored;$0.49;proposed;
 Teferi's Puzzle Box;already;A;20150115;ChannelFireball;colorless;$2.49;proposed;
@@ -697,6 +714,7 @@ Venser, Shaper Savant;already;C;20170126;ChannelFireball;blue;$17.99;proposed;
 Venser, the Sojourner;already;P;20150115;ChannelFireball;multicolored;$5.99;proposed;
 Verdant Catacombs;already;L;20170406;Endgames;colorless;$45.00;actual;
 Viashino Heretic;already;C;20150323;GeorgeTrade;red;$0.45;USD_mtggf;
+Viridian Revel;want;E; ; ;green;$0.00;proposed;
 Viscera Seer;already;C;20161110;Starcitygames;black;$1.25;proposed;
 Vito, Thorn of the Dusk Rose;already;C;20230319;Ronin;black;$5.00;proposed;
 Voice of Resurgence;already;C;20190320;GeorgeTrade;multicolored;$8.00;proposed;
