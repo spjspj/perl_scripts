@@ -41,17 +41,17 @@ sub write_to_socket
     my $header;
     if ($redirect =~ m/^redirect/i)
     {
-        $header = "HTTP/1.1 301 Moved\nLocation: /purchasedcards/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        $header = "HTTP/1.1 301 Moved\nLocation: /purchasedcards/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
     }
     elsif ($redirect =~ m/^noredirect/i)
     {
         if ($SUPPLIED_PASSWORD =~ m/^$/)
         {
-            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
         }
         else
         {
-            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html\nSet-Cookie: SUPPLIED_PASSWORD=$SUPPLIED_PASSWORD\nContent-Length: " . length ($msg_body) . "\n\n";
+            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html\nSet-Cookie: SUPPLIED_PASSWORD=$SUPPLIED_PASSWORD\nContent-Length: " . length ($msg_body) . "\n\n";
         }
     }
 
@@ -121,6 +121,7 @@ my %all_cards_date;
 my %all_cards_place;
 my %all_cards_color;
 my %all_cards_price;
+my %all_cards_div_name;
 
 sub add_new_card
 {
@@ -144,6 +145,9 @@ sub add_new_card
         $all_cards_place {$card} = $place_of_purchase;
         $all_cards_color {$card} = $color;
         $all_cards_price {$card} = $price;
+        my $div_name = "div_$card";
+        $div_name =~ s/\W+/_/img;
+        $all_cards_div_name {$card} = $div_name;
     }
     elsif ($line =~ m/^([^;]+?);(want);(.); *; *;([^;]+?);/)
     {
@@ -156,6 +160,9 @@ sub add_new_card
         $all_cards_have {$card} = $have;
         $all_cards_card_type {$card} = uc($card_type);
         $all_cards_color {$card} = $color;
+        my $div_name = "want_div_$card";
+        $div_name =~ s/\W+/_/img;
+        $all_cards_div_name {$card} = $div_name;
     }
     else
     {
@@ -635,7 +642,6 @@ sub fix_url_code
         $html_text .= "<thead>\n";
         $html_text .= "<br>Overall price was: \$XXX (from YYY cards)<br>";
         $html_text .= "<br>QQQ<br>";
-        
        
         $html_text .= "<tr>\n";
         $html_text .= "<th> <button><font size=-1>Name<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -649,6 +655,7 @@ sub fix_url_code
         $html_text .= "<th> <button><font size=-1>Buying?<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>LGS<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>cut.pl<span aria-hidden=\"true\"></span> </font></button> </th> \n";
+        $html_text .= "<th> <button><font size=-1>Scryfall<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th class=\"no-sort\">*</th>\n";
         $html_text .= "</tr>\n";
@@ -661,6 +668,7 @@ sub fix_url_code
         my $even_odd = "even";
         my $deck;
         my $overall_price = 0;
+        my $overall_price_str = "";
         my $overall_count = 0;
         my %group_prices;
         my %group_counts;
@@ -764,6 +772,12 @@ sub fix_url_code
                 my $current_price = $all_cards_price{$card};
                 $row .= " <td> <font color=\"$fontcolor\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
 
+                #  Scryfall additional images..
+                #  https://api.scryfall.com/cards/named?exact=Kavu%20Aggressor
+                #  ,"image_uris":{"small":"https://cards.scryfall.io/small/front/a/2/a2832ad3-ce7f-44d2-beb2-c95d982905a6.jpg?1562927844"
+                #,"normal":"https://cards.scryfall.io/normal/front/a/2/a2832ad3-ce7f-44d2-beb2-c95d982905a6.jpg?1562927844"
+                #,"large":"https://cards.scryfall.io/large/front/a/2/a2832ad3-ce7f-44d2-beb2-c95d982905a6.jpg?1562927844"
+
                 if ($all_cards_have{$card} ne "already")
                 {
                     if ($authorized)
@@ -791,6 +805,19 @@ sub fix_url_code
                 else
                 {
                     $row .= "<td><font size=-3>Already have price</font></td>\n";
+                }
+
+                # Add in div for small image of each card if you hover over
+                my $div_name = $all_cards_div_name {$card};
+                my $c = $card;
+                $c =~ s/\W/ /img;
+                if ($div_name =~ m/^want/)
+                {
+                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; getResponse(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), 0); }'><font size=-3>Image</font></div></td>\n";
+                }
+                else
+                {
+                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; getResponse(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), 0); }'><font size=-3>Image</font></div></td>\n";
                 }
                 $row =~ s/\n//img;
 
@@ -863,6 +890,7 @@ sub fix_url_code
                     if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
                     {
                         $overall_price += $1*100 + $2;
+                        $overall_price_str .= " + $1*100 + $2 ";
                     }
                 }
 
@@ -873,7 +901,33 @@ sub fix_url_code
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
+        $html_text .= "<script>\n";
+
+        foreach $card (sort keys (%all_cards))
+        {
+            my $div_name = $all_cards_div_name {$card};
+            $html_text .= "var done_$div_name = 0\n";
+        }
+
+        $html_text .= "async function getResponse(url, theObj, bigOrSmall) {\n";
+        $html_text .= "    let response = await fetch(url);\n";
+        $html_text .= "    let response_json = await response.json();\n";
+        $html_text .= "    var image = new Image();\n";
+        $html_text .= "    if (response_json.image_uris !== undefined) \n";
+        $html_text .= "    {\n";
+        $html_text .= "        if (bigOrSmall) {image.src = response_json.image_uris.normal; }\n";
+        $html_text .= "        else { image.src = response_json.image_uris.small; } \n";
+        $html_text .= "    }\n";
+        $html_text .= "    else if (response_json.card_faces[0].image_uris !== undefined) \n";
+        $html_text .= "    {\n";
+        $html_text .= "        image.src = response_json.card_faces[0].image_uris.small;\n";
+        $html_text .= "    }\n";
+        $html_text .= "    theObj.appendChild(image);\n";
+        $html_text .= "}\n";
+        $html_text .= "</script>\n";
+
         $overall_price =~ s/(\d\d)$/.$1/;
+        #$html_text =~ s/XXX/$overall_price <font size=-2>$overall_price_str<\/font>/mg;
         $html_text =~ s/XXX/$overall_price/mg;
         $html_text =~ s/YYY/$overall_count/mg;
 
