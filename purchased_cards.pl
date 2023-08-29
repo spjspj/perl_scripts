@@ -922,6 +922,7 @@ sub fix_url_code
         $html_text .= "    {\n";
         $html_text .= "        image.src = response_json.card_faces[0].image_uris.small;\n";
         $html_text .= "    }\n";
+        $html_text .= "    theObj.innerHTML = '';\n";
         $html_text .= "    theObj.appendChild(image);\n";
         $html_text .= "}\n";
         $html_text .= "</script>\n";
