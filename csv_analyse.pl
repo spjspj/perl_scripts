@@ -181,6 +181,7 @@ $field_letters {25} = "Z";
 sub process_csv_data
 {
     my $block = $_ [0];
+    my $posted = $_ [1];
     $csv_block = $block;
     my %new_csv_data;
     %csv_data = %new_csv_data;
@@ -189,6 +190,16 @@ sub process_csv_data
     $max_field_num = 0;
     $max_rows = 0;
     print (">>$csv_block<<\n");
+
+    if ($posted eq "POSTED")
+    {
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+        print "Saving to d:\\perl_programs\\csv_ingest\\CSV_$yyyymmddhhmmss.txt\n";
+        open CSV_FILE, ("> d:\\perl_programs\\csv_ingest\\CSV_$yyyymmddhhmmss.txt");
+        print CSV_FILE $block;
+        close CSV_FILE;
+    }
 
     my $row_num = 1;
     my $col_letter = "A";
@@ -1261,6 +1272,7 @@ sub do_sum_expansion
             $i++;
         }
         $sum_str =~ s/\+$//;
+        $sum_str =~ s/\+\+/+/img;
         $sum_str .= "";
         return $sum_str;
     }
@@ -1284,6 +1296,8 @@ sub fix_up_field_vals
         $field_val =~ s/$next_field_id/$that_field_val/; 
         $next_field_id = has_field_id ($field_val, $field_id, 1);
     }
+    $field_val =~ s/\+\+/+/img;
+    $field_val =~ s/\+$//img;
     return $field_val;
 }
 
@@ -3111,6 +3125,20 @@ sub set_examples
             next;
         }
 
+        if ($txt =~ m/GET.*show_history.*/m)
+        {
+            $txt =~ m/(........show_examples.......)/im;
+            
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
+            my $listing = `dir /a /b /s d:\\perl_programs\\csv_ingest\\*.txt`;
+            $listing =~ s/d:\\.*\\//img;
+            print ("Found >>> $listing\n");
+            $listing =~ s/(.*?)\n/<a href="\/csv_analyse\/old_csv?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing </body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
         if ($txt =~ m/GET.*toggle_calculate_off.*HTTP/m)
         {
             $show_formulas = 1;
@@ -3225,7 +3253,18 @@ $//img;
             $new_csv_data =~ s/^\n$//img;
             $new_csv_data =~ s/^.*newcsv=//img;
             $new_csv_data =~ s/%0D%0A/\n/img;
-            process_csv_data ($new_csv_data);
+            process_csv_data ($new_csv_data, "POSTED");
+        }
+
+        if ($txt =~ m/GET.*old_csv.(.*)/i)
+        {
+            my $file = $1;
+            $file =~ s/ HTTP.*//;
+            $file =~ s/\n//img;
+            $file =~ s/^.*old_csv.CSV/CSV/;
+            print ("Going to look at... d:\\perl_programs\\csv_ingest\\$file\n");
+            my $new_csv = `type  d:\\perl_programs\\csv_ingest\\$file`;
+            process_csv_data ($new_csv, "DONT_SAVE");
         }
 
         my $search = ".*";
@@ -3238,6 +3277,14 @@ $//img;
         if ($txt =~ m/groupstr=(.*)/im)
         {
             $group = "$1";
+        }
+        
+        my $group_column = "";
+        my $group_column_num = "";
+        if ($txt =~ m/group_column.columns=(.*)$/im)
+        {
+            $group_column = "$1";
+            $group_column_num = get_num_of_col_header ($group_column);
         }
 
         my $dual_group = ".*";
@@ -3368,6 +3415,22 @@ $//img;
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
+                
+        # Group by column name
+        $html_text .= "<form action=\"/csv_analyse/group_column\">
+                <label for=\"group_column\">Group by column</label><br>
+                <select name=\"columns\">";
+
+        my $group_block;
+
+        my $xy;
+        for ($xy = 0; $xy < $max_field_num; $xy++)
+        {
+            my $col = get_col_header ($xy);
+            my $col_label = get_col_header ($xy) . " - Column " . get_field_letter_from_field_num ($xy);
+            $html_text .= "<option value=\"$col\">$col_label</option>";
+        }
+        $html_text .= "</select name=\"columns\"><input type=\"submit\" value=\"Group By Column\"></form></td><td>";
 
         #my $f1 = get_field_value (2, "D", 1);
         my $f1 =~ "20230401";
@@ -3390,6 +3453,7 @@ $//img;
                 <label>Update CSV:</label><br>
                 <input type=\"submit\" value=\"Update CSV\">
                 <a href=\"/csv_analyse/show_examples\">Examples</a>
+                <a href=\"/csv_analyse/show_history\">History</a>
                 <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
                 <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
                 <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">Mesh 3D</a>
@@ -3451,6 +3515,8 @@ $//img;
         }
         my $only_one_group = 1;
         my $first_group_only = 0;
+        my $group_by_column = 0;
+        my $group_by_column = 0;
         my $dual_groups = 0;
         my $group2 = "";
         my $chosen_col = "";
@@ -3459,15 +3525,28 @@ $//img;
         {
             $only_one_group = 0;
             $first_group_only = 1;
+            $group_by_column = 0;
             $dual_groups = 0;
             $group = "$1";
             $group2 = "$2";
+        }
+
+        if ($group_column =~ m/(.+)/)
+        {
+            $only_one_group = 0;
+            $first_group_only = 0;
+            $group_by_column = 1;
+            $dual_groups = 0;
+            $group = "$1";
+            $group2 = "";
+            $overall_match = $group_column;
         }
 
         if ($dual_group =~ m/\((.*)\).*\((.*)\)/)
         {
             $only_one_group = 0;
             $first_group_only = 0;
+            $group_by_column = 0;
             $dual_groups = 1;
             $group = "$1";
             $group2 = "$2";
@@ -3646,6 +3725,27 @@ $//img;
                             }
                         }
                     }
+                    
+                    if ($group_by_column)
+                    {
+                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+
+                        $group_counts {$this_group}++;
+                        $current_col_letter = get_next_field_letter ($current_col_letter);
+                        $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+
+                        if (!defined ($group_colours {$this_group}))
+                        {
+                            $group_colours {$this_group} = $group_colours {$group_count};
+                            $group_count++;
+                        }
+                        $row =~ s/(<td[^>]+>)/$1<font color=$group_colours{$this_group}>/img;
+                        $row =~ s/<\/td>/<\/font><\/td>/img;
+                        # Leave first td alone..
+                        $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
+                        $row =~ s/<\/font><\/td>/<\/td>/im;
+                    }
+
                     if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                     {
                         $force_row = 1;
@@ -3711,6 +3811,7 @@ $//img;
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No aaa group Total</font></td></tr>\n";
                             }
                         }
+                        
                         elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
                         {
                             $fake_row =~ m/($group)/im;
@@ -3783,6 +3884,27 @@ $//img;
             if ($dual_groups)
             {
                 $force_row = -1;
+            }
+
+            if ($group_by_column)
+            {
+                my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+
+                $group_counts {$this_group}++;
+                my $current_col_letter = $col_letter;
+                $current_col_letter = get_next_field_letter ($current_col_letter);
+                $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+
+                if (!defined ($group_colours {$this_group}))
+                {
+                    $group_colours {$this_group} = $group_colours {$group_count};
+                    $group_count++;
+                }
+                $row =~ s/(<td[^>]+>)/$1<font color=$group_colours{$this_group}>/img;
+                $row =~ s/<\/td>/<\/font><\/td>/img;
+                # Leave first td alone..
+                $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
+                $row =~ s/<\/font><\/td>/<\/td>/im;
             }
 
             if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
