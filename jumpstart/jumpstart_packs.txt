@@ -1,0 +1,1505 @@
+#blink_stuff.dck 
+#1 MRD 261 Thought Prison
+1 AVR 32 Restoration Angel
+1 ELD 335 Charming Prince
+1 EVE 6 Flickerwisp
+1 KLD 176 Cloudblazer
+1 MM2 67 Vendilion Clique
+1 ROE 53 Wall of Omens
+1 TSP 73 Riftwing Cloudskate
+1 CNS 41 Brago, King Eternal
+1 FUT 46 Venser, Shaper Savant
+1 MB1 206 Recruiter of the Guard
+1 MRD 261 Thought Prison
+3 UST 212 Plains
+4 UST 213 Island
+1 KTK 233 Flooded Strand
+1 RNA 251 Hallowed Fountain
+
+#burn.dck 
+1 AKH 134 Glorybringer
+1 DKA 93 Hellrider
+1 MH1 145 Seasoned Pyromancer
+1 ELD 147 Torbran, Thane of Red Fell
+#1 GTC 106 Skullcrack
+1 LEG 137 Chain Lightning
+1 M11 149 Lightning Bolt
+1 M12 147 Inferno Titan
+1 M13 150 Thundermaw Hellkite
+1 RAV 117 Char
+1 SCG 106 Sulfuric Vortex
+1 SOM 81 Arc Trail
+1 THS 135 Purphoros, God of the Forge
+8 UST 215 Mountain
+
+#exile stuff.dck 
+1 AVR 47 Deadeye Navigator
+1 C13 1 Act of Authority
+1 EMA 32 Swords to Plowshares
+1 EMN 65 Imprisoned in the Moon
+1 C19 92 Reality Shift
+1 M14 7 Banisher Priest
+1 MM3 17 Path to Exile
+1 MOR 22 Reveillark
+1 NEM 37 Parallax Tide
+1 TSP 39 Return to Dust
+1 ZNR 322 Skyclave Apparition
+1 WAR 248 Karn's Bastion
+1 KHM 257 Glacial Floodplain
+4 UST 212 Plains
+2 UST 213 Island
+#1 NEM 17 Parallax Wave
+#1 ELD 395 Kenrith's Transformation
+#flash.dck 
+#1 ZNR 77 Sea Gate Stormcaller
+# land_hate2.dck 
+1 FRF 1 Ugin, the Spirit Dragon
+#NoSoul's Betrayal
+#Kormus Bell
+#Urborg
+# Doubling season
+
+# Scarecrows..Doubling season_changelings >> Reaper king
+1 AER 164 Metallic Mimic
+1 MRD 165 Duplicant
+1 M14 47 Clone
+1 DGM 11 Aetherling
+1 MBS 23 Cryptoplasm
+1 EMN 64 Identity Thief
+1 M15 68 Mercurial Pretender
+1 MB1 509 Stunt Double
+1 AKH 74 Vizier of Many Faces
+1 TSP 90 Vesuvan Shapeshifter
+1 CMR 341 Sky Diamond
+9 UST 213 Island
+
+# Shapeshifters....Duplican!!
+1 LRW 31 Mirror Entity
+1 LRW 11 Crib Swap
+1 MB1 1647 Universal Automaton
+1 MH1 1 Morophon, the Boundless
+1 SHM 260 Reaper King
+1 C15 105 Rite of Replication
+1 MH1 216 Unsettled Mariner
+1 KHM 235 Bloodline Pretender
+1 MOR 42 Mothdust Changeling
+1 LRW 85 Shapesharer
+3 UST 212 Plains
+5 UST 213 Island
+1 ARC 103 Azorius Signet
+1 RNA 243 Azorius Guildgate
+
+# upheaval.dck 
+1 ODY 113 Upheaval
+1 ISD 170 Avacyn's Pilgrim
+1 M12 165 Birds of Paradise
+1 ZNR 193 Lotus Cobra
+1 CON 87 Noble Hierarch
+1 THS 180 Sylvan Caryatid
+1 TSB 89 Wall of Roots
+1 ELD 171 Questing Beast
+1 KLD 244 Botanical Sanctum
+7 UST 216 Forest
+1 UST 213 Island
+1 THS 172 Polukranos, World Eater
+1 M21 204 Scavenging Ooze
+1 THB 169 Dryad of the Ilysian Grove
+
+#aristocrats.dck 
+1 JOU 146 Athreos, God of Passage
+1 ELD 350 Ayara, First of Locthwain
+1 AVR 86 Blood Artist
+1 WAR 188 Cruel Celebrant
+1 RIX 157 Elenda, the Dusk Rose
+1 TSP 106 Endrek Sahr, Master Breeder
+1 KTK 73 Grim Haruspex
+1 DST 140 Skullclamp
+1 BFZ 126 Zulaport Cutthroat
+1 MB1 748 Reassembling Skeleton
+1 EMA 218 Ashnod's Altar
+1 CMR 360 Vault of Champions
+2 UST 212 Plains
+6 UST 214 Swamp
+
+#card_draw.dck 
+1 TSP 48 Ancestral Vision
+1 MMQ 61 Brainstorm
+1 RAV 40 Compulsive Research
+1 MBS 21 Consecrated Sphinx
+1 TOR 36 Deep Analysis
+1 ORI 60 Jace, Vryn's Prodigy
+1 LRW 76 Mulldrifter
+1 M12 73 Ponder
+1 M11 70 Preordain
+1 5DN 36 Serum Visions
+1 MRD 53 Thirst for Knowledge
+1 NPH 35 Gitaxian Probe
+8 UST 213 Island
+
+#other_blue_stuff.dck
+#1 ALA 60 Tezzeret the Seeker
+1 VIS 43 Shrieking Drake
+1 CN2 107 Desertion
+1 CSP 29 Commandeer
+1 USG 66 Confiscate
+1 MMQ 62 Bribery
+1 WWK 40 Thada Adel, Acquisitor
+1 UDS 40 Opposition
+1 SOI 58 Engulf the Shore
+1 THS 53 Master of Waves
+1 C18 91 Inkwell Leviathan
+1 SOM 208 Sword of Body and Mind
+1 M13 72 Talrand, Sky Summoner
+8 UST 213 Island
+
+#control_magic_enchantmens_onboard_steal_stuff.dck 
+1 UDS 50 Treachery
+1 4ED 64 Control Magic
+1 LRW 88 Sower of Temptation
+1 MB1 1522 Enchanted Evening
+1 RTR 44 Jace, Architect of Thought
+1 SOM 53 Volition Reins
+1 UDS 26 Aura Thief
+1 USG 76 Gilded Drake
+1 ZNR 85 Thieving Skydiver
+1 M20 43 Agent of Treachery
+1 WAR 68 Spark Double
+1 ZNR 66 Lullmage's Domination
+8 UST 213 Island
+
+#copy.dck 
+1 KTK 34 Clever Impersonator
+1 NPH 42 Phyrexian Metamorph
+1 XLN 60 Jace, Cunning Castaway
+1 DOM 57 The Mirari Conjecture
+1 HOU 31 Champion of Wits
+1 M12 72 Phantasmal Image
+1 SCG 29 Brain Freeze
+1 SCG 41 Mind's Desire
+1 C17 37 Fractured Identity
+1 SOM 175 Mimic Vat
+1 CMR 89 Sakashima of a Thousand Faces
+1 HOU 165 Mirage Mirror
+1 RTR 241 Hallowed Fountain
+1 UST 212 Plains
+6 UST 213 Island
+
+#counterspells.dck 
+1 3ED 54 Counterspell
+1 7ED 76 Force Spike
+1 7ED 88 Memory Lapse
+1 EVE 22 Glen Elendra Archmage
+1 IMA 55 Flusterstorm
+1 M12 55 Frost Titan
+1 M12 63 Mana Leak
+1 RAV 63 Remand
+1 THS 47 Dissolve
+1 TMP 58 Dismiss
+8 UST 213 Island
+1 FUT 42 Pact of Negation
+1 BOK 40 Kira, Great Glass-Spinner
+
+#dimir_stuff_mill.dck 
+1 BNG 152 Phenax, God of Deception
+1 MH1 75 Urza, Lord High Artificer
+1 EMA 196 Baleful Strix
+1 GTC 222 Nightveil Specter
+1 THS 66 Thassa, God of the Sea
+1 MM2 71 Bitterblossom
+1 THS 110 Whip of Erebos
+1 THS 188 Ashiok, Nightmare Weaver
+1 THS 85 Erebos, God of the Dead
+4 UST 213 Island
+4 UST 214 Swamp
+1 ZNR 114 Mind Drain
+1 KLD 84 Gonti, Lord of Luxury
+1 ORI 60 Jace, Vryn's Prodigy
+
+#elves_little_critters.dck 
+1 10E 261 Elvish Champion
+1 CMR 235 Imperious Perfect
+1 M21 193 Llanowar Visionary
+1 CN2 179 Copperhorn Scout
+1 M13 160 Arbor Elf
+1 M13 168 Elvish Archdruid
+1 M15 173 Elvish Mystic
+1 M19 196 Reclamation Sage
+1 ROE 190 Joraga Treespeaker
+1 TMP 224 Eladamri, Lord of Leaves
+8 UST 216 Forest
+1 WWK 106 Joraga Warcaller
+1 ZEN 172 Oracle of Mul Daya
+
+#golgari_land_black_tutors.dck 
+1 ORI 90 Dark Petition
+1 ELD 110 Wishclaw Talisman
+1 AER 171 Planar Bridge
+1 INV 308 Planar Portal
+1 M14 95 Diabolic Tutor
+1 3ED 105 Demonic Tutor
+1 MB1 1327 Search for Tomorrow
+1 DTK 186 Explosive Vegetation
+1 EMA 161 Civic Wayfinder
+1 A25 165 Cultivate
+1 SHM 113 Farhaven Elf
+1 MM2 156 Primeval Titan
+3 UST 216 Forest
+3 UST 214 Swamp
+1 GRN 253 Overgrown Tomb
+1 ZEN 229 Verdant Catacombs
+
+#haste_gobbos.dck 
+1 6ED 186 Goblin Recruiter
+1 EMA 119 Beetleback Chief
+1 M10 157 Siege-Gang Commander
+1 M13 138 Krenko, Mob Boss
+1 M15 145 Goblin Rabblemaster
+1 M21 139 Conspicuous Snoop
+1 ORI 151 Goblin Piledriver
+1 RTR 98 Guttersnipe
+1 TSP 170 Mogg War Marshal
+8 UST 215 Mountain
+1 ZEN 126 Goblin Guide
+1 GRN 109 Legion Warboss
+1 OGW 110 Goblin Dark-Dwellers
+
+#land_destruction.dck 
+1 6ED 4 Armageddon
+1 EMA 2 Balance
+1 10E 319 Crucible of Worlds
+1 HOU 129 Ramunap Excavator
+1 CMD 140 Acidic Slime
+1 DST 146 Sundering Titan
+1 9ED 228 Wildfire
+1 MB1 844 Avalanche Riders
+1 DDL 54 Deus of Calamity
+1 EMA 248 Wasteland
+1 MB1 1667 Field of Ruin
+1 RTR 248 Temple Garden
+1 BFZ 235 Cinder Glade
+1 UST 212 Plains
+3 UST 216 Forest
+3 UST 215 Mountain
+
+#leovold_draw7s.dck 
+1 AVR 151 Reforge the Soul
+1 CMR 74 Hullbreacher
+1 WAR 61 Narset, Parter of Veils
+1 CNS 136 Barbed Shocker
+1 BRB 99 Windfall
+1 EMA 199 Dack Fayden
+1 SOM 98 Molten Psyche
+1 C13 48 Jace's Archivist
+1 GPT 152 Izzet Signet
+1 C13 113 Incendiary Command
+1 AER 28 Baral, Chief of Compliance
+1 RTR 247 Steam Vents
+4 UST 213 Island
+4 UST 215 Mountain
+
+#mana_dorks_big_critters.dck 
+1 9ED 283 Wood Elves
+1 EVE 66 Bloom Tender
+1 M12 182 Llanowar Elves
+1 M13 160 Arbor Elf
+1 M13 168 Elvish Archdruid
+1 M15 173 Elvish Mystic
+1 ROE 190 Joraga Treespeaker
+1 ZEN 172 Oracle of Mul Daya
+1 AVR 172 Craterhoof Behemoth
+1 WWK 96 Avenger of Zendikar
+1 SHM 135 Woodfall Primus
+1 EMA 177 Natural Order
+8 UST 216 Forest
+
+#mind_slaver.dck 
+1 ORI 229 Hangarback Walker
+1 BFZ 223 Hedron Archive
+1 SOM 169 Kuldotha Forgemaster
+1 10E 335 Mind Stone
+1 SOM 176 Mindslaver
+1 MB1 898 Daretti, Scrap Savant
+1 ULG 80 Goblin Welder
+1 EMN 6 Emrakul, the Promised End
+1 C14 38 Scrap Mastery
+1 C13 237 Basalt Monolith
+1 A25 65 Merfolk Looter
+1 RTR 247 Steam Vents
+1 MM3 244 Scalding Tarn
+3 UST 213 Island
+4 UST 215 Mountain
+
+#pillowfort.dck 
+1 M11 58 Jace Beleren
+1 7ED 319 Static Orb
+1 EMA 234 Winter Orb
+1 NPH 162 Torpor Orb
+1 NPH 164 Unwinding Clock
+1 RTR 24 Sphere of Safety
+1 CHK 10 Ghostly Prison
+1 TMP 80 Propaganda
+1 NEM 139 Tangle Wire
+1 HOU 22 Solemnity
+1 RTR 241 Hallowed Fountain
+4 UST 213 Island
+1 ICE 353 Glacial Chasm
+4 UST 212 Plains
+
+#removal.dck 
+1 A25 104 Ravenous Chupacabra
+1 BFZ 119 Ob Nixilis Reignited
+1 DKA 70 Mikaeus, the Unhallowed
+1 EMA 38 Wrath of God
+1 FRF 65 Crux of Fate
+1 GTC 242 Godless Shrine
+1 KTK 81 Murderous Cut
+1 M14 96 Doom Blade
+1 MBS 43 Go for the Throat
+1 PLC 85 Damnation
+1 THB 302 Shatter the Sky
+1 THS 90 Hero's Downfall
+1 ULG 49 Bone Shredder
+2 UST 212 Plains
+5 UST 214 Swamp
+
+#resource_denial.dck 
+1 4ED 147 Mind Twist
+1 DTK 98 Duress
+1 HOU 77 Torment of Hailfire
+1 M10 100 Hypnotic Specter
+1 M15 103 Liliana Vess
+1 MM3 76 Liliana of the Veil
+1 MOR 66 Mind Shatter
+1 ROE 115 Inquisition of Kozilek
+1 THS 107 Thoughtseize
+1 VMA 122 Hymn to Tourach
+8 UST 214 Swamp
+1 WAR 98 Liliana's Triumph
+1 EMN 85 Collective Brutality
+
+#sneak.dck 
+1 BNG 156 Xenagos, God of Revels
+1 THS 209 Xenagos, the Reveler
+1 USG 218 Sneak Attack
+1 AER 77 Chandra's Revolution
+1 BFZ 15 Ulamog, the Ceaseless Hunger
+1 WWK 115 Terastodon
+1 THS 187 Ashen Rider
+1 SHM 135 Woodfall Primus
+1 DTK 216 Dragonlord Atarka
+1 WWK 96 Avenger of Zendikar
+1 WAR 133 Ilharg, the Raze-Boar
+3 UST 216 Forest
+3 UST 215 Mountain
+1 GTC 247 Stomping Ground
+1 IMA 238 Grove of the Burnwillows
+1 KTK 249 Wooded Foothills
+
+#sneak2.dck 
+1 CHK 193 Through the Breach
+1 C17 144 Utvara Hellkite
+1 CN2 57 Skyline Despot
+1 C17 138 Hellkite Charger
+1 ALA 109 Predator Dragon
+1 M13 150 Thundermaw Hellkite
+1 RNA 114 Skarrgan Hellkite
+1 AKH 134 Glorybringer
+1 THS 143 Stormbreath Dragon
+1 C17 29 Territorial Hellkite
+1 VMA 184 Scourge of the Throne
+1 FRF 106 Lightning Shrieker
+8 UST 215 Mountain
+
+#tokens_ramp.dck 
+1 FRF 145 Whisperwood Elemental
+1 FUT 147 Nacatl War-Pride
+1 M13 193 Thragtusk
+1 M15 178 Hornet Queen
+1 ODY 274 Squirrel Nest
+1 UST 108 Earl of Squirrel
+1 WWK 115 Terastodon
+1 WWK 96 Avenger of Zendikar
+1 MH1 161 Deep Forest Hermit
+1 CHK 239 Sakura-Tribe Elder
+1 M21 177 Cultivate
+1 TSP 216 Search for Tomorrow
+8 UST 216 Forest
+
+#ubr_gods.dck 
+1 HOU 146 The Scorpion God
+1 HOU 145 The Scarab God
+1 HOU 139 The Locust God
+1 AKH 136 Hazoret the Fervent
+1 AKH 82 Bontu the Glorified
+1 SHM 183 Demigod of Revenge
+1 JOU 93 Dictate of the Twin Gods
+1 THS 85 Erebos, God of the Dead
+1 WAR 207 Nicol Bolas, Dragon-God
+1 HOU 140 Nicol Bolas, God-Pharaoh
+3 UST 214 Swamp
+1 UST 213 Island
+2 UST 215 Mountain
+1 RTR 247 Steam Vents
+1 MM3 244 Scalding Tarn
+1 KTK 239 Polluted Delta
+1 BFZ 249 Sunken Hollow
+
+#white_weenie.dck 
+8 UST 212 Plains
+1 MH1 13 Giver of Runes
+1 EMA 22 Mother of Runes
+1 KTK 22 Seeker of the Way
+1 DKA 24 Thalia, Guardian of Thraben
+1 BNG 5 Brimaz, King of Oreskos
+1 LRW 31 Mirror Entity
+1 NPH 19 Porcelain Legionnaire
+1 AVR 36 Silverblade Paladin
+1 MBS 8 Hero of Bladehold
+1 AVR 31 Nearheath Pilgrim
+1 M12 19 Grand Abolisher
+1 NPH 4 Blade Splicer
+
+# Equipment.dck
+1 NPH 130 Batterskull
+1 DST 140 Skullclamp
+1 SOM 208 Sword of Body and Mind
+1 MBS 138 Sword of Feast and Famine
+1 DST 148 Sword of Fire and Ice
+1 BOK 163 Umezawa's Jitte
+1 SOM 223 Wurmcoil Engine
+1 AER 181 Walking Ballista
+1 ORI 229 Hangarback Walker
+1 KLD 235 Smuggler's Copter
+1 M15 225 Phyrexian Revoker
+1 KLD 199 Bomat Courier
+8 UST 215 Mountain
+
+# landfall_matters2.dck
+1 BFZ 140 Akoum Stonewaker
+1 MB1 1225 Grazing Gladehart
+1 MB1 1230 Groundswell
+1 ZNR 150 Moraug, Fury of Akoum
+1 BFZ 217 Omnath, Locus of Rage
+1 BFZ 181 Oran-Rief Hydra
+1 ZNR 203 Scute Swarm
+1 BFZ 197 Undergrowth Champion
+1 AKH 248 Sheltered Thicket
+5 UST 216 Forest
+2 UST 215 Mountain
+1 KTK 249 Wooded Foothills
+1 THS 221 Traveler's Amulet
+1 CM2 229 Wayfarer's Bauble
+1 MB1 1545 Armillary Sphere
+
+# mardu_planeswalkers.dck
+1 C16 311 Nomad Outpost
+1 WAR 233 Nahiri, Storm of Stone
+1 WAR 135 Jaya, Venerated Firemage
+1 WAR 100 Ob Nixilis, the Hate-Twisted
+1 WAR 37 The Wanderer
+1 M20 128 Chandra, Novice Pyromancer
+1 WAR 227 Angrath, Captain of Chaos
+1 WAR 83 Davriel, Rogue Shadowmage
+1 WAR 32 Teyo, the Shieldmage
+1 WAR 146 Tibalt, Rakish Instigator
+1 BFZ 119 Ob Nixilis Reignited
+4 UST 215 Mountain
+2 UST 212 Plains
+3 UST 214 Swamp
+
+# bigblackmana_make_sac.dck
+1 9ED 135 Grave Pact
+1 UMA 248 Phyrexian Tower
+1 CM2 64 Fleshbag Marauder
+#1 TOR 139 Cabal Coffers
+1 M15 248 Urborg, Tomb of Yawgmoth
+1 OGW 67 Bearer of Silence
+1 CM2 60 Butcher of Malakir
+1 GTC 63 Devour Flesh
+1 TMP 128 Diabolic Edict
+1 NPH 61 Geth's Verdict
+1 FRF 76 Merciless Executioner
+1 KHM 112 Tergrid, God of Fright
+1 WAR 98 Liliana's Triumph
+1 WAR 97 Liliana, Dreadhorde General
+6 UST 214 Swamp
+1 TSP 120 Nether Traitor
+
+# Landhate2
+1 ARB 85 Zealous Persecution
+1 M15 248 Urborg, Tomb of Yawgmoth
+1 CHK 133 Night of Souls' Betrayal
+1 RNA 170 Ethereal Absolution
+1 4ED 332 Kormus Bell
+1 MBS 136 Spine of Ish Sah
+1 8ED 300 Ensnaring Bridge
+1 C17 8 Teferi's Protection
+1 TMP 24 Humility
+1 KHM 269 Snowfield Sinkhole
+1 C16 266 Orzhov Signet
+4 UST 212 Plains
+2 UST 214 Swamp
+1 UDS 1 Academy Rector
+1 EMA 9 Enlightened Tutor
+1 V10 15 Zuran Orb
+
+# Amulet of vigor.
+1 SOM 145 Contagion Engine
+1 DST 110 Darksteel Forge
+1 DST 130 Mycosynth Lattice
+1 3ED 267 Nevinyrral's Disk
+1 V13 8 Tangle Wire
+1 DOM 234 Traxos, Scourge of Kroog
+1 EMA 235 Worn Powerstone
+1 WWK 121 Amulet of Vigor
+1 AER 169 Paradox Engine
+1 C18 38 Arixmethes, Slumbering Isle
+1 DIS 170 Azorius Chancery
+1 RAV 276 Dimir Aqueduct
+1 GPT 159 Izzet Boilerworks
+1 DIS 180 Simic Growth Chamber
+1 CNS 164 Exploration
+1 RAV 278 Golgari Rot Farm
+1 HOP 134 Gruul Turf
+1 RAV 281 Selesnya Sanctuary
+1 UST 216 Forest
+1 UST 213 Island
+
+# bug_pws.dck
+1 WAR 150 Arlinn, Voice of the Pack
+1 WAR 236 Vraska, Swarm's Eminence
+1 WAR 235 Samut, Tyrant Smasher
+1 WAR 56 Kasmina, Enigmatic Mentor
+1 WAR 234 Saheeli, Sublime Artificer
+1 WAR 232 Kiora, Behemoth Beckoner
+1 WAR 164 Jiang Yanggu, Wildcrafter
+1 WAR 230 Huatli, the Sun's Heart
+1 WAR 229 Dovin, Hand of Control
+1 DDE 54 Coalition Relic
+1 MRD 175 Gilded Lotus
+1 CMR 359 Undergrowth Stadium
+2 UST 216 Forest
+4 UST 213 Island
+1 MH1 244 Prismatic Vista
+1 MH1 243 Nurturing Peatland
+
+# flash_critters.dck
+1 KLD 67 Torrential Gearhulk
+1 TSP 57 Draining Whelk
+1 EMN 189 Spell Queller
+1 TSB 97 Mystic Snake
+1 M21 222 Niambi, Esteemed Speaker
+1 DGM 65 Deputy of Acquittals
+1 ISD 41 Village Bell-Ringer
+1 ISD 78 Snapcaster Mage
+1 LRW 78 Pestermite
+1 FUT 46 Venser, Shaper Savant
+1 PLC 22 Whitemane Lion
+1 KHM 266 Rimewood Falls
+1 KHM 257 Glacial Floodplain
+5 UST 213 Island
+2 UST 212 Plains
+
+#niv_mizzet.dck
+1 MM3 175 Niv-Mizzet, Dracogenius
+1 MM2 182 Niv-Mizzet, the Firemind
+1 C20 225 Niv-Mizzet, the Firemind
+1 GRN 192 Niv-Mizzet, Parun
+1 EVE 53 Flame Jab
+1 EMA 63 Oona's Grace
+1 CMR 453 Spitting Image
+1 MH1 150 Throes of Chaos
+1 EMA 214 Call the Skybreaker
+1 DDJ 36 Nivix, Aerie of the Firemind
+1 RTR 226 Chromatic Lantern
+4 UST 213 Island
+4 UST 215 Mountain
+1 GPT 152 Izzet Signet
+
+#niv_mizzet2.dck
+1 GRN 192 Niv-Mizzet, Parun
+1 RTR 183 Niv-Mizzet, Dracogenius
+1 GPT 123 Niv-Mizzet, the Firemind
+1 KLD 249 Spirebluff Canal
+1 MH1 238 Fiery Islet
+1 ZNR 56 Deliberate
+1 GRN 163 Crackling Drake
+1 OGW 155 Jori En, Ruin Diver
+1 KHM 46 Behold the Multiverse
+1 BNG 91 Epiphany Storm
+1 VMA 83 Obsessive Search
+1 CHK 81 Reach Through Mists
+1 UMA 81 Visions of Beyond
+1 KHM 273 Volatile Fjord
+1 C20 310 Shivan Reef
+1 EVE 175 Cascade Bluffs
+1 UMA 242 Desolate Lighthouse
+2 UST 213 Island
+1 UST 215 Mountain
+
+#persist_undying.dck
+1 SHM 248 Cauldron of Souls
+1 AVR 96 Demonlord of Ashmouth
+1 AVR 89 Butcher Ghoul
+1 MH1 89 Endling
+1 DKA 37 Geralf's Mindcrusher
+1 AER 74 Yahenni, Undying Partisan
+1 EVE 84 Cauldron Haze
+1 SHM 75 Puppeteer Clique
+1 M14 50 Dismiss into Dream
+1 NPH 115 Melira, Sylvok Outcast
+1 CMR 158 Viscera Seer
+1 UST 216 Forest
+2 UST 213 Island
+4 UST 214 Swamp
+1 GTC 249 Watery Grave
+1 DIS 172 Breeding Pool
+
+#bolas_citadel.dck
+1 KHM 262 Ice Tunnel
+1 KHM 257 Glacial Floodplain
+1 MRD 278 Ancient Den
+1 NPH 2 Apostle's Blessing
+1 WAR 79 Bolas's Citadel
+1 WWK 57 Death's Shadow
+1 NPH 57 Dismember
+1 NPH 35 Gitaxian Probe
+1 NPH 137 Hex Parasite
+1 NPH 17 Norn's Annex
+1 NPH 70 Postmortem Lunge
+1 MRD 283 Seat of the Synod
+1 NPH 74 Surgical Extraction
+1 MB1 527 Tinker
+1 NPH 76 Vault Skirge
+1 MRD 286 Vault of Whispers
+1 UST 213 Island
+2 UST 214 Swamp
+1 UST 212 Plains
+
+# Anglels/Lifelink
+1 GRN 10 Divine Visitation
+1 MMA 13 Elspeth, Knight-Errant
+1 THS 9 Elspeth, Sun's Champion
+1 M14 5 Archangel of Thune
+1 AVR 10 Cathars' Crusade
+1 AKH 1 Angel of Sanctions
+1 AVR 2 Angel of Jubilation
+1 DST 9 Pristine Angel
+1 KLD 4 Angel of Invention
+1 M11 7 Baneslayer Angel
+1 KHM 24 Righteous Valkyrie
+1 THS 223 Nykthos, Shrine to Nyx
+8 UST 212 Plains
+
+# Dimir Sagas
+1 THB 52 Kiora Bests the Sea God
+1 DOM 57 The Mirari Conjecture
+1 DOM 90 The Eldest Reborn
+1 DOM 70 Time of Ice
+1 DOM 42 The Antiquities War
+1 DOM 102 Rite of Belzenlok
+1 DOM 100 Phyrexian Scriptures
+1 DOM 82 Chainer's Torment
+1 THB 91 Elspeth's Nightmare
+1 THB 53 Medomai's Prophecy
+1 KHM 232 The Trickster-God's Heist
+1 KHM 262 Ice Tunnel
+4 UST 213 Island
+3 UST 214 Swamp
+1 RAV 260 Dimir Signet
+
+# Jund Pain
+1 CMR 293 Yurlok of Scorch Thrash
+1 CHK 212 Heartbeat of Spring
+1 3ED 164 Mana Flare
+1 SHM 122 Mana Reflection
+1 CHK 225 Kodama's Reach
+1 RAV 163 Farseek
+1 UMA 163 Eternal Witness
+1 DGM 120 Zhur-Taa Druid
+1 DGM 99 Ruric Thar, the Unbowed
+1 EMA 215 Deathrite Shaman
+1 DIS 171 Blood Crypt
+1 C16 321 Savage Lands
+1 ISD 249 Woodland Cemetery
+4 UST 216 Forest
+1 UST 215 Mountain
+1 UST 214 Swamp
+1 CMR 342 Spectral Searchlight
+
+# Fog 
+1 M13 172 Fog
+1 MB1 22 Angelsong
+1 C15 32 Arachnogenesis
+1 EVE 81 Batwing Brume
+1 KLD 148 Commencement of Festivities
+1 STH 104 Constant Mists
+1 THS 156 Defend the Hearth
+1 BFZ 23 Encircling Fissure
+1 BBD 117 Fog Bank
+1 PC2 17 Guard Gomazoa
+1 M19 212 Arcades, the Strategist
+1 IKO 248 Indatha Triome
+1 IKO 250 Ketria Triome
+1 IKO 251 Raugrin Triome
+3 UST 216 Forest
+1 UST 213 Island
+2 UST 212 Plains
+
+# Unblockable
+1 EVE 160 Slippery Bogle
+1 KHM 319 Toski, Bearer of Secrets
+1 C15 44 Ezuri, Claw of Progress
+1 C15 241 Cold-Eyed Selkie
+1 VMA 251 Edric, Spymaster of Trest
+1 RIX 43 Mist-Cloaked Herald
+1 OGW 47 Slip Through Space
+1 ISD 60 Invisible Stalker
+1 NPH 29 Blighted Agent
+1 GPT 94 Silhana Ledgewalker
+1 AER 109 Heroic Intervention
+1 UMA 250 Rogue's Passage
+1 JMP 34 Thriving Grove
+1 JMP 36 Thriving Isle
+1 BFZ 239 Lumbering Falls
+2 UST 216 Forest
+3 UST 213 Island
+
+# proliferate.dck
+1 WAR 205 Merfolk Skydiver
+1 RA2 05 Merfolk Skydiver
+1 WAR 173 Pollenbright Druid
+1 CM2 52 Thrummingbird
+1 MB1 1564 Contagion Clasp
+1 MB1 504 Steady Progress
+1 SOM 35 Inexorable Tide
+1 WAR 271 Guildpact Informant
+1 WAR 159 Evolution Sage
+1 WAR 158 Courage in Crisis
+1 RNA 152 Aeromunculus
+1 FRF 121 Ainok Guide
+1 MM2 137 Algae Gharial
+1 EVE 177 Flooded Grove
+1 KTK 234 Frontier Bivouac
+1 ISD 241 Hinterland Harbor
+3 UST 216 Forest
+2 UST 213 Island
+
+# Ninja
+1 MH1 199 Fallen Shinobi
+1 MB1 1515 Yuriko, the Tiger's Shadow
+1 BOK 71 Ink-Eyes, Servant of Oni
+1 PC2 105 Silent-Blade Oni
+1 PC2 18 Higure, the Still Wind
+1 MH1 58 Mist-Syndicate Naga
+1 PCA 24 Sakashima's Student
+#1 PCA 37 Throat Slitter
+1 M15 223 Ornithopter
+1 MH1 204 Ingenious Infiltrator
+1 C15 99 Ninja of the Deep Hours
+1 BOK 84 Skullsnatcher
+1 WWK 134 Creeping Tar Pit
+4 UST 213 Island
+4 UST 214 Swamp
+
+# gold
+1 RTR 141 Abrupt Decay
+1 KTK 160 Abzan Ascendancy
+1 EVE 117 Creakwood Liege
+1 M15 210 Garruk, Apex Predator
+1 CM2 157 Ghave, Guru of Spores
+1 RAV 209 Golgari Germination
+1 LRW 250 Nath of the Gilt-Leaf
+1 SHM 237 Rhys the Redeemed
+1 RAV 225 Savra, Queen of the Golgari
+1 RAV 230 Shambling Shell
+1 C16 208 Korozda Guildmage
+1 EVE 131 Worm Harvest
+1 A25 248 Twilight Mire
+1 UMA 251 Stirring Wildwood
+1 SHM 281 Wooded Bastion
+2 UST 216 Forest
+3 UST 214 Swamp
+
+# demons
+1 M15 110 Ob Nixilis, Unshackled
+1 HOU 73 Razaketh, the Foulblooded
+1 DOM 86 Demonlord Belzenlok
+1 THS 75 Abhorrent Overlord
+1 FRF 62 Archfiend of Depravity
+1 KHM 349 Burning-Rune Demon
+1 M15 101 Indulgent Tormentor
+1 GRN 69 Doom Whisperer
+1 RTR 63 Desecration Demon
+1 HOU 57 Ammit Eternal
+1 KHM 115 Varragoth, Bloodsky Sire
+1 KHM 352 Dream Devourer
+8 UST 214 Swamp
+
+# gilder_bairn.dck
+1 HHO 10 Snow Mercy
+1 SHM 148 Silkbind Faerie
+1 SHM 146 Puresight Merrow
+1 SHM 258 Pili-Pala
+1 EVE 12 Patrol Signaler
+1 SHM 16 Order of Whiteclay
+1 SHM 43 Leech Bonder
+1 SHM 42 Knacksaw Clique
+1 EVE 152 Gilder Bairn
+1 MB1 1581 Farmstead Gleaner
+1 SCG 45 Pemmin's Aura
+1 EVE 31 Wake Thrasher
+1 DGM 146 Azorius Guildgate
+1 KHM 293 Hengegate Pathway
+4 UST 213 Island
+2 UST 212 Plains
+
+# red_gain_control_fling.dck
+1 AVR 166 Zealous Conscripts
+1 NPH 78 Act of Aggression
+1 GTC 85 Act of Treason
+1 ELD 118 Claim the Firstborn
+1 MB1 968 Greater Gargadon
+1 RAV 124 Flash Conscription
+1 ROE 139 Conquering Manticore
+1 TMP 276 Altar of Dementia
+1 SOK 163 Miren, the Moaning Well
+1 ELD 237 Witch's Oven
+1 ELD 126 Fling
+5 UST 215 Mountain
+1 RAV 280 Sacred Foundry
+1 DGM 147 Boros Guildgate
+1 CMR 169 Coercive Recruiter
+1 DOM 217 Helm of the Host
+
+# stormcrow.dck
+1 ORI 46 Aspiring Aeronaut
+1 UST 31 Crow Storm
+1 RNA 39 Faerie Duelist
+1 ELD 45 Faerie Vandal
+1 JMP 162 Oneirophage
+1 XLN 78 Siren Lookout
+1 XLN 83 Storm Fleet Aerialist
+1 9ED 100 Storm Crow
+1 GRN 48 Nightveil Sprite
+1 ONS 218 Mana Echoes
+1 C19 215 Izzet Locket
+1 IKO 251 Raugrin Triome
+1 IKO 250 Ketria Triome
+6 UST 213 Island
+1 UST 215 Mountain
+
+# Deepglow
+1 C16 7 Deepglow Skate
+1 MOR 122 Fertilid
+1 UST 112 Hydradoodle
+1 M14 181 Kalonian Hydra
+1 DTK 200 Sandsteppe Scavenger
+1 GTC 50 Simic Manipulator
+1 ELD 322 Steelbane Hydra
+1 ELD 185 Yorvo, Lord of Garenbrig
+1 TSB 84 Spike Feeder
+1 GTC 119 Experiment One
+1 GRN 141 Pelt Collector
+6 UST 216 Forest
+2 UST 213 Island
+1 GTC 246 Simic Guildgate
+
+# eye_of_the_storm.dck
+1 RAV 48 Eye of the Storm
+1 GRN 207 Thousand-Year Storm
+1 C16 122 Chaos Warp
+1 USG 105 Turnabout
+1 FEM 18b High Tide
+1 KLD 44 Dramatic Reversal
+#1 RTR 172 Izzet Charm
+1 IKO 67 Shark Typhoon
+1 MB1 513 Talrand, Sky Summoner
+1 KLD 56 Metallurgic Summonings
+1 C16 310 Mystic Monastery
+1 IKO 251 Raugrin Triome
+5 UST 213 Island
+2 UST 215 Mountain
+1 TSP 152 Empty the Warrens
+1 THS 127 Lightning Strike
+
+# infect.dck
+1 MB1 1363 Triumph of the Hordes
+1 SHM 203 Boggart Ram-Gang
+1 MRD 107 Slith Firewalker
+1 RTR 86 Ash Zealot
+1 RNA 215 Zhur-Taa Goblin
+1 ALA 189 Rip-Clan Crasher
+1 DKA 127 Strangleroot Geist
+1 SHM 103 Pyre Charger
+1 10E 224 Raging Goblin
+1 MH1 127 Goblin Champion
+1 RNA 120 Tin Street Dodger
+1 GTC 97 Legion Loyalist
+1 3ED 287 Taiga
+3 UST 216 Forest
+4 UST 215 Mountain
+
+# shrines.dck
+1 CHK 172 Honden of Infinite Rage
+1 CHK 213 Honden of Life's Web
+1 CHK 116 Honden of Night's Reach
+1 CHK 69 Honden of Seeing Winds
+1 M21 120 Sanctum of Stone Fangs
+1 M21 203 Sanctum of Fruitful Harvest
+1 M21 157 Sanctum of Shattered Heights
+1 M21 68 Sanctum of Calm Waters
+1 M21 33 Sanctum of Tranquil Light
+1 E02 46 Jungle Shrine
+1 GPT 157 Godless Shrine
+1 UST 216 Forest
+2 UST 213 Island
+1 UST 215 Mountain
+1 UST 212 Plains
+1 UST 214 Swamp
+1 IKO 259 Zagoth Triome
+1 IKO 251 Raugrin Triome
+1 EMA 13 Honden of Cleansing Fire
+
+# oona
+1 SHM 172 Oona, Queen of the Fae
+1 SHM 163 Glen Elendra Liege
+1 EVE 22 Glen Elendra Archmage
+1 MOR 72 Oona's Blackguard
+1 CMR 288 Nymris, Oona's Trickster
+1 ELD 188 Drown in the Loch
+1 LRW 75 Mistbind Clique
+1 ELD 39 Brazen Borrower
+1 ULG 29 Cloud of Faeries
+1 MOR 81 Violet Pall
+1 ARC 104 Dimir Signet
+4 UST 213 Island
+4 UST 214 Swamp
+1 GTC 241 Dimir Guildgate
+
+#sliver.dck
+1 M14 9 Bonescythe Sliver
+1 STH 127 Crystalline Sliver
+1 TSP 196 Gemhide Sliver
+1 M14 184 Manaweft Sliver
+1 M14 189 Predatory Sliver
+1 M15 211 Sliver Hivelord
+1 PLS 106 Eladamri's Call
+1 FUT 158 Sliver Legion
+1 MH1 200 The First Sliver
+1 M14 57 Galerider Sliver
+1 SUM 285 Savannah
+1 RNA 246 Breeding Pool
+1 IKO 250 Ketria Triome
+3 UST 216 Forest
+1 UST 213 Island
+1 UST 215 Mountain
+1 UST 212 Plains
+1 UST 214 Swamp
+1 KTK 248 Windswept Heath
+
+# 0 cost equipment
+1 KLD 60 Paradoxical Outcome
+1 EMN 192 Cathar's Shield
+1 MB1 1551 Bone Saw
+1 SOM 136 Accorder's Shield
+1 ALA 219 Sigil of Distinction
+1 MMA 211 Paradise Mantle
+1 THB 236 Shadowspear
+1 CMR 197 Rograkh, Son of Rohgahh
+1 THB 232 Bronze Sword
+1 BFZ 224 Hedron Blade
+1 DKA 145 Avacyn's Collar
+2 UST 213 Island
+1 AER 23 Sram, Senior Edificer
+1 THS 55 Mnemonic Wall
+1 RTR 241 Hallowed Fountain
+1 KTK 233 Flooded Strand
+3 UST 212 Plains
+
+# Doubling tokens
+1 AKH 2 Anointed Procession
+1 ISD 199 Parallel Lives
+1 BBD 195 Doubling Season
+1 JMP 29 Branching Evolution
+1 PC2 68 Mycoloth
+1 C13 162 Primal Vigor
+1 V15 7 Entreat the Angels
+1 DDO 7 Decree of Justice
+1 DTK 36 Secure the Wastes
+1 JOU 128 Hydra Broodmaster
+1 MBS 117 Myr Turbine
+4 UST 216 Forest
+4 UST 212 Plains
+1 RTR 246 Selesnya Guildgate
+
+# narset.dck
+1 KLD 192 Aetherflux Reservoir
+1 CHK 268 Sensei's Divining Top
+1 FRF 20 Monastery Mentor
+1 VIS 145 Helm of Awakening
+1 EMA 50 Future Sight
+1 ME3 17 Land Tax
+1 KTK 190 Narset, Enlightened Master
+1 10E 332 Loxodon Warhammer
+1 GPT 152 Izzet Signet
+1 M19 306 Nexus of Fate
+1 MM3 244 Scalding Tarn
+1 KTK 233 Flooded Strand
+1 MH1 244 Prismatic Vista
+1 MRD 199 Lightning Greaves
+3 UST 213 Island
+1 UST 215 Mountain
+2 UST 212 Plains
+
+# miracles.dck
+1 AVR 82 Vanishment
+1 V14 12 Terminus
+1 MB1 517 Temporal Mastery
+1 AVR 191 Revenge of the Hunted
+1 V15 7 Entreat the Angels
+1 C16 87 Devastation Tide
+1 C18 63 Banishing Stroke
+1 EMA 62 Mystical Tutor
+1 CHK 268 Sensei's Divining Top
+1 THS 55 Mnemonic Wall
+2 UST 216 Forest
+3 UST 213 Island
+2 UST 212 Plains
+1 SLU 18 Hengegate Pathway
+1 SLU 11 Barkchannel Pathway
+1 UMA 45 Archaeomancer
+
+# Blue burn
+1 HML 37 Reveka, Wizard Savant
+1 3ED 75 Prodigal Sorcerer
+1 TMP 82 Rootwater Hunter
+#1 MIR 94 Suq'Ata Firewalker
+1 ULG 44 Thornwind Faeries
+1 ICE 112 Zuran Spellcaster
+1 TSP 63 Fledgling Mawcor
+1 10E 72 Cephalid Constable
+8 UST 213 Island
+1 EVE 100 Crackleburr
+1 LRW 263 Thousand-Year Elixir
+1 SHM 267 Umbral Mantle
+1 GPT 156 Sword of the Paruns
+1 UST 153 Lobe Lobber
+
+# true_storm.dck
+1 TSP 58 Dream Stalker
+1 VIS 43 Shrieking Drake
+1 SCG 75 Tendrils of Agony
+1 PLS 97 Cavern Harpy
+1 3ED 99 Dark Ritual
+1 MMA 110 Desperate Ritual
+1 ARC 46 Seething Song
+1 BBD 235 Genesis Chamber
+1 UMA 232 Phyrexian Altar
+1 CMR 545 Ramos, Dragon Engine
+3 UST 213 Island
+2 UST 215 Mountain
+2 UST 214 Swamp
+1 3ED 282 Badlands
+1 KTK 239 Polluted Delta
+1 TOR 51 Cabal Ritual
+
+# exalted.dck
+#1 UMA 38 Sublime Archangel
+1 ALA 12 Guardians of Akrasa
+1 ALA 27 Sigiled Paladin
+1 ALA 145 Rhox Charger
+1 CON 122 Rhox Bodyguard
+1 M13 21 Knight of Glory
+1 ALA 126 Court Archers
+1 ALA 6 Battlegrace Angel
+1 CON 3 Aven Squire
+1 ALA 3 Angelic Benediction
+1 ALA 1 Akrasan Squire
+1 M13 221 Cathedral of War
+1 ARB 75 Qasali Pridemage
+1 RAV 281 Selesnya Sanctuary
+1 C17 279 Selesnya Guildgate
+1 RTR 248 Temple Garden
+1 UST 216 Forest
+4 UST 212 Plains
+
+# die_roll.dck
+1 ZNC 65 Evolution Sage
+1 TD2 67 Contagion Clasp
+1 MH1 229 Sword of Truth and Justice
+1 UST 102 As Luck Would Have It
+1 UST 104 Chittering Doom
+1 UST 112 Hydradoodle
+1 UST 153 Lobe Lobber
+1 UST 154 Mad Science Fair Project
+1 UST 74 Summon the Pack
+1 UST 126 Willing Test Subject
+1 UST 70 Squirrel-Powered Scheme
+1 UST 110 Ground Pounder
+1 3ED 283 Bayou
+1 MM3 249 Verdant Catacombs
+1 RTR 243 Overgrown Tomb
+1 WAR 248 Karn's Bastion
+3 UST 216 Forest
+1 UST 214 Swamp
+
+# ondying.dck
+1 ORI 229 Hangarback Walker
+1 JOU 146 Athreos, God of Passage
+1 RNA 212 Teysa Karlov
+1 ISD 38 Thraben Sentry
+1 M14 123 Xathrid Necromancer
+1 ZNR 375 Lithoform Engine
+1 ZNR 233 Orah, Skyclave Hierophant
+1 C14 22 Flesh Carver
+1 9ED 146 Mindslicer
+1 ISD 11 Doomed Traveler
+1 FMB1 99 Blasting Station
+1 EMN 21 Desperate Sentry
+3 UST 212 Plains
+3 UST 214 Swamp
+1 3ED 286 Scrubland
+1 GTC 242 Godless Shrine
+
+# paintersservant.dck
+1 INV 125 Spreading Plague
+1 SHM 257 Painter's Servant
+1 ROE 176 Awakening Zone
+1 MM2 191 Creakwood Liege
+1 BFZ 167 From Beyond
+1 MRD 251 Sword of Kaldra
+1 DST 139 Shield of Kaldra
+1 PRM 31989 Helm of Kaldra
+1 M13 200 Akroma's Memorial
+1 CMA 216 Eldrazi Monument
+1 WWK 122 Basilisk Collar
+4 UST 216 Forest
+4 UST 214 Swamp
+1 JMP 37 Thriving Moor
+
+# minotaur.dck
+1 ZNR 134 Akoum Warrior
+1 HOU 104 Neheb, the Eternal
+1 JMP 25 Sethron, Hurloon General
+1 THS 195 Kragma Warcaller
+1 JMP 22 Lightning Visionary
+1 BNG 153 Ragemonger
+1 AKH 203 Neheb, the Worthy
+1 GRN 116 Smelt-Ward Minotaur
+1 THS 130 Minotaur Skullcleaver
+1 THS 121 Fanatic of Mogis
+1 UST 98a Target Minotaur
+6 UST 215 Mountain
+2 UST 214 Swamp
+1 DGM 154 Rakdos Guildgate
+
+# Pack Rat/Living Death..
+1 RTR 66 Drainpipe Vermin
+1 ISD 120 Typhoid Rats
+1 GRN 64 Burglar Rat
+1 SLD 35 Pack Rat
+1 CHK 131 Nezumi Shortfang
+1 HOP 39 Rotting Rats
+1 BRB 38 Living Death
+1 CHK 124 Marrow-Gnawer
+1 CHK 129 Nezumi Graverobber
+1 RTR 73 Pack Rat
+1 FUT 79 Stronghold Rats
+1 ICE 157 Pestilence Rats
+8 UST 214 Swamp
+
+# bolas
+1 E01 86 Slave of Bolas
+1 MBS 97 Tezzeret, Agent of Bolas
+1 E01 85 Nicol Bolas, Planeswalker
+1 PWAR 207p Nicol Bolas, Dragon-God
+1 HOU 205 Nicol Bolas, the Deceiver
+1 HOU 140 Nicol Bolas, God-Pharaoh
+1 PM19 218s Nicol Bolas, the Ravager
+1 CHR 81 Nicol Bolas
+1 PWAR 41 Augur of Bolas
+1 C14 140 Disciple of Bolas
+1 HOU 208 Visage of Bolas
+3 UST 213 Island
+2 UST 215 Mountain
+4 UST 214 Swamp
+
+# uw_flyers
+1 KHM 6 Clarion Spirit
+1 M19 33 Remorseful Cleric
+1 EMN 40 Selfless Spirit
+1 KHC 85 Empyrean Eagle
+1 SOI 38 Spectral Shepherd
+1 KHC 16 Ethereal Valkyrie
+1 KHC 2 Ranar the Ever-Watchful
+1 KHM 233 Vega, the Watcher
+1 DKA 136 Drogskol Captain
+1 CNS 41 Brago, King Eternal
+1 DKA 137 Drogskol Reaver
+1 WWK 133 Celestial Colonnade
+3 UST 213 Island
+5 UST 212 Plains
+
+# brudiclad
+1 M15 46 Chasm Skulker
+1 HOU 139 The Locust God
+1 ZEN 61 Rite of Replication
+1 M19 69 Sai, Master Thopterist
+1 THS 53 Master of Waves
+1 C19 24 Dockside Extortionist
+1 M13 138 Krenko, Mob Boss
+1 DOM 217 Helm of the Host
+1 SOM 180 Myr Battlesphere
+1 C14 16 Reef Worm
+1 C18 39 Brudiclad, Telchor Engineer
+4 UST 213 Island
+2 UST 215 Mountain
+1 C13 303 Kher Keep
+1 M19 252 Highland Lake
+1 EVE 175 Cascade Bluffs
+
+# phyrexian.dck
+1 KHM 199 Vorinclex, Monstrous Raider
+1 CMR 270 Belbe, Corrupted Observer
+1 SOM 64 Geth, Lord of the Vault
+1 MM3 3 Blade Splicer
+1 MM3 15 Master Splicer
+1 CMR 233 Ich-Tekik, Salvage Splicer
+1 3ED 283 Bayou
+1 3ED 285 Savannah
+2 UST 216 Forest
+2 UST 212 Plains
+3 UST 214 Swamp
+1 RAV 262 Golgari Signet
+1 GPT 155 Orzhov Signet
+1 NPH 9 Elesh Norn, Grand Cenobite
+1 NPH 73 Sheoldred, Whispering One
+1 NPH 127 Vorinclex, Voice of Hunger 
+
+# fight.dck
+1 GRN 210 Undercity Uprising
+1 IKO 177 Back for More
+1 PTHB 224p Polukranos, Unchained
+1 PRIX 179s Golden Guardian
+1 VIS 158 Triangle of War
+1 AVR 200 Ulvenwald Tracker
+1 C15 36 Ezuri's Predation
+1 IKO 162 Kogla, the Titan Ape
+1 KHM 162 Blizzard Brawl
+1 C15 188 Kodama's Reach
+1 GRN 125 Circuitous Route
+1 C13 290 Golgari Guildgate
+1 UST 214 Swamp
+1 EXP 13 Overgrown Tomb
+6 ICE 383 Snow-Covered Forest
+1 ICE 372 Snow-Covered Swamp
+
+# devils.dck
+1 WAR 204 Mayhem Devil
+1 RNA 216 Footlight Fiend
+1 M21 152 Hobblefiend
+1 AVR 155 Scalding Devil
+1 SOI 181 Sin Prodder
+1 UMA 154 Vexing Devil
+1 DKA 106 Torch Fiend
+1 DKA 93 Hellrider
+1 DKA 91 Forge Devil
+1 DKA 89 Flayer of the Hatebound
+1 ISD 134 Charmbreaker Devils
+1 MH2 246 Drossforge Bridge
+1 DIS 171 Blood Crypt
+1 UMA 248 Phyrexian Tower
+5 UST 215 Mountain
+1 UST 214 Swamp
+
+# D:\xmage_decks\jumpstart_cube_decks>type peaandhamsoup.dck
+1 MB1 1595 Hot Soup
+1 THB 236 Shadowspear
+1 MMQ 246 Food Chain
+1 ELD 160 Gilded Goose
+1 ELD 91 Giant's Skewer
+1 ELD 197 Oko, Thief of Crowns
+1 ELD 200 Savvy Hunter
+1 C21 332 Gyome, Master Chef
+1 ELD 80 Bog Naughty
+2 UST 214 Swamp
+2 UST 216 Forest
+1 UST 213 Island
+1 3ED 290 Underground Sea
+1 3ED 288 Tropical Island
+1 THB 181 Nessian Boar
+1 PWAR 133s Ilharg, the Raze-Boar
+1 3ED 282 Badlands
+1 3ED 287 Taiga
+
+# D:\xmage_decks\jumpstart_cube_decks>type rhiannon_durgons.dck
+1 MB1 1417 Dragon Broodmother
+1 STX 189 Galazeth Prismari
+1 KHM 139 Goldspan Dragon
+1 CMD 204 Intet, the Dreamer
+1 AFR 197 Old Gnawbone
+1 STX 240 Tanazir Quandrix
+1 V13 7 Thran Dynamo
+1 DOM 233 Thran Temporal Gateway
+1 AFC 4 Vrondiss, Rage of Ancients
+1 IKO 211 Sprite Dragon
+1 GPT 150 Gruul Signet
+1 BBD 229 Savage Ventmaw
+2 UST 216 Forest
+1 UST 213 Island
+3 UST 215 Mountain
+1 DIS 172 Breeding Pool
+1 KTK 234 Frontier Bivouac
+
+# Maralen with DJ PJ
+1 MOR 65 Maralen of the Mornsong
+1 CMR 141 Opposition Agent
+1 9ED 146 Mindslicer
+1 CNS 206 Vedalken Orrery
+1 C19 224 Strionic Resonator
+1 FRF 66 Dark Deal
+1 TMP 151 Reanimate
+1 PWAR 79p Bolas's Citadel
+1 DKA 70 Mikaeus, the Unhallowed
+1 6ED 161 Vampiric Tutor
+1 ELD 350 Ayara, First of Locthwain
+1 THS 89 Gray Merchant of Asphodel
+8 UST 214 Swamp
+
+# D:\xmage_decks\jumpstart_cube_decks>type praetor.dck
+1 KHM 199 Vorinclex, Monstrous Raider
+1 SLD 213 Vorinclex, Voice of Hunger
+1 SLD 212 Urabrask the Hidden
+1 SLD 210 Jin-Gitaxias, Core Augur
+1 SLD 209 Elesh Norn, Grand Cenobite
+1 PNPH 73* Sheoldred, Whispering One
+1 CM2 10 Atraxa, Praetors' Voice
+1 NPH 71 Praetor's Grasp
+3 UST 216 Forest
+2 UST 213 Island
+2 UST 215 Mountain
+2 UST 212 Plains
+3 UST 214 Swamp
+
+# D:\xmage_decks\jumpstart_cube_decks>type curses2.dck (Philip's 20220125)
+1 TSP 71 Paradox Haze
+1 DKA 56 Curse of Misfortunes
+1 HOU 19 Overwhelming Splendor
+1 C17 30 Curse of Bounty
+1 MB1 896 Curse of Opulence
+1 MB1 800 Trespasser's Curse
+1 AKH 84 Cruel Reality
+1 C19 16 Curse of Fool's Wisdom
+1 DKA 85 Curse of Bloodletting
+1 MIR 14 Enlightened Tutor
+1 ISD 94 Curse of Death's Hold
+1 UST 216 Forest
+1 UST 213 Island
+1 UST 215 Mountain
+1 UST 212 Plains
+1 UST 214 Swamp
+1 EXP 11 Godless Shrine
+1 KHM 261 Highland Forest
+1 KHM 262 Ice Tunnel
+1 M15 248 Urborg, Tomb of Yawgmoth
+
+#curses
+1 DKA 5 Curse of Exhaustion
+1 HOU 19 Overwhelming Splendor
+1 HOU 78 Torment of Scarabs
+1 DKA 56 Curse of Misfortunes
+1 C17 16 Curse of Disturbance
+1 C13 71 Curse of Shallow Graves
+1 UDS 15 Replenish
+1 C19 132 Zombie Infestation
+1 WAR 228 Ashiok, Dream Render
+1 C17 3 Curse of Vitality
+1 C19 16 Curse of Fool's Wisdom
+1 USG 325 Serra's Sanctum
+3 UST 212 Plains
+4 UST 214 Swamp
+1 3ED 286 Scrubland
+
+# force_draw.dck
+1 M10 54 Hive Mind
+1 LRW 66 Forced Fruition
+1 PRM 62529 Windfall
+1 CMD 51 Minds Aglow
+1 MB1 1537 Commit // Memory
+1 C13 48 Jace's Archivist
+1 PELD 46p Folio of Fancies
+1 M11 217 Temple Bell
+1 8ED 316 Teferi's Puzzle Box
+1 LRW 71 Jace Beleren
+1 C18 86 Dictate of Kruphix
+9 UST 213 Island
+
+# 3C_commanders.dck
+1 C16 231 Zedruu the Greathearted
+1 AFC 223 Arcane Sanctum
+1 C13 299 Jungle Shrine
+1 C16 308 Murmuring Bosk
+1 C16 311 Nomad Outpost
+1 AFC 258 Seaside Citadel
+1 C16 297 Frontier Bivouac
+1 C13 283 Crumbling Necropolis
+1 C16 313 Opulent Palace
+1 C13 317 Savage Lands
+1 C13 186 Derevi, Empyrial Tactician
+1 CMR 531 Queen Marchesa
+1 CLB 287 Myrkul, Lord of Bones
+1 C19 38 Atla Palani, Nest Tender
+1 CMR 528 Muldrotha, the Gravetide
+1 C20 18 Xyris, the Writhing Storm
+1 C13 204 Prossh, Skyraider of Kher
+1 C13 221 Thraximundar
+1 C13 203 Oloro, Ageless Ascetic
+1 C16 310 Mystic Monastery
+
+# Red alpha
+1 LEA 140 Disintegrate
+1 LEA 149 Fireball
+1 LEA 152 Fork
+1 LEA 244 Gauntlet of Might
+1 LEA 154 Goblin King
+1 LEA 157 Hill Giant
+1 LEA 161 Lightning Bolt
+1 LEA 162 Mana Flare
+1 LEA 264 Mox Ruby
+1 LEA 233 Black Vise
+1 LEA 269 Sol Ring
+8 LEA 292 Mountain
+1 LEA 168 Raging River
+
+# Horobi
+1 CHK 117 Horobi, Death's Wail
+1 SHM 55 Aphotic Wisps
+1 MID 103 Gisa, Glorious Resurrector
+1 AVR 107 Harvester of Souls
+1 THS 97 Mogis's Marauder
+1 SCG 70 Nefashu
+1 BFZ 121 Retreat to Hagra
+1 KTK 85 Retribution of the Ancients
+1 GTC 76 Shadow Alley Denizen
+1 RIX 86 Tetzimoc, Primal Death
+1 LEG 122 Touch of Darkness
+9 UST 214 Swamp
+
+# Muldrotha
+1 5ED 140 Animate Dead
+1 ONE 161 Cankerbloom
+1 THB 314 Gravebreaker Lamia
+1 WAR 94 Kaya's Ghostform
+1 APC 114 Pernicious Deed
+1 GRN 82 Plaguecrafter
+1 CHK 239 Sakura-Tribe Elder
+1 PLC 153 Seal of Primordium
+1 DKA 48 Secrets of the Dead
+1 PCY 126 Spore Frog
+1 2X2 528 Muldrotha, the Gravetide
+3 UST 216 Forest
+1 UST 213 Island
+3 UST 214 Swamp
+1 STX 269 Necroblossom Snarl
+1 STX 274 Vineglimmer Snarl
