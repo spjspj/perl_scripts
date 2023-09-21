@@ -1,0 +1,100 @@
+1 [C15:77] Open the Vaults
+1 [5ED:388] Mana Vault
+1 [UDS:15] Replenish
+1 [VIS:72] Vampiric Tutor
+1 [AER:49] Whir of Invention
+1 [M13:204] Elixir of Immortality
+1 [INV:308] Planar Portal
+1 [VMA:78] Mana Drain
+1 [RTR:226] Chromatic Lantern
+1 [RTR:35] Cyclonic Rift
+1 [HOU:120] Hour of Promise
+1 [6ED:19] Enlightened Tutor
+1 [SHM:122] Mana Reflection
+1 [10E:119] Traumatize
+1 [MM2:23] Leyline of Sanctity
+1 [ODY:17] Delaying Shield
+1 [2ED:105] Demonic Tutor
+1 [DST:130] Mycosynth Lattice
+1 [RAV:251] Privileged Position
+1 [EMA:38] Wrath of God
+1 [MPS:11] Crucible of Worlds
+1 [MPS:16] Mana Crypt
+1 [DOM:93] Final Parting
+1 [FUT:161] Coalition Relic
+1 [S99:79] Grim Tutor
+1 [SOM:145] Contagion Engine
+1 [AER:171] Planar Bridge
+1 [NPH:164] Unwinding Clock
+1 [GPT:155] Orzhov Signet
+1 [GPT:152] Izzet Signet
+1 [M14:216] Ring of Three Wishes
+1 [M10:52] Fabricate
+1 [HOU:165] Mirage Mirror
+1 [RAV:63] Remand
+1 [RAV:260] Dimir Signet
+1 [C13:263] Swiftfoot Boots
+1 [M14:206] Darksteel Forge
+1 [UDS:139] Thran Dynamo
+1 [CMA:220] Lightning Greaves
+1 [3ED:274] Sol Ring
+1 [10E:6] Aura of Silence
+1 [MMA:141] Doubling Season
+1 [MM3:63] Damnation
+1 [MIR:80] Mystical Tutor
+1 [MBS:104] Darksteel Plate
+1 [M11:61] Leyline of Anticipation
+1 [CSP:86] Karplusan Minotaur
+1 [UDS:1] Academy Rector
+1 [C16:7] Deepglow Skate
+1 [KTK:34] Clever Impersonator
+1 [NPH:42] Phyrexian Metamorph
+1 [DGM:115] Vorel of the Hull Clade
+1 [EVE:152] Gilder Bairn
+1 [THB:330] Nyxbloom Ancient
+1 [ONE:118] All Will Be One
+1 [CMR:425] Eternal Witness
+1 [MH2:179] Timeless Witness
+1 [UST:214] Swamp
+1 [UST:212] Plains
+2 [UST:216] Forest
+2 [UST:213] Island
+1 [UST:215] Mountain
+1 [KTK:233] Flooded Strand
+1 [RTR:241] Hallowed Fountain
+1 [3ED:288] Tropical Island
+1 [GTC:249] Watery Grave
+1 [KTK:230] Bloodstained Mire
+1 [CM2:242] Command Tower
+1 [KTK:239] Polluted Delta
+1 [TSP:269] Academy Ruins
+1 [KTK:248] Windswept Heath
+1 [DOM:247] Sulfur Falls
+1 [RTR:247] Steam Vents
+1 [M15:248] Urborg, Tomb of Yawgmoth
+1 [KLD:247] Inventors' Fair
+1 [TOR:139] Cabal Coffers
+1 [3ED:291] Volcanic Island
+1 [ZEN:223] Scalding Tarn
+1 [WAR:248] Karn's Bastion
+1 [GTC:245] Sacred Foundry
+1 [GTC:240] Breeding Pool
+1 [RTR:238] Blood Crypt
+1 [ICE:353] Glacial Chasm
+1 [GTC:242] Godless Shrine
+1 [3ED:283] Bayou
+1 [3ED:285] Savannah
+1 [ZEN:220] Misty Rainforest
+1 [ZEN:229] Verdant Catacombs
+1 [USG:322] Phyrexian Tower
+1 [3ED:289] Tundra
+1 [LEB:280] Plateau
+1 [3ED:290] Underground Sea
+1 [ZEN:219] Marsh Flats
+1 [USG:111] Windfall
+1 [WWK:132] Bojuka Bog
+1 [3ED:185] Wheel of Fortune
+1 [BBD:212] Seedborn Muse
+SB: 1 [ELD:303] Kenrith, the Returned King
+LAYOUT MAIN:(1,8)(EDH_POWER_LEVEL,false,24)|([TSP:269],[3ED:283],[RTR:238],[GTC:240],[RTR:226],[CM2:242],[MPS:11],[M14:206],[MBS:104],[RAV:260],[M13:204],[UST:216],[UST:216],[GTC:242],[RTR:241],[UST:213],[UST:213],[GPT:152],[CSP:86],[UST:215],[C15:77],[GPT:155],[UST:212],[LEB:280],[GTC:245],[3ED:285],[RTR:247],[UST:214],[UDS:139],[10E:119],[3ED:288],[3ED:289],[3ED:290],[3ED:291],[GTC:249])([ONE:118],[KTK:34],[HOU:165],[THB:330],[NPH:42],[RAV:63])([WWK:132])([MM3:63],[MM2:23],[CMA:220],[RAV:251],[C13:263],[EMA:38])([CMR:425],[ICE:353],[M11:61],[USG:322],[UDS:15])([10E:6],[SOM:145],[ODY:17],[EVE:152],[WAR:248],[SHM:122],[DOM:247],[MH2:179],[NPH:164],[M15:248],[DGM:115],[3ED:185],[USG:111])([UDS:1],[KTK:230],[2ED:105],[6ED:19],[M10:52],[DOM:93],[KTK:233],[S99:79],[HOU:120],[KLD:247],[ZEN:219],[ZEN:220],[MIR:80],[AER:171],[KTK:239],[M14:216],[ZEN:223],[VIS:72],[ZEN:229],[AER:49],[KTK:248])([TOR:139],[FUT:161],[RTR:35],[C16:7],[MMA:141],[MPS:16],[VMA:78],[5ED:388],[DST:130],[INV:308],[3ED:274],[BBD:212])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,100)|([ELD:303])

@@ -1,0 +1,99 @@
+1 [BNG:57] Whelming Wave
+1 [HOU:165] Mirage Mirror
+1 [KHM:369] Maskwood Nexus
+1 [M11:87] Captivating Vampire
+1 [M14:209] Elixir of Immortality
+1 [ME4:227] Sol Ring
+1 [MH2:410] Chatterfang, Squirrel General
+1 [MOR:124] Gilt-Leaf Archdruid
+1 [MPS:11] Crucible of Worlds
+1 [MPS:45] Planar Bridge
+1 [MPS:8] Chromatic Lantern
+1 [MRD:35] Fabricate
+1 [NPH:164] Unwinding Clock
+1 [RAV:174] Nullmage Shepherd
+1 [6ED:19] Enlightened Tutor
+1 [M21:375] Heroic Intervention
+1 [A25:214] Prossh, Skyraider of Kher
+1 [FUT:159] Akroma's Memorial
+1 [BBD:241] Mycosynth Lattice
+1 [9ED:270] Seedborn Muse
+1 [MPS:17] Mana Vault
+1 [3ED:105] Demonic Tutor
+1 [CMR:156] Vampiric Tutor
+1 [M10:21] Open the Vaults
+1 [RTR:35] Cyclonic Rift
+1 [CMD:88] Living Death
+1 [RAV:150] Warp World
+1 [RIX:147] Tendershoot Dryad
+1 [MMA:151] Kodama's Reach
+1 [CMR:261] Three Visits
+1 [C17:8] Teferi's Protection
+1 [TMP:222] Earthcraft
+1 [SHM:122] Mana Reflection
+1 [THB:190] Nyxbloom Ancient
+1 [RAV:251] Privileged Position
+1 [THS:110] Whip of Erebos
+1 [XLN:46] Arcane Adaptation
+1 [DDP:1] Avenger of Zendikar
+1 [C19:24] Dockside Extortionist
+1 [DOM:217] Helm of the Host
+1 [SHM:260] Reaper King
+1 [FUT:161] Coalition Relic
+1 [RAV:158] Doubling Season
+1 [M14:216] Ring of Three Wishes
+1 [HOU:22] Solemnity
+1 [SOM:122] Genesis Wave
+1 [C13:84] Ophiomancer
+1 [C16:70] Mirror Entity
+1 [MPS:16] Mana Crypt
+1 [M21:164] Terror of the Peaks
+1 [C16:156] Lurking Predators
+1 [C19:38] Atla Palani, Nest Tender
+3 [UST:216] Forest
+2 [UST:213] Island
+1 [UST:215] Mountain
+1 [UST:212] Plains
+1 [UST:214] Swamp
+1 [KHM:275] The World Tree
+1 [3ED:287] Taiga
+1 [3ED:288] Tropical Island
+1 [USG:321] Gaea's Cradle
+1 [EXP:25] Misty Rainforest
+1 [EXP:20] Windswept Heath
+1 [EXP:17] Polluted Delta
+1 [EXP:23] Verdant Catacombs
+1 [EXP:27] Sunken Ruins
+1 [EXP:16] Flooded Strand
+1 [EXP:31] Fetid Heath
+1 [EXP:15] Breeding Pool
+1 [3ED:291] Volcanic Island
+1 [3ED:289] Tundra
+1 [3ED:285] Savannah
+1 [USG:322] Phyrexian Tower
+1 [ICE:353] Glacial Chasm
+1 [TOR:139] Cabal Coffers
+1 [MH2:259] Urza's Saga
+1 [M15:248] Urborg, Tomb of Yawgmoth
+1 [3ED:290] Underground Sea
+1 [3ED:286] Scrubland
+1 [KLD:247] Inventors' Fair
+1 [M20:247] Field of the Dead
+1 [3ED:283] Bayou
+1 [3ED:282] Badlands
+1 [TMP:315] Ancient Tomb
+1 [EXP:6] Hallowed Fountain
+1 [KTK:249] Wooded Foothills
+1 [KTK:230] Bloodstained Mire
+1 [CMR:158] Viscera Seer
+1 [PC2:62] Cultivate
+1 [CMD:182] Aura Shards
+1 [RIX:174] Zacama, Primal Calamity
+1 [DOM:199] Muldrotha, the Gravetide
+1 [CMR:249] Reshape the Earth
+1 [HOU:52] Unesh, Criosphinx Sovereign
+1 [MOM:137] Etali, Primal Conqueror
+1 [LTR:246] The One Ring
+SB: 1 [ELD:303] Kenrith, the Returned King
+LAYOUT MAIN:(1,12)(CMC,false,30)|([TMP:315],[3ED:282],[3ED:283],[KTK:230],[EXP:15],[TOR:139],[EXP:31],[M20:247],[EXP:16],[UST:216],[UST:216],[UST:216],[USG:321],[ICE:353],[EXP:6],[KLD:247],[UST:213],[UST:213],[EXP:25],[UST:215],[USG:322],[UST:212],[EXP:17],[3ED:285],[3ED:286],[EXP:27],[UST:214],[3ED:287],[KHM:275],[3ED:288],[3ED:289],[3ED:290],[M15:248],[MH2:259],[EXP:23],[3ED:291],[EXP:20],[KTK:249])([MPS:16])([M14:209],[6ED:19],[MPS:17],[ME4:227],[CMR:156],[CMR:158])([RTR:35],[3ED:105],[C19:24],[TMP:222],[M21:375],[CMR:261])([XLN:46],[M11:87],[MH2:410],[MPS:8],[FUT:161],[MPS:11],[MRD:35],[SOM:122],[MMA:151],[HOU:165],[C16:70],[C13:84],[HOU:22],[C17:8],[PC2:62],[CMD:182])([C19:38],[DOM:217],[KHM:369],[RAV:174],[NPH:164],[BNG:57],[THS:110],[LTR:246])([RAV:158],[MOR:124],[CMD:88],[RAV:251],[M14:216],[9ED:270],[RIX:147],[M21:164])([C16:156],[SHM:122],[BBD:241],[M10:21],[MPS:45],[A25:214],[DOM:199],[HOU:52])([FUT:159],[DDP:1],[THB:190],[MOM:137])([RAV:150])([RIX:174],[CMR:249])([SHM:260])
+LAYOUT SIDEBOARD:(1,1)(RARITY,false,27)|([ELD:303])

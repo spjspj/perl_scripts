@@ -1,0 +1,89 @@
+1 [10E:347] Adarkar Wastes
+1 [4ED:334] Mana Vault
+1 [5DN:163] Vedalken Orrery
+1 [6ED:19] Enlightened Tutor
+1 [A25:232] Strionic Resonator
+1 [AER:19] Felidar Guardian
+1 [AER:49] Whir of Invention
+1 [AVR:47] Deadeye Navigator
+1 [AVR:79] Tamiyo, the Moon Sage
+1 [BBD:84] Sea of Clouds
+1 [BFZ:241] Prairie Stream
+1 [C13:1] Act of Authority
+1 [C14:104] Cyclonic Rift
+1 [C14:59] Arcane Lighthouse
+1 [C15:244] Basalt Monolith
+1 [C16:272] Sol Ring
+1 [C16:72] Open the Vaults
+1 [C16:87] Devastation Tide
+1 [C18:54] Coveted Jewel
+1 [CHK:277] Hall of the Bandit Lord
+1 [DDI:34] Flood Plain
+1 [DGM:146] Azorius Guildgate
+1 [DIS:159] Azorius Signet
+1 [DST:110] Darksteel Forge
+1 [DST:130] Mycosynth Lattice
+1 [ELD:317] Shimmer Dragon
+1 [EMA:32] Swords to Plowshares
+1 [EMA:34] Wall of Omens
+1 [EVE:6] Flickerwisp
+1 [EXP:17] Polluted Delta
+1 [EXP:26] Mystic Gate
+1 [EXP:6] Hallowed Fountain
+1 [FUT:161] Coalition Relic
+1 [FUT:46] Venser, Shaper Savant
+1 [KLD:176] Cloudblazer
+1 [KLD:226] Panharmonicon
+1 [KLD:247] Inventors' Fair
+1 [KTK:233] Flooded Strand
+1 [LRW:76] Mulldrifter
+1 [M10:226] Glacial Fortress
+1 [M10:52] Fabricate
+1 [M11:61] Leyline of Anticipation
+1 [M12:37] Stonehorn Dignitary
+1 [M13:204] Elixir of Immortality
+1 [M14:216] Ring of Three Wishes
+1 [M14:43] Archaeomancer
+1 [M19:254] Reliquary Tower
+1 [M20:43] Agent of Treachery
+1 [MBS:136] Spine of Ish Sah
+1 [MH1:75] Urza, Lord High Artificer
+1 [MM2:16] Elesh Norn, Grand Cenobite
+1 [MM2:23] Leyline of Sanctity
+1 [MMQ:94] Rishadan Footpad
+1 [MPS:14] Lightning Greaves
+1 [MPS:16] Mana Crypt
+1 [MPS:45] Planar Bridge
+1 [MRD:261] Thought Prison
+1 [MRD:278] Ancient Den
+1 [MRD:283] Seat of the Synod
+1 [NEM:17] Parallax Wave
+1 [NEM:37] Parallax Tide
+1 [NPH:164] Unwinding Clock
+1 [NPH:42] Phyrexian Metamorph
+1 [ORI:250] Rogue's Passage
+1 [PLC:45] Reality Acid
+1 [RTR:200] Sphinx's Revelation
+1 [SOI:16] Eerie Interlude
+1 [SOM:145] Contagion Engine
+1 [SOM:48] Trinket Mage
+1 [THS:223] Nykthos, Shrine to Nyx
+1 [TSP:39] Return to Dust
+1 [UDS:15] Replenish
+1 [UDS:50] Treachery
+1 [ULG:11] Karmic Guide
+1 [USG:111] Windfall
+1 [USG:88] Peregrine Drake
+1 [V09:8] Mystical Tutor
+1 [V12:2] Boseiju, Who Shelters All
+1 [VMA:322] Tundra
+7 [UST:212] Plains
+8 [UST:213] Island
+1 [CMR:319] Jeweled Lotus
+1 [V10:10] Mox Diamond
+1 [DOM:224] Mox Amber
+1 [LTR:246] The One Ring
+1 [BRO:12] Loran of the Third Path
+SB: 1 [EMA:198] Brago, King Eternal
+LAYOUT MAIN:(1,9)(CMC,false,26)|([10E:347],[MRD:278],[C14:59],[DGM:146],[V12:2],[DDI:34],[KTK:233],[M10:226],[CHK:277],[EXP:6],[KLD:247],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[CMR:319],[MPS:16],[DOM:224],[V10:10],[EXP:26],[THS:223],[UST:212],[UST:212],[UST:212],[UST:212],[UST:212],[UST:212],[UST:212],[EXP:17],[BFZ:241],[M19:254],[ORI:250],[BBD:84],[MRD:283],[VMA:322])([M13:204],[6ED:19],[4ED:334],[V09:8],[C16:272],[EMA:32])([DIS:159],[C14:104],[MPS:14],[A25:232],[EMA:34])([C13:1],[C15:244],[FUT:161],[SOI:16],[M10:52],[EVE:6],[PLC:45],[RTR:200],[SOM:48],[AER:49],[USG:111],[BRO:12])([M14:43],[AER:19],[M11:61],[MM2:23],[KLD:226],[NEM:37],[NEM:17],[NPH:42],[UDS:15],[TSP:39],[MMQ:94],[M12:37],[LTR:246],[NPH:164],[MH1:75],[5DN:163],[FUT:46])([KLD:176],[C16:87],[ULG:11],[LRW:76],[USG:88],[M14:216],[AVR:79],[MRD:261],[UDS:50])([SOM:145],[C18:54],[AVR:47],[DST:130],[C16:72],[MPS:45],[ELD:317])([M20:43],[MM2:16],[MBS:136])([DST:110])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,100)|([EMA:198])

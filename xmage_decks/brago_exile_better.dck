@@ -1,0 +1,89 @@
+1 [PLC:45] Reality Acid
+1 [SOM:48] Trinket Mage
+1 [UDS:15] Replenish
+1 [MRD:283] Seat of the Synod
+1 [AER:49] Whir of Invention
+1 [M13:204] Elixir of Immortality
+1 [4ED:334] Mana Vault
+1 [C15:244] Basalt Monolith
+1 [C14:59] Arcane Lighthouse
+1 [C14:104] Cyclonic Rift
+1 [TSP:39] Return to Dust
+1 [VMA:322] Tundra
+1 [EXP:17] Polluted Delta
+1 [M14:216] Ring of Three Wishes
+1 [MBS:136] Spine of Ish Sah
+1 [DGM:146] Azorius Guildgate
+1 [5DN:163] Vedalken Orrery
+1 [M10:52] Fabricate
+1 [V09:8] Mystical Tutor
+1 [CHK:277] Hall of the Bandit Lord
+1 [EVE:6] Flickerwisp
+1 [FUT:46] Venser, Shaper Savant
+1 [KLD:176] Cloudblazer
+1 [RIX:22] Slaughter the Strong
+1 [ULG:11] Karmic Guide
+1 [NEM:37] Parallax Tide
+1 [C13:1] Act of Authority
+1 [MM2:23] Leyline of Sanctity
+1 [ORI:250] Rogue's Passage
+1 [M19:254] Reliquary Tower
+1 [DDI:34] Flood Plain
+1 [6ED:19] Enlightened Tutor
+1 [USG:111] Windfall
+1 [AKH:245] Irrigated Farmland
+1 [V12:2] Boseiju, Who Shelters All
+1 [AVR:47] Deadeye Navigator
+1 [THS:223] Nykthos, Shrine to Nyx
+1 [M12:219] Swiftfoot Boots
+1 [C16:72] Open the Vaults
+1 [C16:272] Sol Ring
+1 [M12:37] Stonehorn Dignitary
+1 [MRD:261] Thought Prison
+1 [EMA:32] Swords to Plowshares
+1 [EMA:34] Wall of Omens
+1 [DST:130] Mycosynth Lattice
+1 [MPS:14] Lightning Greaves
+1 [10E:347] Adarkar Wastes
+1 [MOR:22] Reveillark
+1 [DIS:159] Azorius Signet
+1 [C13:276] Bant Panorama
+1 [FRF:1] Ugin, the Spirit Dragon
+1 [MPS:16] Mana Crypt
+1 [MM2:16] Elesh Norn, Grand Cenobite
+1 [KLD:226] Panharmonicon
+1 [LRW:76] Mulldrifter
+1 [FUT:161] Coalition Relic
+1 [C16:87] Devastation Tide
+1 [AVR:79] Tamiyo, the Moon Sage
+1 [M10:226] Glacial Fortress
+1 [KTK:233] Flooded Strand
+1 [MMQ:94] Rishadan Footpad
+1 [UDS:50] Treachery
+1 [EXP:26] Mystic Gate
+1 [NEM:17] Parallax Wave
+1 [EXP:6] Hallowed Fountain
+1 [BFZ:241] Prairie Stream
+1 [M14:43] Archaeomancer
+1 [MRD:278] Ancient Den
+1 [M11:61] Leyline of Anticipation
+1 [THS:53] Master of Waves
+1 [USG:88] Peregrine Drake
+1 [SOM:145] Contagion Engine
+8 [UST:213] Island
+7 [UST:212] Plains
+1 [CMD:19] Martyr's Bond
+1 [DST:110] Darksteel Forge
+1 [MH1:52] Force of Negation
+1 [2XM:51] Force of Will
+1 [C20:35] Fierce Guardianship
+1 [RNA:22] Smothering Tithe
+1 [THB:261] Thassa, Deep-Dwelling
+1 [IKO:232] Yorion, Sky Nomad
+1 [OGW:13] Eldrazi Displacer
+1 [ONE:10] Elesh Norn, Mother of Machines
+1 [NPH:164] Unwinding Clock
+1 [PRM:46934] Mana Drain
+SB: 1 [EMA:198] Brago, King Eternal
+LAYOUT MAIN:(1,10)(CMC,false,71)|([10E:347],[MRD:278],[C14:59],[DGM:146],[C13:276],[V12:2],[DDI:34],[KTK:233],[M10:226],[CHK:277],[EXP:6],[AKH:245],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[UST:213],[MPS:16],[EXP:26],[THS:223],[UST:212],[UST:212],[UST:212],[UST:212],[UST:212],[UST:212],[UST:212],[EXP:17],[BFZ:241],[M19:254],[ORI:250],[MRD:283],[VMA:322])([M13:204],[6ED:19],[4ED:334],[V09:8],[C16:272],[EMA:32])([DIS:159],[C14:104],[MPS:14],[PRM:46934],[M12:219],[EMA:34])([C13:1],[C15:244],[FUT:161],[OGW:13],[M10:52],[C20:35],[EVE:6],[MH1:52],[PLC:45],[RIX:22],[SOM:48],[AER:49],[USG:111])([M14:43],[M11:61],[MM2:23],[THS:53],[KLD:226],[NEM:37],[NEM:17],[UDS:15],[TSP:39],[MMQ:94],[RNA:22],[M12:37],[THB:261],[NPH:164],[5DN:163],[FUT:46])([KLD:176],[C16:87],[ONE:10],[2XM:51],[ULG:11],[LRW:76],[USG:88],[MOR:22],[M14:216],[AVR:79],[MRD:261],[UDS:50],[IKO:232])([SOM:145],[AVR:47],[CMD:19],[DST:130],[C16:72])([MM2:16],[MBS:136])([FRF:1])([DST:110])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,100)|([EMA:198])

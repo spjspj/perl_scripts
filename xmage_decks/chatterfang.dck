@@ -1,0 +1,86 @@
+1 [MH2:219] Academy Manufactor
+1 [TMP:276] Altar of Dementia
+1 [5ED:140] Animate Dead
+1 [KHM:240] Maskwood Nexus
+1 [ELD:331] Arcane Signet
+1 [6ED:274] Ashnod's Altar
+1 [GRN:152] Assassin's Trophy
+1 [WWK:96] Avenger of Zendikar
+1 [ROE:176] Awakening Zone
+1 [IKO:73] Bastion of Remembrance
+1 [NPH:103] Beast Within
+1 [M12:165] Birds of Paradise
+1 [MOR:58] Bitterblossom
+1 [MMQ:116] Black Market
+1 [AVR:86] Blood Artist
+1 [MH2:152] Chatterstorm
+1 [MH2:153] Chitterspitter
+1 [M10:207] Coat of Arms
+1 [AVR:172] Craterhoof Behemoth
+1 [M21:177] Cultivate
+1 [SUM:105] Demonic Tutor
+1 [JOU:65] Dictate of Erebos
+1 [EMN:155] Eldritch Evolution
+1 [5DN:86] Eternal Witness
+1 [WWK:99] Explore
+1 [M13:170] Farseek
+1 [RAV:262] Golgari Signet
+1 [10E:144] Grave Pact
+1 [XLN:191] Growing Rites of Itlimoc
+1 [PLC:149] Harmonize
+1 [M21:188] Heroic Intervention
+1 [TSP:202] Krosan Grip
+1 [MRD:199] Lightning Greaves
+1 [WAR:97*] Liliana, Dreadhorde General
+1 [VIS:114] Natural Order
+1 [OGW:138] Nissa, Voice of Zendikar
+1 [ISD:199] Parallel Lives
+1 [RIX:81] Pitiless Plunderer
+1 [M12:190] Rampant Growth
+1 [TMP:151] Reanimate
+1 [XLN:117] Revel in Riches
+1 [CHK:239] Sakura-Tribe Elder
+1 [TSP:216] Search for Tomorrow
+1 [DST:140] Skullclamp
+1 [NEM:117] Skyshroud Claim
+1 [SUM:274] Sol Ring
+1 [MH2:175] Squirrel Sovereign
+1 [5ED:329] Sylvan Library
+1 [RIX:147] Tendershoot Dryad
+1 [KHM:197] Toski, Bearer of Secrets
+1 [M11:120] Viscera Seer
+1 [KHC:72] Reclamation Sage
+1 [BFZ:126] Zulaport Cutthroat
+1 [ODY:274] Squirrel Nest
+1 [ZNR:203] Scute Swarm
+1 [WWK:132] Bojuka Bog
+1 [KLD:243] Blooming Marsh
+1 [KTK:230] Bloodstained Mire
+1 [ELD:241] Castle Locthwain
+1 [AVR:226] Cavern of Souls
+1 [ELD:240] Castle Garenbrig
+1 [CMR:349] Command Beacon
+1 [MMQ:320] High Market
+1 [JOU:163] Mana Confluence
+1 [2XM:270] Mana Crypt
+1 [THS:223] Nykthos, Shrine to Nyx
+1 [ZEN:221] Oran-Rief, the Vastwood
+1 [GRN:253] Overgrown Tomb
+1 [MH2:401] Profane Tutor
+1 [DOM:248] Woodland Cemetery
+1 [MH2:261] Yavimaya, Cradle of Growth
+1 [KHM:274] Woodland Chasm
+1 [ZEN:229] Verdant Catacombs
+1 [KTK:249] Wooded Foothills
+12 [ZEN:249] Forest
+6 [ZEN:239] Swamp
+1 [SOI:281] Westvale Abbey
+1 [ELD:357] Wishclaw Talisman
+1 [MOR:124] Gilt-Leaf Archdruid
+1 [BBD:212] Seedborn Muse
+1 [AER:171] Planar Bridge
+1 [CMA:54] Diabolic Tutor
+1 [3ED:283] Bayou
+SB: 1 [MH2:151] Chatterfang, Squirrel General
+LAYOUT MAIN:(1,9)(CMC,false,50)|([KTK:230],[KLD:243],[WWK:132],[ELD:240],[ELD:241],[AVR:226],[CMR:349],[ZEN:249],[ZEN:249],[ZEN:249],[ZEN:249],[ZEN:249],[ZEN:249],[ZEN:249],[SOI:281],[ZEN:249],[ZEN:249],[ZEN:249],[ZEN:249],[ZEN:249],[MMQ:320],[JOU:163],[2XM:270],[THS:223],[ZEN:221],[GRN:253],[MH2:401],[ZEN:239],[ZEN:239],[ZEN:239],[ZEN:239],[ZEN:239],[ZEN:239],[ZEN:229],[KTK:249],[DOM:248],[KHM:274],[MH2:261],[3ED:283])([M12:165],[TMP:151],[DST:140],[SUM:274],[M11:120])([TMP:276],[5ED:140],[ELD:331],[GRN:152],[MOR:58],[AVR:86],[MH2:152],[SUM:105],[WWK:99],[M13:170],[RAV:262],[M21:188],[MRD:199],[M12:190],[CHK:239],[MH2:175],[5ED:329],[BFZ:126],[ELD:357])([MH2:219],[6ED:274],[ROE:176],[IKO:73],[NPH:103],[MH2:153],[M21:177],[EMN:155],[5DN:86],[XLN:191],[TSP:202],[OGW:138],[ZNR:203],[TSP:216],[ODY:274],[KHC:72])([10E:144],[PLC:149],[VIS:114],[ISD:199],[RIX:81],[NEM:117],[KHM:197],[KHM:240],[CMA:54])([MMQ:116],[M10:207],[JOU:65],[XLN:117],[RIX:147],[MOR:124],[BBD:212])([WAR:97*],[AER:171])([WWK:96])([AVR:172])
+LAYOUT SIDEBOARD:(1,1)(COLOR_IDENTITY,false,70)|([MH2:151])

@@ -1,0 +1,101 @@
+1 [UDS:15] Replenish
+1 [6ED:83] Mystical Tutor
+1 [EXP:23] Verdant Catacombs
+1 [MPS:8] Chromatic Lantern
+1 [10E:6] Aura of Silence
+1 [EXP:20] Windswept Heath
+1 [USG:325] Serra's Sanctum
+1 [HOP:111] Darksteel Forge
+1 [MPS:37] Ensnaring Bridge
+1 [RTR:35] Cyclonic Rift
+1 [KLD:247] Inventors' Fair
+1 [UDS:26] Aura Thief
+1 [SHM:122] Mana Reflection
+1 [CHK:273] Boseiju, Who Shelters All
+1 [INV:278] Sterling Grove
+1 [8ED:311] Planar Portal
+1 [EXP:10] Temple Garden
+1 [PLC:54] Frozen Aether
+1 [6ED:19] Enlightened Tutor
+1 [M10:21] Open the Vaults
+1 [INV:49] Collective Restraint
+1 [JUD:139] Mirari's Wake
+1 [DST:130] Mycosynth Lattice
+1 [TOR:139] Cabal Coffers
+1 [RAV:251] Privileged Position
+1 [MPS:11] Crucible of Worlds
+1 [M15:248] Urborg, Tomb of Yawgmoth
+2 [UST:212] Plains
+1 [UST:214] Swamp
+1 [FUT:161] Coalition Relic
+1 [UST:216] Forest
+1 [CHK:133] Night of Souls' Betrayal
+1 [WWK:132] Bojuka Bog
+1 [SHM:140] Enchanted Evening
+1 [M11:21] Leyline of Sanctity
+1 [ULG:98] Crop Rotation
+1 [NPH:162] Torpor Orb
+1 [NPH:164] Unwinding Clock
+1 [M11:101] Leyline of the Void
+1 [ICE:87] Mystic Remora
+1 [M14:216] Ring of Three Wishes
+1 [M10:52] Fabricate
+1 [HOU:165] Mirage Mirror
+1 [CNS:164] Exploration
+1 [ICE:353] Glacial Chasm
+1 [3ED:283] Bayou
+1 [3ED:286] Scrubland
+1 [3ED:285] Savannah
+1 [C17:8] Teferi's Protection
+1 [M14:209] Elixir of Immortality
+1 [CHK:10] Ghostly Prison
+1 [AVR:48] Devastation Tide
+1 [RNA:22] Smothering Tithe
+1 [LRW:3] Austere Command
+1 [TMP:80] Propaganda
+1 [EXP:31] Fetid Heath
+1 [6ED:161] Vampiric Tutor
+1 [MPS:45] Planar Bridge
+1 [HOU:22] Solemnity
+1 [EXP:27] Sunken Ruins
+1 [TMP:315] Ancient Tomb
+1 [AER:109] Heroic Intervention
+1 [4ED:334] Mana Vault
+1 [LRW:259] Rings of Brighthearth
+1 [USG:322] Phyrexian Tower
+1 [HOP:130] Ancient Den
+1 [UDS:1] Academy Rector
+1 [MMA:219] Academy Ruins
+1 [USG:111] Windfall
+1 [EXP:17] Polluted Delta
+1 [EXP:16] Flooded Strand
+1 [EXP:25] Misty Rainforest
+1 [EXP:15] Breeding Pool
+1 [UST:213] Island
+1 [3ED:290] Underground Sea
+1 [3ED:291] Volcanic Island
+1 [3ED:289] Tundra
+1 [3ED:288] Tropical Island
+1 [EXP:6] Hallowed Fountain
+1 [EXP:7] Watery Grave
+1 [ELD:247] Mystic Sanctuary
+1 [KHM:275] The World Tree
+1 [THB:190] Nyxbloom Ancient
+1 [ME4:227] Sol Ring
+1 [3ED:105] Demonic Tutor
+1 [CMD:19] Martyr's Bond
+1 [PC2:56] Awakening Zone
+1 [USG:304] Noetic Scales
+1 [CSP:29] Commandeer
+1 [DIS:143] Dovescape
+1 [CMR:89] Sakashima of a Thousand Faces
+1 [GPT:29] Leyline of Singularity
+1 [NEO:250] Mirror Box
+1 [CMA:54] Diabolic Tutor
+1 [DOM:233] Thran Temporal Gateway
+1 [C19:179] Seedborn Muse
+1 [M11:77] Traumatize
+1 [CMR:433] Ramunap Excavator
+SB: 1 [ELD:303] Kenrith, the Returned King
+LAYOUT MAIN:(1,9)(CMC,false,33)|([MMA:219],[HOP:130],[TMP:315],[3ED:283],[WWK:132],[CHK:273],[EXP:15],[TOR:139],[EXP:31],[EXP:16],[UST:216],[ICE:353],[EXP:6],[KLD:247],[UST:213],[EXP:25],[ELD:247],[USG:322],[UST:212],[UST:212],[EXP:17],[3ED:285],[3ED:286],[USG:325],[EXP:27],[UST:214],[EXP:10],[KHM:275],[3ED:288],[3ED:289],[3ED:290],[M15:248],[EXP:23],[3ED:291],[EXP:7],[EXP:20])([ULG:98],[M14:209],[6ED:19],[CNS:164],[4ED:334],[ICE:87],[6ED:83],[ME4:227],[6ED:161])([RTR:35],[3ED:105],[AER:109],[INV:278],[NPH:162])([10E:6],[PC2:56],[MPS:8],[FUT:161],[MPS:11],[MPS:37],[M10:52],[CHK:10],[HOU:165],[NEO:250],[TMP:80],[LRW:259],[HOU:22],[C17:8],[USG:111],[CMR:433])([UDS:1],[UDS:26],[INV:49],[CMA:54],[PLC:54],[M11:21],[GPT:29],[M11:101],[CHK:133],[USG:304],[UDS:15],[CMR:89],[RNA:22],[DOM:233],[NPH:164])([AVR:48],[SHM:140],[JUD:139],[RAV:251],[M14:216],[C19:179],[M11:77])([LRW:3],[DIS:143],[SHM:122],[CMD:19],[DST:130],[M10:21],[MPS:45],[8ED:311])([CSP:29],[THB:190])([HOP:111])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,100)|([ELD:303])

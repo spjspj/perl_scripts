@@ -1,0 +1,78 @@
+1 [AER:171] Planar Bridge
+1 [MMQ:116] Black Market
+1 [TMP:276] Altar of Dementia
+1 [5ED:140] Animate Dead
+1 [ORI:229] Hangarback Walker
+1 [V12:14] Vesuva
+1 [SHM:57] Beseech the Queen
+1 [C14:59] Arcane Lighthouse
+1 [C13:259] Sol Ring
+1 [PLC:85] Damnation
+1 [TMP:151] Reanimate
+1 [HOU:73] Razaketh, the Foulblooded
+1 [M15:103] Liliana Vess
+1 [USG:322] Phyrexian Tower
+1 [TOR:139] Cabal Coffers
+1 [USG:166] Victimize
+1 [M14:216] Ring of Three Wishes
+1 [M14:95] Diabolic Tutor
+1 [MBS:39] Black Sun's Zenith
+1 [M12:98] Grave Titan
+1 [HOU:165] Mirage Mirror
+1 [TMP:142] Living Death
+1 [SHM:248] Cauldron of Souls
+1 [THS:110] Whip of Erebos
+1 [CHK:273] Boseiju, Who Shelters All
+1 [M12:106] Rune-Scarred Demon
+1 [C13:84] Ophiomancer
+1 [3ED:235] Basalt Monolith
+1 [ORI:250] Rogue's Passage
+1 [DOM:238] Cabal Stronghold
+1 [FRF:65] Crux of Fate
+1 [M13:87] Diabolic Revelation
+1 [WWK:53] Butcher of Malakir
+1 [DKA:69] Increasing Ambition
+1 [MBS:46] Massacre Wurm
+1 [GTC:61] Crypt Ghast
+1 [THS:223] Nykthos, Shrine to Nyx
+1 [ODY:118] Buried Alive
+1 [UDS:139] Thran Dynamo
+1 [SCG:64] Decree of Pain
+1 [SHM:75] Puppeteer Clique
+1 [AVR:86] Blood Artist
+1 [10E:144] Grave Pact
+1 [M11:120] Viscera Seer
+1 [TMP:292] Jet Medallion
+1 [NPH:73] Sheoldred, Whispering One
+1 [ZEN:201] Expedition Map
+1 [M15:248] Urborg, Tomb of Yawgmoth
+1 [3ED:105] Demonic Tutor
+1 [DTK:120] Sidisi, Undead Vizier
+1 [JOU:65] Dictate of Erebos
+1 [ONS:140] Doomed Necromancer
+1 [KLD:226] Panharmonicon
+1 [SOM:61] Exsanguinate
+25 [UST:214] Swamp
+1 [THS:85] Erebos, God of the Dead
+1 [DOM:93] Final Parting
+1 [ROE:120] Nirkana Revenant
+1 [THS:213] Burnished Hart
+1 [THS:89] Gray Merchant of Asphodel
+1 [GTC:248] Thespian's Stage
+1 [WWK:132] Bojuka Bog
+1 [NPH:132] Caged Sun
+1 [DST:140] Skullclamp
+1 [M14:224] Strionic Resonator
+1 [LRW:135] Profane Command
+1 [KHM:112] Tergrid, God of Fright
+1 [PKLD:90s] Marionette Master
+1 [XLN:117] Revel in Riches
+1 [DST:130] Mycosynth Lattice
+1 [TMP:315] Ancient Tomb
+1 [CMR:141] Opposition Agent
+1 [FRF:66] Dark Deal
+1 [VIS:72] Vampiric Tutor
+1 [EMA:108] Toxic Deluge
+SB: 1 [DKA:70] Mikaeus, the Unhallowed
+LAYOUT MAIN:(1,9)(CMC,false,48)|([TMP:315],[C14:59],[WWK:132],[CHK:273],[TOR:139],[DOM:238],[ORI:229],[THS:223],[USG:322],[ORI:250],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[UST:214],[GTC:248],[M15:248],[V12:14])([ZEN:201],[TMP:151],[DST:140],[C13:259],[M11:120],[VIS:72])([TMP:276],[5ED:140],[MBS:39],[AVR:86],[3ED:105],[SOM:61],[TMP:292],[LRW:135],[M14:224])([3ED:235],[ODY:118],[THS:213],[FRF:66],[ONS:140],[HOU:165],[C13:84],[CMR:141],[USG:166],[EMA:108])([GTC:61],[PLC:85],[M14:95],[THS:85],[10E:144],[KLD:226],[UDS:139],[THS:110])([MMQ:116],[SHM:248],[FRF:65],[M13:87],[JOU:65],[DOM:93],[THS:89],[DKA:69],[M15:103],[TMP:142],[SHM:75],[XLN:117],[M14:216],[DTK:120],[KHM:112])([SHM:57],[NPH:132],[M12:98],[PKLD:90s],[MBS:46],[DST:130],[ROE:120],[AER:171])([WWK:53],[M12:106],[NPH:73])([SCG:64],[HOU:73])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,50)|([DKA:70])

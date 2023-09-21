@@ -1,0 +1,102 @@
+1 [C15:77] Open the Vaults
+1 [5ED:388] Mana Vault
+1 [UDS:15] Replenish
+1 [VIS:72] Vampiric Tutor
+1 [AER:49] Whir of Invention
+1 [M13:204] Elixir of Immortality
+1 [ZEN:220] Misty Rainforest
+1 [INV:308] Planar Portal
+1 [ZEN:229] Verdant Catacombs
+1 [ZEN:223] Scalding Tarn
+1 [VMA:78] Mana Drain
+1 [USG:322] Phyrexian Tower
+1 [RTR:226] Chromatic Lantern
+1 [TOR:139] Cabal Coffers
+1 [KLD:247] Inventors' Fair
+1 [RTR:35] Cyclonic Rift
+1 [HOU:120] Hour of Promise
+1 [BFZ:235] Cinder Glade
+1 [6ED:19] Enlightened Tutor
+1 [SHM:122] Mana Reflection
+1 [CHK:273] Boseiju, Who Shelters All
+1 [TSP:269] Academy Ruins
+1 [UDS:1] Academy Rector
+1 [MM2:23] Leyline of Sanctity
+1 [ODY:17] Delaying Shield
+1 [2ED:105] Demonic Tutor
+1 [KTK:248] Windswept Heath
+1 [DST:130] Mycosynth Lattice
+1 [RAV:251] Privileged Position
+1 [EMA:38] Wrath of God
+1 [NPH:80] Bludgeon Brawl
+1 [MPS:11] Crucible of Worlds
+1 [M15:248] Urborg, Tomb of Yawgmoth
+1 [DOM:247] Sulfur Falls
+1 [RTR:247] Steam Vents
+1 [MPS:16] Mana Crypt
+1 [UST:212] Plains
+1 [UST:213] Island
+1 [UST:214] Swamp
+1 [FUT:161] Coalition Relic
+1 [UST:215] Mountain
+1 [UST:216] Forest
+1 [GTC:249] Watery Grave
+1 [KTK:239] Polluted Delta
+1 [RTR:241] Hallowed Fountain
+1 [KTK:233] Flooded Strand
+1 [KTK:230] Bloodstained Mire
+1 [RTR:238] Blood Crypt
+1 [SOM:145] Contagion Engine
+1 [AER:171] Planar Bridge
+1 [CM2:242] Command Tower
+1 [C16:51] Armory Automaton
+1 [3ED:290] Underground Sea
+1 [NPH:162] Torpor Orb
+1 [3ED:291] Volcanic Island
+1 [NPH:164] Unwinding Clock
+1 [GPT:155] Orzhov Signet
+1 [C16:7] Deepglow Skate
+1 [3ED:289] Tundra
+1 [3ED:288] Tropical Island
+1 [GPT:152] Izzet Signet
+1 [M14:216] Ring of Three Wishes
+1 [GTC:245] Sacred Foundry
+1 [GTC:242] Godless Shrine
+1 [M10:52] Fabricate
+1 [GTC:240] Breeding Pool
+1 [HOU:165] Mirage Mirror
+1 [ICE:353] Glacial Chasm
+1 [RAV:63] Remand
+1 [3ED:283] Bayou
+1 [KTK:34] Clever Impersonator
+1 [RAV:260] Dimir Signet
+1 [3ED:285] Savannah
+1 [CMD:77] Diabolic Tutor
+1 [NPH:42] Phyrexian Metamorph
+1 [C13:263] Swiftfoot Boots
+1 [M14:206] Darksteel Forge
+1 [LEB:280] Plateau
+1 [MM2:213] Expedition Map
+1 [UDS:139] Thran Dynamo
+1 [CMA:220] Lightning Greaves
+1 [3ED:274] Sol Ring
+1 [SOM:110] Asceticism
+1 [10E:6] Aura of Silence
+1 [ZEN:211] Arid Mesa
+1 [MMA:141] Doubling Season
+1 [C17:238] Bojuka Bog
+1 [MM3:63] Damnation
+1 [MIR:80] Mystical Tutor
+1 [ZEN:219] Marsh Flats
+1 [MBS:104] Darksteel Plate
+1 [M11:61] Leyline of Anticipation
+1 [BBD:34] Fumble
+1 [SHM:140] Enchanted Evening
+1 [LRW:259] Rings of Brighthearth
+1 [INV:278] Sterling Grove
+1 [USG:325] Serra's Sanctum
+1 [TD0:A66] Constant Mists
+1 [LTR:246] The One Ring
+SB: 1 [ELD:303] Kenrith, the Returned King
+LAYOUT MAIN:(1,8)(CMC,false,29)|([TSP:269],[ZEN:211],[3ED:283],[RTR:238],[KTK:230],[C17:238],[CHK:273],[GTC:240],[TOR:139],[BFZ:235],[CM2:242],[KTK:233],[UST:216],[ICE:353],[GTC:242],[RTR:241],[KLD:247],[UST:213],[MPS:16],[ZEN:219],[ZEN:220],[UST:215],[USG:322],[UST:212],[LEB:280],[KTK:239],[GTC:245],[3ED:285],[ZEN:223],[USG:325],[RTR:247],[DOM:247],[UST:214],[3ED:288],[3ED:289],[3ED:290],[M15:248],[ZEN:229],[3ED:291],[GTC:249],[KTK:248])([M13:204],[6ED:19],[MM2:213],[5ED:388],[MIR:80],[3ED:274],[VIS:72])([TD0:A66],[RTR:35],[2ED:105],[RAV:260],[BBD:34],[GPT:152],[CMA:220],[VMA:78],[GPT:155],[RAV:63],[INV:278],[C13:263],[NPH:162])([C16:51],[10E:6],[NPH:80],[RTR:226],[FUT:161],[MPS:11],[MBS:104],[M10:52],[HOU:165],[LRW:259],[AER:49])([UDS:1],[KTK:34],[MM3:63],[ODY:17],[CMD:77],[M11:61],[MM2:23],[NPH:42],[UDS:15],[UDS:139],[NPH:164],[EMA:38],[LTR:246])([SOM:110],[C16:7],[MMA:141],[SHM:140],[HOU:120],[RAV:251],[M14:216])([SOM:145],[SHM:122],[DST:130],[C15:77],[AER:171],[INV:308])([M14:206])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,100)|([ELD:303])

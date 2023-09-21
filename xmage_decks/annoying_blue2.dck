@@ -1,0 +1,81 @@
+1 [MRD:35] Fabricate
+1 [SOM:48] Trinket Mage
+1 [NPH:162] Torpor Orb
+1 [8ED:64] Bribery
+1 [AER:49] Whir of Invention
+1 [C14:19] Teferi, Temporal Archmage
+1 [CMD:277] Homeward Path
+1 [NPH:164] Unwinding Clock
+1 [C14:59] Arcane Lighthouse
+1 [INV:308] Planar Portal
+1 [ISD:78] Snapcaster Mage
+1 [C14:104] Cyclonic Rift
+1 [STH:139] Portcullis
+1 [WTH:152] Mana Web
+1 [UGIN:1] Ugin, the Spirit Dragon
+1 [DDI:24] Preordain
+1 [M14:216] Ring of Three Wishes
+1 [KLD:247] Inventors' Fair
+1 [SOK:44] Meishin, the Mind Cage
+1 [TMP:306] Sapphire Medallion
+1 [HOU:165] Mirage Mirror
+1 [ONS:322] Riptide Laboratory
+1 [VIS:43] Shrieking Drake
+1 [RAV:63] Remand
+1 [M21:241] Tormod's Crypt
+1 [TSP:269] Academy Ruins
+1 [KTK:34] Clever Impersonator
+1 [C17:217] Nevinyrral's Disk
+1 [MPS:25] Solemn Simulacrum
+1 [DST:129] Memnarch
+1 [LEA:231] Basalt Monolith
+1 [NPH:42] Phyrexian Metamorph
+1 [M19:254] Reliquary Tower
+1 [IMA:65] Mana Drain
+1 [CNS:206] Vedalken Orrery
+1 [DOM:233] Thran Temporal Gateway
+22 [ZEN:234] Island
+1 [MRD:175] Gilded Lotus
+1 [M14:206] Darksteel Forge
+1 [KLD:60] Paradoxical Outcome
+1 [M14:209] Elixir of Immortality
+1 [V12:2] Boseiju, Who Shelters All
+1 [AVR:48] Devastation Tide
+1 [INV:49] Collective Restraint
+1 [THS:223] Nykthos, Shrine to Nyx
+1 [PCY:45] Rhystic Study
+1 [MBS:21] Consecrated Sphinx
+1 [UDS:139] Thran Dynamo
+1 [C16:272] Sol Ring
+1 [DST:130] Mycosynth Lattice
+1 [MPS:11] Crucible of Worlds
+1 [MPS:17] Mana Vault
+1 [C14:286] Buried Ruin
+1 [M15:248] Urborg, Tomb of Yawgmoth
+1 [ME2:229] Glacial Chasm
+1 [MPS:16] Mana Crypt
+1 [FUT:161] Coalition Relic
+1 [EMA:62] Mystical Tutor
+1 [SOI:58] Engulf the Shore
+1 [NPH:132] Caged Sun
+1 [KTK:239] Polluted Delta
+1 [KLD:192] Aetherflux Reservoir
+1 [CMD:55] Propaganda
+1 [TMP:55] Capsize
+1 [MPS:45] Planar Bridge
+1 [BFZ:15] Ulamog, the Ceaseless Hunger
+1 [M11:61] Leyline of Anticipation
+1 [LRW:71] Jace Beleren
+1 [MH1:75] Urza, Lord High Artificer
+1 [USG:111] Windfall
+1 [HOP:136] Seat of the Synod
+1 [USG:304] Noetic Scales
+1 [ELD:247] Mystic Sanctuary
+1 [GPT:29] Leyline of Singularity
+1 [EMA:49] Force of Will
+1 [C20:35] Fierce Guardianship
+1 [THB:261] Thassa, Deep-Dwelling
+1 [MAT:7] Filter Out
+SB: 1 [FUT:46] Venser, Shaper Savant
+LAYOUT MAIN:(1,11)(CMC,false,38)|([TSP:269],[C14:59],[V12:2],[C14:286],[ME2:229],[CMD:277],[KLD:247],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[ZEN:234],[MPS:16],[ELD:247],[THS:223],[KTK:239],[M19:254],[ONS:322],[HOP:136],[M21:241],[M15:248])([M14:209],[MPS:17],[EMA:62],[DDI:24],[VIS:43],[C16:272])([C14:104],[IMA:65],[RAV:63],[TMP:306],[ISD:78],[NPH:162])([LEA:231],[TMP:55],[FUT:161],[MPS:11],[MRD:35],[LRW:71],[WTH:152],[HOU:165],[CMD:55],[PCY:45],[SOM:48],[AER:49],[USG:111],[C20:35],[MAT:7])([KLD:192],[KTK:34],[INV:49],[SOI:58],[M11:61],[C17:217],[USG:304],[KLD:60],[NPH:42],[STH:139],[MPS:25],[UDS:139],[DOM:233],[NPH:164],[MH1:75],[CNS:206],[GPT:29],[THB:261])([8ED:64],[AVR:48],[MRD:175],[M14:216],[EMA:49])([NPH:132],[MBS:21],[DST:130],[MPS:45],[INV:308],[C14:19])([SOK:44],[DST:129])([UGIN:1])([M14:206])([BFZ:15])
+LAYOUT SIDEBOARD:(1,1)(COLOR,false,100)|([FUT:46])

@@ -1,0 +1,100 @@
+1 [UDS:1] Academy Rector
+1 [M14:43] Archaeomancer
+1 [10E:6] Aura of Silence
+1 [GRN:233] Chromatic Lantern
+1 [INV:49] Collective Restraint
+1 [M19:229] Crucible of Worlds
+1 [ODY:17] Delaying Shield
+1 [DTK:181] Den Protector
+1 [RAV:158] Doubling Season
+1 [SHM:140] Enchanted Evening
+1 [6ED:19] Enlightened Tutor
+1 [8ED:300] Ensnaring Bridge
+1 [5DN:86] Eternal Witness
+1 [M10:52] Fabricate
+1 [PLC:54] Frozen Aether
+1 [SOM:122] Genesis Wave
+1 [10E:88] Hurkyl's Recall
+1 [WWK:31] Jace, the Mind Sculptor
+1 [M20:26] Leyline of Sanctity
+1 [SHM:122] Mana Reflection
+1 [5ED:388] Mana Vault
+1 [WTH:152] Mana Web
+1 [7ED:307] Meekstone
+1 [DST:130] Mycosynth Lattice
+1 [6ED:83] Mystical Tutor
+1 [THB:190] Nyxbloom Ancient
+1 [M10:21] Open the Vaults
+1 [NPH:42] Phyrexian Metamorph
+1 [AER:171] Planar Bridge
+1 [8ED:311] Planar Portal
+1 [STH:139] Portcullis
+1 [RAV:251] Privileged Position
+1 [TMP:80] Propaganda
+1 [UDS:15] Replenish
+1 [M14:216] Ring of Three Wishes
+1 [10E:296] Seedborn Muse
+1 [RAV:270] Selesnya Signet
+1 [DIS:166] Simic Signet
+1 [RNA:22] Smothering Tithe
+1 [INV:278] Sterling Grove
+1 [NEM:139] Tangle Wire
+1 [MB1:515] Teferi, Temporal Archmage
+1 [DOM:233] Thran Temporal Gateway
+1 [J21:654] Timeless Witness
+1 [M14:77] Traumatize
+1 [NPH:164] Unwinding Clock
+1 [6ED:161] Vampiric Tutor
+1 [5DN:163] Vedalken Orrery
+1 [BNG:57] Whelming Wave
+1 [AER:49] Whir of Invention
+1 [USG:111] Windfall
+1 [ULG:98] Crop Rotation
+2 [UST:216] Forest
+1 [UST:213] Island
+2 [UST:212] Plains
+1 [UST:214] Swamp
+1 [TSP:269] Academy Ruins
+1 [TMP:315] Ancient Tomb
+1 [WWK:132] Bojuka Bog
+1 [RNA:246] Breeding Pool
+1 [TOR:139] Cabal Coffers
+1 [ELD:333] Command Tower
+1 [M15:242] Darksteel Citadel
+1 [RAV:276] Dimir Aqueduct
+1 [EVE:177] Flooded Grove
+1 [KTK:233] Flooded Strand
+1 [ICE:353] Glacial Chasm
+1 [RNA:248] Godless Shrine
+1 [RNA:251] Hallowed Fountain
+1 [FUT:177] Horizon Canopy
+1 [KLD:247] Inventors' Fair
+1 [WAR:248] Karn's Bastion
+1 [ZEN:220] Misty Rainforest
+1 [SHM:277] Mystic Gate
+1 [THS:223] Nykthos, Shrine to Nyx
+1 [USG:322] Phyrexian Tower
+1 [H1R:40] Prismatic Vista
+1 [USG:325] Serra's Sanctum
+1 [M15:248] Urborg, Tomb of Yawgmoth
+1 [M19:254] Reliquary Tower
+1 [KTK:248] Windswept Heath
+1 [RTR:35] Cyclonic Rift
+1 [3ED:285] Savannah
+1 [3ED:286] Scrubland
+1 [3ED:283] Bayou
+1 [3ED:290] Underground Sea
+1 [3ED:289] Tundra
+1 [3ED:288] Tropical Island
+1 [SUM:105] Demonic Tutor
+1 [SUM:274] Sol Ring
+1 [M21:173] Azusa, Lost but Seeking
+1 [CMR:433] Ramunap Excavator
+1 [IKO:259] Zagoth Triome
+1 [SNC:257] Spara's Headquarters
+1 [CNS:164] Exploration
+1 [LTR:246] The One Ring
+1 [HOU:165] Mirage Mirror
+SB: 1 [ELD:303] Kenrith, the Returned King
+LAYOUT MAIN:(2,8)(CMC,true,26)|()()([DTK:181])([M21:173],[5DN:86],[CMR:433])([UDS:1],[M14:43],[NPH:42],[J21:654])([10E:296])()([THB:190])([TSP:269],[TMP:315],[3ED:283],[WWK:132],[RNA:246],[TOR:139],[ELD:333],[M15:242],[RAV:276],[EVE:177],[KTK:233],[UST:216],[UST:216],[ICE:353],[RNA:248],[RNA:251],[FUT:177],[KLD:247],[UST:213],[WAR:248],[ZEN:220],[SHM:277],[THS:223],[USG:322],[UST:212],[UST:212],[H1R:40],[M19:254],[3ED:285],[3ED:286],[USG:325],[SNC:257],[UST:214],[3ED:288],[3ED:289],[3ED:290],[M15:248],[KTK:248],[IKO:259])([ULG:98],[6ED:19],[CNS:164],[5ED:388],[7ED:307],[6ED:83],[SUM:274],[6ED:161])([RTR:35],[SUM:105],[10E:88],[RAV:270],[DIS:166],[INV:278])([10E:6],[GRN:233],[M19:229],[8ED:300],[M10:52],[SOM:122],[WTH:152],[TMP:80],[NEM:139],[AER:49],[USG:111],[HOU:165])([INV:49],[ODY:17],[PLC:54],[WWK:31],[M20:26],[STH:139],[UDS:15],[RNA:22],[LTR:246],[DOM:233],[NPH:164],[5DN:163],[BNG:57])([RAV:158],[SHM:140],[RAV:251],[M14:216],[M14:77])([SHM:122],[DST:130],[M10:21],[AER:171],[8ED:311],[MB1:515])()
+LAYOUT SIDEBOARD:(1,1)(CMC,false,33)|([ELD:303])

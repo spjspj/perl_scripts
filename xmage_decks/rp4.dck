@@ -1,0 +1,99 @@
+1 [TSP:269] Academy Ruins
+1 [WWK:121] Amulet of Vigor
+1 [2ED:279] Bayou
+1 [AFC:226] Bojuka Bog
+1 [CN2:178] Burgeoning
+1 [TOR:139] Cabal Coffers
+1 [MPS:8] Chromatic Lantern
+1 [DMC:180] Coalition Relic
+1 [INV:49] Collective Restraint
+1 [ULG:98] Crop Rotation
+1 [MPS:11] Crucible of Worlds
+1 [M21:177] Cultivate
+1 [C14:104] Cyclonic Rift
+1 [2ED:105] Demonic Tutor
+1 [RAV:158] Doubling Season
+1 [THB:169] Dryad of the Ilysian Grove
+1 [IKO:184] Eerie Ultimatum
+1 [SHM:140] Enchanted Evening
+1 [CNS:164] Exploration
+1 [DTK:186] Explosive Vegetation
+1 [MRD:35] Fabricate
+1 [M20:247] Field of the Dead
+3 [ZEN:248] Forest
+1 [USG:321] Gaea's Cradle
+1 [ICE:353] Glacial Chasm
+1 [RNA:248] Godless Shrine
+1 [PAER:109p] Heroic Intervention
+1 [KLD:247] Inventors' Fair
+2 [ZEN:235] Island
+1 [CHK:225] Kodama's Reach
+1 [M11:61] Leyline of Anticipation
+1 [EMA:225] Mana Crypt
+1 [SHM:122] Mana Reflection
+1 [4ED:334] Mana Vault
+1 [JUD:139] Mirari's Wake
+1 [ZEN:220] Misty Rainforest
+1 [ELD:247] Mystic Sanctuary
+1 [6ED:83] Mystical Tutor
+1 [ODY:257] New Frontiers
+1 [THB:190] Nyxbloom Ancient
+1 [M10:21] Open the Vaults
+1 [GRN:253] Overgrown Tomb
+1 [USG:322] Phyrexian Tower
+1 [ZEN:232] Plains
+1 [MPS:45] Planar Bridge
+1 [8ED:311] Planar Portal
+1 [H1R:40] Prismatic Vista
+1 [RAV:251] Privileged Position
+1 [CMR:433] Ramunap Excavator
+1 [UDS:15] Replenish
+1 [CMR:249] Reshape the Earth
+1 [C14:122] Rite of Replication
+1 [BRC:24] Rootpath Purifier
+1 [2ED:281] Savannah
+1 [2ED:282] Scrubland
+1 [TSP:216] Search for Tomorrow
+1 [C19:179] Seedborn Muse
+1 [USG:325] Serra's Sanctum
+1 [RNA:22] Smothering Tithe
+1 [ME4:227] Sol Ring
+1 [C14:271] Solemn Simulacrum
+1 [VOW:221] Splendid Reclamation
+1 [J21:720] Sterling Grove
+1 [ZEN:240] Swamp
+1 [C17:8] Teferi's Protection
+1 [KHM:275] The World Tree
+1 [C16:46] Thrasios, Triton Hero
+1 [CMR:261] Three Visits
+1 [MH2:179] Timeless Witness
+1 [ODY:110] Traumatize
+1 [2ED:284] Tropical Island
+1 [2ED:285] Tundra
+1 [2ED:286] Underground Sea
+1 [NPH:164] Unwinding Clock
+1 [TSR:287] Urborg, Tomb of Yawgmoth
+1 [6ED:161] Vampiric Tutor
+1 [ZEN:229] Verdant Catacombs
+1 [GRN:259] Watery Grave
+1 [RIX:150] Wayward Swordtooth
+1 [USG:111] Windfall
+1 [6ED:269] Worldly Tutor
+1 [MH2:261] Yavimaya, Cradle of Growth
+1 [RIX:151] World Shaper
+1 [SHM:113] Farhaven Elf
+1 [TMP:222] Earthcraft
+1 [4ED:34] Land Tax
+1 [M11:206] Elixir of Immortality
+1 [BRO:260] Demolition Field
+1 [PELD:244p] Fabled Passage
+1 [AFR:358] Treasure Vault
+1 [RAV:150] Warp World
+1 [CHK:273] Boseiju, Who Shelters All
+1 [C19:157] Beast Within
+1 [3ED:287] Taiga
+1 [ME3:212] The Tabernacle at Pendrell Vale
+1 [WTH:152] Mana Web
+SB: 1 [ELD:303] Kenrith, the Returned King
+LAYOUT MAIN:(1,10)(CMC,false,24)|([TSP:269],[2ED:279],[AFC:226],[TOR:139],[BRO:260],[PELD:244p],[M20:247],[ZEN:248],[ZEN:248],[ZEN:248],[USG:321],[ICE:353],[RNA:248],[KLD:247],[ZEN:235],[ZEN:235],[EMA:225],[ZEN:220],[ELD:247],[GRN:253],[USG:322],[ZEN:232],[H1R:40],[2ED:281],[2ED:282],[USG:325],[ZEN:240],[KHM:275],[2ED:284],[2ED:285],[2ED:286],[TSR:287],[ZEN:229],[GRN:259],[MH2:261],[AFR:358],[CHK:273],[3ED:287],[ME3:212])([WWK:121],[CN2:178],[ULG:98],[M11:206],[CNS:164],[4ED:34],[4ED:334],[6ED:83],[ODY:257],[ME4:227],[6ED:161],[6ED:269])([C14:104],[2ED:105],[TMP:222],[PAER:109p],[J21:720],[C16:46],[CMR:261])([MPS:8],[DMC:180],[MPS:11],[M21:177],[THB:169],[MRD:35],[SHM:113],[CHK:225],[CMR:433],[TSP:216],[C17:8],[RIX:150],[USG:111],[C19:157],[WTH:152])([INV:49],[DTK:186],[M11:61],[UDS:15],[C14:122],[BRC:24],[RNA:22],[C14:271],[VOW:221],[MH2:179],[NPH:164],[RIX:151])([RAV:158],[SHM:140],[JUD:139],[RAV:251],[C19:179],[ODY:110])([SHM:122],[M10:21],[MPS:45],[8ED:311])([IKO:184],[THB:190])([RAV:150])([CMR:249])
+LAYOUT SIDEBOARD:(1,1)(CMC,false,13)|([ELD:303])
