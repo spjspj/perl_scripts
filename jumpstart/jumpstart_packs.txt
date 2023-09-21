@@ -1503,3 +1503,22 @@
 3 UST 214 Swamp
 1 STX 269 Necroblossom Snarl
 1 STX 274 Vineglimmer Snarl
+
+# Broodmoth
+1 IKO 21 Luminous Broodmoth
+1 DMU 198 Elas il-Kor, Sadistic Pilgrim
+1 ONE 305 Drivnod, Carnage Dominus
+1 BFZ 126 Zulaport Cutthroat
+1 SNC 170 Brokers Ascendancy
+1 M11 120 Viscera Seer
+1 WAR 188 Cruel Celebrant
+1 AVR 86 Blood Artist
+1 IKO 184 Eerie Ultimatum
+1 SOI 242 Anguished Unmaking
+1 CLB 754 Grim Haruspex
+1 UST 216 Forest
+2 UST 212 Plains
+3 UST 214 Swamp
+1 IKO 248 Indatha Triome
+1 GRN 258 Temple Garden
+1 GRN 253 Overgrown Tomb
