@@ -30,7 +30,8 @@ sub write_to_socket
     my $header;
     if ($redirect =~ m/^redirect/i)
     {
-        $header = "HTTP/1.1 301 Moved\nLocation: /math_game/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        $header = "HTTP/1.1 302 Moved\nLocation: /math_game/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        print (">>> $header <<<\n");
     }
     elsif ($redirect =~ m/^noredirect/i)
     {
@@ -285,7 +286,9 @@ sub make_html_code
 
     $num_html .= "</script>\n";
     
-    $string .= "$num_html<br><a href='make_new_game'>Make a new game!</a></body>\n";
+    $string .= "$num_html<br><a href=\"make_new_game_now_$eq\">Make a new game!<\/a></body>\n";
+
+
     $string .= "</html>";
     return $string;
 }
@@ -329,14 +332,19 @@ sub make_html_code
         my $lat;
         my $long;
         my $txt = read_from_socket (\*CLIENT);
+        print ("FIRST Checking against - $txt\n");
         $txt =~ s/math_game\/math_game/math_game\//img;
         $txt =~ s/math_game\/math_game/math_game\//img;
         $txt =~ s/math_game\/math_game/math_game\//img;
         $txt =~ s/math_game\/math_game/math_game\//img;
 
+        print ("Checking against - $txt\n");
         if ($txt =~ m/make_new_game/im)
         {
             create_new_game ();
+            my $html_text = make_html_code ();
+            write_to_socket (\*CLIENT, $html_text, "", "redirect");
+            next;
         }
 
         my $html_text = make_html_code ();
