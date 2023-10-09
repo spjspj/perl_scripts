@@ -267,6 +267,7 @@ sub make_html_code
     $num_html .= "<br><br><button id=\"youranswer\" class=\"youranswer_button youranswer_button1\">&nbsp;</button>&nbsp;\n";
     $num_html .= "<button id=\"status\" onclick=\"clear_all();$reset_button_ids\" class=\"operation_button operation_button1\">Clear</button>&nbsp;\n";
     $num_html .= "<button id=\"undo\" onclick=\"undo_last_action();\" class=\"undo_button undo_button1\">Undo</button>&nbsp;\n";
+    $num_html .= "<button id=\"reveal\" onclick=\"reveal_answer();\" class=\"undo_button undo_button1\">Reveal Answer..</button>&nbsp;\n";
     #$num_html .= "<br><br>Actual answer for hidden equation ($equation - based on $num_terms):\n";
     $num_html .= "<br><br>Actual answer for hidden equation (Solution will use $num_terms terms):\n";
     $num_html .= "<br><br><button id=\"actualanswer\" class=\"answer_button answer_button1\">$eq</button>&nbsp;\n";
@@ -372,6 +373,13 @@ sub make_html_code
     $num_html .= "{\n";
     $num_html .= "    document.getElementById(button_id).disabled = false;\n";
     $num_html .= "    document.getElementById(button_id).style.background='$green';\n";
+    $num_html .= "}\n";
+    $num_html .= "function reveal_answer ()\n";
+    $num_html .= "{\n";
+    $num_html .= "    document.getElementById('equation').innerHTML = '$equation';\n";
+    $num_html .= "    document.getElementById('status').innerHTML = 'YOU LOSE :(';\n";
+    $num_html .= "    document.getElementById('status').disabled = true;\n";
+    $num_html .= "    document.getElementById('undo').disabled = true;\n";
     $num_html .= "}\n";
 
     $num_html .= "</script>\n";
