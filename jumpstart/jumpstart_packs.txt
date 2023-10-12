@@ -1487,6 +1487,7 @@
 9 UST 214 Swamp
 
 # Muldrotha
+1 2X2 528 Muldrotha, the Gravetide
 1 5ED 140 Animate Dead
 1 ONE 161 Cankerbloom
 1 THB 314 Gravebreaker Lamia
@@ -1497,7 +1498,6 @@
 1 PLC 153 Seal of Primordium
 1 DKA 48 Secrets of the Dead
 1 PCY 126 Spore Frog
-1 2X2 528 Muldrotha, the Gravetide
 3 UST 216 Forest
 1 UST 213 Island
 3 UST 214 Swamp
@@ -1522,3 +1522,25 @@
 1 IKO 248 Indatha Triome
 1 GRN 258 Temple Garden
 1 GRN 253 Overgrown Tomb
+
+# Weird Lifelink
+1 ORI 120 Tainted Remedy
+1 CMR 3 Akroma's Will
+1 DGM 132 Ready // Willing
+1 SOI 42 Tenacity
+1 M10 54 Hive Mind
+1 THS 19 Hopeful Eidolon
+1 THB 18 Heliod, Sun-Crowned
+1 DTK 27 Ojutai Exemplars
+1 ZNR 6 Attended Healer
+1 M15 65 Jorubai Murk Lurker
+1 BBD 25 Brightling
+1 C19 291 Island
+1 DDQ 37 Island
+1 PTC shr365 Plains
+1 9ED 331 Plains
+1 DOM 253 Plains
+1 PC2 145 Swamp
+1 RNA 248 Godless Shrine
+1 GTC 249 Watery Grave
+1 30A 279 Tropical Island
