@@ -1535,12 +1535,53 @@
 1 ZNR 6 Attended Healer
 1 M15 65 Jorubai Murk Lurker
 1 BBD 25 Brightling
-1 C19 291 Island
-1 DDQ 37 Island
-1 PTC shr365 Plains
-1 9ED 331 Plains
-1 DOM 253 Plains
-1 PC2 145 Swamp
+2 UST 213 Island
+3 UST 212 Plains
+1 UST 214 Swamp
 1 RNA 248 Godless Shrine
 1 GTC 249 Watery Grave
 1 30A 279 Tropical Island
+
+# Tomer's six drop
+1 FRF 87 Tasigur, the Golden Fang
+1 DGM 92 Progenitor Mimic
+1 GTC 188 Prime Speaker Zegana
+1 CMR 365 Aesi, Tyrant of Gyre Strait
+1 M12 109 Sorin Markov
+1 BFZ 206 Sire of Stagnation
+1 IKO 221 Gyruda, Doom of Depths
+1 WAR 187 Casualties of War
+1 M10 190 Lurking Predators
+1 PZ2 65787 Selvala's Stampede
+1 TMP 315 Ancient Tomb
+1 DMU 261 Yavimaya Coast
+1 IKO 259 Zagoth Triome
+1 GRN 253 Overgrown Tomb
+1 BRO 264 Llanowar Wastes
+1 AKH 243 Fetid Pools
+1 M21 246 Fabled Passage
+1 UST 216 Forest
+1 UST 213 Island
+1 UST 214 Swamp
+
+# Seven drop - Richard
+1 ROE 1 All Is Dust
+1 KHM 295 Alrund's Epiphany
+1 FRF 149 Atarka, World Render
+1 ONS 71 Blatant Thievery
+1 M21 228 Chromatic Orrery
+1 KHM 343 Cyclone Summoner
+1 DTK 216 Dragonlord Atarka
+1 OGW 147 Zendikar Resurgent
+1 ISD 129 Balefire Dragon
+1 AFR 197 Old Gnawbone
+1 TMP 315 Ancient Tomb
+1 CHK 276 Forbidden Orchard
+1 LTC 377 Yavimaya, Cradle of Growth
+1 ZEN 220 Misty Rainforest
+1 UST 216 Forest
+1 UST 213 Island
+1 UST 215 Mountain
+1 SLD 132 Breeding Pool
+1 SLD 126 Stomping Ground
+1 GPT 164 Steam Vents
