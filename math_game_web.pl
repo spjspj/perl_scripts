@@ -100,9 +100,10 @@ my $eq;
 
 sub new_number
 {
-    my $upper_limit = $_ [0];
+    my $lower_limit = $_ [0];
+    my $upper_limit = $_ [1];
     my $temp_num = int (rand ($upper_limit)) + 1;
-    while (defined ($used_nums {$temp_num}))
+    while (defined ($used_nums {$temp_num}) || !($temp_num >= $lower_limit && $temp_num <= $upper_limit))
     {
         $temp_num = int (rand ($upper_limit)) + 1;
     }
@@ -111,13 +112,15 @@ sub new_number
     return $temp_num;
 }
 
+my $hard_game = 0;
 sub create_new_game
 {
+    $hard_game = $_ [0];
+
     my %a;
     my %b;
     my %c;
     my %d;
-    my $hard = $_ [0];
 
     $num_terms = int (rand (4)) + 3;
     %nums = %b;
@@ -127,14 +130,14 @@ sub create_new_game
 
     print ($num_terms , " is number of terms\n");
     my $operator_dice = 7;
-    if ($hard)
+    if ($hard_game)
     {
-        $nums {0} = new_number (4);
-        $nums {1} = new_number (10);
-        $nums {2} = new_number (20);
-        $nums {3} = new_number (50);
-        $nums {4} = new_number (100);
-        $nums {5} = new_number (100);
+        $nums {0} = new_number (1, 4);
+        $nums {1} = new_number (1, 10);
+        $nums {2} = new_number (6, 20);
+        $nums {3} = new_number (11, 50);
+        $nums {4} = new_number (26, 100);
+        $nums {5} = new_number (51, 100);
         $operator_dice = 9;
         $num_terms = int (rand (2));
         if ($num_terms == 0)
@@ -146,14 +149,14 @@ sub create_new_game
             $num_terms = 6;
         }
     }
-    elsif (!$hard)
+    elsif (!$hard_game)
     {
-        $nums {0} = new_number (5);
-        $nums {1} = new_number (5);
-        $nums {2} = new_number (10);
-        $nums {3} = new_number (10);
-        $nums {4} = new_number (20);
-        $nums {5} = new_number (40);
+        $nums {0} = new_number (1, 5);
+        $nums {1} = new_number (1, 5);
+        $nums {2} = new_number (1, 18);
+        $nums {3} = new_number (7, 20);
+        $nums {4} = new_number (8, 30);
+        $nums {5} = new_number (14, 40);
     }
 
     $used_terms {0} = 0;
@@ -192,6 +195,43 @@ sub create_new_game
     }
     $used_terms {$number} = 1;
     $equation .= $nums {$number};
+
+    my %rand_terms;
+    if ($hard_game == 1)
+    {
+        my $l = length ($equation);
+        my $open_idx = int (rand ($l));
+        my $close_idx = int (rand ($l));
+        if ($open_idx > $close_idx) 
+        {
+            my $a = $open_idx;
+            my $b = $close_idx;
+            $open_idx = $b;
+            $close_idx = $a;
+        }
+
+        print (">>>>> OPEN=$open_idx\n");
+        while ($equation =~ m/^(.{$open_idx})[0-9]/ && $open_idx > 0)
+        {
+            print ("OPEN=$open_idx\n");
+            $open_idx--;
+        }
+        
+        if ($open_idx > 0) 
+        {
+            $open_idx++;
+        }
+        
+        print (">>>>>CLOSE=$close_idx\n");
+        while ($equation =~ m/^(.{$close_idx})[0-9]/ && $close_idx < $l)
+        {
+            print ("CLOSE=$close_idx\n");
+            $close_idx++;
+        }
+        $equation =~ s/^(.{$close_idx})/$1)/;
+        $equation =~ s/^(.{$open_idx})/$1(/;
+        $equation =~ s/\)\(//;
+    }
     
     print ("ANSWER GIVEN:\n");
     print (join (",", values (%nums))), "\n";
@@ -292,14 +332,21 @@ sub make_html_code
     my $reset_button_ids = "";
     foreach $num (sort (values (%nums)))
     {
-        $num_html .= "<button id='button$num' onclick=\"add_to_equation($num, 'button$num')\" class=\"button button1\">$num</button>&nbsp;\n";
+        $num_html .= "<button id='button$num' onclick=\"add_to_equation($num, 'button$num', 1)\" class=\"button button1\">$num</button>&nbsp;\n";
         $reset_button_ids .= "enable_thing ('button$num');";
     }
 
-    $num_html .= "<br><br><button onclick=\"add_to_equation('+')\" class=\"operation_button operation_button1\">+</button>&nbsp;\n";
-    $num_html .= "<button onclick=\"add_to_equation('-')\" class=\"operation_button operation_button1\">-</button>&nbsp;\n";
-    $num_html .= "<button onclick=\"add_to_equation('*')\" class=\"operation_button operation_button1\">*</button>&nbsp;\n";
-    $num_html .= "<button onclick=\"add_to_equation('\/')\" class=\"operation_button operation_button1\">\/</button>&nbsp;\n";
+    $num_html .= "<br><br><button onclick=\"add_to_equation('+', 'xzy', 0)\" class=\"operation_button operation_button1\"><font size=+2>+</font></button>&nbsp;\n";
+    $num_html .= "<button onclick=\"add_to_equation('-', 'xzy', 0)\" class=\"operation_button operation_button1\"><font size=+1>-</font></button>&nbsp;\n";
+    $num_html .= "<button onclick=\"add_to_equation('*', 'xzy', 0)\" class=\"operation_button operation_button1\"><font size=+1>*</font></button>&nbsp;\n";
+    $num_html .= "<button onclick=\"add_to_equation('\/', 'xzy', 0)\" class=\"operation_button operation_button1\"><font size=+1>\/</font></button>&nbsp;\n";
+
+    if ($hard_game)
+    {
+        $num_html .= "<button onclick=\"add_to_equation('(', 'xzy', 0)\" class=\"operation_button operation_button1\"><font size=+1>(</font></button>&nbsp;\n";
+        $num_html .= "<button onclick=\"add_to_equation(')', 'xzy', 0)\" class=\"operation_button operation_button1\"><font size=+1>)</font></button>&nbsp;\n";
+    }
+
     $num_html .= "<br><br>Your equation so far:\n";
     $num_html .= "<br><p id='equation'></p>\n";
     $num_html .= "<br><br>Your answer so far:\n";
@@ -334,20 +381,29 @@ sub make_html_code
     $num_html .= " let old_button9 = \"\";";
     $num_html .= " let old_button10 = \"\";";
     $num_html .= " let old_button11 = \"\";";
+    $num_html .= " let old_button12 = \"\";";
+    $num_html .= " let old_button13 = \"\";";
+    $num_html .= " let old_button14 = \"\";";
+    $num_html .= " let old_button15 = \"\";";
+    $num_html .= " let old_button16 = \"\";";
+    $num_html .= " let old_button17 = \"\";";
+    $num_html .= " let old_button18 = \"\";";
+    $num_html .= " let old_button19 = \"\";";
     $num_html .= " let track_states = 0;";
     $num_html .= " document.getElementById('undo').disabled = true;\n";
     $num_html .= " document.getElementById('undo').style.background='#999999';\n";
-    $num_html .= "function add_to_equation(thing_to_add, button_id)\n";
+    $num_html .= "function add_to_equation(thing_to_add, button_id, do_disable)\n";
     $num_html .= "{\n";
     $num_html .= "    document.getElementById('equation').innerHTML = document.getElementById('equation').innerHTML + thing_to_add;\n";
-    $num_html .= "    document.getElementById('youranswer').innerHTML = eval (document.getElementById('equation').innerHTML);\n";
-    $num_html .= "    document.getElementById(button_id).disabled = true;\n";
-    $num_html .= "    document.getElementById(button_id).style.background='#999999';\n";
-    $num_html .= "    if (document.getElementById('youranswer').innerHTML == document.getElementById('actualanswer').innerHTML)\n";
-    $num_html .= "    {\n";
-    $num_html .= "        document.getElementById('status').innerHTML = 'YOU WIN!';\n";
-    $num_html .= "    }\n";
     $num_html .= "    track_states++;";
+    $num_html .= "    if (track_states == 19) { old_state19 = document.getElementById('equation').innerHTML; old_button19 = button_id; } ";
+    $num_html .= "    if (track_states == 18) { old_state18 = document.getElementById('equation').innerHTML; old_button18 = button_id; } ";
+    $num_html .= "    if (track_states == 17) { old_state17 = document.getElementById('equation').innerHTML; old_button17 = button_id; } ";
+    $num_html .= "    if (track_states == 16) { old_state16 = document.getElementById('equation').innerHTML; old_button16 = button_id; } ";
+    $num_html .= "    if (track_states == 15) { old_state15 = document.getElementById('equation').innerHTML; old_button15 = button_id; } ";
+    $num_html .= "    if (track_states == 14) { old_state14 = document.getElementById('equation').innerHTML; old_button14 = button_id; } ";
+    $num_html .= "    if (track_states == 13) { old_state13 = document.getElementById('equation').innerHTML; old_button13 = button_id; } ";
+    $num_html .= "    if (track_states == 12) { old_state12 = document.getElementById('equation').innerHTML; old_button12 = button_id; } ";
     $num_html .= "    if (track_states == 11) { old_state11 = document.getElementById('equation').innerHTML; old_button11 = button_id; } ";
     $num_html .= "    if (track_states == 10) { old_state10 = document.getElementById('equation').innerHTML; old_button10 = button_id; } ";
     $num_html .= "    if (track_states == 9) { old_state9 = document.getElementById('equation').innerHTML; old_button9 = button_id; } ";
@@ -361,6 +417,13 @@ sub make_html_code
     $num_html .= "    if (track_states == 1) { old_state1 = document.getElementById('equation').innerHTML; old_button1 = button_id; } ";
     $num_html .= "    document.getElementById('undo').disabled = false;\n";
     $num_html .= "    document.getElementById('undo').style.background='#343499';\n";
+    $num_html .= "    if (do_disable) { document.getElementById(button_id).disabled = true; }\n";
+    $num_html .= "    if (do_disable) { document.getElementById(button_id).style.background='#999999'; }\n";
+    $num_html .= "    update_answer()\n";
+    $num_html .= "    if (document.getElementById('youranswer').innerHTML == document.getElementById('actualanswer').innerHTML)\n";
+    $num_html .= "    {\n";
+    $num_html .= "        document.getElementById('status').innerHTML = 'YOU WIN!';\n";
+    $num_html .= "    }\n";
     $num_html .= "}\n";
     $num_html .= "function clear_all()\n";
     $num_html .= "{\n";
@@ -380,6 +443,14 @@ sub make_html_code
     $num_html .= "    old_state9 = \"\";";
     $num_html .= "    old_state10 = \"\";";
     $num_html .= "    old_state11 = \"\";";
+    $num_html .= "    old_state12 = \"\";";
+    $num_html .= "    old_state13 = \"\";";
+    $num_html .= "    old_state14 = \"\";";
+    $num_html .= "    old_state15 = \"\";";
+    $num_html .= "    old_state16 = \"\";";
+    $num_html .= "    old_state17 = \"\";";
+    $num_html .= "    old_state18 = \"\";";
+    $num_html .= "    old_state19 = \"\";";
     $num_html .= "    old_button1 = \"\";";
     $num_html .= "    old_button2 = \"\";";
     $num_html .= "    old_button3 = \"\";";
@@ -391,7 +462,21 @@ sub make_html_code
     $num_html .= "    old_button9 = \"\";";
     $num_html .= "    old_button10 = \"\";";
     $num_html .= "    old_button11 = \"\";";
+    $num_html .= "    old_button12 = \"\";";
+    $num_html .= "    old_button13 = \"\";";
+    $num_html .= "    old_button14 = \"\";";
+    $num_html .= "    old_button15 = \"\";";
+    $num_html .= "    old_button16 = \"\";";
+    $num_html .= "    old_button17 = \"\";";
+    $num_html .= "    old_button18 = \"\";";
+    $num_html .= "    old_button19 = \"\";";
     $num_html .= "    track_states = 0;";
+    $num_html .= "}\n";
+    $num_html .= "function update_answer()\n";
+    $num_html .= "{\n";
+    $num_html .= "    try {\n";
+    $num_html .= "    document.getElementById('youranswer').innerHTML = eval (document.getElementById('equation').innerHTML);\n";
+    $num_html .= "    } catch(err) {}\n";
     $num_html .= "}\n";
     $num_html .= "function undo_last_action()\n";
     $num_html .= "{\n";
@@ -406,12 +491,22 @@ sub make_html_code
     $num_html .= "    if (track_states == 9) { document.getElementById('equation').innerHTML = old_state8; track_states = 8; enable_thing (old_button9); } ";
     $num_html .= "    if (track_states == 10) { document.getElementById('equation').innerHTML = old_state9; track_states = 9; enable_thing (old_button10); } ";
     $num_html .= "    if (track_states == 11) { document.getElementById('equation').innerHTML = old_state10; track_states = 10; enable_thing (old_button11); } ";
-    $num_html .= "    document.getElementById('youranswer').innerHTML = eval (document.getElementById('equation').innerHTML);\n";
+    $num_html .= "    if (track_states == 12) { document.getElementById('equation').innerHTML = old_state10; track_states = 11; enable_thing (old_button12); } ";
+    $num_html .= "    if (track_states == 13) { document.getElementById('equation').innerHTML = old_state10; track_states = 12; enable_thing (old_button13); } ";
+    $num_html .= "    if (track_states == 14) { document.getElementById('equation').innerHTML = old_state10; track_states = 13; enable_thing (old_button14); } ";
+    $num_html .= "    if (track_states == 15) { document.getElementById('equation').innerHTML = old_state10; track_states = 14; enable_thing (old_button15); } ";
+    $num_html .= "    if (track_states == 16) { document.getElementById('equation').innerHTML = old_state10; track_states = 15; enable_thing (old_button16); } ";
+    $num_html .= "    if (track_states == 17) { document.getElementById('equation').innerHTML = old_state10; track_states = 16; enable_thing (old_button17); } ";
+    $num_html .= "    if (track_states == 18) { document.getElementById('equation').innerHTML = old_state10; track_states = 17; enable_thing (old_button18); } ";
+    $num_html .= "    if (track_states == 19) { document.getElementById('equation').innerHTML = old_state10; track_states = 18; enable_thing (old_button19); } ";
+    $num_html .= "    update_answer()\n";
     $num_html .= "}\n";
     $num_html .= "function enable_thing (button_id)\n";
     $num_html .= "{\n";
-    $num_html .= "    document.getElementById(button_id).disabled = false;\n";
-    $num_html .= "    document.getElementById(button_id).style.background='$green';\n";
+    $num_html .= "    try {\n";
+    $num_html .= "        document.getElementById(button_id).disabled = false;\n";
+    $num_html .= "        document.getElementById(button_id).style.background='$green';\n";
+    $num_html .= "    } catch(err) {}\n";
     $num_html .= "}\n";
     $num_html .= "function reveal_answer ()\n";
     $num_html .= "{\n";
