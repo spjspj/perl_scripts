@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 ##
-#   File : math_game_web.pl
-#   Date : 8/Oct/2023
+#   File : secure_copy_paste.pl
+#   Date : 19/Sept/2023
 #   Author : spjspj
-#   Purpose : Make a online math game ..
+#   Purpose : Allow a copy and paste to happen
 ##
 
 use strict;
@@ -11,10 +11,24 @@ use POSIX;
 use LWP::Simple;
 use Socket;
 use File::Copy;
+use Math::Trig;
 
-my $SUPPLIED_PASSWORD;
+my %secure_paste;
+my $pasted_text = "HELLO!  You can change me now!";
+my %all_pasted_text;
+my %meta_data;
+my %calculated_data;
+my %col_roundings;
+my $max_field_num = 0;
+my $max_rows = 0;
+my %col_types;
+my $show_formulas = 0;
+my $count = 0;
+my %each_element;
+my $each_element_count = 0;
 
-#####
+my $SUPPLIED_KEYWORD;
+
 sub write_to_socket
 {
     my $sock_ref = $_ [0];
@@ -30,18 +44,17 @@ sub write_to_socket
     my $header;
     if ($redirect =~ m/^redirect/i)
     {
-        $header = "HTTP/1.1 302 Moved\nLocation: /math_game/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
-        print (">>> $header <<<\n");
+        $header = "HTTP/1.1 301 Moved\nLocation: /secure_paste/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
     }
     elsif ($redirect =~ m/^noredirect/i)
     {
-        if ($SUPPLIED_PASSWORD =~ m/^$/)
+        if ($SUPPLIED_KEYWORD =~ m/^$/)
         {
             $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
         }
         else
         {
-            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html\nSet-Cookie: SUPPLIED_PASSWORD=$SUPPLIED_PASSWORD\nContent-Length: " . length ($msg_body) . "\n\n";
+            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html\nSet-Cookie: SUPPLIED_KEYWORD=$SUPPLIED_KEYWORD\nContent-Length: " . length ($msg_body) . "\n\n";
         }
     }
 
@@ -52,6 +65,7 @@ sub write_to_socket
     $msg_body =~ s/\.png/\.npg/;
     $msg_body =~ s/img/mgi/;
     $msg_body .= chr(13) . chr(10) . "0";
+    print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
     syswrite ($sock_ref, $msg_body);
 }
 
@@ -63,332 +77,115 @@ sub read_from_socket
     my $header = "";
     my $rin = "";
     my $rout;
-    my $min;
-    my $max;
-    my $msg_type;
-    my $msg_body;
-    my $msg_len;
+    my $isPost = 0;
+    my $done_expected_content_len = 0;
+    my $expected_content_len = 0;
+    my $old_expected_content_len = 0;
+    my $seen_content_len = -2;
+    my $content = "";
 
     vec ($rin, fileno ($sock_ref), 1) = 1;
 
     # Read the message header
-    while ((!(ord ($ch) == 13 and ord ($prev_ch) == 10)))
+    while (((!(ord ($ch) == 13 and ord ($prev_ch) == 10)) && !$isPost) || ($isPost && $seen_content_len < $expected_content_len))
     {
         if (select ($rout=$rin, undef, undef, 200) == 1)
         {
             $prev_ch = $ch;
-            # There is at least one byte ready to be read..
             if (sysread ($sock_ref, $ch, 1) < 1)
             {
                 return "resend";
             }
+
             $header .= $ch;
-            my $h = $header;
-            $h =~ s/(.)/",$1-" . ord ($1) . ";"/emg;
+            if (!$isPost && $header =~ m/POST/img)
+            {
+                $isPost = 1;
+            }
+        }
+
+        if ($seen_content_len >= -1)
+        {
+            $seen_content_len ++;
+            $content .= $ch;
+        }
+        if (ord ($ch) == 13 and ord ($prev_ch) == 10)
+        {
+            $seen_content_len = -1;
+        }
+
+        if ($isPost == 1 && $done_expected_content_len == 0)
+        {
+            if ($header =~ m/Content.Length: (\d+)/im)
+            {
+                $expected_content_len = $1;
+                if ($old_expected_content_len < $expected_content_len)
+                {
+                    $old_expected_content_len = $expected_content_len;
+                }
+                else
+                {
+                    $done_expected_content_len = 1;
+                }
+            }
         }
     }
-
     return $header;
 }
 
-my $num_terms = int (rand (4)) + 3;
-my %nums;
-my %used_nums;
-my %used_terms;
-my $equation;
-my $eq;
-
-sub create_new_game
+sub is_authorized
 {
-    my %a;
-    my %b;
-    my %c;
-    my %d;
-
-    $num_terms = int (rand (4)) + 3;
-    %nums = %b;
-    %used_nums = %c;
-    %used_terms = %d;
-    $equation = "";
-
-    print ($num_terms , " is number of terms\n");
-    $nums {0} = int (rand (4)) + 1;
-    $nums {1} = int (rand (6)) + 4;
-    $nums {2} = int (rand (10)) + 5;
-    $nums {3} = int (rand (15)) + 15;
-    $nums {4} = int (rand (15)) + 15;
-    $nums {5} = int (rand (10)) + 40;
-
-    $used_terms {0} = 0;
-    $used_terms {1} = 0;
-    $used_terms {2} = 0;
-    $used_terms {3} = 0;
-    $used_terms {4} = 0;
-    $used_terms {5} = 0;
-    $used_terms {6} = 0;
-
-    for (my $i = 0; $i < $num_terms - 1; $i++)
+    my $pw = $_ [0];
+    if ($pw =~ m/spjwashere/img)
     {
-        my $number = int (rand (6));
-        while ($used_terms {$number} == 1)
-        {
-            $number = int (rand (6));
-        }
-        $used_terms {$number} = 1;
-        $equation .= $nums {$number};
-
-        my $operator = int (rand (7));
-        my $sign;
-        if ($operator < 2) { $sign = "+"; }
-        elsif ($operator < 4) { $sign = "-"; }
-        elsif ($operator < 6) { $sign = "*"; }
-        else { $sign = "/"; }
-        $equation .= $sign;
+        return 2;
     }
-
-    my $number = int (rand (6));
-    while ($used_terms {$number} == 1)
+    print ("\npw = $pw\n");
+    if ($pw =~ m/^......*/)
     {
-        $number = int (rand (6));
+        # Check that the other programs are running..
+        return 1;
     }
-    $used_terms {$number} = 1;
-    $equation .= $nums {$number};
-    
-    print ("ANSWER GIVEN:\n");
-    print (join (",", values (%nums))), "\n";
-    print "\n";
-    print ($equation, "\n");
-    $eq = eval ($equation);
-    print ("Answer is: ", $eq, "\n");
-
-    print ("\n\n\n\n\n\n\n\n\nNO ANSWER GIVEN:\n");
-    print (join (",", values (%nums))), "\n";
-    print "\n";
-    #print ($equation, "\n");
-    $eq = eval ($equation);
-    print ("Answer is: ", $eq, "\n");
+   return 0;
 }
 
-sub make_html_code
+sub fix_url_code
 {
-    my $string = "";
-    my $green = '#04AA6D';
-    $string = "<!DOCTYPE html>\n";
-    $string .= "<html>\n";
-    $string .= "<head>\n";
-    $string .= "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n";
-    $string .= "<style>\n";
-    $string .= ".button {\n";
-    $string .= "  background-color: $green; /* Green */\n";
-    $string .= "  border: none;\n";
-    $string .= "  color: white;\n";
-    $string .= "  padding: 20px;\n";
-    $string .= "  text-align: center;\n";
-    $string .= "  text-decoration: none;\n";
-    $string .= "  display: inline-block;\n";
-    $string .= "  font-size: 16px;\n";
-    $string .= "  margin: 4px 2px;\n";
-    $string .= "  cursor: pointer;\n";
-    $string .= "}\n";
-    $string .= ".button1 {border-radius: 12px;}\n";
-    $string .= ".answer_button {\n";
-    $string .= "  background-color: #B939C9; /* purple */\n";
-    $string .= "  border: none;\n";
-    $string .= "  color: white;\n";
-    $string .= "  padding: 20px;\n";
-    $string .= "  text-align: center;\n";
-    $string .= "  text-decoration: none;\n";
-    $string .= "  display: inline-block;\n";
-    $string .= "  font-size: 16px;\n";
-    $string .= "  margin: 4px 2px;\n";
-    $string .= "  cursor: pointer;\n";
-    $string .= "}\n";
-    $string .= ".answer_button1 {border-radius: 12px;}\n";
-    $string .= ".youranswer_button {\n";
-    $string .= "  background-color: #B9D949; /* yellowy */\n";
-    $string .= "  border: none;\n";
-    $string .= "  color: white;\n";
-    $string .= "  padding: 20px;\n";
-    $string .= "  text-align: center;\n";
-    $string .= "  text-decoration: none;\n";
-    $string .= "  display: inline-block;\n";
-    $string .= "  font-size: 16px;\n";
-    $string .= "  margin: 4px 2px;\n";
-    $string .= "  cursor: pointer;\n";
-    $string .= "}\n";
-    $string .= ".youranswer_button1 {border-radius: 12px;}\n";
-    $string .= ".operation_button {\n";
-    $string .= "  background-color: #B98949; /* bluey */";
-    $string .= "  border: none;\n";
-    $string .= "  color: white;\n";
-    $string .= "  padding: 20px;\n";
-    $string .= "  text-align: center;\n";
-    $string .= "  text-decoration: none;\n";
-    $string .= "  display: inline-block;\n";
-    $string .= "  font-size: 16px;\n";
-    $string .= "  margin: 4px 2px;\n";
-    $string .= "  cursor: pointer;\n";
-    $string .= "}\n";
-    $string .= ".operation_button1 {border-radius: 12px;}\n";
-    $string .= ".undo_button {\n";
-    $string .= "  background-color: #343499; /* bluey */";
-    $string .= "  border: none;\n";
-    $string .= "  color: white;\n";
-    $string .= "  padding: 20px;\n";
-    $string .= "  text-align: center;\n";
-    $string .= "  text-decoration: none;\n";
-    $string .= "  display: inline-block;\n";
-    $string .= "  font-size: 16px;\n";
-    $string .= "  margin: 4px 2px;\n";
-    $string .= "  cursor: pointer;\n";
-    $string .= "}\n";
-    $string .= ".undo_button1 {border-radius: 12px;}\n";
-    $string .= "</style>\n";
-    $string .= "</head>\n";
-    $string .= "<body>\n";
-    $string .= "<h2>Math Game!</h2>\n";
-
-    my $num;
-    my $num_html;
-    my $reset_button_ids = "";
-    foreach $num (sort (values (%nums)))
-    {
-        $num_html .= "<button id='button$num' onclick=\"add_to_equation($num, 'button$num')\" class=\"button button1\">$num</button>&nbsp;\n";
-        $reset_button_ids .= "enable_thing ('button$num');";
-    }
-
-    $num_html .= "<br><br><button onclick=\"add_to_equation('+')\" class=\"operation_button operation_button1\">+</button>&nbsp;\n";
-    $num_html .= "<button onclick=\"add_to_equation('-')\" class=\"operation_button operation_button1\">-</button>&nbsp;\n";
-    $num_html .= "<button onclick=\"add_to_equation('*')\" class=\"operation_button operation_button1\">*</button>&nbsp;\n";
-    $num_html .= "<button onclick=\"add_to_equation('\/')\" class=\"operation_button operation_button1\">\/</button>&nbsp;\n";
-    $num_html .= "<br><br>Your equation so far:\n";
-    $num_html .= "<br><p id='equation'></p>\n";
-    $num_html .= "<br><br>Your answer so far:\n";
-    $num_html .= "<br><br><button id=\"youranswer\" class=\"youranswer_button youranswer_button1\">&nbsp;</button>&nbsp;\n";
-    $num_html .= "<button id=\"status\" onclick=\"clear_all();$reset_button_ids\" class=\"operation_button operation_button1\">Clear</button>&nbsp;\n";
-    $num_html .= "<button id=\"undo\" onclick=\"undo_last_action();\" class=\"undo_button undo_button1\">Undo</button>&nbsp;\n";
-    $num_html .= "<button id=\"reveal\" onclick=\"reveal_answer();\" class=\"undo_button undo_button1\">Reveal Answer..</button>&nbsp;\n";
-    #$num_html .= "<br><br>Actual answer for hidden equation ($equation - based on $num_terms):\n";
-    $num_html .= "<br><br>Actual answer for hidden equation (Solution will use $num_terms terms):\n";
-    $num_html .= "<br><br><button id=\"actualanswer\" class=\"answer_button answer_button1\">$eq</button>&nbsp;\n";
-
-    $num_html .= "<script>\n";
-    $num_html .= " let old_state1 = \"\";";
-    $num_html .= " let old_state2 = \"\";";
-    $num_html .= " let old_state3 = \"\";";
-    $num_html .= " let old_state4 = \"\";";
-    $num_html .= " let old_state5 = \"\";";
-    $num_html .= " let old_state6 = \"\";";
-    $num_html .= " let old_state7 = \"\";";
-    $num_html .= " let old_state8 = \"\";";
-    $num_html .= " let old_state9 = \"\";";
-    $num_html .= " let old_state10 = \"\";";
-    $num_html .= " let old_state11 = \"\";";
-    $num_html .= " let old_button1 = \"\";";
-    $num_html .= " let old_button2 = \"\";";
-    $num_html .= " let old_button3 = \"\";";
-    $num_html .= " let old_button4 = \"\";";
-    $num_html .= " let old_button5 = \"\";";
-    $num_html .= " let old_button6 = \"\";";
-    $num_html .= " let old_button7 = \"\";";
-    $num_html .= " let old_button8 = \"\";";
-    $num_html .= " let old_button9 = \"\";";
-    $num_html .= " let old_button10 = \"\";";
-    $num_html .= " let old_button11 = \"\";";
-    $num_html .= " let track_states = 0;";
-    $num_html .= " document.getElementById('undo').disabled = true;\n";
-    $num_html .= " document.getElementById('undo').style.background='#999999';\n";
-    $num_html .= "function add_to_equation(thing_to_add, button_id)\n";
-    $num_html .= "{\n";
-    $num_html .= "    document.getElementById('equation').innerHTML = document.getElementById('equation').innerHTML + thing_to_add;\n";
-    $num_html .= "    document.getElementById('youranswer').innerHTML = eval (document.getElementById('equation').innerHTML);\n";
-    $num_html .= "    document.getElementById(button_id).disabled = true;\n";
-    $num_html .= "    document.getElementById(button_id).style.background='#999999';\n";
-    $num_html .= "    if (document.getElementById('youranswer').innerHTML == document.getElementById('actualanswer').innerHTML)\n";
-    $num_html .= "    {\n";
-    $num_html .= "        document.getElementById('status').innerHTML = 'YOU WIN!';\n";
-    $num_html .= "    }\n";
-    $num_html .= "    track_states++;";
-    $num_html .= "    if (track_states == 11) { old_state11 = document.getElementById('equation').innerHTML; old_button11 = button_id; } ";
-    $num_html .= "    if (track_states == 10) { old_state10 = document.getElementById('equation').innerHTML; old_button10 = button_id; } ";
-    $num_html .= "    if (track_states == 9) { old_state9 = document.getElementById('equation').innerHTML; old_button9 = button_id; } ";
-    $num_html .= "    if (track_states == 8) { old_state8 = document.getElementById('equation').innerHTML; old_button8 = button_id; } ";
-    $num_html .= "    if (track_states == 7) { old_state7 = document.getElementById('equation').innerHTML; old_button7 = button_id; } ";
-    $num_html .= "    if (track_states == 6) { old_state6 = document.getElementById('equation').innerHTML; old_button6 = button_id; } ";
-    $num_html .= "    if (track_states == 5) { old_state5 = document.getElementById('equation').innerHTML; old_button5 = button_id; } ";
-    $num_html .= "    if (track_states == 4) { old_state4 = document.getElementById('equation').innerHTML; old_button4 = button_id; } ";
-    $num_html .= "    if (track_states == 3) { old_state3 = document.getElementById('equation').innerHTML; old_button3 = button_id; } ";
-    $num_html .= "    if (track_states == 2) { old_state2 = document.getElementById('equation').innerHTML; old_button2 = button_id; } ";
-    $num_html .= "    if (track_states == 1) { old_state1 = document.getElementById('equation').innerHTML; old_button1 = button_id; } ";
-    $num_html .= "    document.getElementById('undo').disabled = false;\n";
-    $num_html .= "    document.getElementById('undo').style.background='#343499';\n";
-    $num_html .= "}\n";
-    $num_html .= "function clear_all()\n";
-    $num_html .= "{\n";
-    $num_html .= "    document.getElementById('equation').innerHTML = '';\n";
-    $num_html .= "    document.getElementById('youranswer').innerHTML = '&nbsp;';\n";
-    $num_html .= "    document.getElementById('status').innerHTML = 'Clear';\n";
-    $num_html .= "    document.getElementById('undo').disabled = true;\n";
-    $num_html .= "    document.getElementById('undo').style.background='#999999';\n $reset_button_ids";
-    $num_html .= "    old_state1 = \"\";";
-    $num_html .= "    old_state2 = \"\";";
-    $num_html .= "    old_state3 = \"\";";
-    $num_html .= "    old_state4 = \"\";";
-    $num_html .= "    old_state5 = \"\";";
-    $num_html .= "    old_state6 = \"\";";
-    $num_html .= "    old_state7 = \"\";";
-    $num_html .= "    old_state8 = \"\";";
-    $num_html .= "    old_state9 = \"\";";
-    $num_html .= "    old_state10 = \"\";";
-    $num_html .= "    old_state11 = \"\";";
-    $num_html .= "    old_button1 = \"\";";
-    $num_html .= "    old_button2 = \"\";";
-    $num_html .= "    old_button3 = \"\";";
-    $num_html .= "    old_button4 = \"\";";
-    $num_html .= "    old_button5 = \"\";";
-    $num_html .= "    old_button6 = \"\";";
-    $num_html .= "    old_button7 = \"\";";
-    $num_html .= "    old_button8 = \"\";";
-    $num_html .= "    old_button9 = \"\";";
-    $num_html .= "    old_button10 = \"\";";
-    $num_html .= "    old_button11 = \"\";";
-    $num_html .= "    track_states = 0;";
-    $num_html .= "}\n";
-    $num_html .= "function undo_last_action()\n";
-    $num_html .= "{\n";
-    $num_html .= "    if (track_states == 1) { clear_all(); return; } ";
-    $num_html .= "    if (track_states == 2) { document.getElementById('equation').innerHTML = old_state1; track_states = 1; enable_thing (old_button2); } ";
-    $num_html .= "    if (track_states == 3) { document.getElementById('equation').innerHTML = old_state2; track_states = 2; enable_thing (old_button3); } ";
-    $num_html .= "    if (track_states == 4) { document.getElementById('equation').innerHTML = old_state3; track_states = 3; enable_thing (old_button4); } ";
-    $num_html .= "    if (track_states == 5) { document.getElementById('equation').innerHTML = old_state4; track_states = 4; enable_thing (old_button5); } ";
-    $num_html .= "    if (track_states == 6) { document.getElementById('equation').innerHTML = old_state5; track_states = 5; enable_thing (old_button6); } ";
-    $num_html .= "    if (track_states == 7) { document.getElementById('equation').innerHTML = old_state6; track_states = 6; enable_thing (old_button7); } ";
-    $num_html .= "    if (track_states == 8) { document.getElementById('equation').innerHTML = old_state7; track_states = 7; enable_thing (old_button8); } ";
-    $num_html .= "    if (track_states == 9) { document.getElementById('equation').innerHTML = old_state8; track_states = 8; enable_thing (old_button9); } ";
-    $num_html .= "    if (track_states == 10) { document.getElementById('equation').innerHTML = old_state9; track_states = 9; enable_thing (old_button10); } ";
-    $num_html .= "    if (track_states == 11) { document.getElementById('equation').innerHTML = old_state10; track_states = 10; enable_thing (old_button11); } ";
-    $num_html .= "    document.getElementById('youranswer').innerHTML = eval (document.getElementById('equation').innerHTML);\n";
-    $num_html .= "}\n";
-    $num_html .= "function enable_thing (button_id)\n";
-    $num_html .= "{\n";
-    $num_html .= "    document.getElementById(button_id).disabled = false;\n";
-    $num_html .= "    document.getElementById(button_id).style.background='$green';\n";
-    $num_html .= "}\n";
-    $num_html .= "function reveal_answer ()\n";
-    $num_html .= "{\n";
-    $num_html .= "    document.getElementById('equation').innerHTML = '$equation';\n";
-    $num_html .= "    document.getElementById('status').innerHTML = 'YOU LOSE :(';\n";
-    $num_html .= "    document.getElementById('status').disabled = true;\n";
-    $num_html .= "    document.getElementById('undo').disabled = true;\n";
-    $num_html .= "}\n";
-
-    $num_html .= "</script>\n";
-    
-    $string .= "$num_html<br><a href=\"make_new_game_now_$eq\">Make a new game!<\/a></body>\n";
-
-
-    $string .= "</html>";
-    return $string;
+    my $txt = $_ [0];
+    $txt =~ s/\+/ /g;
+    $txt =~ s/%21/!/g;
+    $txt =~ s/%22/"/g;
+    $txt =~ s/%23/#/g;
+    $txt =~ s/%24/\$/g;
+    $txt =~ s/%25/%/g;
+    $txt =~ s/%26/&/g;
+    $txt =~ s/%27/'/g;
+    $txt =~ s/%28/(/g;
+    $txt =~ s/%29/)/g;
+    $txt =~ s/%2A/*/g;
+    $txt =~ s/%2B/+/g;
+    $txt =~ s/%2C/,/g;
+    $txt =~ s/%2D/-/g;
+    $txt =~ s/%2E/./g;
+    $txt =~ s/%2F/\//g;
+    $txt =~ s/%3A/:/g;
+    $txt =~ s/%3B/;/g;
+    $txt =~ s/%3C/</g;
+    $txt =~ s/%3D/=/g;
+    $txt =~ s/%3E/>/g;
+    $txt =~ s/%3F/?/g;
+    $txt =~ s/%40/@/g;
+    $txt =~ s/%5B/[/g;
+    $txt =~ s/%5C/\\/g;
+    $txt =~ s/%5D/]/g;
+    $txt =~ s/%5E/\^/g;
+    $txt =~ s/%5F/_/g;
+    $txt =~ s/%60/`/g;
+    $txt =~ s/%7B/{/g;
+    $txt =~ s/%7C/|/g;
+    $txt =~ s/%7D/}/g;
+    $txt =~ s/%7E/~/g;
+    return $txt;
 }
 
 # Main
@@ -400,12 +197,11 @@ sub make_html_code
     my $client_addr;
     my $pid;
     my $SERVER;
-    my $port = 1234;
+    my $port = 6725;
     my $trusted_client;
     my $data_from_client;
+    my $html_text = "";
     $|=1;
-
-    create_new_game ();
 
     socket (SERVER, PF_INET, SOCK_STREAM, $proto) or die "Failed to create a socket: $!";
     setsockopt (SERVER, SOL_SOCKET, SO_REUSEADDR, 1) or die "setsocketopt: $!";
@@ -427,25 +223,172 @@ sub make_html_code
         $client_addr = inet_ntoa ($iaddr);
         print ("\n$client_addr\n");
 
-        my $lat;
-        my $long;
         my $txt = read_from_socket (\*CLIENT);
-        print ("FIRST Checking against - $txt\n");
-        $txt =~ s/math_game\/math_game/math_game\//img;
-        $txt =~ s/math_game\/math_game/math_game\//img;
-        $txt =~ s/math_game\/math_game/math_game\//img;
-        $txt =~ s/math_game\/math_game/math_game\//img;
+        print ("Raw data was $txt\n");
+        $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
+        $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
+        $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
 
-        print ("Checking against - $txt\n");
-        if ($txt =~ m/make_new_game/im)
+        $SUPPLIED_KEYWORD = "";
+        if ($txt =~ m/^Cookie.*?SUPPLIED_KEYWORD=(\w\w\w[\w_\.\d-]+).*?(;|$)/im)
         {
-            create_new_game ();
-            my $html_text = make_html_code ();
-            write_to_socket (\*CLIENT, $html_text, "", "redirect");
+            $SUPPLIED_KEYWORD = $1;
+        }
+
+        print ("\n0pw = $SUPPLIED_KEYWORD\n");
+        my $old_authorized = is_authorized ($SUPPLIED_KEYWORD);
+        print ("\n1pw = $SUPPLIED_KEYWORD\n");
+        my $authorized = is_authorized ($SUPPLIED_KEYWORD);
+        if ($txt =~ m/keyword=(\w\w\w[\w_\.\d-]+) HTTP/im)
+        {
+            $SUPPLIED_KEYWORD = $1;
+            print ("\n2pw = $SUPPLIED_KEYWORD\n");
+            $authorized = is_authorized ($SUPPLIED_KEYWORD);
+            $SUPPLIED_KEYWORD = $1;
+        }
+
+        if ($old_authorized > $authorized)
+        {
+            $authorized = $old_authorized;
+        }
+
+        if ($authorized == 0)
+        {
+            $html_text = "<font color=red>Supply keyword here:</font><br><br>";
+            $html_text .= "
+                <form action=\"/secure_paste/keyword\">
+                <label for=\"keyword\">Keyword:</label><br>
+                <input type=\"text\" id=\"keyword\" name=\"keyword\" value=\"xyzabc\"><br>
+                <input type=\"submit\" value=\"Supply keyword to proceed\">
+                </form><br>Authorized: $authorized<br>You supplied: $SUPPLIED_KEYWORD<br> from: <br>>>$txt<<";
+            $SUPPLIED_KEYWORD = "";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
 
-        my $html_text = make_html_code ();
+        $txt =~ m/GET (.*) HTTP/;
+        my $original_url = $1;
+
+        if ($txt =~ m/.*favico.*/m)
+        {
+            my $size = -s ("d:/perl_programs/aaa.jpg");
+            print (">>>>> size = $size\n");
+            my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
+            print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
+            syswrite (\*CLIENT, $h);
+            copy "d:/perl_programs/aaa.jpg", \*CLIENT;
+            next;
+        }
+
+        print ("Dealing with >>>$txt<<<\n");
+
+        if ($authorized > 1 && $txt =~ m/GET.*show_history.*/m)
+        {
+            $txt =~ m/(........show_examples.......)/im;
+            
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
+            my $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.txt`;
+            $listing =~ s/d:\\.*\\//img;
+            print ("Found >>> $listing\n");
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing </body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
+        if ($authorized > 1 && $txt =~ m/GET.*old_paste.(.*)/i)
+        {
+            my $file = $1;
+            $file =~ s/ HTTP.*//;
+            $file =~ s/\n//img;
+            $file =~ s/^.*old_paste.PASTE/PASTE/;
+            print ("Going to look at... d:\\perl_programs\\secure_paste\\$file\n");
+            my $old_paste = `type d:\\perl_programs\\secure_paste\\$file`;
+            print ("Adding it under: $file\n");
+            $all_pasted_text{$file} = fix_url_code ($old_paste);
+        }
+
+        if ($txt =~ m/GET/m)
+        {
+            $txt =~ m/(........secure_paste.......)/im;
+            my $matching_text = $1;
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Copy Paste</h1> <br>
+<form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\">
+<textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">$all_pasted_text{$SUPPLIED_KEYWORD}</textarea>
+<input type=\"submit\" value=\"Create New Paste\" class=\"submitButton\">
+</form><br>Current pasted text for '$SUPPLIED_KEYWORD':<br><pre>$all_pasted_text{$SUPPLIED_KEYWORD}</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a> Authorized = $authorized";
+
+            if ($authorized > 1)
+            {
+                my $k;
+                foreach $k (sort (keys (%all_pasted_text)))
+                {
+                    $html_text .= "<br>Paste: <a href='/secure_paste/keyword?keyword=$k'>$k (" . length ($all_pasted_text {$k}). ")</a><br>";
+                }
+            }
+            $html_text .= "<br>See history here: <a href=\"/secure_paste/show_history\">History</a></body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+        
+        if ($txt =~ m/POST.*updated_paste.*/i)
+        {
+            my $secure_paste = $txt;
+            my $new_paste = "";
+            my $discard_header = 1;
+
+            while ($secure_paste =~ s/^(.*?)(\n|$)//im && $discard_header >= 0)
+            {
+                my $line = $1;
+                if ($line =~ m/^$/ || $line =~ m/^
+$/)
+                {
+                    $discard_header --;
+                }
+
+                if (!$discard_header)
+                {
+                    $new_paste .= "$line\n";
+                }
+            }
+
+            $new_paste =~ s/^
+$//img;
+            $new_paste =~ s/^\n$//img;
+            $new_paste =~ s/^\n$//img;
+            $new_paste =~ s/^.*newpaste=//img;
+            $new_paste =~ s/%0D%0A/<br>/img;
+            $all_pasted_text{$SUPPLIED_KEYWORD} = fix_url_code ($new_paste);
+
+            {
+                my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+                my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+                print ("> d:\\perl_programs\\secure_paste\\PASTE_$SUPPLIED_KEYWORD.$yyyymmddhhmmss.txt");
+                open PASTE_FILE, ("> d:\\perl_programs\\secure_paste\\PASTE_$SUPPLIED_KEYWORD.$yyyymmddhhmmss.txt");
+                print PASTE_FILE fix_url_code ($new_paste);
+                close PASTE_FILE;
+            }
+
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body><h1>Copy Paste</h1> <br>
+<form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\">
+<textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">$all_pasted_text{$SUPPLIED_KEYWORD}</textarea>
+<input type=\"submit\" value=\"Create New Paste\" class=\"submitButton\">
+</form><br>Current pasted text for '$SUPPLIED_KEYWORD':<br>$all_pasted_text{$SUPPLIED_KEYWORD}<br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a> 2ndAuthorized = $authorized";
+            if ($authorized > 1)
+            {
+                my $k;
+                foreach $k (sort (keys (%all_pasted_text)))
+                {
+                    $html_text .= "<br>Paste: <a href='/secure_paste/keyword?keyword=$k'>$k (" . length ($all_pasted_text {$k}). ")</a><br>";
+                }
+            }
+
+            $html_text .= "<br>See history here: <a href=\"/secure_paste/show_history\">History</a></body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
         write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+        print ("============================================================\n");
     }
 }
