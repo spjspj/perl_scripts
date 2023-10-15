@@ -35,11 +35,18 @@ sub write_to_socket
     my $msg_body = $_ [1];
     my $form = $_ [2];
     my $redirect = $_ [3];
+    my $is_admin_session = $_ [4];
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
     print $yyyymmddhhmmss, "\n";
 
     $msg_body = $msg_body;
+
+    my $admin_cookie;
+    if ($is_admin_session)
+    {
+        $admin_cookie = "Set-Cookie: ADMIN_SESSION=1\n";
+    }
 
     my $header;
     if ($redirect =~ m/^redirect/i)
@@ -54,7 +61,7 @@ sub write_to_socket
         }
         else
         {
-            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html\nSet-Cookie: SUPPLIED_KEYWORD=$SUPPLIED_KEYWORD\nContent-Length: " . length ($msg_body) . "\n\n";
+            $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nContent-Type: text/html\nSet-Cookie: SUPPLIED_KEYWORD=$SUPPLIED_KEYWORD\n" . $admin_cookie . "Content-Length: " . length ($msg_body) . "\n\n";
         }
     }
 
@@ -133,16 +140,27 @@ sub read_from_socket
     return $header;
 }
 
-sub is_authorized
+sub has_valid_keyword
+{
+    my $pw = $_ [0];
+    print ("\npw = $pw\n");
+    if ($pw =~ m/^......*/)
+    {
+        # Check that the other programs are running..
+        return 1;
+    }
+   return 0;
+}
+
+sub get_admin_session
 {
     my $pw = $_ [0];
     if ($pw =~ m/spjwashere/img)
     {
-        return 2;
+        return 1;
     }
-    if ($pw =~ m/^......*/)
+    if ($pw =~ m/ADMIN_SESSION/img)
     {
-        # Check that the other programs are running..
         return 1;
     }
    return 0;
@@ -200,6 +218,7 @@ sub fix_url_code
     my $trusted_client;
     my $data_from_client;
     my $html_text = "";
+    my $is_admin_session;
     $|=1;
 
     socket (SERVER, PF_INET, SOCK_STREAM, $proto) or die "Failed to create a socket: $!";
@@ -222,7 +241,6 @@ sub fix_url_code
         $client_addr = inet_ntoa ($iaddr);
         print ("\n$client_addr\n");
 
-
         my $txt = read_from_socket (\*CLIENT);
         print ("Raw data was $txt\n");
         $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
@@ -230,28 +248,43 @@ sub fix_url_code
         $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
 
         $SUPPLIED_KEYWORD = "";
-        if ($txt =~ m/^Cookie.*?SUPPLIED_KEYWORD=(\w\w\w[\w_]+).*?(;|$)/im)
+        if ($txt =~ m/^Cookie.*?SUPPLIED_KEYWORD=(\w\w\w[\w_\.\d-]+).*?(;|$)/im)
         {
             $SUPPLIED_KEYWORD = $1;
         }
 
-        if ($txt =~ m/keyword=(\w\w\w[\w_]+) HTTP/im)
+        $is_admin_session = get_admin_session ($txt);
+
+        print ("\n0pw = $SUPPLIED_KEYWORD\n");
+        my $old_valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
+        print ("\n1pw = $SUPPLIED_KEYWORD\n");
+        my $valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
+
+
+        if ($txt =~ m/keyword=(\w\w\w[\w_\.\d-]+) HTTP/im)
         {
+            $SUPPLIED_KEYWORD = $1;
+            print ("\n2pw = $SUPPLIED_KEYWORD\n");
+            $valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
             $SUPPLIED_KEYWORD = $1;
         }
 
-        my $authorized = is_authorized ($SUPPLIED_KEYWORD);
-        if ($authorized == 0)
+        if ($old_valid_keyword > $valid_keyword)
         {
-            $SUPPLIED_KEYWORD = "";
+            $valid_keyword = $old_valid_keyword;
+        }
+
+        if ($valid_keyword == 0)
+        {
             $html_text = "<font color=red>Supply keyword here:</font><br><br>";
             $html_text .= "
                 <form action=\"/secure_paste/keyword\">
                 <label for=\"keyword\">Keyword:</label><br>
                 <input type=\"text\" id=\"keyword\" name=\"keyword\" value=\"xyzabc\"><br>
                 <input type=\"submit\" value=\"Supply keyword to proceed\">
-                </form>";
-            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+                </form><br>You supplied: $SUPPLIED_KEYWORD<br>";
+            $SUPPLIED_KEYWORD = "";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
         }
 
@@ -270,26 +303,58 @@ sub fix_url_code
         }
 
         print ("Dealing with >>>$txt<<<\n");
+
+        if ($is_admin_session == 1 && $txt =~ m/GET.*show_history.*/m)
+        {
+            $txt =~ m/(........show_examples.......)/im;
+            
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
+            my $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.txt`;
+            $listing =~ s/d:\\.*\\//img;
+            print ("Found >>> $listing\n");
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing </body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
+            next;
+        }
+
+        if ($is_admin_session == 1 && $txt =~ m/GET.*old_paste.(.*)/i)
+        {
+            my $file = $1;
+            $file =~ s/ HTTP.*//;
+            $file =~ s/\n//img;
+            $file =~ s/^.*old_paste.PASTE/PASTE/;
+            print ("Going to look at... d:\\perl_programs\\secure_paste\\$file\n");
+            my $old_paste = `type d:\\perl_programs\\secure_paste\\$file`;
+            print ("Adding it under: $file\n");
+            $all_pasted_text{$file} = fix_url_code ($old_paste);
+        }
+
         if ($txt =~ m/GET/m)
         {
             $txt =~ m/(........secure_paste.......)/im;
             my $matching_text = $1;
-            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Copy Paste</h1> <br>
-<form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\">
-<textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">$all_pasted_text{$SUPPLIED_KEYWORD}</textarea>
-<input type=\"submit\" value=\"Create New Paste\" class=\"submitButton\">
-</form><br>Current pasted text for '$SUPPLIED_KEYWORD':<br>$all_pasted_text{$SUPPLIED_KEYWORD}<br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a>";
+            my $pasted_txt = $all_pasted_text {$SUPPLIED_KEYWORD};
 
-            if ($authorized == 2)
+            if (length ($pasted_txt) == 0)
             {
+                $pasted_txt .= "<font color=red>NB: Nothing pasted as yet for $SUPPLIED_KEYWORD</font>";
+            }
+            
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Copy Paste</h1> <br>";
+            if ($is_admin_session == 1)
+            {
+                $html_text .= "<form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\"> <textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">$all_pasted_text{$SUPPLIED_KEYWORD}</textarea> <input type=\"submit\" value=\"Create New Paste\" class=\"submitButton\"></form>";
                 my $k;
                 foreach $k (sort (keys (%all_pasted_text)))
                 {
-                    $html_text .= "<br>Paste: <a href='/secure_paste/keyword?keyword=$k'>$all_pasted_text{$k}</a>";
+                    $html_text .= "<br>&nbsp;See paste here: <a href='/secure_paste/keyword?keyword=$k'>$k (" . length ($all_pasted_text {$k}). ")</a>";
                 }
+                $html_text .= "<br>&nbsp;<a href=\"/secure_paste/show_history\">History</a><br>";
             }
-            $html_text .= "</body> </html>";
-            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            $html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD':<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+            
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
         }
         
@@ -322,27 +387,41 @@ $//img;
             $new_paste =~ s/%0D%0A/<br>/img;
             $all_pasted_text{$SUPPLIED_KEYWORD} = fix_url_code ($new_paste);
 
-            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body><h1>Copy Paste</h1> <br>
-<form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\">
-<textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">$all_pasted_text{$SUPPLIED_KEYWORD}</textarea>
-<input type=\"submit\" value=\"Create New Paste\" class=\"submitButton\">
-</form><br>Current pasted text for '$SUPPLIED_KEYWORD':<br>$all_pasted_text{$SUPPLIED_KEYWORD}<br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a>";
-            if ($authorized == 2)
+            if ($is_admin_session == 1)
             {
+                my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+                my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+                print ("> d:\\perl_programs\\secure_paste\\PASTE_$SUPPLIED_KEYWORD.$yyyymmddhhmmss.txt");
+                open PASTE_FILE, ("> d:\\perl_programs\\secure_paste\\PASTE_$SUPPLIED_KEYWORD.$yyyymmddhhmmss.txt");
+                print PASTE_FILE fix_url_code ($new_paste);
+                close PASTE_FILE;
+            }
+
+            my $pasted_txt = $all_pasted_text {$SUPPLIED_KEYWORD};
+            if (length ($pasted_txt) == 0)
+            {
+                $pasted_txt = "<font color=red>NB: Nothing pasted as yet for $SUPPLIED_KEYWORD</font>";
+            }
+
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body><h1>Copy Paste</h1> <br>";
+
+            if ($is_admin_session == 1)
+            {
+                $html_text .= "<form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\"> <textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">$all_pasted_text{$SUPPLIED_KEYWORD}</textarea> <input type=\"submit\" value=\"Create New Paste\" class=\"submitButton\"></form>";
                 my $k;
                 foreach $k (sort (keys (%all_pasted_text)))
                 {
-                    $html_text .= "<br>Paste: <a href='/secure_paste/keyword?keyword=$k'>$all_pasted_text{$k}</a>";
+                    $html_text .= "<br>&nbsp;See paste here: <a href='/secure_paste/keyword?keyword=$k'>$k (" . length ($all_pasted_text {$k}). ")</a>";
                 }
+                $html_text .= "<br>&nbsp;<a href=\"/secure_paste/show_history\">History</a><br>";
             }
 
-            $html_text .= "</body> </html>";
-            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            $html_text .= "<br>Current pasted text for '$SUPPLIED_KEYWORD':<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
-
         }
 
-        write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+        write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
         print ("============================================================\n");
     }
 }
