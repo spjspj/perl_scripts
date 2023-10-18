@@ -28,6 +28,7 @@ my %each_element;
 my $each_element_count = 0;
 
 my $SUPPLIED_KEYWORD;
+my $SUPPLIED_FILE_NAME;
 
 sub write_to_socket
 {
@@ -122,8 +123,8 @@ sub read_from_socket
         # Content-Disposition: form-data; name="file"; filename="asdf.bmp"
         # Content-Type: image/bmp
         #
-        # BM6x      6   (   ¦   P   ? ?                                                                         
-        #                                                '¦ '¦ '¦ '¦ '¦                            '¦ '¦ '¦ '¦ '
+        # BM6x      6   (   Â¦   P   ? ?                         Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â 
+        # Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â 'Â¦Â 'Â¦Â 'Â¦Â 'Â¦Â 'Â¦Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â 'Â¦Â 'Â¦Â 'Â¦Â 'Â¦Â '
         #  etc
         #  etc..
         #  -----------------------------16872368921677059352327625213--
@@ -172,13 +173,26 @@ sub read_from_socket
         {
             $seen_content_len ++;
             $count ++;
-            if ($count > $content_length - 2000 && $count % 100 == 0)
-            {
-                print "ALMOST FINSIHING - seen $count characters.. of $content_length\n";
-            }
             if ($count == $content_length)
             {
-                print "FINSIHING - seen $count characters..\n";
+                $content =~ m/^.*?filename="(.*?)"/im;
+                $SUPPLIED_FILE_NAME = $1;
+                my $delete_head = 1;
+                while ($content =~ m/^(..*?)\x0D\x0A/im && $delete_head)
+                {
+                    my $a = $1;
+                    if ($a =~ m/.*:/)
+                    {
+                        $content =~ s/^(..*?)\x0D\x0A//im;
+                    }
+                    else
+                    {
+                        $content =~ s/^\x0D\x0A//im;
+                        $delete_head = 0;
+                    }
+                }
+
+                print $content;
                 return ($header, $content);
             }
             if ($seen_content_len > 0)
@@ -191,21 +205,17 @@ sub read_from_socket
         {
             $actual_content_length ++;
         }
+
         if (ord ($ch) == 13 and ord ($prev_ch) == 10 && $actual_content_length == -1)
         {
             print "\n!! starting actual from here!!\n";
             $actual_content_length++;
         }
 
-
         if ($seen_boundary_number == 1 && $header =~ m/\x0A--+$boundary_number(.)/img)
         {
-            print (">>>\nHEADER BEGINS HERE (0xA - $boundary_number):\n\n$header\nAND FINI\n");
-            print (">>>\nCONTENT BEGINS HERE:\n\n$content\nAND FINI AS WELL\n");
-            print ("SEEN BOUNDARY CONDITION!!\n");
             $seen_boundary_number = 2;
             $seen_content_len = -1;
-            print "aaaaa\n";
             my $new_content;
             $content = $new_content;
             $count = $actual_content_length;
@@ -498,16 +508,6 @@ sub get_drag_drop_body
 
         my ($txt, $content) = read_from_socket (\*CLIENT);
         print ("Raw data was $txt\n");
-        if (length ($content) > 0)
-        {
-            print ("Was a post!!\n");
-            print (length ($content) ." was length!!\n");
-
-            open my $fh, '>', "d:/d_downloads/test.bmp" or die;
-            binmode $fh;
-            syswrite ($fh, $content);
-            close ($fh);
-        }
         $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
         $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
         $txt =~ s/secure_paste\/secure_paste/secure_paste\//img;
@@ -519,6 +519,19 @@ sub get_drag_drop_body
         }
 
         $is_admin_session = get_admin_session ($txt);
+
+        if ($is_admin_session && length ($content) > 0)
+        {
+            print ("Was a post!!\n");
+            print (length ($content) ." was length!!\n");
+
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+            my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+            open my $fh, '>', "d:/perl_programs/secure_paste/$SUPPLIED_FILE_NAME";
+            binmode $fh;
+            syswrite ($fh, $content);
+            close ($fh);
+        }
 
         print ("\n0pw = $SUPPLIED_KEYWORD\n");
         my $old_valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
@@ -633,7 +646,8 @@ sub get_drag_drop_body
             while ($secure_paste =~ s/^(.*?)(\n|$)//im && $discard_header >= 0)
             {
                 my $line = $1;
-                if ($line =~ m/^$/ || $line =~ m/^$/)
+                if ($line =~ m/^$/ || $line =~ m/^
+$/)
                 {
                     $discard_header --;
                 }
@@ -644,7 +658,8 @@ sub get_drag_drop_body
                 }
             }
 
-            $new_paste =~ s/^$//img;
+            $new_paste =~ s/^
+$//img;
             $new_paste =~ s/^\n$//img;
             $new_paste =~ s/^\n$//img;
             $new_paste =~ s/^.*newpaste=//img;
