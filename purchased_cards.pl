@@ -55,25 +55,14 @@ sub write_to_socket
         }
     }
 
-    #my $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nAccept-Ranges: bytes\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
-    #my $header = "HTTP/1.1 301 Moved\nLocation: /full0\nLast-Modified: $yyyymmddhhmmss\nAccept-Ranges: bytes\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
-
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body = $header . $msg_body;
     $msg_body =~ s/\.png/\.npg/;
     $msg_body =~ s/img/mgi/;
-    #$msg_body .= chr(13) . chr(10);
     $msg_body .= chr(13) . chr(10) . "0";
-    #print ("\n===========\nWrite to socket: $msg_body\n==========\n");
     print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
-
-    #unless (defined (syswrite ($sock_ref, $msg_body)))
-    #{
-    #    return 0;
-    #}
-    #print ("\n&&&$redirect&&&&&&&&&&&&\n", $msg_body, "\nRRRRRRRRRRRRRR\n");
     syswrite ($sock_ref, $msg_body);
 }
 
@@ -122,10 +111,12 @@ my %all_cards_place;
 my %all_cards_color;
 my %all_cards_price;
 my %all_cards_div_name;
+my %all_cards_price_div_name;
 
 sub add_new_card
 {
     my $line = $_ [0];
+    my $type = $_ [1];
     $line = fix_url_code ($line);
     if ($line =~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\$*\d+\.\d\d|\$\d+|)(;|$)/)
     {
@@ -148,6 +139,7 @@ sub add_new_card
         my $div_name = "div_$card";
         $div_name =~ s/\W+/_/img;
         $all_cards_div_name {$card} = $div_name;
+        $all_cards_price_div_name {$card} = $div_name . "_price";
     }
     elsif ($line =~ m/^([^;]+?);(want);(.); *; *;([^;]+?);/)
     {
@@ -163,10 +155,11 @@ sub add_new_card
         my $div_name = "want_div_$card";
         $div_name =~ s/\W+/_/img;
         $all_cards_div_name {$card} = $div_name;
+        $all_cards_price_div_name {$card} = $div_name . "_price";
     }
     else
     {
-        print ("Found error with: $line\n");
+        print ("$type -- Found error with: $line\n");
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\d+\.\d\d|\$*\d+|)(;|$)/)
         {
             print ("1 failed ($line) here\n");
@@ -216,7 +209,7 @@ sub read_all_cards
     while (<ALL>)
     {
         chomp $_;
-        add_new_card ($_);
+        add_new_card ($_, "cards_list");
     }
     close ALL;
 }
@@ -235,7 +228,7 @@ sub read_all_purchased_cards
         $purchased_cards {$line} = 1;
         $line =~ s/"//g;
         $line =~ s/,/;/g;
-        add_new_card ($line);
+        add_new_card ($line, "purchase");
     }
     close ALL;
 }
@@ -347,8 +340,6 @@ sub fix_url_code
 
         my $authorized = is_authorized ($SUPPLIED_PASSWORD);
 
-        
-
         if ($txt =~ m/.*favico.*/m)
         {
             my $size = -s ("d:/perl_programs/aaa.jpg");
@@ -378,13 +369,14 @@ sub fix_url_code
             next;
         }
         # Have got all information?? https://xmage.au/purchasedcards/card_info?card_name=Arcane+Adaptation&purchased=ronin&color=blue&type=enchantment&price=0.00 HTTP/1.1
-        if ($txt =~ m/card_info\?card_name=(.*?)&purchased=(.*?)&color=(.*?)&type=(.*?)&price=((\d+)\.(\d+)|\d+) HTTP/im)
+        if ($authorized && $txt =~ m/card_info\?card_name=(.*?)&purchased=(.*?)&color=(.*?)&type=(.*?)&price=((\d+)\.(\d+)|\d+) HTTP/im)
         {
             my $card = $1;
             my $place = $2;
             my $color = $3;
             my $card_type = $4;
             my $price = $5;
+            $card = s/\+/ /img;
 
             $color =~ m/^(.)/;
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -403,7 +395,31 @@ sub fix_url_code
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
-        elsif ($txt =~ m/\/card\?(.*)\Wplace\?(.*) HTTP/im)
+        elsif ($authorized && $txt =~ m/card_wanted\?card_name=(.*?)&color=(.*?)&type=(.*?) HTTP/im)
+        {
+            my $card = $1;
+            my $color = $2;
+            my $card_type = $3;
+            $card =~ s/\+/ /img;
+
+            $color =~ m/^(.)/;
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+            my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+            
+            my $card_type_fl = $card_type;
+            $card_type_fl =~ s/^(.).*/$1/;
+
+            # name;have;type;date;place;color;price;currency;
+            my $card_line = "$card;want;$card_type_fl; ; ;$color;\$0.00;proposed;\r\n";
+            open PURCHASES, ">> D:/D_Downloads/apache_lounge/Apache24/cgibin/cards_list.txt";
+            print PURCHASES $card_line;
+            close PURCHASES;
+            my $html_text = "Noted - $card wanted (card color was $color and type was $card_type)<br>Return to <a href=\"\/purchasedcards\/\">List here<\/a>\n";
+            add_new_card ($card_line, "purchase");
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+        elsif ($authorized && $txt =~ m/\/card\?(.*)\Wplace\?(.*) HTTP/im)
         {
             my $card = $1;
             my $place = $2;
@@ -453,7 +469,46 @@ sub fix_url_code
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
-        print "DID NOT PURCHASED SOMETHING!!!\n";
+        elsif ($authorized && $txt =~ m/card_wanted\?card_name=(.*?) HTTP/im)
+        {
+            my $card = $1;
+            my $html_text;
+            
+            $html_text = "<font color=red>New Wanted Card information:</font><br><br>";
+            $card =~ s/%20/ /img;
+            $html_text .= "<form action=\"/purchasedcards/card_wanted\">
+                <label for=\"card_name\">Card name:</label><br>
+                <input type=\"text\" id=\"card_name\" name=\"card_name\" value=\"$card\"><br><br>
+                <label for=\"card_name\">color:</label><br>
+                <select id=\"color\" name=\"color\">
+                    <option value=\"Select\">Select....</option>
+                    <option value=\"white\">white</option>
+                    <option value=\"blue\">blue</option>
+                    <option value=\"black\">black</option>
+                    <option value=\"red\">red</option>
+                    <option value=\"green\">green</option>
+                    <option value=\"colorless\">colorless</option>
+                    <option value=\"mulitcolored\">multicolored</option>
+                </select><br><br>
+                <label for=\"card_name\">Type:</label><br>
+                <select id=\"type\" name=\"type\">
+                    <option value=\"Select\">Select....</option>
+                    <option value=\"creature\">creature</option>
+                    <option value=\"enchantment\">enchantment</option>
+                    <option value=\"artifact\">artifact</option>
+                    <option value=\"land\">land</option>
+                    <option value=\"saga\">saga</option>
+                    <option value=\"battle\">battle</option>
+                    <option value=\"planewalker\">planewalker</option>
+                    <option value=\"instant\">instant</option>
+                    <option value=\"sorcery\">sorcery</option>
+                    <option value=\"planeswalker\">planeswalker</option>
+                </select><br><br>
+                <input type=\"submit\" value=\"Submit\">
+                </form>\n";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
         print "$txt\n";
 
         print ("Read -> $txt\n");
@@ -640,7 +695,8 @@ sub fix_url_code
         }
 
         $html_text .= "<thead>\n";
-        $html_text .= "<br>Overall price was: \$XXX (from YYY cards)<br>";
+        $html_text .= "<br>Overall price was: \$XXX (from YYY cards)";
+        $html_text .= "&nbsp;&nbsp;&nbsp;<a href=\"card_wanted?card_name=Library of Congress\">New card wanted</a> </font>\n </td>\n";
         $html_text .= "<br>QQQ<br>";
        
         $html_text .= "<tr>\n";
@@ -762,12 +818,13 @@ sub fix_url_code
                 $row .= " <td> <font color=\"$fontcolor\">$all_cards_have{$card}</a></font></td>\n";
                 $fake_row .= "have=$all_cards_have{$card} ; ";
 
+                my $price_div_name = $all_cards_price_div_name {$card};
                 my $d = $all_cards_date{$card};
                 $row .= " <td> <font color=\"$fontcolor\">$d</a> </font>\n </td>\n";
                 $fake_row .= "date=$d ; ";
                 $row .= " <td> <font color=\"$fontcolor\">$all_cards_place{$card}</a> </font>\n </td>\n";
                 $fake_row .= "place=$all_cards_place{$card} ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$all_cards_price{$card}</a> </font>\n </td>\n";
+                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$all_cards_price{$card}</a></font></div>\n </td>\n";
                 $fake_row .= "price=$all_cards_price{$card} ; ";
                 my $current_price = $all_cards_price{$card};
                 $row .= " <td> <font color=\"$fontcolor\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
@@ -813,11 +870,11 @@ sub fix_url_code
                 $c =~ s/\W/ /img;
                 if ($div_name =~ m/^want/)
                 {
-                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; getResponse(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), 0); }'><font size=-3>Image</font></div></td>\n";
+                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; getResponse(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }'><font size=-3>Image</font></div></td>\n";
                 }
                 else
                 {
-                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; getResponse(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), 0); }'><font size=-3>Image</font></div></td>\n";
+                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; getResponse(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }'><font size=-3>Image</font></div></td>\n";
                 }
                 $row =~ s/\n//img;
 
@@ -909,7 +966,7 @@ sub fix_url_code
             $html_text .= "var done_$div_name = 0\n";
         }
 
-        $html_text .= "async function getResponse(url, theObj, bigOrSmall) {\n";
+        $html_text .= "async function getResponse(url, theObj, priceObj, bigOrSmall) {\n";
         $html_text .= "    let response = await fetch(url);\n";
         $html_text .= "    let response_json = await response.json();\n";
         $html_text .= "    var image = new Image();\n";
@@ -924,6 +981,19 @@ sub fix_url_code
         $html_text .= "    }\n";
         $html_text .= "    theObj.innerHTML = '';\n";
         $html_text .= "    theObj.appendChild(image);\n";
+        $html_text .= "    var profit_lost = priceObj.innerHTML;\n";
+        $html_text .= "    const re = /^.*\\\$/img;\n";
+        $html_text .= "    const re2 = /(\\.\\d\\d).*\$/img;\n";
+        $html_text .= "    profit_lost = profit_lost.replace (re,\"\");\n";
+        $html_text .= "    profit_lost = profit_lost.replace (re2,'\\\$1');\n";
+        $html_text .= "    profit_lost = eval (profit_lost + \"-1 * \" + response_json.prices.usd);\n";
+        $html_text .= "    profit_lost = parseFloat (profit_lost).toFixed (2);\n";
+        $html_text .= "    if (profit_lost < 0) { ";
+        $html_text .= "        profit_lost = -1 * profit_lost; ";
+        $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=darkgreen>Profit=\" + profit_lost + \"</font>\";\n";
+        $html_text .= "    } else  { ";
+        $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=red>Loss=\" + profit_lost + \"</font>\";\n";
+        $html_text .= "    }";
         $html_text .= "}\n";
         $html_text .= "</script>\n";
 
