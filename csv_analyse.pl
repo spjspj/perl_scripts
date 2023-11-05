@@ -1044,6 +1044,54 @@ sub do_len_expansion
     return $field_val;
 }
 
+sub do_abs_expansion 
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ABS)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/abs($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_rand_expansion 
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((RAND)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/rand($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_round_expansion 
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ROUND)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/int($1+0.5)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
 sub do_if_expansion
 {
     my $field_val = $_ [0];
@@ -1364,6 +1412,18 @@ sub perl_expansions
     if ($str =~ m/IF\(/)
     {
         $str = do_if_expansion ($str);
+    }
+    if ($str =~ m/ABS\(/)
+    {
+        $str = do_abs_expansion ($str);
+    }
+    if ($str =~ m/RAND\(/)
+    {
+        $str = do_rand_expansion ($str);
+    }
+    if ($str =~ m/ROUND\(/)
+    {
+        $str = do_round_expansion ($str);
     }
 
     # General cleanup..
@@ -3773,8 +3833,9 @@ $//img;
                             $group_counts {$this_group}++;
 
                             $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
+                            print (">>> AA group price - $pot_group_price = get_field_value ($old_row_num, COLUMn=??" . get_num_of_col_header ($chosen_col) . ", 0, $show_formulas)\n");
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
-                            $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
+                            $group_prices {$this_group . "_calc"} .= "+$pot_group_price (AA $old_row_num,$chosen_col)";
                             print ("$this_group --- $pot_group_price\n");
                         }
                         elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
@@ -3785,7 +3846,7 @@ $//img;
                                 $group_counts {$this_group}++;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
-                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
+                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price (BB $old_row_num,$chosen_col)";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
@@ -3822,7 +3883,7 @@ $//img;
                                 $group_counts {$this_group}++;
                                 $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
-                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price ($old_row_num,$chosen_col)";
+                                $group_prices {$this_group . "_calc"} .= "+$pot_group_price (CC $old_row_num,$chosen_col)";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
                                 $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
