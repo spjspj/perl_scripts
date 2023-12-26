@@ -25,6 +25,7 @@ my $pulse_index = 0;
 my %outputs;
 my $string = "broadcaster->a,b,cXX%a->bXX%b->cXX%c->invXX&inv->aXX";
 my $string = "broadcaster->aXX%a->inv,conXX&inv->bXX%b->conXX&con->outputXX";
+my $string = "broadcaster->nr,tn,bx,nxXX%bz->rb,mfXX%tn->kb,mdXX%jp->psXX&kc->rxXX%dh->kb,ltXX%lt->cq,kbXX%ps->mf,fhXX%sr->nh,jhXX%jg->tvXX%bx->fd,jgXX%kg->fd,lgXX%fh->dpXX%hv->mf,bzXX%mj->zvXX%rz->gq,mfXX%tc->tdXX%bl->fdXX%lg->fd,qjXX%gq->hc,mfXX%kh->ckXX%td->kb,bmXX%cq->kx,kbXX%zv->tkXX&nh->kh,zv,tk,mj,nx,qm,phXX%tk->mcXX%nr->jp,mfXX%bt->rzXX%dj->nh,qmXX%qt->gb,fdXX%rb->mfXX&ph->kcXX%dp->bt,mfXX&kb->hn,md,tc,tn,mrXX%gb->fd,qsXX&vn->kcXX%rt->kg,fdXX%ck->nh,srXX%qx->rt,fdXX%jh->pt,nhXX%mr->rsXX%nx->nh,djXX%qm->mjXX&fd->bx,kt,jgXX%rs->kb,dhXX%bm->kb,mrXX%tv->qx,fdXX%pt->nhXX%qj->qt,fdXX%kx->kbXX%qs->bl,fdXX%md->hhXX%hh->tc,kbXX%mc->kh,nhXX%hc->hvXX&kt->kcXX&mf->fh,vn,bt,hc,nr,jpXX&hn->kcXX";
 my $orig_string = $string;
 my $round_number = 0;
 
@@ -55,7 +56,7 @@ sub get_all_objects
     my $copy_string = $orig_string;
     while ($copy_string =~ s/XX(%|[^a-z])([a-z]+)//)
     {
-        print ("$round_number: Make new object $2 that is $1\n");
+        #print ("$round_number: Make new object $2 that is $1\n");
         make_new_object ($2, $1);
     }
 }
@@ -67,7 +68,7 @@ sub send_pulse
     my $pulse_low_or_high = $_ [2];
     my $reason = $_ [3];
 
-    print ("\n$round_number: Sending pulse ($pulse_index) from -> ($from to $to with value: $pulse_low_or_high) -- Reason for pulse = $reason\n");
+    #print ("\n$round_number: Sending pulse ($pulse_index) from -> ($from to $to with value: $pulse_low_or_high) -- Reason for pulse = $reason\n");
     $pulses {$pulse_index} = $from . "X" . $to . "X" . $pulse_low_or_high;
     $pulses_dealt_with {$pulse_index} = 0;
     $pulse_index++;
@@ -87,7 +88,7 @@ sub broadcast
     while ($input =~ s/^([a-z]+)(,|X)//)
     {
         my $object_name = $1;
-        print ("$round_number:Object named $object_name\n");
+        #print ("$round_number:Object named $object_name\n");
         send_pulse ("broadcast", $object_name, 0, "aaa");
     }
 }
@@ -104,7 +105,7 @@ sub set_inputs
         $num_inputs++;
         $objects_inputs_names {$input . $num_inputs} = $1;
     }
-    print ("$round_number: set_inputs - Found $num_inputs for $input!!\n");
+    #print ("$round_number: set_inputs - Found $num_inputs for $input!!\n");
     return $num_inputs;
 }
 
@@ -121,7 +122,7 @@ sub set_outputs
         my $input = $2;
         my $output = $3;
         $num_outputs++;
-        print ("   $round_number:  $input goes to $output\n");
+        #print ("   $round_number:  $input goes to $output\n");
         $objects_outputs_names {$input . $num_outputs} = $output;
     }
     while ($copy_string =~ s/XX([%&])($input)->([^,X]+?)XX//)
@@ -130,11 +131,11 @@ sub set_outputs
         my $input = $2;
         my $output = $3;
         $num_outputs++;
-        print ("   $round_number:  $input goes to $output\n");
+        #print ("   $round_number:  $input goes to $output\n");
         $objects_outputs_names {$input . $num_outputs} = $output;
     }
 
-    print ("$round_number:   set_outputs - Found $num_outputs for $input!!\n");
+    #print ("$round_number:   set_outputs - Found $num_outputs for $input!!\n");
     return $num_outputs;
 }
 
@@ -152,7 +153,7 @@ sub flip_flop
     {
         my $object_input = $1;
         my $object_output = $2;
-        print ("$round_number:Flip-flop Object named $object_input goes to $object_output\n");
+        #print ("$round_number:Flip-flop Object named $object_input goes to $object_output\n");
         send_pulse ($object_input, $object_output, $objects_value {$object_input}, "bbb");
     }
     
@@ -160,7 +161,7 @@ sub flip_flop
     {
         my $object_input = $1;
         my $object_output = $2;
-        print ("$round_number:Flip-flop Object named $object_input goes to $object_output\n");
+        #print ("$round_number:Flip-flop Object named $object_input goes to $object_output\n");
         send_pulse ($object_input, $object_output, $objects_value {$object_input}, "ccc");
     }
 }
@@ -179,7 +180,7 @@ sub conjunction
     {
         my $object_input = $1;
         my $object_output = $2;
-        print ("$round_number:Conjunction Object named $object_input goes to $object_output\n");
+        #print ("$round_number:Conjunction Object named $object_input goes to $object_output\n");
         send_pulse ($object_input, $object_output, $objects_value {$object_input}, "ddd");
     }
 }
@@ -203,10 +204,10 @@ sub set_object_value
             $value_was_set = 1;
             if ($objects_num_inputs {$obj_name} == 1)
             {
-                print ("$round_number:$obj_name is inverter.. Incoming value is: $val so new value is: ");
+                #print ("$round_number:$obj_name is inverter.. Incoming value is: $val so new value is: ");
                 if ($val == 0) { $objects_value{$obj_name} = 1; }
                 elsif ($val == 1) { $objects_value{$obj_name} = 0; }
-                print ("$round_number:$objects_value{$obj_name}\n");
+                #print ("$round_number:$objects_value{$obj_name}\n");
                 $value_was_set = 1;
                 
                 # Sends any pulses!
@@ -223,14 +224,14 @@ sub set_object_value
             }
             else
             {
-                print ("$round_number:$obj_name is NAND: $val so new value is: ");
+                #print ("$round_number:$obj_name is NAND: $val so new value is: ");
 
                 my $x = 1;
                 my $is_nand = 0;
                 while (defined ($objects_inputs_names {$obj_name . $x}))
                 {
                     my $val = get_val_of_object ($objects_inputs_names {$obj_name . $x});
-                    print (":  (is_nand?$is_nand) ii>  $obj_name - input $x is named " . $objects_inputs_names {$obj_name . $x} . " (val=$val) vs value=" . $objects_value {$objects_inputs_names {$obj_name . $x}});
+                    #print (":  (is_nand?$is_nand) ii>  $obj_name - input $x is named " . $objects_inputs_names {$obj_name . $x} . " (val=$val) vs value=" . $objects_value {$objects_inputs_names {$obj_name . $x}});
                     if ($val == 0)
                     {
                         $is_nand = 1;
@@ -255,9 +256,9 @@ sub set_object_value
         }
         if ($objects_type {$obj_name} eq "%")
         {
-            print ("$round_number:   -----> set_object_value: Flipflop.. ");
-            print (" :old_value=" . $objects_value{$obj_name});
-            print (" :input =  " . $val);
+            #print ("$round_number:   -----> set_object_value: Flipflop.. ");
+            #print (" :old_value=" . $objects_value{$obj_name});
+            #print (" :input =  " . $val);
             if ($val == 0)
             {
                 if ($objects_value{$obj_name} == 0) { $objects_value{$obj_name} = 1; }
@@ -277,9 +278,9 @@ sub set_object_value
             }
             else 
             { 
-                print (": (No change as high pulse incoming) ");
+                #print (": (No change as high pulse incoming) ");
             }
-            print (": new_value = " . $objects_value{$obj_name} . "\n");
+            #print (": new_value = " . $objects_value{$obj_name} . "\n");
             $value_was_set = 1;
         }
     }
@@ -301,12 +302,12 @@ sub progress_state
                 my $from = $1;
                 my $to = $2;
                 my $val = $3;
-                print ("$round_number:   Potentially dealing with pulse $pulse_id ($from -> $to with val = $val)\n");
+                #print ("$round_number:   Potentially dealing with pulse $pulse_id ($from -> $to with val = $val)\n");
                 $is_object_set = set_object_value ($to, $val);
                 if ($is_object_set)
                 {
-                    print ("$round_number:   Dealing with pulse $pulse_id ($from -> $to with val = $val)\n");
-                    print ("$round_number:   ... From $from to $to with $val\n");
+                    #print ("$round_number:   Dealing with pulse $pulse_id ($from -> $to with val = $val)\n");
+                    #print ("$round_number:   ... From $from to $to with $val\n");
                 }
             }
 
@@ -328,13 +329,13 @@ sub progress_state
 sub print_state
 {
     my $i = $_ [0];
-    print ("$round_number:========$i --- ");
+    #print ("$round_number:========$i --- ");
     my $key;
     foreach $key (sort (keys (%objects)))
     {
-        print ("$round_number:, ", $objects_type {$key}, "$key - ", $objects_value {$key});
+        #print ("$round_number:, ", $objects_type {$key}, "$key - ", $objects_value {$key});
     }
-    print ("$round_number:\n");
+    #print ("$round_number:\n");
 }
 
 sub print_pulse_state
@@ -345,7 +346,7 @@ sub print_pulse_state
     my $low = 0;
     foreach $key (sort (keys (%pulses)))
     {
-        print ("$round_number:$key , ", $pulses {$key}, "\n");
+        #print ("$round_number:$key , ", $pulses {$key}, "\n");
         if ($pulses {$key} =~ m/.*0$/)
         {
             $low++;
@@ -362,27 +363,31 @@ sub print_pulse_state
 {
     print ("\n$string\n");
     get_all_objects ();
-    for ($round_number = 0; $round_number < 5; $round_number++)
+    for ($round_number = 0; $round_number < 1000; $round_number++)
     {
         $string = $orig_string;
-        print ("\n===============================\n");
+        #print ("\n===============================\n");
 
         while ($string =~ s/^([^X]+?XX)//)
         {
             my $thingo = $1;
-            print "\n$round_number: Main! with $thingo\n";
+            #print "\n$round_number: Main! with $thingo\n";
             broadcast ($thingo);
             #flip_flop ($thingo);
             #conjunction ($thingo);
             while (!progress_state ())
             {
-                print ("$round_number:Progressing state..\n");
+                #print ("$round_number:Progressing state..\n");
             }
         }
-        print_state ($round_number);
+        #print_state ($round_number);
         if ($round_number == 0)
         {
-            print_pulse_state ();
+            #print_pulse_state ();
+        }
+        #if ($round_number % 10 == 0)
+        {
+            print ("$round_number:Progressing state..\n");
         }
     }
     print_pulse_state ();
