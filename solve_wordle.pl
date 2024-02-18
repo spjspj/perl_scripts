@@ -196,7 +196,7 @@ sub write_to_socket
     my $header;
     if ($redirect =~ m/^redirect/i)
     {
-        $header = "HTTP/1.1 301 Moved\nLocation: /wordle_solver/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
+        $header = "HTTP/1.1 301 Moved\nLocation: /solve_wordle/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
     }
     elsif ($redirect =~ m/^noredirect/i)
     {
@@ -345,7 +345,7 @@ sub fix_url_code
         chomp ($txt);
         my $original_get = $txt;
 
-        my $search = ".*";
+        my $search = "^.....\$";
         my $character_1 = "";
         my $character_2 = "";
         my $character_3 = "";
@@ -359,7 +359,7 @@ sub fix_url_code
         my $must_contain_character_4 = "";
         my $must_contain_character_5 = "";
 
-        #GET /wordle_solver/search?searchstr=%5BROE%5D.*%5BORE%5D.*%5BROE%5D&char1=&char2=&char3=&char4=&char5=&words_already=.*+HTTP%2F1.1 HTTP/1.1
+        #GET /solve_wordle/search?searchstr=%5BROE%5D.*%5BORE%5D.*%5BROE%5D&char1=&char2=&char3=&char4=&char5=&words_already=.*+HTTP%2F1.1 HTTP/1.1
         if ($txt =~ m/searchstr=(.*)&char1/im)
         {
             $search = "$1";
@@ -412,17 +412,17 @@ sub fix_url_code
         my $html_text = "<!DOCTYPE html>\n";
         
         $html_text .= "<table><tr><td>\n";
-        $html_text .= "<form action=\"/wordle_solver/search\">
+        $html_text .= "<form action=\"/solve_wordle/search\">
                 <br>
                 <label for=\"searchstr\">Search <font size=-2> Example:^.[^O].[^R][^E]\$</font>:</label>
                 <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
                 <br>
                 <label for=\"searchstr\">Known letters:</label>
-                <input type=\"text\" id=\"char1\" style=\"background-color: lightgreen\" name=\"char1\" maxlength=\"1\" size=\"1\">
-                <input type=\"text\" id=\"char2\" style=\"background-color: lightgreen\" name=\"char2\" maxlength=\"1\" size=\"1\">
-                <input type=\"text\" id=\"char3\" style=\"background-color: lightgreen\" name=\"char3\" maxlength=\"1\" size=\"1\">
-                <input type=\"text\" id=\"char4\" style=\"background-color: lightgreen\" name=\"char4\" maxlength=\"1\" size=\"1\">
-                <input type=\"text\" id=\"char5\" style=\"background-color: lightgreen\" name=\"char5\" maxlength=\"1\" size=\"1\">
+                <input type=\"text\" id=\"char1\" style=\"background-color: lightgreen\" name=\"char1\" maxlength=\"1\" size=\"1\" value=\"$character_1\">
+                <input type=\"text\" id=\"char2\" style=\"background-color: lightgreen\" name=\"char2\" maxlength=\"1\" size=\"1\" value=\"$character_2\">
+                <input type=\"text\" id=\"char3\" style=\"background-color: lightgreen\" name=\"char3\" maxlength=\"1\" size=\"1\" value=\"$character_3\">
+                <input type=\"text\" id=\"char4\" style=\"background-color: lightgreen\" name=\"char4\" maxlength=\"1\" size=\"1\" value=\"$character_4\">
+                <input type=\"text\" id=\"char5\" style=\"background-color: lightgreen\" name=\"char5\" maxlength=\"1\" size=\"1\" value=\"$character_5\">
                 <br>
                 <label for=\"letters_known\">Letters in solution:</label> 
                 <input type=\"text\" id=\"letters_known\" style=\"background-color: lightyellow\" name=\"letters_known\" value=\"$letters_known\">
@@ -435,7 +435,6 @@ sub fix_url_code
                 </form></td></tr></table> 
                 ";
 
-
         my %words_chosen_hash;
         if ($words_chosen =~ m/^(\w\w\w\w\w)(,|$)/)
         {
@@ -445,6 +444,7 @@ sub fix_url_code
         my $word;
         my $num_words = 0;
         $html_text .= "<pre>";
+        print ("Checking regexes of\nSearch: $search\nBad characters: $bad_characters\nLetters known: $letters_known \n");
         if ($search =~ m/^...*$/)
         {
             foreach $word (sort keys (%all_words))
@@ -452,26 +452,32 @@ sub fix_url_code
                 my $orig = $word;
                 if ($word =~ m/$search/im)
                 {
-                    if ($word !~ m/$bad_characters/im)
+                    my $use_word = 1;
+                    
+                    # Referer: https://xmage.au/solve_wordle/search?searchstr=%5E.I.%5B%5ERE%5D.%24&char1=&char2=I&char3=&char4=&char5=&letters_known=I&words_already=
+                    if ($bad_characters =~ m/.../im && $word =~ m/$bad_characters/im)
                     {
-                        my $use_word = 1;
-                        if ($must_contain_character_1 =~ m/^.$/ && $word !~ m/$must_contain_character_1/im) { $use_word = 0; }
-                        if ($must_contain_character_2 =~ m/^.$/ && $word !~ m/$must_contain_character_2/im) { $use_word = 0; }
-                        if ($must_contain_character_3 =~ m/^.$/ && $word !~ m/$must_contain_character_3/im) { $use_word = 0; }
-                        if ($must_contain_character_4 =~ m/^.$/ && $word !~ m/$must_contain_character_4/im) { $use_word = 0; }
-                        if ($must_contain_character_5 =~ m/^.$/ && $word !~ m/$must_contain_character_5/im) { $use_word = 0; }
-                        if ($use_word)
+                       
+                        $use_word = 0;
+                    }
+
+                    if ($must_contain_character_1 =~ m/^.$/ && $word !~ m/$must_contain_character_1/im) { $use_word = 0; }
+                    if ($must_contain_character_2 =~ m/^.$/ && $word !~ m/$must_contain_character_2/im) { $use_word = 0; }
+                    if ($must_contain_character_3 =~ m/^.$/ && $word !~ m/$must_contain_character_3/im) { $use_word = 0; }
+                    if ($must_contain_character_4 =~ m/^.$/ && $word !~ m/$must_contain_character_4/im) { $use_word = 0; }
+                    if ($must_contain_character_5 =~ m/^.$/ && $word !~ m/$must_contain_character_5/im) { $use_word = 0; }
+
+                    if ($use_word)
+                    {
+                        $html_text .= "$word";
+                        $num_words++;
+                        if ($num_words % 5 == 0)
                         {
-                            $html_text .= "$word";
-                            $num_words++;
-                            if ($num_words % 5 == 0)
-                            {
-                                $html_text .= "<br>";
-                            }
-                            else
-                            {
-                                $html_text .= ",";
-                            }
+                            $html_text .= "<br>";
+                        }
+                        else
+                        {
+                            $html_text .= ",";
                         }
                     }
                 }
