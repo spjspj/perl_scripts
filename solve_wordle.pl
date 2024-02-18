@@ -21,6 +21,7 @@ my %card_type;
 my %card_converted_cost;
 my %all_cards_abilities;
 my %expansion;
+my $MAX_WORD_COUNT = 150;
 
 my %all_words;
 print ("1) Start creating words..\n");
@@ -351,13 +352,24 @@ sub fix_url_code
         my $character_3 = "";
         my $character_4 = "";
         my $character_5 = "";
+        my $v_character_1 = "";
+        my $v_character_2 = "";
+        my $v_character_3 = "";
+        my $v_character_4 = "";
+        my $v_character_5 = "";
         my $letters_known = "";
+        my $v_letters_known = "";
         my $words_chosen = "";
         my $must_contain_character_1 = "";
         my $must_contain_character_2 = "";
         my $must_contain_character_3 = "";
         my $must_contain_character_4 = "";
         my $must_contain_character_5 = "";
+        my $v_must_contain_character_1 = "";
+        my $v_must_contain_character_2 = "";
+        my $v_must_contain_character_3 = "";
+        my $v_must_contain_character_4 = "";
+        my $v_must_contain_character_5 = "";
 
         #GET /solve_wordle/search?searchstr=%5BROE%5D.*%5BORE%5D.*%5BROE%5D&char1=&char2=&char3=&char4=&char5=&words_already=.*+HTTP%2F1.1 HTTP/1.1
         if ($txt =~ m/searchstr=(.*)&char1/im)
@@ -380,6 +392,23 @@ sub fix_url_code
             if ($lk =~ s/^(.)//) {  $must_contain_character_3 = "$1"; }
             if ($lk =~ s/^(.)//) {  $must_contain_character_4 = "$1"; }
             if ($lk =~ s/^(.)//) {  $must_contain_character_5 = "$1"; }
+        }
+        
+        if ($txt =~ m/vhar1=(.)&/im) { $v_character_1 = $1; }
+        if ($txt =~ m/vhar2=(.)&/im) { $v_character_2 = $1; }
+        if ($txt =~ m/vhar3=(.)&/im) { $v_character_3 = $1; }
+        if ($txt =~ m/vhar4=(.)&/im) { $v_character_4 = $1; }
+        if ($txt =~ m/vhar5=(.)&/im) { $v_character_5 = $1; }
+
+        if ($txt =~ m/vetters_known=(.*?)&/im)
+        {
+            $v_letters_known = "$1";
+            my $lk = $v_letters_known; 
+            if ($lk =~ s/^(.)//) { $v_must_contain_character_1 = "$1"; }
+            if ($lk =~ s/^(.)//) { $v_must_contain_character_2 = "$1"; }
+            if ($lk =~ s/^(.)//) { $v_must_contain_character_3 = "$1"; }
+            if ($lk =~ s/^(.)//) { $v_must_contain_character_4 = "$1"; }
+            if ($lk =~ s/^(.)//) { $v_must_contain_character_5 = "$1"; }
         }
 
         my $bad_characters;
@@ -408,13 +437,22 @@ sub fix_url_code
         my @strs = split /&/, $txt;
         #print join (',,,', @strs);
 
+        $search = "^";
+        if ($v_character_1 =~ m/^.$/) { $search .= "[^$v_character_1]"; } elsif ($character_1 =~ m/^.$/) { $search .= "$character_1"; } else { $search .= "."; }
+        if ($v_character_2 =~ m/^.$/) { $search .= "[^$v_character_2]"; } elsif ($character_2 =~ m/^.$/) { $search .= "$character_2"; } else { $search .= "."; }
+        if ($v_character_3 =~ m/^.$/) { $search .= "[^$v_character_3]"; } elsif ($character_3 =~ m/^.$/) { $search .= "$character_3"; } else { $search .= "."; }
+        if ($v_character_4 =~ m/^.$/) { $search .= "[^$v_character_4]"; } elsif ($character_4 =~ m/^.$/) { $search .= "$character_4"; } else { $search .= "."; }
+        if ($v_character_5 =~ m/^.$/) { $search .= "[^$v_character_5]"; } elsif ($character_5 =~ m/^.$/) { $search .= "$character_5"; } else { $search .= "."; }
+        $search .= "\$";
+
+
         # Sortable table with cards in it..
         my $html_text = "<!DOCTYPE html>\n";
         
-        $html_text .= "<table><tr><td>\n";
-        $html_text .= "<form action=\"/solve_wordle/search\">
+        $html_text .= "<table><tr><td><font face='Courier New'>\n";
+        $html_text .= "<form id=\"wordle\" action=\"/solve_wordle/search\">
                 <br>
-                <label for=\"searchstr\">Search <font size=-2> Example:^.[^O].[^R][^E]\$</font>:</label>
+                <label for=\"searchstr\">Search <font size=-1> Example:^.[^O].[^R][^E]\$</font>:</label>
                 <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
                 <br>
                 <label for=\"searchstr\">Known letters:</label>
@@ -424,6 +462,13 @@ sub fix_url_code
                 <input type=\"text\" id=\"char4\" style=\"background-color: lightgreen\" name=\"char4\" maxlength=\"1\" size=\"1\" value=\"$character_4\">
                 <input type=\"text\" id=\"char5\" style=\"background-color: lightgreen\" name=\"char5\" maxlength=\"1\" size=\"1\" value=\"$character_5\">
                 <br>
+                <label for=\"searchstr\">Valid letters:</label>
+                <input type=\"text\" id=\"vhar1\" style=\"background-color: lightblue\" name=\"vhar1\" maxlength=\"1\" size=\"1\" value=\"$v_character_1\">
+                <input type=\"text\" id=\"vhar2\" style=\"background-color: lightblue\" name=\"vhar2\" maxlength=\"1\" size=\"1\" value=\"$v_character_2\">
+                <input type=\"text\" id=\"vhar3\" style=\"background-color: lightblue\" name=\"vhar3\" maxlength=\"1\" size=\"1\" value=\"$v_character_3\">
+                <input type=\"text\" id=\"vhar4\" style=\"background-color: lightblue\" name=\"vhar4\" maxlength=\"1\" size=\"1\" value=\"$v_character_4\">
+                <input type=\"text\" id=\"vhar5\" style=\"background-color: lightblue\" name=\"vhar5\" maxlength=\"1\" size=\"1\" value=\"$v_character_5\">
+                <br>
                 <label for=\"letters_known\">Letters in solution:</label> 
                 <input type=\"text\" id=\"letters_known\" style=\"background-color: lightyellow\" name=\"letters_known\" value=\"$letters_known\">
                 <br>
@@ -432,7 +477,29 @@ sub fix_url_code
                 <br>
                 <label for=\"searchstr\">Search:</label>
                 <input type=\"submit\" value=\"Search\">
-                </form></td></tr></table> 
+                </form></td></tr></table></font>
+<script>
+function reset_form () 
+{
+    var formToReset = document.getElementById(\"wordle\");
+    alert (\"HELLO!!\");
+    formToReset.reset ();
+    alert (\"HELL2!!\");
+}
+
+function reset_inputElements()
+{
+    var inputs = document.getElementsByTagName(\"input\");
+    for (i=0; i<inputs.length; i++)
+    {
+        if (inputs [i].getAttribute('type') == \"text\")
+        {
+            inputs [i].setAttribute('value','');
+        }
+    }
+}
+</script>
+                <input id=\"Clear Form\" type=\"button\" value=\"Clear Form\" onclick=\"reset_inputElements();\" />
                 ";
 
         my %words_chosen_hash;
@@ -444,6 +511,7 @@ sub fix_url_code
         my $word;
         my $num_words = 0;
         $html_text .= "<pre>";
+
         print ("Checking regexes of\nSearch: $search\nBad characters: $bad_characters\nLetters known: $letters_known \n");
         if ($search =~ m/^...*$/)
         {
@@ -467,7 +535,7 @@ sub fix_url_code
                     if ($must_contain_character_4 =~ m/^.$/ && $word !~ m/$must_contain_character_4/im) { $use_word = 0; }
                     if ($must_contain_character_5 =~ m/^.$/ && $word !~ m/$must_contain_character_5/im) { $use_word = 0; }
 
-                    if ($use_word)
+                    if ($use_word && $num_words < $MAX_WORD_COUNT)
                     {
                         $html_text .= "$word";
                         $num_words++;
@@ -478,6 +546,10 @@ sub fix_url_code
                         else
                         {
                             $html_text .= ",";
+                        }
+                        if ($num_words >= $MAX_WORD_COUNT)
+                        {
+                            $html_text .= "<br>Etc..";
                         }
                     }
                 }
