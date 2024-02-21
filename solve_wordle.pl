@@ -3,7 +3,7 @@
 #   File : solve_wordle.pl
 #   Date : 18/Feb/2024
 #   Author : spjspj
-#   Purpose : Solve wordle/lewdle 5 letter words
+#   Purpose : Solve wordle words
 ##
 
 use strict;
@@ -375,6 +375,7 @@ sub fix_url_code
         my $v_must_contain_character_3 = "";
         my $v_must_contain_character_4 = "";
         my $v_must_contain_character_5 = "";
+        my $show_lewdle = 0;
         my %known_letters_hash;
 
         #GET /solve_wordle/search?searchstr=%5BROE%5D.*%5BORE%5D.*%5BROE%5D&char1=&char2=&char3=&char4=&char5=&words_already=.*+HTTP%2F1.1 HTTP/1.1
@@ -419,7 +420,7 @@ sub fix_url_code
         }
 
         my $bad_characters;
-        if ($txt =~ m/words_already=(.*) HTTP/im)
+        if ($txt =~ m/words_already=(.*?)( HTTP|&)/im)
         {
             $words_chosen = "$1";
             $words_chosen = fix_url_code ($words_chosen);
@@ -445,6 +446,12 @@ sub fix_url_code
 
             $words_chosen =~ s/\W//im; 
             $bad_characters = "[$words_chosen]";
+        }
+        
+        $show_lewdle = "";
+        if ($txt =~ m/display_lewdle=(.+) HTTP/im)
+        {
+            $show_lewdle = "checked";
         }
 
         my $l;
@@ -507,6 +514,9 @@ sub fix_url_code
                 <br>
                 <label for=\"searchstr\">Search:</label>
                 <input type=\"submit\" value=\"Search\">
+                <br>
+                <label for=\"display_lewdle\">Display Lewdle Results (explicit):</label><br>
+                <input type=\"checkbox\" id=\"display_lewdle\" name=\"display_lewdle\" $show_lewdle>
                 </form></td></tr></table></font>
 <script>
 function reset_form () 
@@ -615,44 +625,47 @@ function reset_inputElements()
             while ($stats =~ s/K//i) { $c++; } $the_words .= "K = $c; "; $c=0;
             while ($stats =~ s/J//i) { $c++; } $the_words .= "<br>J = $c;</font><br><br>"; $c=0;
 
-            $html_text .= "$the_words</pre><br>";
+            $html_text .= "$the_words<br>";
             
             $num_words = 0;
-            $html_text .= "<br>Lewdle words:<br>";
-            foreach $word (sort keys (%lw))
+            if ($show_lewdle ne "")
             {
-                my $orig = $word;
-                if ($word =~ m/$search/im)
+                $html_text .= "<br>Lewdle words:<br>";
+                foreach $word (sort keys (%lw))
                 {
-                    my $use_word = 1;
-                    
-                    if ($bad_characters =~ m/.../im && $word =~ m/$bad_characters/im)
+                    my $orig = $word;
+                    if ($word =~ m/$search/im)
                     {
-                       
-                        $use_word = 0;
-                    }
+                        my $use_word = 1;
 
-                    if ($must_contain_character_1 =~ m/^.$/ && $word !~ m/$must_contain_character_1/im) { $use_word = 0; }
-                    if ($must_contain_character_2 =~ m/^.$/ && $word !~ m/$must_contain_character_2/im) { $use_word = 0; }
-                    if ($must_contain_character_3 =~ m/^.$/ && $word !~ m/$must_contain_character_3/im) { $use_word = 0; }
-                    if ($must_contain_character_4 =~ m/^.$/ && $word !~ m/$must_contain_character_4/im) { $use_word = 0; }
-                    if ($must_contain_character_5 =~ m/^.$/ && $word !~ m/$must_contain_character_5/im) { $use_word = 0; }
+                        if ($bad_characters =~ m/.../im && $word =~ m/$bad_characters/im)
+                        {
 
-                    if ($use_word && $num_words < $MAX_WORD_COUNT)
-                    {
-                        $html_text .= "$word";
-                        $num_words++;
-                        if ($num_words % 5 == 0)
-                        {
-                            $html_text .= "<br>";
+                            $use_word = 0;
                         }
-                        else
+
+                        if ($must_contain_character_1 =~ m/^.$/ && $word !~ m/$must_contain_character_1/im) { $use_word = 0; }
+                        if ($must_contain_character_2 =~ m/^.$/ && $word !~ m/$must_contain_character_2/im) { $use_word = 0; }
+                        if ($must_contain_character_3 =~ m/^.$/ && $word !~ m/$must_contain_character_3/im) { $use_word = 0; }
+                        if ($must_contain_character_4 =~ m/^.$/ && $word !~ m/$must_contain_character_4/im) { $use_word = 0; }
+                        if ($must_contain_character_5 =~ m/^.$/ && $word !~ m/$must_contain_character_5/im) { $use_word = 0; }
+
+                        if ($use_word && $num_words < $MAX_WORD_COUNT)
                         {
-                            $html_text .= ",";
-                        }
-                        if ($num_words >= $MAX_WORD_COUNT)
-                        {
-                            $html_text .= "<br>Etc..";
+                            $html_text .= "$word";
+                            $num_words++;
+                            if ($num_words % 5 == 0)
+                            {
+                                $html_text .= "<br>";
+                            }
+                            else
+                            {
+                                $html_text .= ",";
+                            }
+                            if ($num_words >= $MAX_WORD_COUNT)
+                            {
+                                $html_text .= "<br>Etc..";
+                            }
                         }
                     }
                 }
