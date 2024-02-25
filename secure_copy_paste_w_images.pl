@@ -13,6 +13,7 @@ use Socket;
 use File::Copy;
 use Math::Trig;
 use MIME::Base64 qw(encode_base64url decode_base64url);
+use Digest::MD5 qw(md5 md5_hex md5_base64);
 #use Encode qw(encode);
 
 my %secure_paste;
@@ -35,6 +36,28 @@ my $each_element_count = 0;
 my $SUPPLIED_KEYWORD;
 my $SUPPLIED_FILE_NAME;
 
+my $md5_seed = "";
+sub get_next_md5
+{
+    if ($md5_seed eq "")
+    {
+        $md5_seed = `dir d:\\perl_programs\\secure_paste\\*.*`;
+        print ("MD5 = $md5_seed\n");
+    }
+    $md5_seed = encode_base64url (md5 ($md5_seed));
+    $md5_seed =~ s/\W//g;
+        
+    print ("Next MD5 = $md5_seed\n");
+    return $md5_seed;
+}
+
+sub is_valid_admin_key
+{
+    my $incoming = $_ [0];
+    print ("Comparing $md5_seed vs $incoming\n");
+    return $md5_seed eq $incoming;
+}
+
 sub write_to_socket
 {
     my $sock_ref = $_ [0];
@@ -51,7 +74,7 @@ sub write_to_socket
     my $admin_cookie;
     if ($is_admin_session)
     {
-        $admin_cookie = "Set-Cookie: ADMIN_SESSION=1\n";
+        $admin_cookie = "Set-Cookie: ADMIN_SESSION=" . get_next_md5 () . "\n";
     }
 
     my $header;
@@ -75,9 +98,9 @@ sub write_to_socket
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body = $header . $msg_body;
-    $msg_body =~ s/\.png/\.npg/;
-    $msg_body =~ s/img/mgi/;
     $msg_body .= chr(13) . chr(10) . "0";
+    print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
+    print ("\n===========\nWrite to socket: $msg_body\n==========\n");
     print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
     syswrite ($sock_ref, $msg_body);
 }
@@ -198,10 +221,14 @@ sub read_from_socket
                     }
                 }
 
-                my $b64_content = encode_base64url ($content);
-                $b64_content =~ s/_/\//g;
-                $b64_content =~ s/-/+/g;
-                return ($header, $b64_content);
+                if (is_file_image ($SUPPLIED_FILE_NAME))
+                {
+                    my $b64_content = encode_base64url ($content);
+                    $b64_content =~ s/_/\//g;
+                    $b64_content =~ s/-/+/g;
+                    $content = $b64_content;
+                }
+                return ($header, $content);
             }
             if ($seen_content_len > 0)
             {
@@ -277,13 +304,19 @@ sub has_valid_keyword
 sub get_admin_session
 {
     my $pw = $_ [0];
-    if ($pw =~ m/spjwashere/img)
+    if ($pw =~ m/your_admin_passphrase_here/img)
     {
         return 1;
     }
     if ($pw =~ m/ADMIN_SESSION/img)
     {
-        return 1;
+        if ($pw =~ m/ADMIN_SESSION=(\w+)/im)
+        {
+            if (is_valid_admin_key ($1))
+            {
+                return 1;
+            }
+        }
     }
    return 0;
 }
@@ -476,6 +509,20 @@ sub get_drag_drop_body
     $dd_body .= "</div>";
     return $dd_body;
 }
+                
+                
+sub is_file_image
+{
+    my $file = $_ [0];
+    print ("Testing $file!!\n");
+    if ($file =~ m/(\.jpg|\.bmp|\.gif|\.jpeg|\.png)/im)
+    {
+        print ("IMAGE Testing $file!!\n");
+        return 1;
+    }
+    print ("NO IMAGE Testing $file!!\n");
+    return 0;
+}
 
 # Main
 {
@@ -492,6 +539,8 @@ sub get_drag_drop_body
     my $html_text = "";
     my $is_admin_session;
     $|=1;
+
+    get_next_md5 ();
 
     my $dd_header = get_drag_drop_header ();
     my $dd_body = get_drag_drop_body ();
@@ -547,7 +596,6 @@ sub get_drag_drop_body
         print ("\n1pw = $SUPPLIED_KEYWORD\n");
         my $valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
 
-
         if ($txt =~ m/keyword=(\w\w\w[\w_\.\d-]+) HTTP/im)
         {
             $SUPPLIED_KEYWORD = $1;
@@ -559,6 +607,70 @@ sub get_drag_drop_body
         if ($old_valid_keyword > $valid_keyword)
         {
             $valid_keyword = $old_valid_keyword;
+        }
+
+        #if ($is_admin_session == 1 && $txt =~ m/GET.*old_paste.(.*)/i)
+        if ($txt =~ m/GET.*old_paste.(.*)/im)
+        {
+            my $file = $1;
+            $file =~ s/ HTTP.*//;
+            $file =~ s/\n//img;
+            $file =~ s/^.*old_paste.PASTE/PASTE/;
+            $file =~ s/\W\W/_/img;
+            $file =~ s/\W\W/_/img;
+            $file =~ s/\W\W/_/img;
+            $file =~ s/\W\W/_/img;
+            $file =~ s/\W\W/_/img;
+            $file =~ s/\W\W/_/img;
+
+            my $is_image = is_file_image ($file);
+            if ($is_image)
+            {
+                $type_pasted_text{$file} = $IMAGE_TYPE;
+            }
+            else
+            {
+                $type_pasted_text{$file} = $TEXT_TYPE;
+            }
+
+   
+            open (F,"<d:/perl_programs/secure_paste/$file");
+#            binmode (F);
+#            my $buf;
+#            my $full_file;
+#            my $ct = 0;
+#            my $BLOCK_SIZE = 4096;
+#
+#            while (read (F, $buf, $BLOCK_SIZE, $ct*$BLOCK_SIZE))
+#            {
+#                #$full_file .= $buf;
+#                #$buf = "";
+#                #print ("$ct -- Read in $buf\n");
+#                $ct++;
+#            }
+#            close (F);
+            my $buf;
+            my $full_thing = "";
+            while (<F>)
+            {
+                chomp;
+                my $line = $_;
+                #print ("Saw the followin: $line\n");
+                if (!$is_image)
+                {
+                    $full_thing .= $line . "\n";
+                }
+                else
+                {
+                    $full_thing .= $line . "\n";
+                }
+            }
+            close (F);
+            $buf =~ s/^$\n/<br>/img;
+
+            $all_pasted_text{$file} = $full_thing;
+            $valid_keyword = 1;
+            $SUPPLIED_KEYWORD = "$file";
         }
 
         if ($valid_keyword == 0)
@@ -604,17 +716,17 @@ sub get_drag_drop_body
             
             $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.bmp`;
             $listing =~ s/d:\\.*\\//img;
-            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_image_paste?$1">$1<\/a><br>\n/img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
 
             $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.png`;
             $listing =~ s/d:\\.*\\//img;
-            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_image_paste?$1">$1<\/a><br>\n/img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
             
             $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.jpg`;
             $listing =~ s/d:\\.*\\//img;
-            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_image_paste?$1">$1<\/a><br>\n/img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
             
             $html_text .= "</body> </html>";
@@ -622,61 +734,20 @@ sub get_drag_drop_body
             next;
         }
 
-        if ($is_admin_session == 1 && $txt =~ m/GET.*old_paste.(.*)/i)
-        {
-            my $file = $1;
-            $file =~ s/ HTTP.*//;
-            $file =~ s/\n//img;
-            $file =~ s/^.*old_paste.PASTE/PASTE/;
-            print ("Going to look at... d:\\perl_programs\\secure_paste\\$file\n");
-            my $old_paste = `type d:\\perl_programs\\secure_paste\\$file`;
-            print ("Adding it under: $file\n");
-            $all_pasted_text{$file} = fix_url_code ($old_paste);
-            $type_pasted_text{$file} = $TEXT_TYPE;
-        }
+#        if ($is_admin_session == 1 && $txt =~ m/GET.*old_paste.(.*)/i)
+#        {
+#            my $file = $1;
+#            $file =~ s/ HTTP.*//;
+#            $file =~ s/\n//img;
+#            $file =~ s/^.*old_paste.PASTE/PASTE/;
+#            print ("Going to look at... d:\\perl_programs\\secure_paste\\$file\n");
+#            my $old_paste = `type d:\\perl_programs\\secure_paste\\$file`;
+#            print ("Adding it under: $file\n");
+#            $all_pasted_text{$file} = fix_url_code ($old_paste);
+#            $type_pasted_text{$file} = $TEXT_TYPE;
+#        }
         
-        if ($is_admin_session == 1 && $txt =~ m/GET.*old_image_paste.(.*)/i)
-        {
-            my $file = $1;
-            $file =~ s/ HTTP.*//;
-            $file =~ s/\n//img;
-            $file =~ s/^.*old_image_paste.PASTE/PASTE/;
-            $file =~ s/\W\W/_/img;
-            $file =~ s/\W\W/_/img;
-            $file =~ s/\W\W/_/img;
-            $file =~ s/\W\W/_/img;
-            $file =~ s/\W\W/_/img;
-            $file =~ s/\W\W/_/img;
-            print ("Going to look at... d:\\perl_programs\\secure_paste\\$file\n");
-            
-            open (F,"<d:/perl_programs/secure_paste/$file");
-#            binmode (F);
-#            my $buf;
-#            my $full_file;
-#            my $ct = 0;
-#            my $BLOCK_SIZE = 4096;
-#
-#            while (read (F, $buf, $BLOCK_SIZE, $ct*$BLOCK_SIZE))
-#            {
-#                #$full_file .= $buf;
-#                #$buf = "";
-#                #print ("$ct -- Read in $buf\n");
-#                $ct++;
-#            }
-#            close (F);
-            my $buf;
-            while (<F>)
-            {
-                chomp;
-                $buf = $_;;
-            }
-            close (F);
-
-            $all_pasted_text{$file} = $buf;
-            $type_pasted_text{$file} = $IMAGE_TYPE;
-            print ("Found d:\\perl_programs\\secure_paste\\$file was " . length($buf) . " bytes long\n");
-        }
-
+        
         if ($txt =~ m/GET.*image.*keyword/m)
         {
             my %secure_paste;
@@ -721,12 +792,12 @@ sub get_drag_drop_body
 
             if (!defined ($type_pasted_text {$SUPPLIED_KEYWORD}) || $type_pasted_text {$SUPPLIED_KEYWORD} eq $TEXT_TYPE)
             {
-                $html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword\$keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
             }
             else
             {
                 #$html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"/secure_paste/image?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</img><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
-                $html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"data:image/jpg;base64,$all_pasted_text{$SUPPLIED_KEYWORD}\"/><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"data:image/jpg;base64,$all_pasted_text{$SUPPLIED_KEYWORD}\"/><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
             }
 
             write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
