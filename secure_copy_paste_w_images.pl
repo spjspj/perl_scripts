@@ -20,6 +20,7 @@ my %secure_paste;
 my $pasted_text = "HELLO!  You can change me now!";
 my $TEXT_TYPE = "text";
 my $IMAGE_TYPE = "image";
+my $SOUND_TYPE = "sound";
 my %all_pasted_text;
 my %type_pasted_text;
 my %meta_data;
@@ -51,6 +52,25 @@ sub get_next_md5
     return $md5_seed;
 }
 
+sub get_base64
+{
+    my $b64_content = encode_base64url ($_ [0]);
+    $b64_content =~ s/_/\//g;
+    $b64_content =~ s/-/+/g;
+    return $b64_content;
+}
+
+sub get_base64_text
+{
+    my $seed = $_ [0];
+    print "already base 64!!!\n";
+    if ($all_pasted_text{$SUPPLIED_KEYWORD} !~ m/^[A-Za-z0-9\+\/]{25}/)
+    {
+        return get_base64 ($all_pasted_text{$SUPPLIED_KEYWORD});
+    }
+    return $all_pasted_text{$SUPPLIED_KEYWORD};
+}
+
 sub is_valid_admin_key
 {
     my $incoming = $_ [0];
@@ -65,8 +85,7 @@ sub write_to_socket
     my $form = $_ [2];
     my $redirect = $_ [3];
     my $is_admin_session = $_ [4];
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-    my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+    my $yyyymmddhhmmss = get_yyyymmddhhmmss ();
     print $yyyymmddhhmmss, "\n";
 
     $msg_body = $msg_body;
@@ -223,10 +242,7 @@ sub read_from_socket
 
                 if (is_file_image ($SUPPLIED_FILE_NAME))
                 {
-                    my $b64_content = encode_base64url ($content);
-                    $b64_content =~ s/_/\//g;
-                    $b64_content =~ s/-/+/g;
-                    $content = $b64_content;
+                    $content = get_base64 ($content);
                 }
                 return ($header, $content);
             }
@@ -304,7 +320,7 @@ sub has_valid_keyword
 sub get_admin_session
 {
     my $pw = $_ [0];
-    if ($pw =~ m/your_admin_passphrase_here/img)
+    if ($pw =~ m/supersecretpassphraseman!/img)
     {
         return 1;
     }
@@ -510,18 +526,35 @@ sub get_drag_drop_body
     return $dd_body;
 }
                 
-                
 sub is_file_image
 {
     my $file = $_ [0];
     print ("Testing $file!!\n");
-    if ($file =~ m/(\.jpg|\.bmp|\.gif|\.jpeg|\.png)/im)
+    if ($file =~ m/(\.jpg|\.bmp|\.gif|\.jpeg|\.png)$/im)
     {
         print ("IMAGE Testing $file!!\n");
         return 1;
     }
     print ("NO IMAGE Testing $file!!\n");
     return 0;
+}
+
+sub is_mp3
+{
+    my $file = $_ [0];
+    if ($file =~ m/(\.mp3|\.wav|\.avi)$/im)
+    {
+        print ("SOUND $file!!\n");
+        return 1;
+    }
+    print ("NOT SOUND $file!!\n");
+    return 0;
+}
+                
+sub get_yyyymmddhhmmss
+{
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    return sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
 }
 
 # Main
@@ -583,8 +616,6 @@ sub is_file_image
             print ("Was a post!!\n");
             print (length ($content) ." was length!!\n");
 
-            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-            my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
             open my $fh, '>', "d:/perl_programs/secure_paste/$SUPPLIED_FILE_NAME";
             binmode $fh;
             syswrite ($fh, $content);
@@ -604,7 +635,7 @@ sub is_file_image
             $SUPPLIED_KEYWORD = $1;
         }
 
-        if ($old_valid_keyword > $valid_keyword)
+        if ($old_valid_keyword ne $valid_keyword)
         {
             $valid_keyword = $old_valid_keyword;
         }
@@ -624,9 +655,14 @@ sub is_file_image
             $file =~ s/\W\W/_/img;
 
             my $is_image = is_file_image ($file);
+            my $is_sound = is_mp3 ($file);
             if ($is_image)
             {
                 $type_pasted_text{$file} = $IMAGE_TYPE;
+            }
+            elsif ($is_sound)
+            {
+                $type_pasted_text{$file} = $SOUND_TYPE;
             }
             else
             {
@@ -655,7 +691,6 @@ sub is_file_image
             {
                 chomp;
                 my $line = $_;
-                #print ("Saw the followin: $line\n");
                 if (!$is_image)
                 {
                     $full_thing .= $line . "\n";
@@ -671,6 +706,19 @@ sub is_file_image
             $all_pasted_text{$file} = $full_thing;
             $valid_keyword = 1;
             $SUPPLIED_KEYWORD = "$file";
+            
+            if (!$is_admin_session)
+            {
+                # Move it..
+                my $new_file = $file;
+                my $yyyymmddhhmmss = get_yyyymmddhhmmss ();
+                $new_file =~ s/\.([^\.]+)/.$yyyymmddhhmmss.$1/;
+                if ($file =~ m/oneshot/im)
+                {
+                    print ("\nMoving it:\nmove d:\\perl_programs\\secure_paste\\$file d:\\perl_programs\\secure_paste\\$new_file\n==========================\n"); 
+                    `move d:\\perl_programs\\secure_paste\\$file d:\\perl_programs\\secure_paste\\$new_file`;
+                }
+            }
         }
 
         if ($valid_keyword == 0)
@@ -728,7 +776,12 @@ sub is_file_image
             $listing =~ s/d:\\.*\\//img;
             $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
-            
+
+            $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.mp3`;
+            $listing =~ s/d:\\.*\\//img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing";
+             
             $html_text .= "</body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
@@ -794,10 +847,14 @@ sub is_file_image
             {
                 $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword\$keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
             }
-            else
+            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $IMAGE_TYPE) 
             {
                 #$html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"/secure_paste/image?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</img><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
-                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"data:image/jpg;base64,$all_pasted_text{$SUPPLIED_KEYWORD}\"/><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"data:image/jpg;base64," . get_base64_text ($SUPPLIED_KEYWORD) . "\"/><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+            }
+            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $SOUND_TYPE) 
+            {
+                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br> <audio controls='controls' autobuffer='autobuffer' autoplay='autoplay'><source src=\"data:audio/mp 3;base64," . get_base64_text ($SUPPLIED_KEYWORD) . "\"/></body></html>";
             }
 
             write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
@@ -836,8 +893,7 @@ $//img;
 
             if ($is_admin_session)
             {
-                my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-                my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+                my $yyyymmddhhmmss = get_yyyymmddhhmmss ();
                 print ("> d:\\perl_programs\\secure_paste\\PASTE_$SUPPLIED_KEYWORD.$yyyymmddhhmmss.txt");
                 open PASTE_FILE, ("> d:\\perl_programs\\secure_paste\\PASTE_$SUPPLIED_KEYWORD.$yyyymmddhhmmss.txt");
                 print PASTE_FILE fix_url_code ($new_paste);
