@@ -21,6 +21,7 @@ my $pasted_text = "HELLO!  You can change me now!";
 my $TEXT_TYPE = "text";
 my $IMAGE_TYPE = "image";
 my $SOUND_TYPE = "sound";
+my $BINARY_TYPE = "binary";
 my %all_pasted_text;
 my %type_pasted_text;
 my %meta_data;
@@ -47,7 +48,7 @@ sub get_next_md5
     }
     $md5_seed = encode_base64url (md5 ($md5_seed));
     $md5_seed =~ s/\W//g;
-        
+
     print ("Next MD5 = $md5_seed\n");
     return $md5_seed;
 }
@@ -240,7 +241,7 @@ sub read_from_socket
                     }
                 }
 
-                if (is_file_image ($SUPPLIED_FILE_NAME))
+                if (is_image ($SUPPLIED_FILE_NAME))
                 {
                     $content = get_base64 ($content);
                 }
@@ -309,9 +310,8 @@ sub has_valid_keyword
 {
     my $pw = $_ [0];
     print ("\npw = $pw\n");
-    if ($pw =~ m/^......*/)
+    if ($pw =~ m/^....*/)
     {
-        # Check that the other programs are running..
         return 1;
     }
    return 0;
@@ -525,8 +525,8 @@ sub get_drag_drop_body
     $dd_body .= "</div>";
     return $dd_body;
 }
-                
-sub is_file_image
+
+sub is_image
 {
     my $file = $_ [0];
     print ("Testing $file!!\n");
@@ -542,6 +542,7 @@ sub is_file_image
 sub is_mp3
 {
     my $file = $_ [0];
+    print ("Testing $file!!\n");
     if ($file =~ m/(\.mp3|\.wav|\.avi)$/im)
     {
         print ("SOUND $file!!\n");
@@ -550,7 +551,17 @@ sub is_mp3
     print ("NOT SOUND $file!!\n");
     return 0;
 }
-                
+
+sub is_binary
+{
+    my $file = $_ [0];
+    if (is_image ($file)) { return 0; }
+    if (is_mp3 ($file)) { return 0; }
+    if ($file =~ m/(\.txt)$/im) { return 0; }
+    if ($file !~ m/\./) { return 0; }
+    return 1;
+}
+
 sub get_yyyymmddhhmmss
 {
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -622,22 +633,13 @@ sub get_yyyymmddhhmmss
             close ($fh);
         }
 
-        print ("\n0pw = $SUPPLIED_KEYWORD\n");
-        my $old_valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
-        print ("\n1pw = $SUPPLIED_KEYWORD\n");
         my $valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
 
         if ($txt =~ m/keyword=(\w\w\w[\w_\.\d-]+) HTTP/im)
         {
             $SUPPLIED_KEYWORD = $1;
-            print ("\n2pw = $SUPPLIED_KEYWORD\n");
             $valid_keyword = has_valid_keyword ($SUPPLIED_KEYWORD);
             $SUPPLIED_KEYWORD = $1;
-        }
-
-        if ($old_valid_keyword ne $valid_keyword)
-        {
-            $valid_keyword = $old_valid_keyword;
         }
 
         #if ($is_admin_session == 1 && $txt =~ m/GET.*old_paste.(.*)/i)
@@ -654,8 +656,9 @@ sub get_yyyymmddhhmmss
             $file =~ s/\W\W/_/img;
             $file =~ s/\W\W/_/img;
 
-            my $is_image = is_file_image ($file);
+            my $is_image = is_image ($file);
             my $is_sound = is_mp3 ($file);
+            my $is_binary = is_binary ($file);
             if ($is_image)
             {
                 $type_pasted_text{$file} = $IMAGE_TYPE;
@@ -664,12 +667,19 @@ sub get_yyyymmddhhmmss
             {
                 $type_pasted_text{$file} = $SOUND_TYPE;
             }
+            elsif ($is_binary)
+            {
+                $type_pasted_text{$file} = $BINARY_TYPE;
+                my $ext = $file;
+                $ext =~ s/^.*\.//;
+                $type_pasted_text{$file . "ext"} = $ext;
+            }
             else
             {
                 $type_pasted_text{$file} = $TEXT_TYPE;
             }
 
-   
+
             open (F,"<d:/perl_programs/secure_paste/$file");
 #            binmode (F);
 #            my $buf;
@@ -706,7 +716,7 @@ sub get_yyyymmddhhmmss
             $all_pasted_text{$file} = $full_thing;
             $valid_keyword = 1;
             $SUPPLIED_KEYWORD = "$file";
-            
+
             if (!$is_admin_session)
             {
                 # Move it..
@@ -715,7 +725,7 @@ sub get_yyyymmddhhmmss
                 $new_file =~ s/\.([^\.]+)/.$yyyymmddhhmmss.$1/;
                 if ($file =~ m/oneshot/im)
                 {
-                    print ("\nMoving it:\nmove d:\\perl_programs\\secure_paste\\$file d:\\perl_programs\\secure_paste\\$new_file\n==========================\n"); 
+                    print ("\nMoving it:\nmove d:\\perl_programs\\secure_paste\\$file d:\\perl_programs\\secure_paste\\$new_file\n==========================\n");
                     `move d:\\perl_programs\\secure_paste\\$file d:\\perl_programs\\secure_paste\\$new_file`;
                 }
             }
@@ -741,7 +751,7 @@ sub get_yyyymmddhhmmss
         if ($txt =~ m/.*favico.*/m)
         {
             my $size = -s ("d:/perl_programs/aaa.jpg");
-            print (">>>>> size = $size\n");
+            print ("FAVICON!!! >>>>> size = $size\n");
             my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
             print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
             syswrite (\*CLIENT, $h);
@@ -757,31 +767,41 @@ sub get_yyyymmddhhmmss
 
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> $dd_header </head> <body> <h1>Previous CSVs</h1> <br>";
 
-            my $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.txt`;
-            $listing =~ s/d:\\.*\\//img;
-            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
-            $html_text .= "$listing";
-            
-            $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.bmp`;
+            my $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.txt`;
             $listing =~ s/d:\\.*\\//img;
             $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
 
-            $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.png`;
-            $listing =~ s/d:\\.*\\//img;
-            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
-            $html_text .= "$listing";
-            
-            $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.jpg`;
+            $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.bmp`;
             $listing =~ s/d:\\.*\\//img;
             $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
 
-            $listing = `dir /a /b /s d:\\perl_programs\\secure_paste\\*.mp3`;
+            $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.png`;
             $listing =~ s/d:\\.*\\//img;
             $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing";
-             
+
+            $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.jpg`;
+            $listing =~ s/d:\\.*\\//img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing";
+
+            $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.mp3`;
+            $listing =~ s/d:\\.*\\//img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing";
+
+            $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.pdf`;
+            $listing =~ s/d:\\.*\\//img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing";
+
+            $listing = `dir /a /b d:\\perl_programs\\secure_paste\\*.zip`;
+            $listing =~ s/d:\\.*\\//img;
+            $listing =~ s/(.*?)\n/<a href="\/secure_paste\/old_paste?$1">$1<\/a><br>\n/img;
+            $html_text .= "$listing";
+
             $html_text .= "</body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
@@ -799,8 +819,7 @@ sub get_yyyymmddhhmmss
 #            $all_pasted_text{$file} = fix_url_code ($old_paste);
 #            $type_pasted_text{$file} = $TEXT_TYPE;
 #        }
-        
-        
+
         if ($txt =~ m/GET.*image.*keyword/m)
         {
             my %secure_paste;
@@ -809,6 +828,33 @@ sub get_yyyymmddhhmmss
             print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
             syswrite (\*CLIENT, $h);
             syswrite (\*CLIENT, $all_pasted_text{$SUPPLIED_KEYWORD});
+            next;
+        }
+
+        if ($txt =~ m/GET.*obtain_file/m)
+        {
+            print ("OBTAIN STUFF\n");
+            if ($txt =~ m/obtain_file\/([^ ]*) HTTP/img)
+            {
+                my $file_to_get = $1;  
+                $file_to_get =~ s/\.\././img;
+                $file_to_get =~ s/\///img;
+                $file_to_get =~ s/\\//img;
+                $file_to_get =~ m/\.(.*)$/im;
+                my $ext = $1;
+                my $size = -s ("d:/perl_programs/secure_paste/$file_to_get");
+
+                print ("OBTAINING FILE OF !!$file_to_get!!! >>>>> size = $size\n");
+                my $h = "HTTP/1.1 200 OK\nLast-Modified: 20220222222222\nConnection: close\nContent-Type: application/$ext\nContent-Length: $size\n\n";
+                print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
+                syswrite (\*CLIENT, $h);
+                copy "d:/perl_programs/secure_paste/$file_to_get", \*CLIENT;
+                next;
+            }
+
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> $dd_header </head> <body> <h1>Obtaining a file..</h1> <br>";
+            $html_text .= "</body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
         }
 
@@ -829,7 +875,7 @@ sub get_yyyymmddhhmmss
             {
                 $html_text .= "<table><tr><td>$dd_body<br></td>";
                 $html_text .= "<td><form action=\"updated_paste\" id=\"newpaste\" name=\"newpaste\" method=\"post\"> <textarea id=\"newpaste\" class=\"text\" cols=\"86\" rows =\"20\" form=\"newpaste\" name=\"newpaste\">";
-                
+
                 if ($type_pasted_text {$SUPPLIED_KEYWORD} eq $TEXT_TYPE)
                 {
                     $html_text .= $all_pasted_text{$SUPPLIED_KEYWORD};
@@ -845,16 +891,27 @@ sub get_yyyymmddhhmmss
 
             if (!defined ($type_pasted_text {$SUPPLIED_KEYWORD}) || $type_pasted_text {$SUPPLIED_KEYWORD} eq $TEXT_TYPE)
             {
-                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword\$keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword\$keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste.txt'>examplePaste.txt</a></body></html>";
             }
-            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $IMAGE_TYPE) 
+            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $IMAGE_TYPE)
             {
-                #$html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"/secure_paste/image?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</img><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
-                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"data:image/jpg;base64," . get_base64_text ($SUPPLIED_KEYWORD) . "\"/><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+                #$html_text .= "<br>Current paste for '$SUPPLIED_KEYWORD' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"/secure_paste/image?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</img><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste.txt'>examplePaste.txt</a></body></html>";
+                $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><img src=\"data:image/jpg;base64," . get_base64_text ($SUPPLIED_KEYWORD) . "\"/><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste.txt'>examplePaste.txt</a></body></html>";
             }
-            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $SOUND_TYPE) 
+            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $SOUND_TYPE)
             {
                 $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br> <audio controls='controls' autobuffer='autobuffer' autoplay='autoplay'><source src=\"data:audio/mp 3;base64," . get_base64_text ($SUPPLIED_KEYWORD) . "\"/></body></html>";
+            }
+            elsif ($type_pasted_text {$SUPPLIED_KEYWORD} eq $BINARY_TYPE)
+            {
+                if (lc($type_pasted_text {$SUPPLIED_KEYWORD . "ext"}) eq "pdf")
+                {
+                    $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br> <embed width='100%' height='100%' name='plugin' src=\"data:application/pdf;base64," . get_base64_text ($SUPPLIED_KEYWORD) . "\"/></body></html>";
+                }
+                elsif (lc($type_pasted_text {$SUPPLIED_KEYWORD . "ext"}) eq "zip")
+                {
+                    $html_text .= "<br>Current paste for '<a href=\"/secure_paste/old_paste?$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' or '<a href=\"/secure_paste/keyword?keyword=$SUPPLIED_KEYWORD\">$SUPPLIED_KEYWORD</a>' (" . $type_pasted_text {$SUPPLIED_KEYWORD} . "):<br><br><br>Can't display the chosen paste.  Instead, you may download it here:<br><a href=\"/secure_paste/obtain_file/$SUPPLIED_KEYWORD\">Download $SUPPLIED_KEYWORD</a></body></html>";
+                }
             }
 
             write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
@@ -920,7 +977,7 @@ $//img;
                 $html_text .= "<br>&nbsp;<a href=\"/secure_paste/show_history\">History</a><br>";
             }
 
-            $html_text .= "<br>Current pasted text for '$SUPPLIED_KEYWORD':<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste'>examplePaste</a></body></html>";
+            $html_text .= "<br>Current pasted text for '$SUPPLIED_KEYWORD':<br><pre>$pasted_txt</pre><br>View Example here: <a href='/secure_paste/keyword?keyword=examplePaste.txt'>examplePaste.txt</a></body></html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect", $is_admin_session);
             next;
         }
