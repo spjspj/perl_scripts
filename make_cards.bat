@@ -1,34 +1,56 @@
 rem @echo off
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '03'" card_back.png card03.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '04'" card_back.png card04.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '05'" card_back.png card05.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '06'" card_back.png card06.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '07'" card_back.png card07.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '08'" card_back.png card08.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '09'" card_back.png card09.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '10'" card_back.png card10.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '11'" card_back.png card11.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '12'" card_back.png card12.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '13'" card_back.png card13.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '14'" card_back.png card14.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '15'" card_back.png card15.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '16'" card_back.png card16.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '17'" card_back.png card17.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '18'" card_back.png card18.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '19'" card_back.png card19.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '20'" card_back.png card20.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '21'" card_back.png card21.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '22'" card_back.png card22.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '23'" card_back.png card23.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '24'" card_back.png card24.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '25'" card_back.png card25.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '26'" card_back.png card26.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '27'" card_back.png card27.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '28'" card_back.png card28.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '29'" card_back.png card29.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '30'" card_back.png card30.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '31'" card_back.png card31.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '32'" card_back.png card32.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '33'" card_back.png card33.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '34'" card_back.png card34.jpg
-magick convert -pointsize 70 -fill blue -draw "text 20,110 '35'" card_back.png card35.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '2 H'" -pointsize 15 -fill darkred -draw "text 12,20 '2H'" card_back.png card2H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '3 H'" -pointsize 15 -fill darkred -draw "text 12,20 '3H'" card_back.png card3H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '4 H'" -pointsize 15 -fill darkred -draw "text 12,20 '4H'" card_back.png card4H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '5 H'" -pointsize 15 -fill darkred -draw "text 12,20 '5H'" card_back.png card5H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '6 H'" -pointsize 15 -fill darkred -draw "text 12,20 '6H'" card_back.png card6H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '7 H'" -pointsize 15 -fill darkred -draw "text 12,20 '7H'" card_back.png card7H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '8 H'" -pointsize 15 -fill darkred -draw "text 12,20 '8H'" card_back.png card8H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '9 H'" -pointsize 15 -fill darkred -draw "text 12,20 '9H'" card_back.png card9H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '10 H'" -pointsize 15 -fill darkred -draw "text 12,20 '10H'"  card_back.png card10H.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'J H'" -pointsize 15 -fill darkred -draw "text 12,20 'JH'" card_back.png cardJH.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'Q H'" -pointsize 15 -fill darkred -draw "text 12,20 'QH'" card_back.png cardQH.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'K H'" -pointsize 15 -fill darkred -draw "text 12,20 'KH'" card_back.png cardKH.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'A H'" -pointsize 15 -fill darkred -draw "text 12,20 'AH'" card_back.png cardAH.jpg
+
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '2 D'" -pointsize 15 -fill darkred -draw "text 12,20 '2D'" card_back.png card2D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '3 D'" -pointsize 15 -fill darkred -draw "text 12,20 '3D'" card_back.png card3D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '4 D'" -pointsize 15 -fill darkred -draw "text 12,20 '4D'" card_back.png card4D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '5 D'" -pointsize 15 -fill darkred -draw "text 12,20 '5D'" card_back.png card5D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '6 D'" -pointsize 15 -fill darkred -draw "text 12,20 '6D'" card_back.png card6D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '7 D'" -pointsize 15 -fill darkred -draw "text 12,20 '7D'" card_back.png card7D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '8 D'" -pointsize 15 -fill darkred -draw "text 12,20 '8D'" card_back.png card8D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '9 D'" -pointsize 15 -fill darkred -draw "text 12,20 '9D'" card_back.png card9D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 '10 D'" -pointsize 15 -fill darkred -draw "text 12,20 '10D'"  card_back.png card10D.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'J D'" -pointsize 15 -fill darkred -draw "text 12,20 'JD'" card_back.png cardJD.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'Q D'" -pointsize 15 -fill darkred -draw "text 12,20 'QD'" card_back.png cardQD.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'K D'" -pointsize 15 -fill darkred -draw "text 12,20 'KD'" card_back.png cardKD.jpg
+magick convert -pointsize 45 -fill darkred -draw "text 20,110 'A D'" -pointsize 15 -fill darkred -draw "text 12,20 'AD'" card_back.png cardAD.jpg
+
+magick convert -pointsize 45 -fill black -draw "text 20,110 '2 S'" -pointsize 15 -fill black -draw "text 12,20 '2S'" card_back.png card2S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '3 S'" -pointsize 15 -fill black -draw "text 12,20 '3S'" card_back.png card3S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '4 S'" -pointsize 15 -fill black -draw "text 12,20 '4S'" card_back.png card4S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '5 S'" -pointsize 15 -fill black -draw "text 12,20 '5S'" card_back.png card5S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '6 S'" -pointsize 15 -fill black -draw "text 12,20 '6S'" card_back.png card6S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '7 S'" -pointsize 15 -fill black -draw "text 12,20 '7S'" card_back.png card7S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '8 S'" -pointsize 15 -fill black -draw "text 12,20 '8S'" card_back.png card8S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '9 S'" -pointsize 15 -fill black -draw "text 12,20 '9S'" card_back.png card9S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '10 S'" -pointsize 15 -fill black -draw "text 12,20 '10S'"  card_back.png card10S.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'J S'" -pointsize 15 -fill black -draw "text 12,20 'JS'" card_back.png cardJS.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'Q S'" -pointsize 15 -fill black -draw "text 12,20 'QS'" card_back.png cardQS.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'K S'" -pointsize 15 -fill black -draw "text 12,20 'KS'" card_back.png cardKS.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'A S'" -pointsize 15 -fill black -draw "text 12,20 'AS'" card_back.png cardAS.jpg
+
+magick convert -pointsize 45 -fill black -draw "text 20,110 '2 C'" -pointsize 15 -fill black -draw "text 12,20 '2C'" card_back.png card2C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '3 C'" -pointsize 15 -fill black -draw "text 12,20 '3C'" card_back.png card3C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '4 C'" -pointsize 15 -fill black -draw "text 12,20 '4C'" card_back.png card4C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '5 C'" -pointsize 15 -fill black -draw "text 12,20 '5C'" card_back.png card5C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '6 C'" -pointsize 15 -fill black -draw "text 12,20 '6C'" card_back.png card6C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '7 C'" -pointsize 15 -fill black -draw "text 12,20 '7C'" card_back.png card7C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '8 C'" -pointsize 15 -fill black -draw "text 12,20 '8C'" card_back.png card8C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '9 C'" -pointsize 15 -fill black -draw "text 12,20 '9C'" card_back.png card9C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 '10 C'" -pointsize 15 -fill black -draw "text 12,20 '10C'"  card_back.png card10C.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'J C'" -pointsize 15 -fill black -draw "text 12,20 'JC'" card_back.png cardJC.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'Q C'" -pointsize 15 -fill black -draw "text 12,20 'QC'" card_back.png cardQC.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'K C'" -pointsize 15 -fill black -draw "text 12,20 'KC'" card_back.png cardKC.jpg
+magick convert -pointsize 45 -fill black -draw "text 20,110 'A C'" -pointsize 15 -fill black -draw "text 12,20 'AC'" card_back.png cardAC.jpg
