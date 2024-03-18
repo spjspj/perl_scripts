@@ -24,7 +24,9 @@ my $BCK = "back";
 my $NUM_CARDS_IN_FULL_DECK = 52;
 my $NUM_CARDS_TO_REMOVE = 8;
 my $GAME_WON;
+my $ROUND_OVER;
 my $CURRENT_LOGIN_NAME = "";
+my $USER_SHOT_MOON = 0;
 
 my $ALL_SUITS_HDSC = "HDSC";
 my $NON_HEART_SUITS_DSC = "DSC";
@@ -49,11 +51,18 @@ my @player_ips;
 my $num_players_in_lobby = 0;
 
 my $TOTAL_TRICKS = 13;
+my $JACK_VALUE = 11;
+my $QUEEN_VALUE = 12;
+my $KING_VALUE = 13;
+my $ACE_VALUE = 14;
+my $LOSING_POINTS = 100;
+my $ROUND_POINTS = 26;
 my $trick_number = 0;
 my $must_lead_2c = 0;
 my $hearts_broken = 0;
 my $current_trick = "";
 my $last_trick = "";
+my $last_trick_table = "";
 my $last_trick_led_by = "";
 my $current_trick_card_count = 0;
 my $current_trick_leading_card = "";
@@ -110,7 +119,24 @@ sub game_won
     {
         force_needs_refresh();
         $GAME_WON = $_ [0];
-        add_to_debug (join ("<br>", @deck));
+        add_to_debug ($win_con . " GAME HAS FINISHED!");
+    }
+}
+
+sub round_over
+{
+    my $win_con = $_ [0];
+
+    if ($ROUND_OVER == 0)
+    {
+        force_needs_refresh();
+        $ROUND_OVER = 1;
+        add_to_debug ("Round OVER - adding scores..");
+        add_scores ();
+        if (!get_game_won ())
+        {
+            reset_for_round ();
+        }
     }
 }
 
@@ -122,6 +148,11 @@ sub get_game_won
     }
     my $t = "Won..";
     return $t;
+}
+
+sub get_round_over
+{
+    return $ROUND_OVER;
 }
 
 sub do_shuffle
@@ -528,7 +559,7 @@ sub set_whos_turn
     {
         $whos_turn = $wt;   
     }
-    add_to_debug ("Setting who goes to $whos_turn\n");
+    add_to_debug ("Setting who goes to $whos_turn (Initial=$initial)\n");
 }
 
 sub get_player_id_from_name
@@ -586,11 +617,13 @@ sub get_card_value
 {
     my $check_card = $_ [0];
 
-    if ($check_card =~ m/^([1-9]|10)/) { return $1; }
-    if ($check_card =~ m/^J/)          { return 11; }
-    if ($check_card =~ m/^Q/)          { return 12; }
-    if ($check_card =~ m/^K/)          { return 13; }
-    if ($check_card =~ m/^A/)          { return 14; }
+    if ($check_card =~ m/^([2-9])/) { return $1; }
+    if ($check_card =~ m/^10/)      { return 10; }
+    if ($check_card =~ m/^1/)       { return 1; }
+    if ($check_card =~ m/^J/)       { return $JACK_VALUE; }
+    if ($check_card =~ m/^Q/)       { return $QUEEN_VALUE; }
+    if ($check_card =~ m/^K/)       { return $KING_VALUE; }
+    if ($check_card =~ m/^A/)       { return $ACE_VALUE; }
     return $NOVALUE;
 }
 
@@ -706,6 +739,7 @@ sub play_card
             }
         }
         $last_trick = "$current_trick_cards{0},$current_trick_cards{1},$current_trick_cards{2},$current_trick_cards{3},";
+        $last_trick_table = get_trick_table (1);
         $last_trick =~ s/,,/,/g;
         $last_trick_led_by = $current_trick_led_by;
 
@@ -714,12 +748,20 @@ sub play_card
         $player_won_cards {$current_winning_player} =~ s/,,/,/g;
         add_to_debug ("Player $current_winning_player has won based on <<< ($player_won_cards{$current_winning_player}) >>> $current_trick_cards{0},$current_trick_cards{1},$current_trick_cards{2},$current_trick_cards{3}\n");
         add_to_debug ("RESET Current_trick $current_trick back to blank -- ($current_trick_card_count)\n");
-        $current_trick = "";
-        $current_trick_card_count = 0;
-        $current_trick_suit = "";
-        set_whos_turn (0, $current_winning_player);
-        handle_turn ();
-        force_needs_refresh ();
+
+        if ($trick_number == $TOTAL_TRICKS)
+        {
+            round_over ();
+        }
+        else
+        {
+            $current_trick = "";
+            $current_trick_card_count = 0;
+            $current_trick_suit = "";
+            set_whos_turn (0, $current_winning_player);
+            handle_turn ();
+            force_needs_refresh ();
+        }
     }
     else
     {
@@ -879,6 +921,11 @@ sub handle_turn
 
 sub set_next_turn
 {
+    if ($must_lead_2c)
+    {
+        add_to_debug ("Can't change turn from $whos_turn due to leading 2C..");
+        return;
+    }
     add_to_debug ("Setting who goes from $whos_turn to " . ($whos_turn + 1));
     $whos_turn++;
     if ($whos_turn >= $num_players_in_game)
@@ -1052,13 +1099,13 @@ sub new_game
     $hearts_broken = 0;
     $current_trick = "";
     $last_trick = "";
+    $last_trick_table = "";
     $current_trick_card_count = 0;
     $current_trick_leading_card = "";
     $current_trick_led_by = -1;
     $current_trick_suit = "";
     my %new_current_trick_cards;
     %current_trick_cards = %new_current_trick_cards;
-    add_to_debug ("WTF - current_trick_cards reset\n");
 
     add_to_debug ("MUST LEAD 2C aaa..\n");
     if ($num_players_in_game != -1)
@@ -1080,6 +1127,8 @@ sub new_game
     $num_players_in_game = $num_players_in_lobby;
 
     $GAME_WON = 0;
+    $ROUND_OVER = 0;
+    $USER_SHOT_MOON = 0;
 
     # Setup the deck..
     add_to_debug ("Setup deck1\n");
@@ -1098,7 +1147,6 @@ sub new_game
         add_to_debug ("Initial $whos_turn is a bot! handle_bot_next_go\n");
         handle_bot_next_go ($whos_turn);
     }
-
     $current_trick_suit = $CLUBS;
     
     force_needs_refresh();
@@ -1109,6 +1157,8 @@ sub reset_game
 {
     $num_players_in_game = -1;
     $GAME_WON = 0;
+    $ROUND_OVER = 0;
+    $USER_SHOT_MOON = 0;
     my @new_deck;
     @deck = @new_deck;
     my $out = "$GAME Game reset <a href=\"\/\">Lobby or Game window<\/a>";
@@ -1123,6 +1173,43 @@ sub reset_game
     deal_deck ();
     $must_lead_2c  = 1;
     $current_trick_card_count = 0;
+    return $out;
+}
+
+sub reset_for_round
+{
+    $GAME_WON = 0;
+    $ROUND_OVER = 0;
+    my @new_deck;
+    @deck = @new_deck;
+    
+    $current_trick = "";
+    $current_trick_card_count = 0;
+    $current_trick_leading_card = "";
+    $current_trick_led_by = -1;
+    $hearts_broken = 0;
+    $last_trick = "";
+    $last_trick_table = "";
+    $trick_number = 0;
+    my %new_current_trick_cards;
+    %current_trick_cards = %new_current_trick_cards;
+    my $out = "$GAME round reset <a href=\"\/\">Lobby or Game window<\/a>";
+    my %new_current_trick_cards;
+    setup_deck ();
+    $must_lead_2c = 1;
+    deal_deck ();
+    set_whos_turn (1, -1);
+    
+    add_to_debug ("Initial $whos_turn was set\n");
+    $current_trick_suit = $CLUBS;
+    my $is_bot = is_bot ("", $whos_turn);
+    if ($is_bot)
+    {
+        add_to_debug ("Initial $whos_turn is a bot! handle_bot_next_go\n");
+        handle_bot_next_go ($whos_turn);
+    }
+    force_needs_refresh();
+
     return $out;
 }
 
@@ -1203,16 +1290,11 @@ sub get_images_from_cards
     {
         my $c = $1;
         my $adder = 100;
-        if ($c =~ m/C/) { $adder = 100; }
-        if ($c =~ m/S/) { $adder = 200; }
-        if ($c =~ m/D/) { $adder = 300; }
-        if ($c =~ m/H/) { $adder = 400; }
-
-        if ($c =~ m/(\d+)/) { $adder += $1; }
-        if ($c =~ m/J/) { $adder += 11; }
-        if ($c =~ m/Q/) { $adder += 12; }
-        if ($c =~ m/K/) { $adder += 13; }
-        if ($c =~ m/A/) { $adder += 14; }
+        if ($c =~ m/$CLUBS/) { $adder = 100; }
+        if ($c =~ m/$SPADES/) { $adder = 200; }
+        if ($c =~ m/$DIAMONDS/) { $adder = 300; }
+        if ($c =~ m/$HEARTS/) { $adder = 400; }
+        $adder += get_card_value ($c);
 
         if (!$sort_cards)
         {
@@ -1252,7 +1334,7 @@ sub get_images_from_cards
         }
     }
 
-    my $actual_card_cell = "<td>";
+    my $actual_card_cell = "";
     my $k;
     for $k (sort (keys %cards))
     {
@@ -1261,47 +1343,110 @@ sub get_images_from_cards
     return $actual_card_cell;
 }
 
-sub player_row
+sub get_trick_table
+{
+    my $mini = $_ [0];
+
+    my $card0 = $current_trick_cards {0};
+    my $card1 = $current_trick_cards {1};
+    my $card2 = $current_trick_cards {2};
+    my $card3 = $current_trick_cards {3};
+
+    $card0 =~ s/,//;
+    $card1 =~ s/,//;
+    $card2 =~ s/,//;
+    $card3 =~ s/,//;
+    $card0 =~ s/^/card/;
+    $card1 =~ s/^/card/;
+    $card2 =~ s/^/card/;
+    $card3 =~ s/^/card/;
+
+    my $keep0 = 0;
+    my $keep1 = 0;
+    my $keep2 = 0;
+    my $keep3 = 0;
+
+    my $position = $current_trick_led_by;
+    my $c = 0;
+    while ($c < $current_trick_card_count)
+    {
+        if ($position == 0) { $keep0 = 1; }
+        if ($position == 1) { $keep1 = 1; }
+        if ($position == 2) { $keep2 = 1; }
+        if ($position == 3) { $keep3 = 1; }
+
+        $c++;
+        $position ++;
+        if ($position > 3)
+        {
+            $position = 0;
+        }
+    }
+
+    if ($keep0 == 0) { $card0 = "back"; }
+    if ($keep1 == 0) { $card1 = "back"; }
+    if ($keep2 == 0) { $card2 = "back"; }
+    if ($keep3 == 0) { $card3 = "back"; }
+
+    my $table = "
+    <table>
+    <tr>
+        <td></td>
+        <td><img width=\"60\" height=\"86\" src=\"hearts/$card0.jpg\"><\/img></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><img width=\"60\" height=\"86\" src=\"hearts/$card3.jpg\"><\/img></td>
+        <td><font size=-1>Trick:</font></td>
+        <td><img width=\"60\" height=\"86\" src=\"hearts/$card1.jpg\"><\/img></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td><img width=\"60\" height=\"86\" src=\"hearts/$card2.jpg\"><\/img></td>
+        <td></td>
+    </tr> 
+    </table>";
+
+    if ($mini)
+    {
+        $table =~ s/60/30/img;
+        $table =~ s/86/43/img;
+        $table =~ s/-1/-3/img;
+    }
+    return $table;
+}
+
+sub player_cell
 {
     my $id = $_ [0];
     my $IP = $_ [1];
     my $this_player_id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "ddd");
 
     my $known_to_user = 0;
-    my $who_has_card_cell = "<td></td>";
+    my $who_has_card_cell = "";
 
     my $this_players_turn = "";
     if ($id == $whos_turn)
     {
-        $this_players_turn = " #This turn#";
+        $this_players_turn = "#MyTurn!#";
     }
     
-    my $name_cell = "<td><font size= color=darkgreen>" . get_player_name ($id) . "(" . $player_score {$id} . " Score) $this_players_turn</font></td>";
+    my $name_cell = "<td><font size= color=darkgreen>" . get_player_name ($id) . " $this_players_turn</font>";
     if ($id == $this_player_id)
     {
-        $name_cell = "<td>**<font size=+1 color=darkblue>" . get_player_name ($id) . "**</font> (" . $player_score {$id} . " Score) $this_players_turn</td>";
+        $name_cell = "<td>**<font size=+1 color=darkblue>" . get_player_name ($id) . "**</font> $this_players_turn";
         $known_to_user = 1;
     }
 
-    my $start_bit = "";
-    if ($id % 2 == 0)
-    {
-        $start_bit = "<tr>";
-    }
-    my $final_bit = "";
-    if ($id % 2 == 1)
-    {
-        $final_bit = "</tr>";
-    }
     my $out;
 
     my $cards = $player_cards {$id};
     my $score = $player_score {$id};
-    my $cards_in_hand_cell = get_images_from_cards ($cards, $id, 0, $known_to_user, 1, $known_to_user);
-    $cards_in_hand_cell .= " (Score = $score)";
-    $cards_in_hand_cell .= "</td>";
+    my $cards_in_hand = get_images_from_cards ($cards, $id, 0, $known_to_user, 1, $known_to_user);
+    $cards_in_hand .= " (Score = $score)";
+    $cards_in_hand .= "</td>";
 
-    $out .= "$start_bit$name_cell$cards_in_hand_cell$who_has_card_cell<td>" . "</td>$final_bit\n";
+    $out .= "$name_cell$cards_in_hand\n";
 
     return $out;
 }
@@ -1315,18 +1460,22 @@ sub get_board
         return " NO BOARD TO SEE..";
     }
 
+    my $blank_td = "<td width=33%>&nbsp;&nbsp;&nbsp;</td>";
+    my $start_tr = "<tr>";
+    my $end_tr = "</tr>";
     my $out;
-    $out .= player_row (0, $IP);
-    $out .= player_row (1, $IP);
-    $out .= player_row (2, $IP);
-    $out .= player_row (3, $IP);
-    $out .= "</tr></table>";
-    if ($last_trick =~ m/...../)
+    # Cross pattern
+    $out .= $start_tr . $blank_td            . player_cell (0, $IP) . $blank_td            . $end_tr;
+    $out .= $start_tr . player_cell (3, $IP) . $blank_td            . player_cell (1, $IP) . $end_tr;
+    $out .= $start_tr . $blank_td            . player_cell (2, $IP) . $blank_td            . $end_tr;
+    $out .= "</table>";
+    if ($trick_number >= 2 || $trick_number >= 1 && $current_trick_card_count == 4)
     {
-        $out .= "Last Trick:&nbsp;" . get_images_from_cards ($last_trick, $id, 0, 1, 0, 0) . " Led by: " . get_player_name ($last_trick_led_by) . "<br>";
+        $out .= "Last Trick Led by: " . get_player_name ($last_trick_led_by) . "<br>$last_trick_table<br>";
     }
 
-    $out .= get_images_from_cards ($current_trick, $id, 1, 1, 0, 0);
+    #$out .= get_images_from_cards ($current_trick, $id, 1, 1, 0, 0);
+    $out .= get_trick_table (0);
     $out =~ s/<\/tr><\/tr>/<\/tr>/img;
     return $out;
 }
@@ -1351,7 +1500,8 @@ sub print_game_state
         $out .= get_game_won ();
     }
 
-    $out .= "<style>table.blueTable { border: 1px solid #1C6EA4; background-color: #ABE6EE; width: 100%; text-align: left; border-collapse: collapse; }\n table.blueTable td, table.blueTable th { border: 1px solid #AAAAAA; padding: 3px 2px; }\n table.blueTable tbody td { font-size: 13px; }\n table.blueTable tr:nth-child(even)\n { background: #D0E4F5; }\n table.blueTable tfoot td { font-size: 14px; }\n table.blueTable tfoot .links { text-align: right; }\n\n<br></style>\n";
+    $out .= "<style>table.blueTable { border: 1px solid #1C6EA4; background-color: #ABE6EE; width: 100%; text-align: left; border-collapse: collapse; }\n table.blueTable td, table.blueTable th { width:33%; border: 1px solid #AAAAAA; padding: 3px 2px; }\n table.blueTable tbody td { font-size: 13px; }\n table.blueTable tr:nth-child(even)\n { background: #D0E4F5; }\n table.blueTable tfoot td { font-size: 14px; }\n table.blueTable tfoot .links { text-align: right; }\n\n<br></style>\n";
+
     $out .= "\n<table class=blueTable>\n";
 
     my $id = get_player_id ($IP);
@@ -1366,7 +1516,6 @@ sub print_game_state
     }
 
     $out .= get_board ($IP) . "<br>";
-
     return $out;
 }
 
@@ -1511,7 +1660,7 @@ sub get_game_state
             $out = print_game_state ($IP);
             $out .= "<br>Trick $trick_number, led by " . get_player_name ($current_trick_led_by). "\n";
             
-            if ($trick_number == 13)
+            if (get_round_over ())
             {
                 $out .= "<br>Player " . get_player_name (0) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {0}, $id, 1, 1, 1, 0);
                 $out .= "<br>Player " . get_player_name (1) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {1}, $id, 1, 1, 1, 0);
@@ -1571,6 +1720,169 @@ sub chosen_card
 
     add_to_debug ("CHOSEN CARD: success as $id is $whos_turn.  Does have $card<<\n");
     return play_card ($id, $card);
+}
+
+sub get_score_from_cards
+{
+    my $cards = $_ [0];
+
+    $cards =~ s/^,*//;
+    my $score = 0;
+    my $cv = 0;
+
+    while ($cards =~ s/^(\w+),//)
+    {
+        my $c = $1;
+        $cv = 0;
+        if ($c =~ m/$HEARTS/) { $cv = 1; }
+        if ($c eq "QS") { $cv = 13; }
+        $score += $cv;
+    }
+    return $score;
+}
+sub set_scores 
+{
+    my $p0_score = $_ [0];
+    my $p1_score = $_ [1];
+    my $p2_score = $_ [2];
+    my $p3_score = $_ [3];
+
+    my $someone_won = $p0_score >= $LOSING_POINTS || $p1_score >= $LOSING_POINTS || $p2_score >= $LOSING_POINTS || $p3_score >= $LOSING_POINTS;
+
+    $player_score {0} = $p0_score;
+    $player_score {1} = $p1_score;
+    $player_score {2} = $p2_score;
+    $player_score {3} = $p3_score;
+
+    my $total = $p0_score + $p1_score + $p2_score + $p3_score;
+    my $total_26 = $total % 26;
+    add_to_debug ("SCORES: $p0_score $p1_score $p2_score $p3_score (total = $total ($total_26))");
+
+    if ($someone_won)
+    {
+        my $winner = 0;
+        my $lowest_score = $p0_score;
+        if ($p1_score < $lowest_score) { $winner = 1; $lowest_score = $p1_score; }
+        if ($p2_score < $lowest_score) { $winner = 2; $lowest_score = $p2_score; }
+        if ($p3_score < $lowest_score) { $winner = 3; $lowest_score = $p3_score; }
+
+        game_won (get_player_name ($winner) . " was the winner!");
+        exit;
+    }
+}
+
+sub is_bad_score
+{
+    my $p0_score = $_ [0];
+    my $p1_score = $_ [1];
+    my $p2_score = $_ [2];
+    my $p3_score = $_ [3];
+    my $player_to_look_at = $_ [4];
+
+    my $someone_won = $p0_score >= $LOSING_POINTS || $p1_score >= $LOSING_POINTS || $p2_score >= $LOSING_POINTS || $p3_score >= $LOSING_POINTS;
+
+    my $winner = 0;
+    my $lowest_score = $p0_score;
+    if ($p1_score < $lowest_score) { $winner = 1; $lowest_score = $p1_score; }
+    if ($p2_score < $lowest_score) { $winner = 2; $lowest_score = $p2_score; }
+    if ($p3_score < $lowest_score) { $winner = 3; $lowest_score = $p3_score; }
+
+    my $highest_score = $p0_score;
+    my $loser = 0;
+    if ($p1_score > $highest_score) { $loser = 1; $highest_score = $p1_score; }
+    if ($p2_score > $highest_score) { $loser = 2; $highest_score = $p2_score; }
+    if ($p3_score > $highest_score) { $loser = 3; $highest_score = $p3_score; }
+
+    if ($someone_won)
+    {
+        if ($winner != $player_to_look_at)
+        {
+            return 1;
+        }
+    }
+    else
+    {
+        if ($loser == $player_to_look_at)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub add_scores
+{
+    my $p0_score = get_score_from_cards ($player_won_cards {0});
+    my $p1_score = get_score_from_cards ($player_won_cards {1});
+    my $p2_score = get_score_from_cards ($player_won_cards {2});
+    my $p3_score = get_score_from_cards ($player_won_cards {3});
+
+    add_to_debug ("SCORES: $p0_score $player_won_cards{0}");
+    add_to_debug ("SCORES: $p1_score $player_won_cards{1}");
+    add_to_debug ("SCORES: $p2_score $player_won_cards{2}");
+    add_to_debug ("SCORES: $p3_score $player_won_cards{3}");
+
+    my $shot_moon = 0;
+    my $shot_moon_player = -1;
+    if ($p0_score == $ROUND_POINTS) { $shot_moon = 1; $shot_moon_player = 0; }
+    if ($p1_score == $ROUND_POINTS) { $shot_moon = 1; $shot_moon_player = 1; }
+    if ($p2_score == $ROUND_POINTS) { $shot_moon = 1; $shot_moon_player = 2; }
+    if ($p3_score == $ROUND_POINTS) { $shot_moon = 1; $shot_moon_player = 3; }
+
+    if ($shot_moon == 0)
+    {
+        my $p0s = $player_score {0} + $p0_score;
+        my $p1s = $player_score {1} + $p1_score;
+        my $p2s = $player_score {2} + $p2_score;
+        my $p3s = $player_score {3} + $p3_score;
+        set_scores ($p0s, $p1s, $p2s, $p3s);
+    }
+    else
+    {
+        add_to_debug ("SHOT MOON: $shot_moon_player!");
+        if (is_bot ($shot_moon_player))
+        {
+            my $pot_p0_score = $player_score {0} + $ROUND_POINTS;
+            my $pot_p1_score = $player_score {1} + $ROUND_POINTS;
+            my $pot_p2_score = $player_score {2} + $ROUND_POINTS;
+            my $pot_p3_score = $player_score {3} + $ROUND_POINTS;
+            if ($shot_moon_player == 0) { $pot_p0_score -= $ROUND_POINTS; }
+            if ($shot_moon_player == 1) { $pot_p1_score -= $ROUND_POINTS; }
+            if ($shot_moon_player == 2) { $pot_p2_score -= $ROUND_POINTS; }
+            if ($shot_moon_player == 3) { $pot_p3_score -= $ROUND_POINTS; }
+
+            if (!is_bad_score ($pot_p0_score, $pot_p1_score, $pot_p2_score, $pot_p2_score, $shot_moon_player))
+            {
+                set_scores ($pot_p0_score, $pot_p1_score, $pot_p2_score, $pot_p2_score);
+                add_to_debug ("SHOT MOON: added 26 from $shot_moon_player!");
+            }
+            else
+            {
+                my $pot_p0_score = $player_score {0};
+                my $pot_p1_score = $player_score {1};
+                my $pot_p2_score = $player_score {2};
+                my $pot_p3_score = $player_score {3};
+                if ($shot_moon_player == 0) { $pot_p0_score -= $ROUND_POINTS; }
+                if ($shot_moon_player == 1) { $pot_p1_score -= $ROUND_POINTS; }
+                if ($shot_moon_player == 2) { $pot_p2_score -= $ROUND_POINTS; }
+                if ($shot_moon_player == 3) { $pot_p3_score -= $ROUND_POINTS; }
+
+                set_scores ($pot_p0_score, $pot_p1_score, $pot_p2_score, $pot_p2_score);
+                add_to_debug ("SHOT MOON: minused 26 from $shot_moon_player!");
+            }
+        }
+        else
+        {
+            my $pot_p0_score = $player_score {0} + $ROUND_POINTS;
+            my $pot_p1_score = $player_score {1} + $ROUND_POINTS;
+            my $pot_p2_score = $player_score {2} + $ROUND_POINTS;
+            my $pot_p3_score = $player_score {3} + $ROUND_POINTS;
+            if ($shot_moon_player == 0) { $pot_p0_score -= $ROUND_POINTS; }
+            if ($shot_moon_player == 1) { $pot_p1_score -= $ROUND_POINTS; }
+            if ($shot_moon_player == 2) { $pot_p2_score -= $ROUND_POINTS; }
+            if ($shot_moon_player == 3) { $pot_p3_score -= $ROUND_POINTS; }
+        }
+    }
 }
 
 # Main
