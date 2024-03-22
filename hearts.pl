@@ -156,10 +156,10 @@ sub do_shuffle
 {
     @deck = shuffle (@deck);
     my $d;
-    my $s = "my $index = 0;";
+    my $s = "my \$index = 0;";
     foreach $d (@deck)
     {
-        $s .= "$deck [$index] = $d; $index++;";
+        $s .= "\$deck [\$index] = \"$d\"; \$index++;";
     }
     add_debug ($s);
 }
