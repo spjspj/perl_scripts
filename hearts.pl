@@ -44,6 +44,8 @@ my @NEEDS_REFRESH;
 
 my @deck;
 my %player_cards;
+my %passed_player_cards;
+my %passed_from_player_cards;
 my %player_won_cards;
 my %player_knowledge;
 my %player_score;
@@ -91,6 +93,18 @@ my $QUEEN_SPADES = "QS";
 my $TWO_CLUBS = "2C";
 
 my $last_trick_number = 0;
+
+my $DO_DEBUG = 1;
+#my $DO_DEBUG = 0;
+sub get_debug
+{
+    if ($DO_DEBUG)
+    {
+        return ("xxx $DEBUG yyy");
+    }
+    return "";
+}
+
 sub add_to_debug
 {
     if ($trick_number > $last_trick_number)
@@ -154,25 +168,71 @@ sub get_round_over
 
 sub do_shuffle
 {
-    @deck = shuffle (@deck);
     my $d;
     my $s = "my \$index = 0;";
     foreach $d (@deck)
     {
         $s .= "\$deck [\$index] = \"$d\"; \$index++;";
     }
-    add_debug ($s);
-}
+    #add_to_debug ($s);
 
-#my $DO_DEBUG = 1;
-my $DO_DEBUG = 0;
-sub get_debug
-{
+    @deck = shuffle (@deck);
+    add_to_debug ($s);
     if ($DO_DEBUG)
     {
-        return ("xxx $DEBUG yyy");
+        my $index = 0;
+        $deck [$index] = "2C"; $index++;
+        $deck [$index] = "5H"; $index++;
+        $deck [$index] = "7D"; $index++;
+        $deck [$index] = "2D"; $index++;
+        $deck [$index] = "3C"; $index++;
+        $deck [$index] = "3S"; $index++;
+        $deck [$index] = "8D"; $index++;
+        $deck [$index] = "JS"; $index++;
+        $deck [$index] = "4C"; $index++;
+        $deck [$index] = "9S"; $index++;
+        $deck [$index] = "QS"; $index++;
+        $deck [$index] = "KS"; $index++;
+        $deck [$index] = "5C"; $index++;
+        $deck [$index] = "9D"; $index++;
+        $deck [$index] = "QD"; $index++;
+        $deck [$index] = "JD"; $index++;
+        $deck [$index] = "6C"; $index++;
+        $deck [$index] = "3H"; $index++;
+        $deck [$index] = "7H"; $index++;
+        $deck [$index] = "9H"; $index++;
+        $deck [$index] = "7C"; $index++;
+        $deck [$index] = "JH"; $index++;
+        $deck [$index] = "QH"; $index++;
+        $deck [$index] = "7S"; $index++;
+        $deck [$index] = "8C"; $index++;
+        $deck [$index] = "AS"; $index++;
+        $deck [$index] = "4S"; $index++;
+        $deck [$index] = "2S"; $index++;
+        $deck [$index] = "9C"; $index++;
+        $deck [$index] = "KH"; $index++;
+        $deck [$index] = "4D"; $index++;
+        $deck [$index] = "8S"; $index++;
+        $deck [$index] = "10C"; $index++;
+        $deck [$index] = "2H"; $index++;
+        $deck [$index] = "5S"; $index++;
+        $deck [$index] = "10S"; $index++;
+        $deck [$index] = "JC"; $index++;
+        $deck [$index] = "AD"; $index++;
+        $deck [$index] = "KD"; $index++;
+        $deck [$index] = "10H"; $index++;
+        $deck [$index] = "QC"; $index++;
+        $deck [$index] = "6H"; $index++;
+        $deck [$index] = "3D"; $index++;
+        $deck [$index] = "6D"; $index++;
+        $deck [$index] = "KC"; $index++;
+        $deck [$index] = "6S"; $index++;
+        $deck [$index] = "8H"; $index++;
+        $deck [$index] = "4H"; $index++;
+        $deck [$index] = "AC"; $index++;
+        $deck [$index] = "5D"; $index++;
+        $deck [$index] = "10D";
     }
-    return "";
 }
 
 sub write_to_socket
@@ -572,6 +632,12 @@ sub get_player_name
     return $player_names [$ID];
 }
 
+sub get_player_score
+{
+    my $ID = $_ [0];
+    return $player_score {$ID};
+}
+
 sub set_whos_turn
 {
     my $initial = $_ [0];
@@ -819,6 +885,7 @@ sub play_card
 
         $player_won_cards {$current_winning_player} .= "$won_cards";
         $player_won_cards {$current_winning_player} =~ s/,,/,/g;
+        add_to_debug ("Won Cards: $current_winning_player, $player_won_cards{$current_winning_player}");
 
         # set players_who_have_won_points
         if (get_knowledge ("trick_has_points"))
@@ -1052,7 +1119,7 @@ sub get_lowest_card
         }
     }
 
-    add_to_debug (" Lowest card is $lowest_card (for $wt with $cards and hearts_broken = $hearts_broken)..\n");
+    add_to_debug (" aa Lowest card is $lowest_card (for $wt with $cards and hearts_broken = $hearts_broken)..\n");
     return $lowest_card;
 }
 
@@ -1086,7 +1153,6 @@ sub get_highest_card
         }
     }
 
-    add_to_debug (" Hightest card is $highest_card (for $wt with $cards and hearts_broken = $hearts_broken)..\n");
     return $highest_card;
 }
 
@@ -1149,21 +1215,49 @@ sub get_chasing_qs
 sub get_highest_point_card
 {
     my $wt = $_ [0];
+    if ($trick_number <= 1)
+    {
+        # No points card :(
+        my $c = get_highest_non_point_card ($wt);
+        return $c;
+    }
+
     if (player_has_card ($wt, $QUEEN_SPADES))
     {
         return $QUEEN_SPADES;
     }
     if (player_has_suit ($wt, $HEARTS))
     {
-        return get_highest_card_in_suit ($wt, $HEARTS);
+        return get_highest_card_in_suit ($wt, $HEARTS, $ACE_VALUE+1);
     }
     return get_highest_card ($wt);
+}
+
+sub get_highest_non_point_card
+{
+    my $wt = $_ [0];
+    my $c = get_highest_card ($wt);
+
+    if (get_card_suit ($c) eq "$CLUBS" || get_card_suit ($c) eq "$DIAMONDS")
+    {
+        return $c;
+    }
+
+    if (get_card_suit ($c) eq "$SPADES" && $c ne "$QUEEN_SPADES")
+    {
+        return $c;
+    }
+
+    if (player_has_suit ($wt, $CLUBS)) { return get_highest_card_in_suit ($wt, $CLUBS, $ACE_VALUE+1); }
+    if (player_has_suit ($wt, $DIAMONDS)) { return get_highest_card_in_suit ($wt, $CLUBS, $ACE_VALUE+1); }
+    if (player_has_suit ($wt, $SPADES)) { return get_lowest_card_in_suit ($wt, $SPADES, $QUEEN_VALUE+1); }
+    return "";
 }
 
 sub get_lowest_spade_for_leading
 {
     my $wt = $_ [0];
-    if (player_has_suit ($wt, $SPADES))
+    if (player_has_suit ($wt, $SPADES) && !player_has_card ($wt, $QUEEN_SPADES))
     {
         my $card = get_lowest_card_in_suit ($wt, $SPADES, $QUEEN_VALUE);
         if (is_valid_card ($card) && get_card_value ($card) < $QUEEN_VALUE)
@@ -1233,6 +1327,7 @@ sub handle_bot_next_go
     if ($current_trick_suit eq "")
     {
         my $card = get_lowest_card ($wt);
+        add_to_debug ("bbb Lowest card $wt for leading is $card");
 
         # Still chasing Queen?
         if (get_chasing_qs ($wt))
@@ -1256,21 +1351,31 @@ sub handle_bot_next_go
     # 0 cards in suit..
     if ($num_in_suit == 0)
     {
+        if (player_has_card ($wt, $QUEEN_SPADES) && is_card_valid_for_trick ($QUEEN_SPADES))
+        {
+            add_to_debug ("player $wt offloads $QUEEN_SPADES");
+            play_card ($wt, $QUEEN_SPADES);
+            return;
+        }
+
         if (stop_the_moon ($wt))
         {
             if (!moon_player_winning_trick ())
             {
+                add_to_debug ("player $wt !moon_player_winning_trick $current_trick_suit " . get_highest_point_card ($wt));
                 play_card ($wt, get_highest_point_card ($wt));
                 return;
             }
 
             if (moon_player_winning_trick ())
             {
+                add_to_debug ("player $wt moon_player_winning_trick!! $current_trick_suit " . get_lowest_card ($wt));
                 play_card ($wt, get_lowest_card ($wt));
                 return;
             }
         }
-        play_card ($wt, get_lowest_card ($wt));
+        add_to_debug ("!stopping the moon so player $wt $current_trick_suit " . get_highest_point_card ($wt));
+        play_card ($wt, get_highest_point_card ($wt));
         return;
     }
 
@@ -1284,22 +1389,32 @@ sub handle_bot_next_go
             {
                 if (!moon_player_winning_trick ())
                 {
-                    play_card ($wt, get_highest_point_card ($wt));
+                    play_card ($wt, get_lowest_card_in_suit ($wt, $current_trick_suit, get_card_value (get_knowledge ("card_winning_trick"))));
                     return;
                 }
 
                 if (moon_player_winning_trick ())
                 {
-                    play_card ($wt, get_lowest_card ($wt));
+                    play_card ($wt, get_highest_card_in_suit ($wt, $current_trick_suit, $ACE_VALUE+1));
                     return;
                 }
             }
+            play_card ($wt, get_lowest_card_in_suit ($wt, $current_trick_suit, get_card_value (get_knowledge ("card_winning_trick"))));
+            return;
         }
 
         if ($trick_number <= 1 || $current_trick_card_count >= 3)
         {
-            play_card ($wt, get_highest_card_in_suit ($wt, $current_trick_suit, $ACE_VALUE+1));
-            return;
+            if (get_knowledge ("trick_has_points"))
+            {
+                play_card ($wt, get_lowest_card_in_suit ($wt, $current_trick_suit, get_card_value (get_knowledge ("card_winning_trick"))));
+                return;
+            }
+            else
+            {
+                play_card ($wt, get_highest_card_in_suit ($wt, $current_trick_suit, $ACE_VALUE+1));
+                return;
+            }
         }
 
         if (get_knowledge ("trick_has_points"))
@@ -1313,19 +1428,20 @@ sub handle_bot_next_go
 
         add_to_debug ("trick has NO point: player $wt for $current_trick_suit multiple cards");
 
-        my $hc = get_highest_card_in_suit ($wt, $current_trick_suit, get_card_value (get_knowledge ("card_winning_trick")));
+        my $lc = get_lowest_card_in_suit ($wt, $current_trick_suit, get_card_value (get_knowledge ("card_winning_trick")));
+        add_to_debug ("trick has NO point: player $wt for $current_trick_suit multiple cards - $lc");
         if ($current_trick_suit eq $SPADES && !get_knowledge ("qs_played"))
         {
             add_to_debug ("trick has NO point: $QUEEN_SPADES not played.. want to get low card here");
-            $hc = get_lowest_card_in_suit ($wt, $current_trick_suit, $JACK_VALUE);
+            $lc = get_lowest_card_in_suit ($wt, $current_trick_suit, $JACK_VALUE);
         }
         elsif ($current_trick_suit eq $HEARTS)
         {
-            $hc = get_lowest_card_in_suit ($wt, $current_trick_suit, 1);
+            $lc = get_lowest_card_in_suit ($wt, $current_trick_suit, 1);
         }
 
-        add_to_debug ("trick has NO point: player $wt for $current_trick_suit multiple cards highest card is $hc");
-        play_card ($wt, $hc);
+        add_to_debug ("trick has NO point: player $wt for $current_trick_suit multiple cards highest card is $lc");
+        play_card ($wt, $lc);
     }
 }
 
@@ -1337,21 +1453,21 @@ sub handle_bots_passing_cards
         my $c1;
         my $c2;
         my $c3;
+        my %cs;
         if ($players_who_must_pass_cards {$i} && is_bot ("", $i))   
         {
             # Ok, get 3 cards..
-            my %cs;
             if (player_has_suit ($i, $HEARTS))
             {
-                $cs {get_highest_card_in_suit ($i, $HEARTS)} = 1;
+                $cs {get_highest_card_in_suit ($i, $HEARTS, $ACE_VALUE)} = 1;
             }
             if (player_has_suit ($i, $SPADES))
             {
                 if (player_has_card ($i, "AS")) { $cs {"AS"} = 1; }
                 if (player_has_card ($i, "KS")) { $cs {"KS"} = 1; }
                 if (player_has_card ($i, "QS")) { $cs {"QS"} = 1; }
-                $cs {get_highest_card_in_suit ($i, $CLUBS)} = 1;
-                $cs {get_highest_card_in_suit ($i, $DIAMONDS)} = 1;
+                $cs {get_highest_card_in_suit ($i, $CLUBS, $ACE_VALUE)} = 1;
+                $cs {get_highest_card_in_suit ($i, $DIAMONDS, $ACE_VALUE)} = 1;
                 $cs {get_highest_card ($i)} = 1;
             }
 
@@ -1363,8 +1479,12 @@ sub handle_bots_passing_cards
                 elsif ($c_count == 1) { $c2 = $c; $c_count++; }
                 elsif ($c_count == 2) { $c3 = $c; $c_count++; }
             }
+
+            add_to_debug ("Bot $i is giving away: $c1,$c2,$c3");
+            pass_3_cards ($i, $c1, $c2, $c3);
+            my %new_cs;
+            %cs = %new_cs;
         }
-        pass_3_cards ($i, $c1, $c2, $c3);
     }
 }
 
@@ -1386,7 +1506,7 @@ sub set_next_turn
     }
     add_to_debug ("Setting who goes from $whos_turn to " . ($whos_turn + 1));
     $whos_turn++;
-    if ($whos_turn >= $num_players_in_game)
+    if ($whos_turn >= 4)
     {
         $whos_turn = 0;
     }
@@ -1560,6 +1680,14 @@ sub new_game
     $players_who_must_pass_cards {1} = 1;
     $players_who_must_pass_cards {2} = 1;
     $players_who_must_pass_cards {3} = 1;
+    $passed_player_cards {0} = "";
+    $passed_player_cards {1} = "";
+    $passed_player_cards {2} = "";
+    $passed_player_cards {3} = "";
+    $passed_from_player_cards {0} = "";
+    $passed_from_player_cards {1} = "";
+    $passed_from_player_cards {2} = "";
+    $passed_from_player_cards {3} = "";
     $direction_passing = $LEFT;
     $trick_number = 0;
     $hearts_broken = 0;
@@ -1644,6 +1772,14 @@ sub reset_game
     $players_who_must_pass_cards {1} = 1;
     $players_who_must_pass_cards {2} = 1;
     $players_who_must_pass_cards {3} = 1;
+    $passed_player_cards {0} = "";
+    $passed_player_cards {1} = "";
+    $passed_player_cards {2} = "";
+    $passed_player_cards {3} = "";
+    $passed_from_player_cards {0} = "";
+    $passed_from_player_cards {1} = "";
+    $passed_from_player_cards {2} = "";
+    $passed_from_player_cards {3} = "";
     $direction_passing = $LEFT;
     $current_trick_card_count = 0;
     return $out;
@@ -1676,6 +1812,14 @@ sub reset_for_round
     $players_who_must_pass_cards {1} = 1;
     $players_who_must_pass_cards {2} = 1;
     $players_who_must_pass_cards {3} = 1;
+    $passed_player_cards {0} = "";
+    $passed_player_cards {1} = "";
+    $passed_player_cards {2} = "";
+    $passed_player_cards {3} = "";
+    $passed_from_player_cards {0} = "";
+    $passed_from_player_cards {1} = "";
+    $passed_from_player_cards {2} = "";
+    $passed_from_player_cards {3} = "";
 
     deal_deck ();
     if ($direction_passing == $LEFT) { $direction_passing = $RIGHT; }
@@ -1694,16 +1838,9 @@ sub reset_for_round
         handle_turn ();
     }
 
-    add_to_debug ("Initial $whos_turn was set\n");
+    add_to_debug ("Reset round..Initial $whos_turn was set\n");
     $current_trick_suit = $CLUBS;
-    my $is_bot = is_bot ("", $whos_turn);
-    if ($is_bot)
-    {
-        add_to_debug ("Initial $whos_turn is a bot! handle_bot_next_go\n");
-        handle_turn ($whos_turn);
-    }
     force_needs_refresh();
-
     return $out;
 }
 
@@ -1721,10 +1858,12 @@ sub is_card_valid_for_trick
 {
     my $card = $_ [0];
     my $player_num = $_ [1];
+    $card =~ s/,//g;
+    my $valid = 1;
 
     if (!is_valid_card ($card))
     {
-        return 0;
+        $valid = 0 & $valid;
     }
     my $suit = get_card_suit ($card);
 
@@ -1739,33 +1878,34 @@ sub is_card_valid_for_trick
     {
         if ($current_trick_suit eq "" && $hearts_broken)
         {
-            #add_to_debug ("is_card_valid_for_trick aa $card $player_num >$current_trick_suit< ");
             return 1;
         }
 
         if ($current_trick_suit eq "" && !$hearts_broken && $suit ne $HEARTS)
         {
-            #add_to_debug ("is_card_valid_for_trick bb $card $player_num >$current_trick_suit< ");
             return 1;
         }
 
         if ($current_trick_suit eq $suit)
         {
-            #add_to_debug ("is_card_valid_for_trick cc $card $player_num >$current_trick_suit< ");
             return 1;
+        }
+        
+        if ($current_trick_suit ne "" && $current_trick_suit ne $suit && player_has_suit ($player_num, $current_trick_suit))
+        {
+            return 0;
+        }
+
+        if ($trick_number <= 1 && ($suit eq $HEARTS || $card eq $QUEEN_SPADES))
+        {
+            return 0;
         }
 
         if (get_first_card_in_suit ($player_num, $current_trick_suit) eq "")
         {
             return 1;
         }
-
-        if ($trick_number == 0 && ($suit eq $HEARTS || $card eq "QS"))
-        {
-            return 0;
-        }
     }
-    #add_to_debug ("  >>> NOT is_card_valid_for_trick $card $player_num >$current_trick_suit< ");
     return 0;
 }
 
@@ -1850,7 +1990,7 @@ sub get_images_from_cards
     {
         $vars_for_javascript_adding =~ s/\+$/;/;
         my $thing = "if (nc < 3) { document.getElementById('cards').innerHTML = '<font color=darkred>Chosen ' + nc + ' cards so far</font>'; document.getElementById('passcards').disabled = true; } else if (nc == 3) { document.getElementById('cards').innerHTML = '<font color=darkblue>Chosen ' + nc + ' cards.</font>'; document.getElementById('passcards').disabled = false; $get_url_strs\ndocument.getElementById('passcards').setAttribute ('onclick', 'window.location.href=\\'pass_3_cards/player_num=$id' + url_str + '\\''); }";
-        $javascript_passing = "<script>$vars_for_javascript_passing\n$vars_for_javascript_cards_strings\nvar nc=0;\nfunction count_cards ()\n{\n$vars_for_javascript_adding\n$thing\n}\ncount_cards();\n</script><div id=\"cards\"></div><input onclick=\"window.location.href=''\" type=\"submit\" value=\"Pass Cards\" id=\"passcards\" disabled><br>";
+        $javascript_passing = "<script>$vars_for_javascript_passing\n$vars_for_javascript_cards_strings\nvar nc=0;\nfunction count_cards ()\n{\n$vars_for_javascript_adding\n$thing\n}\ncount_cards();\n</script><div id=\"cards\"><font color=darkred>Chosen 0 cards so far</font></div><input onclick=\"window.location.href=''\" type=\"submit\" value=\"Pass Cards\" id=\"passcards\" disabled><br>";
     }
 
     my $actual_card_cell = "";
@@ -1961,10 +2101,15 @@ sub player_cell
     my $out;
 
     my $cards = $player_cards {$id};
-    my $score = $player_score {$id};
+    my $score = get_player_score ($id);
     my $cards_in_hand = get_images_from_cards ($cards, $id, 0, $known_to_user | $DO_DEBUG, 1, $known_to_user, 0);
     $cards_in_hand .= " (Score = $score)";
-    $cards_in_hand .= "</td>";
+    
+    if ($trick_number < 2)
+    {
+        my $passed_cards = get_images_from_cards ($passed_player_cards {$id}, $id, 0, $known_to_user | $DO_DEBUG, 1, 0, 0);
+        $cards_in_hand .= "Got passed: $passed_cards</td>";
+    }
 
     $out .= "$name_cell$cards_in_hand\n";
 
@@ -1983,16 +2128,11 @@ sub player_cell_for_passing
     if ($direction_passing == $KEEP) { $direction = "KEEP"; }
 
     my $name_cell = "<td><font size=+1 color=darkblue>**" . get_player_name ($id) . "**</font> Pick three cards to pass: $direction";
-
     my $out;
-
-    my $cards = $player_cards {$id};
-    my $score = $player_score {$id};
-    my $cards_in_hand = get_images_from_cards ($cards, $id, 1, 1, 1, 1, 1);
+    my $cards_in_hand = get_images_from_cards ($player_cards {$id}, $id, 1, 1, 1, 1, 1);
     $cards_in_hand .= "</td>";
 
-    $out .= "$name_cell$cards_in_hand\n";
-    return $out;
+    return "$name_cell$cards_in_hand\n";
 }
 
 sub get_board
@@ -2046,7 +2186,14 @@ sub print_game_state
         return "";
     }
 
-    my $out = "You are in the $GAME game! (Total players=$num_players_in_game)<br>";
+    my $x;
+    my $ss = "<font size=-2>";
+    for ($x = 0; $x < 4; $x++)
+    {
+        $ss .= get_player_name ($x) . "(Score = " . get_player_score ($x) . ")&nbsp;";
+    }
+    $ss .= "</font>";
+    my $out = "You are in the $GAME game! (Info: $ss)<br>";
 
     if (get_game_won () ne "")
     {
@@ -2061,7 +2208,7 @@ sub print_game_state
     if ($id == $whos_turn)
     {
         $out .= "<b>YOUR TURN!!</b>";
-        if ($player_score {$id} > 0)
+        if (get_player_score ($id) > 0)
         {
             $out .= "&nbsp;&nbsp;";
         }
@@ -2220,18 +2367,18 @@ sub get_game_state
                 $out .= "<br>Player " . get_player_name (2) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {2}, $id, 1, 1, 1, 0, 0);
                 $out .= "<br>Player " . get_player_name (3) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {3}, $id, 1, 1, 1, 0, 0);
             }
-            $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a><br><br><br>";
+            $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a>&nbsp;<a href=\"toggle_debug\">Toggle debug</a><br><br><br>";
         }
         elsif (!game_started ())
         {
             if ($num_players_in_lobby >= 2)
             {
-                $out .= "<a href=\"new_game\">Start new game!<\/a>";
+                $out .= "<a href=\"new_game\">Start new game!<\/a>&nbsp;&nbsp;<a href=\"new_game_debug\">Start new game (with debug)!<\/a>";
                 $out .= "</font>";
             }
             else
             {
-                $out .= "<a href=\"new_game\">Start new game!<\/a>";
+                $out .= "<a href=\"new_game\">Start new game!<\/a>&nbsp;&nbsp;<a href=\"new_game_debug\">Start new game (with debug)!<\/a>";
                 $out .= "</font>";
             }
         }
@@ -2435,6 +2582,8 @@ sub add_scores
             if ($shot_moon_player == 1) { $pot_p1_score -= $ROUND_POINTS; }
             if ($shot_moon_player == 2) { $pot_p2_score -= $ROUND_POINTS; }
             if ($shot_moon_player == 3) { $pot_p3_score -= $ROUND_POINTS; }
+            set_scores ($pot_p0_score, $pot_p1_score, $pot_p2_score, $pot_p2_score);
+            add_to_debug ("SHOT MOON: player $shot_moon_player added 26 to others!");
         }
     }
 }
@@ -2475,22 +2624,10 @@ sub pass_3_cards
         if ($id == 3) { $passing_to = 1; }
     }
 
-    my $my_cards = $player_cards {$id};
-    my $their_cards = $player_cards {$passing_to};
-    add_to_debug ("PASSING $id is passing ($card1:$card2:$card3) ($my_cards vs $their_cards): direction=$direction_passing : (me=$id, them=$passing_to)");
-
-    $my_cards =~ s/$card1,//ig;
-    $my_cards =~ s/$card2,//ig;
-    $my_cards =~ s/$card3,//ig;
-    $my_cards =~ s/,,/,/ig;
-    $their_cards .= ",$card1,$card2,$card3,";
-    $their_cards =~ s/,,/,/g;
-
-    add_to_debug (" after passing >> my cards = $my_cards >> their cards = $their_cards");
-    $player_cards {$id} = $my_cards;
-    $player_cards {$passing_to} = $their_cards;
-
     $players_who_must_pass_cards {$id} = 0;
+    add_to_debug (" Not finished passing - $passing_to will get ,$card1,$card2,$card3,  >> $id gave away ,$card1,$card2,$card3,");
+    $passed_player_cards {$passing_to} = ",$card1,$card2,$card3,";
+    $passed_from_player_cards {$id} = ",$card1,$card2,$card3,";
 
     if ($players_who_must_pass_cards {0} == 0
         && $players_who_must_pass_cards {1} == 0
@@ -2500,10 +2637,32 @@ sub pass_3_cards
         $must_pass_3_cards = 0;
         $must_lead_2c = 1;
         $trick_number = 0;
+
+        # Actually pass all cards around..
+        my $i;
+        for ($i = 0; $i < 4; $i++)
+        {
+            my $passed_from_cards = $passed_from_player_cards {$i};
+            my $passed_cards = $passed_player_cards {$i};
+            my $my_cards = $player_cards {$i};
+            add_to_debug (" before passing $i >> $my_cards (receiving=$passed_cards, given away=$passed_from_cards)");
+
+            $passed_from_cards =~ s/^,//;
+            while ($passed_from_cards =~ s/^(\w+?),//)
+            {
+                my $c = $1;
+                $my_cards =~ s/$c,//ig;
+            }
+            $my_cards .= $passed_cards;
+            $my_cards =~ s/,,/,/g;
+
+            add_to_debug (" after passing $i >> $my_cards");
+            $player_cards {$i} = $my_cards;
+        }
+
         set_whos_turn (1, -1);
         handle_turn ();
     }
-    $players_who_must_pass_cards {$id} = 0;
 }
 
 # Main
@@ -2635,9 +2794,20 @@ sub pass_3_cards
         }
 
         # HTTP
+        if ($txt =~ m/GET.*new_game_debug.*/m)
+        {
+            $DO_DEBUG = 1;
+            new_game ();
+            add_to_debug ("Starting new game with debug on");
+            write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
+            next;
+        }
+
         if ($txt =~ m/GET.*new_game.*/m)
         {
+            $DO_DEBUG = 0;
             new_game ();
+            add_to_debug ("Starting new game with debug off");
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
             next;
         }
@@ -2665,6 +2835,11 @@ sub pass_3_cards
         {
             write_to_socket (\*CLIENT, reset_game (), "", "redirect");
             next;
+        }
+
+        if ($txt =~ m/.*toggle.*debug.*/m)
+        {
+            $DO_DEBUG = !$DO_DEBUG;
         }
 
         $txt =~ s/$GAME_URL.*$GAME_URL/$GAME_URL/img;
