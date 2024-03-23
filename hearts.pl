@@ -1466,8 +1466,10 @@ sub handle_bots_passing_cards
                 if (player_has_card ($i, "AS")) { $cs {"AS"} = 1; }
                 if (player_has_card ($i, "KS")) { $cs {"KS"} = 1; }
                 if (player_has_card ($i, "QS")) { $cs {"QS"} = 1; }
-                $cs {get_highest_card_in_suit ($i, $CLUBS, $ACE_VALUE)} = 1;
-                $cs {get_highest_card_in_suit ($i, $DIAMONDS, $ACE_VALUE)} = 1;
+                $cs {get_highest_card_in_suit ($i, $CLUBS, $ACE_VALUE+1)} = 1;
+                $cs {get_highest_card_in_suit ($i, $DIAMONDS, $ACE_VALUE+1)} = 1;
+                $cs {get_highest_card_in_suit ($i, $SPADES, $ACE_VALUE+1)} = 1;
+                $cs {get_highest_card_in_suit ($i, $HEARTS, $ACE_VALUE+1)} = 1;
                 $cs {get_highest_card ($i)} = 1;
             }
 
@@ -1475,9 +1477,12 @@ sub handle_bots_passing_cards
             my $c_count = 0;
             foreach $c (keys (%cs))
             {
-                if ($c_count == 0) { $c1 = $c; $c_count++; }
-                elsif ($c_count == 1) { $c2 = $c; $c_count++; }
-                elsif ($c_count == 2) { $c3 = $c; $c_count++; }
+                if (is_valid_card ($c)) 
+                {
+                    if ($c_count == 0) { $c1 = $c; $c_count++; }
+                    elsif ($c_count == 1) { $c2 = $c; $c_count++; }
+                    elsif ($c_count == 2) { $c3 = $c; $c_count++; }
+                }
             }
 
             add_to_debug ("Bot $i is giving away: $c1,$c2,$c3");
