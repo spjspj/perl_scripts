@@ -656,6 +656,7 @@ sub set_whos_turn
         $whos_turn = $wt;
     }
     add_to_debug ("Setting who goes to $whos_turn (Initial=$initial)\n");
+    force_needs_refresh ();
 }
 
 sub get_player_id_from_name
@@ -945,13 +946,14 @@ sub play_card
             $current_trick_suit = "";
             set_whos_turn (0, $current_winning_player);
             handle_turn ();
-            force_needs_refresh ();
         }
     }
     else
     {
         set_next_turn ();
     }
+
+    force_needs_refresh ();
 }
 
 sub player_has_suit
@@ -1650,16 +1652,6 @@ sub force_needs_refresh
     }
 }
 
-sub force_needs_refresh_trigger
-{
-    my $i = 0;
-    my $reason = $_ [0];
-    for ($i = 0; $i < $num_players_in_lobby; $i++)
-    {
-        $NEEDS_REFRESH [$i] = 1;
-    }
-}
-
 sub get_needs_refresh
 {
     my $i = 0;
@@ -1932,6 +1924,7 @@ sub get_images_from_cards
     my $vars_for_javascript_cards_strings;
     my $get_url_strs = "var url_str = '';";
 
+    add_to_debug ("get_images_from_cards :$cards:$id;known=$known_to_user:make_urls=$make_urls\n");
     while ($cards =~ s/^(\w+),//)
     {
         my $c = $1;
@@ -2096,10 +2089,10 @@ sub player_cell
         $this_players_turn = "#MyTurn!#";
     }
 
-    my $name_cell = "<td><font size= color=darkgreen>" . get_player_name ($id) . " $this_players_turn</font>";
+    my $name_cell = "<td bgcolor=\"ffefef\"><font size= color=darkgreen>" . get_player_name ($id) . " $this_players_turn</font>";
     if ($id == $this_player_id)
     {
-        $name_cell = "<td><font size=+1 color=darkblue>**" . get_player_name ($id) . "**</font> $this_players_turn";
+        $name_cell = "<td bgcolor=\"efefff\"><font size=+1 color=darkblue>**" . get_player_name ($id) . "**</font> $this_players_turn";
         $known_to_user = 1;
     }
 
@@ -2148,7 +2141,7 @@ sub get_board
     {
         return " NO BOARD TO SEE..";
     }
-    my $blank_td = "<td width=33%>&nbsp;&nbsp;&nbsp;</td>";
+    my $blank_td = "<td width=33% bgcolor=\"ffffff\">&nbsp;&nbsp;&nbsp;</td>";
     my $start_tr = "<tr>";
     my $end_tr = "</tr>";
     my $out;
