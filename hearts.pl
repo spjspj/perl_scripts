@@ -106,7 +106,7 @@ sub get_debug
 {
     if ($DO_DEBUG)
     {
-        return ("xxx $DEBUG yyy");
+        return ("<pre><br>$DEBUG </pre>");
     }
     return "";
 }
@@ -119,6 +119,7 @@ sub add_to_debug
         $last_trick_number = $trick_number;
     }
     $DEBUG .= "$trick_number (Trick=$current_trick: Who=$whos_turn) $_[0]<br>\n";
+    $DEBUG =~ s/10([HSCD]),/X$1,/img;
     print "$_[0]\n";
 }
 
@@ -169,16 +170,21 @@ sub get_game_won
 
 sub set_hearts_broken
 {
+    my $a = $_ [0];
     $hearts_broken = 1;
-    set_knowledge ("hearts_broken", 1);
+    set_knowledge ("$a -- hearts_broken", 1);
+    add_to_debug ("$a -- setting hearts_broken!!");
 }
 
 sub only_has_hearts
 {
     my $wt = $_ [0];
-    if (!player_has_suit ($CLUBS) && !player_has_suit ($DIAMONDS) && !player_has_suit ($SPADES))
+    if (!player_has_suit ($wt, $CLUBS) && !player_has_suit ($wt, $DIAMONDS) && !player_has_suit ($wt, $SPADES))
     {
-        return 1;
+        if (player_has_suit ($wt, $HEARTS))
+        {
+            return 1;
+        }
     }
     return 0;
 }
@@ -635,20 +641,32 @@ sub deal_deck
     set_knowledge ("$SPADES highest_card", "AS");
 
     my $cn = 0;
+    my $pn;
+    my %dealt_cards;
     while ($cn < $NUM_CARDS_IN_FULL_DECK)
     {
-        my $pn = $cn % 4;
+        $pn = $cn % 4;
         $player_cards {$pn} .= $deck [$cn] . ",";
 
         my $suit = get_card_suit ($deck [$cn]);
         increase_knowledge ("$pn - $suit");
+        $cn++;
+        $dealt_cards {$pn} ++;
+    }
+
+    add_to_debug ("Dealt out for player 0 - $dealt_cards{0}");
+    add_to_debug ("Dealt out for player 1 - $dealt_cards{1}");
+    add_to_debug ("Dealt out for player 2 - $dealt_cards{2}");
+    add_to_debug ("Dealt out for player 3 - $dealt_cards{3}");
+
+    for ($pn = 0; $pn < 3; $pn++)
+    {
         set_knowledge ("$pn - can_shoot_moon", 1);
         set_knowledge ("$pn - want_to_shoot_moon", 0);
         set_knowledge ("$pn - can_win_rest", 0);
         set_knowledge ("$pn - stop_shooting_moon", 0);
         set_knowledge ("$pn - stop_someone_else_shooting_moon", 1);
         set_knowledge ("current_score - $pn", 0);
-        $cn++;
     }
 }
 
@@ -680,7 +698,7 @@ sub set_whos_turn
     else
     {
         $whos_turn = $wt;
-        have_to_break_hearts ($wt);
+        have_to_break_hearts ($wt, "111");
     }
     add_to_debug ("Setting who goes to $whos_turn (Initial=$initial)\n");
     force_needs_refresh ();
@@ -795,7 +813,8 @@ sub play_card
     my $wt = $_ [0];
     my $card_played = $_ [1];
     my $cards = $player_cards {$wt};
-    add_to_debug ("PLAY CARD ($wt) heartsborked=$hearts_broken ($current_trick_card_count)- card_played=$card_played; $wt player has $cards\n");
+    my $ccards = count_cards ($player_cards {$wt});
+    add_to_debug ("PLAY CARD ($wt) heartsborked=$hearts_broken ($current_trick_card_count)- card_played=$card_played; $wt player has $cards (>>> $ccards <<<)\n");
 
     if (!is_valid_card ($card_played))
     {
@@ -836,6 +855,7 @@ sub play_card
         set_knowledge ("card_winning_trick", $card_played);
         set_knowledge ("trick_has_points", 0);
         set_knowledge ("trick_points", 0);
+        deal_with_trick_points ($card_played);
     }
     elsif ($cards =~ m/$card_played,/ && $current_trick_suit eq "")
     {
@@ -852,22 +872,7 @@ sub play_card
         set_knowledge ("player_winning_trick", $wt);
         set_knowledge ("card_winning_trick", $card_played);
 
-        set_knowledge ("trick_has_points", 0);
-        if (point_card ($card_played))
-        {
-            set_knowledge ("trick_has_points", 1);
-            
-            if (get_card_suit ($card_played) eq $HEARTS)
-            {
-                set_hearts_broken ();
-                set_knowledge ("trick_points", get_knowledge ("trick_points") + $HEARTS_POINTS);
-            }
-            else
-            {
-                set_hearts_broken ();
-                set_knowledge ("trick_points", get_knowledge ("trick_points") + $QUEEN_SPADES_POINTS);
-            }
-        }
+        deal_with_trick_points ($card_played);
     }
     elsif ($cards =~ m/$card_played,/ && $current_trick_suit eq $suit)
     {
@@ -883,10 +888,7 @@ sub play_card
             set_knowledge ("card_winning_trick", $card_played);
         }
 
-        if (point_card ($card_played))
-        {
-            set_knowledge ("trick_has_points", 1);
-        }
+        deal_with_trick_points ($card_played);
     }
     elsif ($cards =~ m/$card_played,/ && $current_trick_suit ne $suit)
     {
@@ -896,16 +898,12 @@ sub play_card
         $current_trick_cards {$wt} = "$card_played,";
         add_to_debug ("ADDed TO current_trick (broke suit) $current_trick -- ($current_trick_card_count) >>$current_trick_cards{$wt}--$wt<<\n");
         set_knowledge ("no $current_trick_suit $wt", 1);
-
-        if (point_card ($card_played))
-        {
-            set_knowledge ("trick_has_points", 1);
-        }
+        deal_with_trick_points ($card_played);
     }
 
     if (!$hearts_broken && get_card_suit ($card_played) eq $HEARTS)
     {
-        set_hearts_broken ();
+        set_hearts_broken ("bbb");
     }
 
     if ($current_trick_card_count >= 4)
@@ -1005,6 +1003,7 @@ sub play_card
             $current_trick_card_count = 0;
             $current_trick_suit = "";
             set_whos_turn (0, $current_winning_player);
+            have_to_break_hearts ($current_winning_player, "afjaja");
             handle_turn ();
         }
     }
@@ -1159,7 +1158,7 @@ sub get_lowest_card
     my $temp_cards = $cards;
     my $found_lowest_card = 0;
 
-    have_to_break_hearts ($wt);
+    have_to_break_hearts ($wt, "111zz");
 
     while ($temp_cards =~ s/^([^,]+[$ALL_SUITS_HDSC]),//)
     {
@@ -1185,11 +1184,39 @@ sub get_lowest_card
 sub have_to_break_hearts
 {
     my $wt = $_ [0];
+    my $a = $_ [1];
 
     if (only_has_hearts ($wt))
     {
-        set_hearts_broken ();
+        set_hearts_broken ("player $wt - ccc" . $a);
     }
+}
+
+sub deal_with_trick_points
+{
+    my $cp = $_ [0];
+    set_knowledge ("trick_has_points", 0);
+    set_knowledge ("trick_points", 0);
+
+    if (point_card ($cp))
+    {
+        set_knowledge ("trick_has_points", 1);
+        set_knowledge ("trick_points", get_score_from_cards ($current_trick));
+        
+        if (get_card_suit ($cp) eq $HEARTS)
+        {
+            set_hearts_broken ("aaa");
+        }
+    }
+}
+
+sub is_last_in_trick
+{
+    if ($current_trick_card_count >= 3)
+    {
+        return 1;
+    }
+    return 0;
 }
 
 sub get_highest_card
@@ -1200,7 +1227,7 @@ sub get_highest_card
     my $highest_card;
 
     my $temp_cards = $cards;
-    have_to_break_hearts ($wt);
+    have_to_break_hearts ($wt, "222");
 
     while ($temp_cards =~ s/^([^,]+[$ALL_SUITS_HDSC]),//)
     {
@@ -1347,6 +1374,21 @@ sub get_moon_player_winning_trick
         return  1;
     }
     return 0;
+}
+
+sub count_cards
+{
+    my $cards = $_ [0];
+    my $cc = 0;
+    while ($cards =~ s/^(\w+),//)
+    {
+        my $c = $1;
+        if (is_valid_card ($c))
+        {
+            $cc++;
+        }
+    } 
+    return $cc;
 }
 
 sub point_card
@@ -1535,6 +1577,8 @@ sub handle_bot_next_go
         $num_in_suit = player_number_cards_in_suit ($wt, $current_trick_suit);
     }
 
+    #==============================================================
+    # Easiest case - only one card in the current suit in the trick
     # 1 card in suit..
     if ($num_in_suit == 1)
     {
@@ -1542,6 +1586,8 @@ sub handle_bot_next_go
         return;
     }
 
+    #=========================================================
+    # Harder cases - 0 or many cards in the current trick suit
     my %card_weightings;
     my $cards = $player_cards {$wt};
     my $is_valid_card;
@@ -1568,9 +1614,11 @@ sub handle_bot_next_go
     my $trick_points = get_knowledge ("trick_points");
     my $moon_player_winning_trick = get_moon_player_winning_trick ();
     my $want_to_shoot_moon = get_knowledge ("$wt - want_to_shoot_moon");
+    my $is_last_in_trick = is_last_in_trick ();
 
     add_to_debug ("bb) Bot $wt ($current_trick_suit) num_in_suit=$num_in_suit want_to_stop_moon=$want_to_stop_moon; trick_has_points=$trick_has_points; trick_points=$trick_points; moon_player_winning_trick=$moon_player_winning_trick; want_to_shoot_moon=$want_to_shoot_moon");
 
+    have_to_break_hearts ($wt, "333");
     if ($current_trick_suit eq "" || $num_in_suit == 0)
     {
         foreach $card (keys (%card_weightings))
@@ -1618,7 +1666,10 @@ sub handle_bot_next_go
         if (!$want_to_shoot_moon)
         {
             $card = get_lowest_card ($wt);
-            $card_weightings {$card} += 2;
+            if (is_valid_card ($card))
+            {
+                $card_weightings {$card} += 2;
+            }
             if (get_chasing_qs ($wt))
             {
                 $card = get_lowest_spade_for_leading ($wt);
@@ -1632,10 +1683,13 @@ sub handle_bot_next_go
         elsif ($want_to_shoot_moon)
         {
             $card = get_highest_card ($wt);
-            $card_weightings {$card} += 2;
+            if (is_valid_card ($card))
+            {
+                $card_weightings {$card} += 2;
+            }
         }
 
-        have_to_break_hearts ($wt);
+        have_to_break_hearts ($wt, "333");
         foreach $card (keys (%card_weightings))
         {
             my $suit = get_card_suit ($card);
@@ -1652,7 +1706,7 @@ sub handle_bot_next_go
         }
         
         $best_card = "";
-        my $best_card_val = -1;
+        my $best_card_val = -100;
         foreach $card (keys (%card_weightings))
         {
             if ($card_weightings {$card} > $best_card_val)
@@ -1662,7 +1716,7 @@ sub handle_bot_next_go
             }
         }
  
-        add_to_debug ("11) Bot $wt going to play >$best_card< (from $best_card_val) : $cws");
+        add_to_debug ("11) Bot $wt going to play >$best_card< (from $best_card_val) >$cws<");
     }
     else
     {
@@ -1683,7 +1737,7 @@ sub handle_bot_next_go
             }
         }
         
-        if ($want_to_stop_moon && $trick_has_points && $trick_points < 5)
+        if ($want_to_stop_moon && $trick_has_points && $trick_points < 5 && $is_last_in_trick)
         {
             # Try and win it..
             $card = get_highest_card_in_suit ($wt, $current_trick_suit, get_card_value (get_knowledge ("card_winning_trick")));
@@ -1697,7 +1751,7 @@ sub handle_bot_next_go
             }
         }
         
-        have_to_break_hearts ($wt);
+        have_to_break_hearts ($wt, "444");
         foreach $card (keys (%card_weightings))
         {
             my $suit = get_card_suit ($card);
@@ -1708,7 +1762,7 @@ sub handle_bot_next_go
         }
 
         $best_card = "";
-        my $best_card_val = -1;
+        my $best_card_val = -100;
         foreach $card (keys (%card_weightings))
         {
             if ($card_weightings {$card} > $best_card_val)
@@ -2002,6 +2056,7 @@ sub new_game
     $player_score {1} = 0;
     $player_score {2} = 0;
     $player_score {3} = 0;
+
     deal_deck ();
     $whos_turn = 0;
     add_to_debug ("Initial $whos_turn was set\n");
@@ -2034,6 +2089,7 @@ sub reset_game
     $player_score {1} = 0;
     $player_score {2} = 0;
     $player_score {3} = 0;
+
     deal_deck ();
     $must_lead_2c  = 0;
     $must_pass_3_cards = 1;
@@ -2117,7 +2173,7 @@ sub reset_for_round
 
 sub in_game
 {
-    my $id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "ccc");
+    my $id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "cxxc");
     if ($id >= 0 && $id < $num_players_in_game)
     {
         return 1;
@@ -2190,6 +2246,7 @@ sub get_images_from_cards
     my $make_urls = $_ [5];
     my $passing_cards = $_ [6];
 
+    my $dimmable = 0;
     $cards =~ s/^,*//;
 
     my %cards;
@@ -2219,10 +2276,12 @@ sub get_images_from_cards
             my $is_valid_card = is_card_valid_for_trick ($c, $id);
             my $a_pre = "";
             my $a_post = "";
+            $dimmable = 1;
             if ($is_valid_card && $make_urls && !$passing_cards) 
             {
                 $a_pre = "<a href=\"chosen_card_$id.$c\">";
                 $a_post = "<\/a>";
+                $dimmable = 0;
             }
 
             if ($passing_cards)
@@ -2241,7 +2300,14 @@ sub get_images_from_cards
             }
             else
             {
-                $cards {"$adder$c"} = $a_pre . "<img id=\"card.$c\" width=\"30\" height=\"43\" src=\"hearts/card$c.jpg\"><\/img>" . $a_post;
+                if ($dimmable)
+                {
+                    $cards {"$adder$c"} = $a_pre . "<img id=\"card.$c\" width=\"30\" height=\"43\" src=\"hearts/card$c" . "_dim.jpg\"><\/img>" . $a_post;
+                }
+                else
+                {
+                    $cards {"$adder$c"} = $a_pre . "<img id=\"card.$c\" width=\"30\" height=\"43\" src=\"hearts/card$c.jpg\"><\/img>" . $a_post;
+                }
             }
         }
         else
@@ -3078,7 +3144,7 @@ sub pass_3_cards
         {
             $DO_DEBUG = 1;
             new_game ();
-            add_to_debug ("Starting new game with debug on");
+            add_to_debug ("Starting new game with debug on ($hearts_broken = hearts is initially this..)");
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
             next;
         }
@@ -3087,7 +3153,7 @@ sub pass_3_cards
         {
             $DO_DEBUG = 0;
             new_game ();
-            add_to_debug ("Starting new game with debug off");
+            add_to_debug ("Starting new game with debug off ($hearts_broken = hearts is initially this..)");
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
             next;
         }
