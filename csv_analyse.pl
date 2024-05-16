@@ -895,7 +895,7 @@ sub do_regex_expansion
             my $value = $1;
             my $first = $2;
             my $second = $3;
-            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/sub rr {\$v = "$value"; \$v =~ s\/$first\/$second\/; print \$v; } rr();/g;
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/eval {my \$v = "$value"; \$v =~ s\/$first\/$second\/; return \$v; }/g;
         }
     }
     return $field_val;
