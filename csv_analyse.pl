@@ -721,9 +721,10 @@ sub do_concat_expansion
         my $to_check = $1;
         if (simple_parentheses_only_two_arguments ($to_check, "CONCATENATE"))
         {
+            print ($field_val);
             if ($field_val =~ m/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/)
             {
-                $field_val =~ s/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/$1$2/;
+                $field_val =~ s/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/fix_quotes ($1$2)/;
                 $field_val =~ s/""/"/g;
                 $field_val =~ s/""/"/g;
             }
@@ -750,9 +751,19 @@ sub do_concat_expansion
         {
             $field_val =~ s/CONCATENATE\(([^\|]+?)|(.+?)\)/$1 . CONCATENATE($2)/;
         }
+        print ("\n>>$field_val<<\n");
         return $field_val;
     }
     return $field_val;
+}
+
+sub fix_quotes
+{
+    my $str = $_ [0];
+    $str =~ s/fix_quotes *\(//;
+    $str =~ s/\)$//;
+    $str =~ s/"/\\"/g;
+    return "\"$str\"";
 }
 
 sub do_mod_expansion
@@ -774,20 +785,20 @@ sub do_mod_expansion
 sub do_days_between_expansion
 {
     my $field_val = $_ [0];
-    if ($field_val =~ m/((DAYBETWEEN)\(.*)/)
+    if ($field_val =~ m/((DAYS)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/days_between($1,$2)/;
+            $field_val =~ s/$func\((.+)\|(.+)\)/days($1,$2)/;
             return $field_val;
         }
     }
     return $field_val;
 }
 
-sub days_between
+sub days
 {
     my $date1 = $_ [0];
     my $date2 = $_ [1];
@@ -847,26 +858,24 @@ sub do_max_expansion
         my $func = $2;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/($1 > $2 ? $1 | $2)/;
+            $field_val =~ s/$func\((.+)\|(.+)\)/($1 > $2 ? $1 : $2)/;
             return $field_val;
         }
     }
     return $field_val;
 }
 
-
-
-
 sub do_standard_expansion 
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
-    if ($field_val =~ m/(($func)\(.*)/)
+    my $upper_func = uc($_ [1]);
+    if ($field_val =~ m/(($upper_func)\(.*)/)
     {
         my $to_check = $1;
-        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        if (simple_parentheses_only_one_argument ($to_check, "$upper_func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/$func ($1,$2)/;
+            $field_val =~ s/$upper_func\((.+)\)/$func($1)/;
             return $field_val;
         }
     }
@@ -886,7 +895,7 @@ sub do_regex_expansion
             my $value = $1;
             my $first = $2;
             my $second = $3;
-            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/(\$v = "$value"; \$v =~ s\/$first\/$second\/;)/g;
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/sub rr {\$v = "$value"; \$v =~ s\/$first\/$second\/; print \$v; } rr();/g;
         }
     }
     return $field_val;
@@ -915,13 +924,13 @@ sub do_pmt_expansion
 sub do_min_expansion
 {
     my $field_val = $_ [0];
-    if ($field_val =~ m/((MAX)\(.*)/)
+    if ($field_val =~ m/((MIN)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/($1 <= $2 ? $1 | $2)/;
+            $field_val =~ s/$func\((.+)\|(.+)\)/($1 <= $2 ? $1 : $2)/;
             return $field_val;
         }
     }
@@ -1022,22 +1031,22 @@ sub do_pi_expansion
 #    return $field_val;
 #}
 
-
 sub do_right_expansion
 {
     my $field_val = $_ [0];
-    if ($field_val =~ m/((LEFT)\(.*)/)
+    if ($field_val =~ m/((RIGHT)\(.*)/)
     {
         my $to_check = $1;
         my $func = $2;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, $2)/;
+            $field_val =~ s/$func\((.+)\|(.+)\)/substr ($1, -$2, $2)/;
             return $field_val;
         }
     }
     return $field_val;
 }
+
 
 sub do_textjoin_expansion
 {
@@ -1436,7 +1445,7 @@ sub perl_expansions
     }
     if ($str =~ m/SQRT\(/)
     {
-        $str = do_standard_expansion ($str, "SQRT");
+        $str = do_standard_expansion ($str, "sqrt");
     }
     if ($str =~ m/REGEXPREPLACE\(/)
     {
@@ -1478,7 +1487,7 @@ sub perl_expansions
     {
         $str = do_round_expansion ($str);
     }
-    if ($str =~ m/DAYBETWEEN\(/)
+    if ($str =~ m/DAYS\(/)
     {
         $str = do_days_between_expansion ($str);
     }
@@ -1515,6 +1524,12 @@ sub recreate_perl
         $str = fix_up_field_vals ($str, $field_id, 0);
         $each_element {$k} = $str;
         my $xx;
+
+        if ($str =~ m/fix_quotes/)
+        {
+            $str = fix_quotes ($str);
+            print ("Doing eval on print($str)\n");
+        }
 
         # Print a value into a variable as read from STDOUT that eval prints out
         my $output;
@@ -3249,8 +3264,6 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
         if ($txt =~ m/GET.*show_examples.*/m)
         {
             $txt =~ m/(........show_examples.......)/im;
-
-
             
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
@@ -3264,6 +3277,41 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
 <input type=\"submit\" value=\"Done\" class=\"submitButton\">
 </form>
 </body> </html>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
+        if ($txt =~ m/GET.*show_help.*/m)
+        {
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>CSV Analyze Help</h1> <br>";
+            $html_text .= "Functions Syntax: <a href='/csv_analyse/old_csv?example.txt'>(see examples)</a><br><br>";
+            $html_text .= "<table width=100%><tr>\n";
+            $html_text .= "<thead>";
+            $html_text .= "<th>Function Name</th>\n";
+            $html_text .= "<th>Explanation</th>\n";
+            $html_text .= "<th>Example/s</th>\n";
+            $html_text .= "</thead>";
+
+            $html_text .= "<tr><td bgcolor=#e5f4ff>ABS</td><td bgcolor=#ffe5f4>Absolute value </td><td bgcolor=#f4e5ff>=ABS(-55.25) returns 55.25</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>CONCATENATE</td><td bgcolor=#ffe5f4>Concatentation of two strings </td><td bgcolor=#f4e5ff>=CONCATENATE(\"AAA\"|\"BBB\") returns AAABBB</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>DAYS</td><td bgcolor=#ffe5f4>Days between two dates (YYYYMMDD)</td bgcolor=#f4e5ff><td bgcolor=#f4e5ff>=DAYS(\"20240501\",\"20240601\")<br>=DAYS(A>,A_)</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>IF</td><td bgcolor=#ffe5f4>If then else structure</td><td bgcolor=#f4e5ff>=IF(4>5|\"Hello\"|\"Goodbye\")</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>INT</td><td bgcolor=#ffe5f4>Take the integer floor of the result of dividing the first argument by the second</td><td bgcolor=#f4e5ff>=INT(6|10) returns 0</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>LEFT</td><td bgcolor=#ffe5f4>Returns the first N characters of S</td><td bgcolor=#f4e5ff>=LEFT(\"ABCDEXYZ\"|5) returns \"ABCDE\"</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>MAX</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>=MAX(3.14159|PI) returns PI</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>MIN</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>=MIN(3.14159|PI) returns 3.14159</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>MOD</td><td bgcolor=#ffe5f4>Modulus of two integers</td bgcolor=#f4e5ff><td bgcolor=#f4e5ff>=MOD(10|3) returns 1</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>PI</td><td bgcolor=#ffe5f4>Returns the value of Pi to 14 decimals</td><td bgcolor=#f4e5ff>=PI() returns 3.14159265358979</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>PMT</td><td bgcolor=#ffe5f4>PMT calculates the payment for a loan based on constant payments and a constant interest rate. =PMT(rate|times|principal)</td><td bgcolor=#f4e5ff>=PMT(5|2|100) returns... </td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>POWER</td><td bgcolor=#ffe5f4>Raise a number to a power </td><td bgcolor=#f4e5ff>=POWER(3|2) returns 9</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>RAND</td><td bgcolor=#ffe5f4>Returns a random number with the max value being the supplied value</td><td bgcolor=#f4e5ff>=RAND(5) returns a random value up to the value of 5</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>REGEXPREPLACE</td><td bgcolor=#ffe5f4>Do regex on first parameter. first_param =~ s/second_param/third_param/</td><td bgcolor=#f4e5ff>=REGEXPREPLACE(\"ABCDE\"|\"ABC\"|\"XYZ\") returns \"XYZDE\"</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>RIGHT</td><td bgcolor=#ffe5f4>Returns the last N characters of S</td><td bgcolor=#f4e5ff>=RIGHT(\"ABCDEXYZ\"|5) returns \"DEXYZ\"</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>ROUND</td><td bgcolor=#ffe5f4>Rounds a given number</td><td bgcolor=#f4e5ff>=ROUND(0.55) returns 1, =ROUND(0.49) returns 0</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>SQRT</td><td bgcolor=#ffe5f4>Square root of a number</td><td bgcolor=#f4e5ff>=SQRT(100) returns 10</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>SUM</td><td bgcolor=#ffe5f4>Sums up a given range</td><td bgcolor=#f4e5ff>=SUM(A1:A10) returns A1+A2+..A8+A9+A10</td>\n</tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>TEXTJOIN</td><td bgcolor=#ffe5f4>Textjoin combines the text from multiple ranges and/or strings, and includes a delimiter you specify between each text value that will be combined. =TEXTJOIN (delimiter|cond|text)</d><td bgcolor=#f4e5ff>=TEXTJOIN(\";\"|\"TRUE\"|A1:A5)</td>\n</tr>";
+            $html_text .= "</tr></table>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
@@ -3595,7 +3643,8 @@ $//img;
         $html_text .= "<td><form action=\"/csv_analyse/update_csv\">
                 <label>Update CSV:</label><br>
                 <input type=\"submit\" value=\"Update CSV\">
-                <a href=\"/csv_analyse/show_examples\">Examples</a>
+                <a href=\"/csv_analyse/show_examples\">Egs</a>
+                <a href=\"/csv_analyse/show_help\">Help</a>
                 <a href=\"/csv_analyse/show_history\">History</a>
                 <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
                 <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
