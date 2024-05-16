@@ -12,6 +12,8 @@ use LWP::Simple;
 use Socket;
 use File::Copy;
 use Math::Trig;
+use DateTime;
+#use DateTime::Format::Duration;
 
 my %csv_data;
 my $csv_block;
@@ -769,6 +771,57 @@ sub do_mod_expansion
     return $field_val;
 }
 
+sub do_days_between_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((DAYBETWEEN)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/days_between($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub days_between
+{
+    my $date1 = $_ [0];
+    my $date2 = $_ [1];
+    my $dummy = 1;
+    #my $d1 = DateTime->new(year => $1, month => $2, day => $3, hour => $dummy, minute => $dummy, second => $dummy, 'UTC');
+
+    $date1 =~ m/^(\d\d\d\d)(\d\d)(\d\d)/;
+    my $d1 = DateTime->new(
+        year      => $1,
+        month     => $2,
+        day       => $3,
+        hour      => $dummy,
+        minute    => $dummy,
+        second    => $dummy,
+        time_zone => 'America/Chicago',
+    );
+
+    $date2 =~ m/^(\d\d\d\d)(\d\d)(\d\d)/;
+    my $d2 = DateTime->new(
+        year      => $1,
+        month     => $2,
+        day       => $3,
+        hour      => $dummy,
+        minute    => $dummy,
+        second    => $dummy,
+        time_zone => 'America/Chicago',
+    );
+
+    my $dur = ($d1 > $d2 ? ($d1->subtract_datetime_absolute($d2)) : ($d2->subtract_datetime_absolute($d1)));
+
+    my $days = $d1->delta_days($d2)->delta_days();
+    return $days;
+}
+
 sub do_int_expansion
 {
     my $field_val = $_ [0];
@@ -1425,7 +1478,11 @@ sub perl_expansions
     {
         $str = do_round_expansion ($str);
     }
-
+    if ($str =~ m/DAYBETWEEN\(/)
+    {
+        $str = do_days_between_expansion ($str);
+    }
+ 
     # General cleanup..
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
     return $str;
@@ -2404,7 +2461,33 @@ sub set_examples
 =A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
 =A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
 =A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
-=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!";
+=A!+0.01;=B!+0.01;=C!;=D!;=E!;=F!;=-G!;=H!;=I!;=J!
+====;====;====;====;====;====;====;====;====;====;====;====;====;====;====;====;====
+Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
+20240226;20240227;20240228;20240229;20240301;20240302;20240303;
+1;1;1;2;2;0;0;=IF(SUM(A3:E3)-5>0|SUM(A3:E3)-5|0)
+20240304;20240305;20240306;20240307;20240308;20240309;20240310;
+1;2;2;2;2;0;0;=IF(SUM(A5:E5)-5>0|SUM(A5:E5)-5|0)
+20240311;20240312;20240313;20240314;20240315;20240316;20240317;
+1;2;2;2;2;0;0;=IF(SUM(A7:E7)-5>0|SUM(A7:E7)-5|0)
+20240318;20240319;20240320;20240321;20240322;20240323;20240324;
+2;2;1;2;2;0;0;=IF(SUM(A9:E9)-5>0|SUM(A9:E9)-5|0)
+20240325;20240326;20240327;20240328;20240329;20240330;20240331;
+2;2;1;2;1;0;0;=IF(SUM(A11:E11)-5>0|SUM(A11:E11)-5|0)
+20240401;20240402;20240403;20240404;20240405;20240406;20240407;
+1;1;1;2;2;0;0;=IF(SUM(A13:E13)-5>0|SUM(A13:E13)-5|0)
+20240408;20240409;20240410;20240411;20240412;20240413;20240414;
+2;2;1;2;1;0;0;=IF(SUM(A15:E15)-5>0|SUM(A15:E15)-5|0)
+20240415;20240416;20240417;20240418;20240419;20240420;20240421;
+2;1;1;1;1;0;0;=IF(SUM(A17:E17)-5>0|SUM(A17:E17)-5|0)
+20240422;20240423;20240424;20240425;20240426;20240427;20240428;
+1;1;1;1;1;0;0;=IF(SUM(A19:E19)-5>0|SUM(A19:E19)-5|0)
+20240429;20240430;20240501;20240502;20240503;20240504;20240505;
+1;2;1;1;1;0;0;=IF(SUM(A21:E21)-5>0|SUM(A21:E21)-5|0)
+20240506;20240507;20240508;20240509;20240510;20240511;20240512;
+1;1;1;1;1;0;0;=IF(SUM(A23:E23)-5>0|SUM(A23:E23)-5|0)
+20240513;20240514;20240515;;;;;
+1;1;1;;;;;=IF(SUM(A25:E25)-5>0|SUM(A25:E25)-5|0)";
 
     $examples_seven= "SPHERE_X;SPHERE_Y;QUARTER_SPHERE_Z
 1;0;0
