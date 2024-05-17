@@ -1528,7 +1528,6 @@ sub recreate_perl
         if ($str =~ m/fix_quotes/)
         {
             $str = fix_quotes ($str);
-            print ("Doing eval on print($str)\n");
         }
 
         # Print a value into a variable as read from STDOUT that eval prints out
@@ -3186,6 +3185,8 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
     my $iaddr;
     my $client_port;
     my $client_addr;
+    my $server_ip = `curl -s GET "http://icanhazip.com"`;
+    $server_ip =~ s/\W*$//img;
     my $pid;
     my $SERVER;
     my $port = 3867;
@@ -3292,40 +3293,62 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
             $html_text .= "<th>Example/s</th>\n";
             $html_text .= "</thead>";
 
-            $html_text .= "<tr><td bgcolor=#e5f4ff>ABS</td><td bgcolor=#ffe5f4>Absolute value </td><td bgcolor=#f4e5ff>=ABS(-55.25) returns 55.25</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>CONCATENATE</td><td bgcolor=#ffe5f4>Concatentation of two strings </td><td bgcolor=#f4e5ff>=CONCATENATE(\"AAA\"|\"BBB\") returns AAABBB</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>DAYS</td><td bgcolor=#ffe5f4>Days between two dates (YYYYMMDD)</td bgcolor=#f4e5ff><td bgcolor=#f4e5ff>=DAYS(\"20240501\",\"20240601\")<br>=DAYS(A>,A_)</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>IF</td><td bgcolor=#ffe5f4>If then else structure</td><td bgcolor=#f4e5ff>=IF(4>5|\"Hello\"|\"Goodbye\")</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>INT</td><td bgcolor=#ffe5f4>Take the integer floor of the result of dividing the first argument by the second</td><td bgcolor=#f4e5ff>=INT(6|10) returns 0</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>LEFT</td><td bgcolor=#ffe5f4>Returns the first N characters of S</td><td bgcolor=#f4e5ff>=LEFT(\"ABCDEXYZ\"|5) returns \"ABCDE\"</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>MAX</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>=MAX(3.14159|PI) returns PI</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>MIN</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>=MIN(3.14159|PI) returns 3.14159</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>MOD</td><td bgcolor=#ffe5f4>Modulus of two integers</td bgcolor=#f4e5ff><td bgcolor=#f4e5ff>=MOD(10|3) returns 1</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>PI</td><td bgcolor=#ffe5f4>Returns the value of Pi to 14 decimals</td><td bgcolor=#f4e5ff>=PI() returns 3.14159265358979</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>PMT</td><td bgcolor=#ffe5f4>PMT calculates the payment for a loan based on constant payments and a constant interest rate. =PMT(rate|times|principal)</td><td bgcolor=#f4e5ff>=PMT(5|2|100) returns... </td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>POWER</td><td bgcolor=#ffe5f4>Raise a number to a power </td><td bgcolor=#f4e5ff>=POWER(3|2) returns 9</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>RAND</td><td bgcolor=#ffe5f4>Returns a random number with the max value being the supplied value</td><td bgcolor=#f4e5ff>=RAND(5) returns a random value up to the value of 5</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>REGEXPREPLACE</td><td bgcolor=#ffe5f4>Do regex on first parameter. first_param =~ s/second_param/third_param/</td><td bgcolor=#f4e5ff>=REGEXPREPLACE(\"ABCDE\"|\"ABC\"|\"XYZ\") returns \"XYZDE\"</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>RIGHT</td><td bgcolor=#ffe5f4>Returns the last N characters of S</td><td bgcolor=#f4e5ff>=RIGHT(\"ABCDEXYZ\"|5) returns \"DEXYZ\"</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>ROUND</td><td bgcolor=#ffe5f4>Rounds a given number</td><td bgcolor=#f4e5ff>=ROUND(0.55) returns 1, =ROUND(0.49) returns 0</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>SQRT</td><td bgcolor=#ffe5f4>Square root of a number</td><td bgcolor=#f4e5ff>=SQRT(100) returns 10</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>SUM</td><td bgcolor=#ffe5f4>Sums up a given range</td><td bgcolor=#f4e5ff>=SUM(A1:A10) returns A1+A2+..A8+A9+A10</td>\n</tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>TEXTJOIN</td><td bgcolor=#ffe5f4>Textjoin combines the text from multiple ranges and/or strings, and includes a delimiter you specify between each text value that will be combined. =TEXTJOIN (delimiter|cond|text)</d><td bgcolor=#f4e5ff>=TEXTJOIN(\";\"|\"TRUE\"|A1:A5)</td>\n</tr>";
-            $html_text .= "</tr></table>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>ABS</td><td bgcolor=#ffe5f4>Absolute value </td><td bgcolor=#f4e5ff>ABS(-55.25);=ABS(-55.25)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>CONCATENATE</td><td bgcolor=#ffe5f4>Concatentation of two strings </td><td bgcolor=#f4e5ff>CONCATENATE(\"AAA\"|\"BBB\");=CONCATENATE(\"AAA\"|\"BBB\")CONCATENATE('AAA'|'BBB');=CONCATENATE('AAA'|'BBB')</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>DAYS</td><td bgcolor=#ffe5f4>Days between two dates (YYYYMMDD)</td><td bgcolor=#f4e5ff>DAYS(\"20240501\",\"20240601\");=DAYS('20240501'|'20240601')</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>IF</td><td bgcolor=#ffe5f4>If then else structure</td><td bgcolor=#f4e5ff>IF(4>5|\"Hello\"|\"Goodbye\");=IF(4>5|\"Hello\"|\"Goodbye\")</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>INT</td><td bgcolor=#ffe5f4>Take the integer floor of the result of dividing the first argument by the second</td><td bgcolor=#f4e5ff>INT(6|10);=INT(6|10)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>LEFT</td><td bgcolor=#ffe5f4>Returns the first N characters of S</td><td bgcolor=#f4e5ff>LEFT(\"ABCDEXYZ\"|5);=LEFT(\"ABCDEXYZ\"|5)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>MAX</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>MAX(3.14159|PI);=MAX(3|PI())</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>MIN</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>MIN(3.14159|PI);=MIN(4|PI())</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>MOD</td><td bgcolor=#ffe5f4>Modulus of two integers</td><td bgcolor=#f4e5ff>MOD(10|3);=MOD(10|3)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>PI</td><td bgcolor=#ffe5f4>Returns the value of Pi to 14 decimals</td><td bgcolor=#f4e5ff>PI();=PI()</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>PMT</td><td bgcolor=#ffe5f4>PMT calculates the payment for a loan based on constant payments and a constant interest rate. =PMT(rate|times|principal)</td><td bgcolor=#f4e5ff>PMT(5|2|100);=PMT(5|2|100)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>POWER</td><td bgcolor=#ffe5f4>Raise a number to a power </td><td bgcolor=#f4e5ff>3;=POWER(A>|2)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>RAND</td><td bgcolor=#ffe5f4>Returns a random number with the max value being the supplied value</td><td bgcolor=#f4e5ff>RAND(5);=RAND(5)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>REGEXPREPLACE</td><td bgcolor=#ffe5f4>Do regex on first parameter. first_param =~ s/second_param/third_param/</td><td bgcolor=#f4e5ff>REGEXPREPLACE(\"ABCDE\"|\"ABC\"|\"XYZ\");=REGEXPREPLACE(ABCDE|ABC|XYZ)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>RIGHT</td><td bgcolor=#ffe5f4>Returns the last N characters of S</td><td bgcolor=#f4e5ff>RIGHT(\"ABCDEXYZ\"|5);=RIGHT(\"ABCDEXYZ\"|5)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>ROUND</td><td bgcolor=#ffe5f4>Rounds a given number</td><td bgcolor=#f4e5ff>ROUND(0.55);=ROUND(0.55)ROUND(0.45);=ROUND(0.45)0;1</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>SQRT</td><td bgcolor=#ffe5f4>Square root of a number</td><td bgcolor=#f4e5ff>SQRT(100);=SQRT(100)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>SUM</td><td bgcolor=#ffe5f4>Sums up a given range</td><td bgcolor=#f4e5ff>SUM(A_:B__);=SUM(A22:B23)SUM(A^^:B^);=SUM(A22:B24)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>TEXTJOIN</td><td bgcolor=#ffe5f4>Textjoin combines the text from multiple ranges and/or strings, and includes a delimiter you specify between each text value that will be combined. =TEXTJOIN (delimiter|cond|text)</td><td bgcolor=#f4e5ff></td></tr>";
+            write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+            next;
+        }
+
+        if ($txt =~ m/GET.*refresh_server_ip.*/m)
+        {
+            $server_ip = `curl -s GET "http://icanhazip.com"`;
+            $server_ip =~ s/\W*$//img;
+            my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refreshed</h1>";
+            $html_text .= "<br>(Note, IPs are as follows: (yours:$client_addr), (server:$server_ip))</body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
 
         if ($txt =~ m/GET.*show_history.*/m)
         {
+            # Find my current IP: curl -s GET "http://icanhazip.com" | grep .
+            print $server_ip;
+            print ("\n$client_addr\n");
+            my $tc_client = $client_addr;
+            $tc_client = $client_addr;
+            $tc_client =~ s/\W*$//img;
+            # Hack to see if client local?
+            if (!($client_addr =~ m/192\.168\.1\./ || $client_addr =~ m/127\.0\.0\.1/ || $tc_client eq $server_ip))
+            {
+                my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Unauthorized access</h1><a href=\"\/csv_analyse\/refresh_server_ip\">Refresh cached server IP here</a></body></html>";
+                write_to_socket (\*CLIENT, $html_text, "", "noredirect");
+                next;
+            }
+
             $txt =~ m/(........show_examples.......)/im;
-            
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
             my $listing = `dir /a /b /s d:\\perl_programs\\csv_ingest\\*.txt`;
             $listing =~ s/d:\\.*\\//img;
             print ("Found >>> $listing\n");
             $listing =~ s/(.*?)\n/<a href="\/csv_analyse\/old_csv?$1">$1<\/a><br>\n/img;
-            $html_text .= "$listing </body> </html>";
+            $html_text .= "$listing<br>(Note, automatically authorized as IPs are as follows: (yours:$client_addr), (server:$server_ip))</body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
