@@ -3224,6 +3224,11 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
         my $lat;
         my $long;
         my $txt = read_from_socket (\*CLIENT);
+
+        $txt =~ m/X-Forwarded-For: *([\d\.]+)/im;
+        my $x_forwarded_for_addr = $1;
+        print ("X_FORWARDED: $x_forwarded_for_addr\n");
+
         print ("Raw data was $txt\n");
         $txt =~ s/csv_data\/csv_data/csv_data\//img;
         $txt =~ s/csv_data\/csv_data/csv_data\//img;
@@ -3234,6 +3239,7 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
             $get_group_info = 1;
             $txt =~ s/\.group_info//;
         }
+
         $txt =~ m/GET (.*) HTTP/;
         my $original_url = $1;
 
@@ -3330,12 +3336,12 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
         {
             # Find my current IP: curl -s GET "http://icanhazip.com" | grep .
             print $server_ip;
-            print ("\n$client_addr\n");
-            my $tc_client = $client_addr;
-            $tc_client = $client_addr;
+            print ("\n$x_forwarded_for_addr vs $client_addr\n");
+            my $tc_client = $x_forwarded_for_addr;
+            $tc_client = $x_forwarded_for_addr;
             $tc_client =~ s/\W*$//img;
             # Hack to see if client local?
-            if (!($client_addr =~ m/192\.168\.1\./ || $client_addr =~ m/127\.0\.0\.1/ || $tc_client eq $server_ip))
+            if (!($x_forwarded_for_addr =~ m/192\.168\.1\./ || $x_forwarded_for_addr =~ m/127\.0\.0\.1/ || $tc_client eq $server_ip))
             {
                 my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Unauthorized access</h1><a href=\"\/csv_analyse\/refresh_server_ip\">Refresh cached server IP here</a></body></html>";
                 write_to_socket (\*CLIENT, $html_text, "", "noredirect");
