@@ -757,6 +757,31 @@ sub do_concat_expansion
     return $field_val;
 }
 
+sub do_bold_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/(BOLD\(.*)/)
+    {
+        my $to_check = $1;
+        print ("Checking with $to_check\n");
+        if (simple_parentheses_only_two_arguments ($to_check, "BOLD"))
+        {
+            print ("aa Checking with $to_check\n");
+            print ($field_val);
+            if ($field_val =~ m/BOLD\(([^\|]+?)\|([^\|]+?)\)/)
+            {
+                print ("bbb Checking with $field_val\n");
+                $field_val =~ s/BOLD\(([^\|]+?)\|([^\|]+?)\)/'<font size=+1 color=$2><b>$1<\/b><\/font>'/;
+                $field_val =~ s/""/"/g;
+                $field_val =~ s/""/"/g;
+                print ("ccc BOLD done Checking with $field_val\n");
+            }
+        }
+        return $field_val;
+    }
+    return $field_val;
+}
+
 sub fix_quotes
 {
     my $str = $_ [0];
@@ -1046,7 +1071,6 @@ sub do_right_expansion
     }
     return $field_val;
 }
-
 
 sub do_textjoin_expansion
 {
@@ -1423,6 +1447,10 @@ sub perl_expansions
     {
         $str = do_concat_expansion ($str);
     }
+    if ($str =~ m/BOLD\(/)
+    {
+        $str = do_bold_expansion ($str);
+    }
     if ($str =~ m/POWER\(/)
     {
         $str = do_power_expansion ($str);
@@ -1529,6 +1557,7 @@ sub recreate_perl
         {
             $str = fix_quotes ($str);
         }
+        #print ("Doing eval on print($str)\n");
 
         # Print a value into a variable as read from STDOUT that eval prints out
         my $output;
@@ -3178,6 +3207,24 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
 -0.258819045;0.965925826;0";
 }
 
+sub is_authorized
+{
+    my $x_forwarded_for_addr = $_ [0];
+    my $server_ip = $_ [1];
+    my $tc_client = $x_forwarded_for_addr;
+    $tc_client = $x_forwarded_for_addr;
+    $tc_client =~ s/\W*$//img;
+
+    # Hack to see if client local?
+    if (!($x_forwarded_for_addr =~ m/192\.168\.1\./ || $x_forwarded_for_addr =~ m/127\.0\.0\.1/ || $tc_client eq $server_ip))
+    {
+        return 0;
+    }
+    return 1;
+}
+
+my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Unauthorized access</h1><a href=\"\/csv_analyse\/refresh_server_ip\">Refresh cached server IP here</a><br>Attempted function:&nbsp;";
+
 # Main
 {
     my $paddr;
@@ -3227,6 +3274,7 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
 
         $txt =~ m/X-Forwarded-For: *([\d\.]+)/im;
         my $x_forwarded_for_addr = $1;
+        my $authorized = is_authorized ($x_forwarded_for_addr, $server_ip);
         print ("X_FORWARDED: $x_forwarded_for_addr\n");
 
         print ("Raw data was $txt\n");
@@ -3291,7 +3339,7 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
         if ($txt =~ m/GET.*show_help.*/m)
         {
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>CSV Analyze Help</h1> <br>";
-            $html_text .= "Functions Syntax: <a href='/csv_analyse/old_csv?example.txt'>(see examples)</a><br><br>";
+            $html_text .= "Functions Syntax: <a href='/csv_analyse/old_csv?safe_example.txt'>(see examples)</a><br><br>";
             $html_text .= "<table width=100%><tr>\n";
             $html_text .= "<thead>";
             $html_text .= "<th>Function Name</th>\n";
@@ -3324,33 +3372,32 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
 
         if ($txt =~ m/GET.*refresh_server_ip.*/m)
         {
+            # Find my current IP: curl -s GET "http://icanhazip.com" | grep .
             $server_ip = `curl -s GET "http://icanhazip.com"`;
             $server_ip =~ s/\W*$//img;
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Refreshed</h1>";
-            $html_text .= "<br>(Note, IPs are as follows: (yours:$client_addr), (server:$server_ip))</body> </html>";
+            $html_text .= "<br>(Note, IPs are as follows: (yours:$client_addr), (server:$server_ip))<br><a href=\"/csv_analyse/show_history\">History</a></body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
 
         if ($txt =~ m/GET.*show_history.*/m)
         {
-            # Find my current IP: curl -s GET "http://icanhazip.com" | grep .
             print $server_ip;
             print ("\n$x_forwarded_for_addr vs $client_addr\n");
             my $tc_client = $x_forwarded_for_addr;
             $tc_client = $x_forwarded_for_addr;
             $tc_client =~ s/\W*$//img;
-            # Hack to see if client local?
-            if (!($x_forwarded_for_addr =~ m/192\.168\.1\./ || $x_forwarded_for_addr =~ m/127\.0\.0\.1/ || $tc_client eq $server_ip))
+
+            my $safe = "";
+            if (!$authorized)
             {
-                my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Unauthorized access</h1><a href=\"\/csv_analyse\/refresh_server_ip\">Refresh cached server IP here</a></body></html>";
-                write_to_socket (\*CLIENT, $html_text, "", "noredirect");
-                next;
+                $safe = "safe";
             }
 
             $txt =~ m/(........show_examples.......)/im;
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
-            my $listing = `dir /a /b /s d:\\perl_programs\\csv_ingest\\*.txt`;
+            my $listing = `dir /a /b /s d:\\perl_programs\\csv_ingest\\*$safe*.txt`;
             $listing =~ s/d:\\.*\\//img;
             print ("Found >>> $listing\n");
             $listing =~ s/(.*?)\n/<a href="\/csv_analyse\/old_csv?$1">$1<\/a><br>\n/img;
@@ -3379,27 +3426,42 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
             %csv_data = %new_csv_data;
         }
 
-        if ($txt =~ m/GET.*dograph_(\d+)/m)
+        if ($authorized && $txt =~ m/GET.*dograph_(\d+)/m)
         {
             my $col = $1;
             my $graph_html = get_graph_html ($1, get_col_header ($1));
             write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
             next;
         }
+        elsif (!$authorized && $txt =~ m/GET.*dograph_(\d+)/m)
+        {
+            write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . "dograph", "", "noredirect");
+            next;
+        }
 
-        if ($txt =~ m/GET.*dograph_group_counts/m)
+        if ($authorized && $txt =~ m/GET.*dograph_group_counts/m)
         {
             my $col = $1;
             my $graph_html = get_graph_html (-1, "graph_counts");
             write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
             next;
         }
+        elsif (!$authorized && $txt =~ m/GET.*dograph_group_counts/m)
+        {
+            write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . "dograph_group_counts", "", "noredirect");
+            next;
+        }
 
-        if ($txt =~ m/GET.*dograph_group_totals/m)
+        if ($authorized && $txt =~ m/GET.*dograph_group_totals/m)
         {
             my $col = $1;
             my $graph_html = get_graph_html (-2, "graph_totals");
             write_to_socket (\*CLIENT, $graph_html, "", "noredirect");
+            next;
+        }
+        elsif (!$authorized && $txt =~ m/GET.*dograph_group_totals/m)
+        {
+            write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . "dograph_group_totals", "", "noredirect");
             next;
         }
 
@@ -3476,7 +3538,7 @@ $//img;
             process_csv_data ($new_csv_data, "POSTED");
         }
 
-        if ($txt =~ m/GET.*old_csv.(.*)/i)
+        if (($authorized && $txt =~ m/GET.*old_csv.(.*)/i) || (!$authorized && $txt =~ m/GET.*old_csv.(.*safe.*)/i))
         {
             my $file = $1;
             $file =~ s/ HTTP.*//;
@@ -3485,6 +3547,11 @@ $//img;
             print ("Going to look at... d:\\perl_programs\\csv_ingest\\$file\n");
             my $new_csv = `type  d:\\perl_programs\\csv_ingest\\$file`;
             process_csv_data ($new_csv, "DONT_SAVE");
+        }
+        elsif (!$authorized && $txt =~ m/GET.*old_csv/i)
+        {
+            write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . "old_csv", "", "noredirect");
+            next;
         }
 
         my $search = ".*";
@@ -3515,7 +3582,7 @@ $//img;
 
         my @strs = split /&/, $txt;
 
-        # Sortable table with cards in it..
+        # Sortable table
         my $html_text = "<html>\n";
         $html_text .= "<head>\n";
         $html_text .= "  <meta charset='UTF-8'>\n";
@@ -3652,11 +3719,9 @@ $//img;
         }
         $html_text .= "</select name=\"columns\"><input type=\"submit\" value=\"Group By Column\"></form></td><td>";
 
-        #my $f1 = get_field_value (2, "D", 1);
         my $f1 =~ "20230401";
         $f1 =~ s/\W/./img;
         $f1 =~ s/^(...)..*$/$1../img;
-        #my $f2 = get_field_value (2, "E", 1);
         my $f2 =~ "AABBCCDD";
         $f2 =~ s/\W/./img;
         $f2 =~ s/^(...)..*$/$1../img;
