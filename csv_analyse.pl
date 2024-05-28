@@ -218,21 +218,54 @@ sub process_csv_data
         {
             my $field = $1;
             # Special case of G^^ (G+Number two above) G__ (G+number two below)  
-            while ($field =~ m/([A-Z])([\^\_])([\^\_])/ && $row_num > 1)
+            while ($field =~ m/([A-Z])([\^])([\^])/ && $row_num > 1)
             {
                 my $col = $1;
                 my $line_mod = $2;
                 my $line_mod_2 = $3;
                 
-                if ($line_mod eq "\^" && $line_mod eq $line_mod_2)
+                my $go_up_lines = 2;
+                while ($field =~ m/([A-Z])([\^])([\^])([\^]*)/)
                 {
-                    my $up_field = $col . ($row_num-2);
-                    $field =~ s/([A-Z])([\^])([\^])/$up_field/;
+                    my $field_orig = "$1$2$3$4";
+                    my $field_up = $field_orig;
+                    $field_orig =~ s/\^/\\^/g;
+                    $go_up_lines = 2;
+                    while ($field_up =~ s/([A-Z])([\^])([\^])([\^])/$1$2$3/)
+                    {
+                        $go_up_lines++;
+                    }
+
+                    my $up_field = $col . ($row_num-$go_up_lines);
+                    $field =~ s/$field_orig/$up_field/;
                 }
-                elsif ($line_mod eq "\_" && $line_mod eq $line_mod_2)
+            }
+
+            # Special case of G__ (G+number two below)  
+            while ($field =~ m/([A-Z])(_)(_)/ && $row_num > 1)
+            {
+                my $col = $1;
+                my $line_mod = $2;
+                my $line_mod_2 = $3;
+                
+                my $go_down_lines = 2;
+                while ($field =~ m/([A-Z])(_)(_)(_*)/)
                 {
-                    my $down_field = $col . ($row_num+2);
-                    $field =~ s/([A-Z])([\_>])([\_>])/$down_field/;
+                    my $field_orig = "$1$2$3$4";
+                    my $field_down = $field_orig;
+                    $go_down_lines = 2;
+
+                    print ("Below: >$field_orig< >$field_down<\n");
+                    while ($field_down =~ s/$col(_)(_)(_)/$col$1$2/)
+                    {
+                        $go_down_lines++;
+                        print (" ** Below: >$field_orig< >$field_down< $go_down_lines\n");
+                    }
+
+                    my $down_field = $col . ($row_num+$go_down_lines);
+                    print (" FInally >$down_field<\n");
+                    $field =~ s/$field_orig/$down_field/;
+                    print (" FInally >$field<\n");
                 }
             }
 
@@ -751,7 +784,6 @@ sub do_concat_expansion
         {
             $field_val =~ s/CONCATENATE\(([^\|]+?)|(.+?)\)/$1 . CONCATENATE($2)/;
         }
-        print ("\n>>$field_val<<\n");
         return $field_val;
     }
     return $field_val;
@@ -785,9 +817,10 @@ sub do_bold_expansion
 sub fix_quotes
 {
     my $str = $_ [0];
-    $str =~ s/fix_quotes *\(//;
+    $str =~ s/fix_quotes *\(([^)]*)\)/$1/;
     $str =~ s/\)$//;
     $str =~ s/"/\\"/g;
+    $str =~ s/'//g;
     return "\"$str\"";
 }
 
@@ -1398,7 +1431,7 @@ sub do_sum_expansion
                 }
                 else
                 {
-                    $sum_str .= get_field_letter_from_field_num ($i) . "$j+";
+                    #$sum_str .= get_field_letter_from_field_num ($i) . "$j+";
                 }
                 $j++;
             }
@@ -3275,6 +3308,13 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
         $txt =~ m/X-Forwarded-For: *([\d\.]+)/im;
         my $x_forwarded_for_addr = $1;
         my $authorized = is_authorized ($x_forwarded_for_addr, $server_ip);
+        
+        #if (!$authorized)
+        #{
+        #    write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . " Please try later", "", "noredirect");
+        #    next;
+        #}
+
         print ("X_FORWARDED: $x_forwarded_for_addr\n");
 
         print ("Raw data was $txt\n");
