@@ -22,6 +22,7 @@ my $TEXT_TYPE = "text";
 my $IMAGE_TYPE = "image";
 my $SOUND_TYPE = "sound";
 my $BINARY_TYPE = "binary";
+my $ADMIN_PASTE = "ADMIN_LEVEL_PASSWORD_CHANGE_FOR_YOUR_SYSTEM";
 my %all_pasted_text;
 my %type_pasted_text;
 my %meta_data;
@@ -320,7 +321,7 @@ sub has_valid_keyword
 sub get_admin_session
 {
     my $pw = $_ [0];
-    if ($pw =~ m/supersecretpassphraseman!/img)
+    if ($pw =~ m/$ADMIN_PASTE/img)
     {
         return 1;
     }
@@ -716,6 +717,7 @@ sub get_yyyymmddhhmmss
             $all_pasted_text{$file} = $full_thing;
             $valid_keyword = 1;
             $SUPPLIED_KEYWORD = "$file";
+            print ("\nRead in\n================================\n(Based on $file):\n==========================\n");
 
             if (!$is_admin_session)
             {
