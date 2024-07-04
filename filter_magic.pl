@@ -20,6 +20,7 @@ my %card_text;
 my %card_cost;
 my %card_type;
 my %card_converted_cost;
+my %card_colour_identity;
 my %all_cards_abilities;
 my %expansion;
 
@@ -31,10 +32,11 @@ sub print_card
     my $ctxt = card_text ($card_to_check);
     my $cc = card_cost ($card_to_check);
     my $ccc = card_converted_cost ($card_to_check);
+    my $cid = card_colour_identity ($card_to_check);
     my $exp = expansion ($card_to_check);
 
     #print ("$card_to_check - $cn - $ctxt - $ctype ($cc,,,$ccc)\n");
-    return ("$card_to_check - nm,,$cn - txt,,$ctxt - typ,,$ctype ($cc,,,$ccc) -- $exp");
+    return ("$card_to_check - nm,,$cn - txt,,$ctxt - typ,,$ctype ($cc,,,$ccc) -- $exp,,,cid=$cid");
 }
 
 # Filter for a sublist of cards in X (i.e. hand, deck, graveyard, exiled, named, tapped, type (artifact,sorcery,enchantment,equipment,creature), )
@@ -54,22 +56,16 @@ sub get_filtered_cards_advanced
     my $use_unique = $_ [11];
     my $card_text = $_ [12];
     my $card_name = $_ [13];
-    my $rating = $_ [14];
+    my $use_colorid = $_ [14];
     my $order_by_rating = 0;
     my $ret;
     my %names_of_cards;
     if ($card_text eq "") { $card_text = ".*"; }
     if ($card_name eq "") { $card_name = ".*"; }
-    if ($rating eq "") { $rating = ".*"; }
 
     if ($card_name =~ m/\|/ && $card_name !~ m/^\(/)
     {
         $card_name = "($card_name)";
-    }
-
-    if ($rating =~ m/\d/)
-    {
-        $order_by_rating = 1;
     }
 
     print ("has_minconvertedcost  $has_minconvertedcost\n");
@@ -81,11 +77,11 @@ sub get_filtered_cards_advanced
     print ("no_white  $no_white\n");
     print ("no_uncoloured  $no_uncoloured\n");
     print ("use_full_format  $use_full_format\n");
+    print ("use_colorid  $use_colorid\n");
     print ("use_block  $use_block\n");
     $card_text =~ s/%20/./img;
     print ("card_text  $card_text\n");
     print ("card_name  $card_name\n");
-    print ("rating  '$rating'\n");
     print ("\n\n\n\n\n\nStarting checking all the cards...\n");
 
     my $c;
@@ -109,23 +105,43 @@ sub get_filtered_cards_advanced
             }
             #print ("\n");
 
-            my $cc = card_cost ($c);
+            if (!$use_colorid)
+            {
+                my $cc = card_cost ($c);
+                # Must not have a color
+                if ($no_red == 1 && $cc =~ m/\{[^\}]*r[^\}]*\}/i) { next; }
+                if ($no_blue == 1 && $cc =~ m/\{[^\}]*u[^\}]*\}/i) { next; }
+                if ($no_green == 1 && $cc =~ m/\{[^\}]*g[^\}]*\}/i) { next; }
+                if ($no_black == 1 && $cc =~ m/\{[^\}]*b[^\}]*\}/i) { next; }
+                if ($no_white == 1 && $cc =~ m/\{[^\}]*w[^\}]*\}/i) { next; }
+                if ($no_uncoloured == 1 && $cc =~ m/\{[^\}]*\d+[^\}]*\}/i) { next; }
 
-            # Must not have a color
-            if ($no_red == 1 && $cc =~ m/\{[^\}]*r[^\}]*\}/i) { next; }
-            if ($no_blue == 1 && $cc =~ m/\{[^\}]*u[^\}]*\}/i) { next; }
-            if ($no_green == 1 && $cc =~ m/\{[^\}]*g[^\}]*\}/i) { next; }
-            if ($no_black == 1 && $cc =~ m/\{[^\}]*b[^\}]*\}/i) { next; }
-            if ($no_white == 1 && $cc =~ m/\{[^\}]*w[^\}]*\}/i) { next; }
-            if ($no_uncoloured == 1 && $cc =~ m/\{[^\}]*\d+[^\}]*\}/i) { next; }
+                # Must have a color
+                if ($no_red == 2 && $cc !~ m/\{[^\}]*r[^\}]*\}/i) { next; }
+                if ($no_blue == 2 && $cc !~ m/\{[^\}]*u[^\}]*\}/i) { next; }
+                if ($no_green == 2 && $cc !~ m/\{[^\}]*g[^\}]*\}/i) { next; }
+                if ($no_black == 2 && $cc !~ m/\{[^\}]*b[^\}]*\}/i) { next; }
+                if ($no_white == 2 && $cc !~ m/\{[^\}]*w[^\}]*\}/i) { next; }
+                if ($no_uncoloured == 2 && $cc !~ m/\{[^\}]*\d+[^\}]*\}/i) { next; }
+            }
 
-            # Must have a color
-            if ($no_red == 2 && $cc !~ m/\{[^\}]*r[^\}]*\}/i) { next; }
-            if ($no_blue == 2 && $cc !~ m/\{[^\}]*u[^\}]*\}/i) { next; }
-            if ($no_green == 2 && $cc !~ m/\{[^\}]*g[^\}]*\}/i) { next; }
-            if ($no_black == 2 && $cc !~ m/\{[^\}]*b[^\}]*\}/i) { next; }
-            if ($no_white == 2 && $cc !~ m/\{[^\}]*w[^\}]*\}/i) { next; }
-            if ($no_uncoloured == 2 && $cc !~ m/\{[^\}]*\d+[^\}]*\}/i) { next; }
+            if ($use_colorid)
+            {
+                my $cc = card_colour_identity ($c);
+                # Must not have a color
+                if ($no_red == 1 && $cc =~ m/R/) { next; }
+                if ($no_blue == 1 && $cc =~ m/U/) { next; }
+                if ($no_green == 1 && $cc =~ m/G/) { next; }
+                if ($no_black == 1 && $cc =~ m/B/) { next; }
+                if ($no_white == 1 && $cc =~ m/W/) { next; }
+
+                # Must have a color
+                if ($no_red == 2 && $cc !~ m/R/) { next; }
+                if ($no_blue == 2 && $cc !~ m/U/) { next; }
+                if ($no_green == 2 && $cc !~ m/G/) { next; }
+                if ($no_black == 2 && $cc !~ m/B/) { next; }
+                if ($no_white == 2 && $cc !~ m/W/) { next; }
+            }
 
             {
                 if ((card_converted_cost ($c) >= $has_minconvertedcost || $has_minconvertedcost eq "") &&
@@ -199,6 +215,12 @@ sub card_converted_cost
 {
     my $id = $_ [0];
     return ($card_converted_cost{$id});
+}
+
+sub card_colour_identity
+{
+    my $id = $_ [0];
+    return ($card_colour_identity{$id});
 }
 
 sub card_type
@@ -509,7 +531,6 @@ sub read_all_cards
             $card_text {$combined_name} = $fields [8];
 
             my $CMC = $fields [4];
-            print ("$CMC === ");
             $CMC =~ s/P//g;
             $CMC =~ s/X//g;
             $CMC =~ s/Y//g;
@@ -530,6 +551,20 @@ sub read_all_cards
             $CMC =~ s/^\+*//g;
             my $cmc = eval ($CMC);
             $card_converted_cost {$combined_name} = $cmc;
+
+            my $cid;
+            if ($line =~ m/{[^}]*?[W]/) { $cid .= "W"; }
+            if ($line =~ m/{[^}]*?[U]/) { $cid .= "U"; }
+            if ($line =~ m/{[^}]*?[B]/) { $cid .= "B"; }
+            if ($line =~ m/{[^}]*?[R]/) { $cid .= "R"; }
+            if ($line =~ m/{[^}]*?[G]/) { $cid .= "G"; }
+            $card_colour_identity {$combined_name} = $cid;
+        
+            if ($count % 1000 == 0)
+            {
+                print ("$count lines ($combined_name) $cid\n");
+            }
+
         }
     }
     print ("Read in: $cards_count cards in total\n");
@@ -751,10 +786,8 @@ sub edh_lands
     $edh_land {"Thriving Grove"} = 1; $edh_land {"Thriving Heath"} = 1; $edh_land {"Thriving Isle"} = 1; $edh_land {"Thriving Moor"} = 1; $edh_land {"Throne of Makindi"} = 1; $edh_land {"Throne of the High City"} = 1; $edh_land {"Timber Gorge"} = 1; $edh_land {"Timberland Ruins"} = 1; $edh_land {"Timberline Ridge"} = 1; $edh_land {"Tinder Farm"} = 1; $edh_land {"Tocasia's Dig Site"} = 1; $edh_land {"Tolaria West"} = 1; $edh_land {"Tolaria"} = 1; $edh_land {"Tomb Fortress"} = 1; $edh_land {"Tomb of Urami"} = 1; $edh_land {"Tomb of the Spirit Dragon"} = 1; $edh_land {"Tournament Grounds"} = 1; $edh_land {"Tower of the Magistrate"} = 1; $edh_land {"Training Center"} = 1; $edh_land {"Tramway Station"} = 1; $edh_land {"Tranquil Cove"} = 1; $edh_land {"Tranquil Expanse"} = 1; $edh_land {"Tranquil Garden"} = 1; $edh_land {"Tranquil Thicket"} = 1; $edh_land {"Transguild Promenade"} = 1; $edh_land {"Treasure Vault"} = 1; $edh_land {"Tree of Tales"} = 1; $edh_land {"Treetop Village"} = 1; $edh_land {"Tresserhorn Sinks"} = 1; $edh_land {"Treva's Ruins"} = 1; $edh_land {"Tropical Island"} = 1; $edh_land {"Tundra"} = 1; $edh_land {"Turntimber Grove"} = 1; $edh_land {"Twilight Mire"} = 1; $edh_land {"Tyrite Sanctum"} = 1; $edh_land {"Uncharted Haven"} = 1; $edh_land {"Unclaimed Territory"} = 1; $edh_land {"Underdark Rift"} = 1; $edh_land {"Underground River"} = 1; $edh_land {"Underground Sea"} = 1; $edh_land {"Undergrowth Stadium"} = 1; $edh_land {"Undiscovered Paradise"} = 1; $edh_land {"Unholy Citadel"} = 1; $edh_land {"Unholy Grotto"} = 1; $edh_land {"Unknown Shores"} = 1; $edh_land {"Unstable Frontier"} = 1; $edh_land {"Untaidake, the Cloud Keeper"} = 1; $edh_land {"Urborg Volcano"} = 1; $edh_land {"Urborg"} = 1; $edh_land {"Urborg, Tomb of Yawgmoth"} = 1; $edh_land {"Urza's Factory"} = 1; $edh_land {"Urza's Fun House"} = 1; $edh_land {"Urza's Mine"} = 1; $edh_land {"Urza's Power Plant"} = 1; $edh_land {"Urza's Saga"} = 1;
     $edh_land {"Urza's Tower"} = 1; $edh_land {"Urza's Workshop"} = 1; $edh_land {"Valakut, the Molten Pinnacle"} = 1; $edh_land {"Vault of Champions"} = 1; $edh_land {"Vault of Whispers"} = 1; $edh_land {"Vault of the Archangel"} = 1; $edh_land {"Vec Townships"} = 1; $edh_land {"Veldt"} = 1; $edh_land {"Verdant Catacombs"} = 1; $edh_land {"Vesuva"} = 1; $edh_land {"Vineglimmer Snarl"} = 1; $edh_land {"Vitu-Ghazi, the City-Tree"} = 1; $edh_land {"Vivid Crag"} = 1; $edh_land {"Vivid Creek"} = 1; $edh_land {"Vivid Grove"} = 1; $edh_land {"Vivid Marsh"} = 1; $edh_land {"Vivid Meadow"} = 1; $edh_land {"Volatile Fjord"} = 1; $edh_land {"Volcanic Island"} = 1; $edh_land {"Voldaren Estate"} = 1; $edh_land {"Volrath's Stronghold"} = 1; $edh_land {"Wandering Fumarole"} = 1; $edh_land {"Wanderwine Hub"} = 1; $edh_land {"War Room"} = 1; $edh_land {"Warped Landscape"} = 1; $edh_land {"Wasteland"} = 1; $edh_land {"Wastes"} = 1; $edh_land {"Waterfront District"} = 1; $edh_land {"Waterlogged Grove"} = 1; $edh_land {"Waterveil Cavern"} = 1; $edh_land {"Watery Grave"} = 1; $edh_land {"Westvale Abbey"} = 1; $edh_land {"Wind-Scarred Crag"} = 1; $edh_land {"Windbrisk Heights"} = 1; $edh_land {"Winding Canyons"} = 1; $edh_land {"Windswept Heath"} = 1; $edh_land {"Wintermoon Mesa"} = 1; $edh_land {"Wirewood Lodge"} = 1; $edh_land {"Witch's Clinic"} = 1; $edh_land {"Witch's Cottage"} = 1; $edh_land {"Witherbloom Campus"} = 1; $edh_land {"Wizards' School"} = 1; $edh_land {"Wooded Bastion"} = 1; $edh_land {"Wooded Foothills"} = 1; $edh_land {"Wooded Ridgeline"} = 1; $edh_land {"Woodland Cemetery"} = 1; $edh_land {"Woodland Chasm"} = 1; $edh_land {"Woodland Stream"} = 1; $edh_land {"Xander's Lounge"} = 1; $edh_land {"Yavimaya Coast"} = 1; $edh_land {"Yavimaya Hollow"} = 1; $edh_land {"Yavimaya, Cradle of Growth"} = 1; $edh_land {"Zagoth Triome"} = 1; $edh_land {"Zhalfirin Void"} = 1; $edh_land {"Ziatora's Proving Ground"} = 1; $edh_land {"Zoetic Cavern"} = 1;
 
-    my $s = "<br>";
-    my $just_cards = "<br>";
-    my $s2 = "<br>";
-    my $cardname_set;
+    my $s = "<br>\n";
+    my $just_cards;
     my $c;
     {
         foreach $c (sort (keys (%edh_land)))
@@ -771,21 +804,22 @@ sub edh_lands
                 if ($ol =~ m/\{[^}]*?G[^{]*?\}/im) { $s .= " green, "; $coled = 1; }
 
                 my $ol2 = $ol;
-                if ($ol2 =~ s/Land - Plains */Land - /i) { $s .= " white WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Island */Land - /i) { $s .= " blue WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Swamp */Land - /i) { $s .= " black WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Mountain */Land - /im) { $s .= " red WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Forest */Land - /im) { $s .= " green WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Plains */Land - /i) { $s .= " white WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Island */Land - /i) { $s .= " blue WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Swamp */Land - /i) { $s .= " black WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Mountain */Land - /im) { $s .= " red WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Forest */Land - /im) { $s .= " green WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Plains */Land - /i) { $s .= " white WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Island */Land - /i) { $s .= " blue WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Swamp */Land - /i) { $s .= " black WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Mountain */Land - /im) { $s .= " red WOOT, "; $coled = 1; }
-                if ($ol2 =~ s/Land - Forest */Land - /im) { $s .= " green WOOT, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Plains */Land - /i) { $s .= " white, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Island */Land - /i) { $s .= " blue, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Swamp */Land - /i) { $s .= " black, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Mountain */Land - /im) { $s .= " red, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Forest */Land - /im) { $s .= " green, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Plains */Land - /i) { $s .= " white, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Island */Land - /i) { $s .= " blue, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Swamp */Land - /i) { $s .= " black, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Mountain */Land - /im) { $s .= " red, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Forest */Land - /im) { $s .= " green, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Plains */Land - /i) { $s .= " white, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Island */Land - /i) { $s .= " blue, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Swamp */Land - /i) { $s .= " black, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Mountain */Land - /im) { $s .= " red, "; $coled = 1; }
+                if ($ol2 =~ s/Land - Forest */Land - /im) { $s .= " green, "; $coled = 1; }
+                if ($ol2 =~ s/any color//im) { $coled = 1; }
 
                 $s .= " -- ";
 
@@ -803,35 +837,21 @@ sub edh_lands
 
                 if ($ol =~ m/^$/)
                 {
-                    $s .= " NOT FOUND!</font><br>";
+                    $s .= " NOT FOUND!</font><br>\n";
                 }
                 else
                 {
-                    $s .= " xyz $ol<br>";
+                    $s .= " $ol<br>";
                     $s .= "1 $c<br>\n";
                 }
             }
         }
     }
 
-    #$s .= join ("..", sort keys (%original_lines));
     # Return this..
     while ($filter =~ s/not([wubrgc])//im)
     {
         my $color = lc($1);
-        #if ($color eq "w") { $s =~ s/^(.*white).*$/>>$1<< GONE FROM white/img; }
-        #if ($color eq "u") { $s =~ s/^(.*blue).*$/>>$1<< GONE FROM BLUE<br>/img; }
-        #if ($color eq "b") { $s =~ s/^(.*black).*$/>>$1<< GONE FROM black/img; }
-        #if ($color eq "r") { $s =~ s/^(.*red).*$/>>$1<< GONE FROM red/img; }
-        #if ($color eq "g") { $s =~ s/^(.*green).*$/>>$1<< GONE FROM GREEN<br>/img; }
-        #if ($color eq "c") { $s =~ s/^(.*colourless).*$/>>$1<< GONE FROM COLORLESS<br>/img; }
-        
-        #if ($color eq "w") { $s =~ s/^(.*plains).*$/>>$1<< GONE FROM 2p<br>/img; }
-        #if ($color eq "u") { $s =~ s/^(.*island).*$/>>$1<< GONE FROM 2i<br>/img; }
-        #if ($color eq "b") { $s =~ s/^(.*swamp).*$/>>$1<< GONE FROM 2s<br>/img; }
-        #if ($color eq "r") { $s =~ s/^(.*mountain).*$/>>$1<< GONE FROM 2m<br>/img; }
-        #if ($color eq "g") { $s =~ s/^(.*forest).*$/>>$1<< GONE FROM 2f<br>/img; }
-
         if ($color eq "w") { $s =~ s/^(.*white).*$//img; }
         if ($color eq "u") { $s =~ s/^(.*blue).*$//img; }
         if ($color eq "b") { $s =~ s/^(.*black).*$//img; }
@@ -847,12 +867,18 @@ sub edh_lands
         if ($color eq "g") { $s =~ s/^(.*forest).*$//img; }
     }
     $just_cards = $s;
+    print "====================";
+    print $just_cards;
+    print "====================";
     $just_cards =~ s/^.*?<br>//img;
-    #$s =~ s/^.*?<br>//img;
+    my @count = $just_cards =~ /1 /g;
+    $just_cards =~ s/\n//img;
+    print "====================";
+    print $just_cards;
+    print "====================";
     $s =~ s/\n//img;
     $s .= "<br>Finished!<br>";
-    print ("$s<<<");
-    return "$just_cards<br><font size=-3>$s</font>";
+    return "Found this number of cards: " . (scalar (@count)) . "<br>$just_cards";
 }
 
 # Main
@@ -933,6 +959,8 @@ sub edh_lands
         }
 
         print ("Read -> $txt\n");
+        $txt =~ s/^.*GET%20\///;
+        $txt =~ s/^.*GET \///;
 
         print ("2- - - - - - -\n");
         my $have_to_write_to_socket = 1;
@@ -1020,7 +1048,7 @@ sub edh_lands
 
         my $card_text = $strs [11];
         my $card_name = $strs [12];
-        my $community_rating = $strs [13];
+        my $use_colorid = $strs [13];
         my $min_cmc = $strs [0];
         my $max_cmc = $strs [1];
 
@@ -1030,11 +1058,6 @@ sub edh_lands
         $form = "<form action=\"\">";
         $form .= "Card name: <input id=cn type=\"text\" size=30 value=\"$card_name\"><br>";
         $form .= "Card text: <input id=ct type=\"text\" size=30 value=\"$card_text\"><br>";
-        $form .= "Rating&nbsp;&nbsp;: <input id=cr type=\"text\" size=30 value=\"$community_rating\">";
-        $form .= "<a onclick=\"javascript: document.getElementById('cr').value='[4]\..*';\">Great!</a>&nbsp;";
-        $form .= "<a onclick=\"javascript: document.getElementById('cr').value='[34]\..*';\">OK</a>&nbsp;";
-        $form .= "<a onclick=\"javascript: document.getElementById('cr').value='[1234]\..*';\">Sorted</a>&nbsp;";
-        $form .= "<a onclick=\"javascript: document.getElementById('cr').value='.*';\">All</a><br>";
         $form .= "Min CMC&nbsp;: <input id=mc type=\"text\" size=15 value=\"$min_cmc\">";
         $form .= "Max CMC&nbsp;: <input id=mxc type=\"text\" size=15 value=\"$max_cmc\"><br>";
 
@@ -1050,10 +1073,10 @@ sub edh_lands
         $form .= "<input id=ng type=\"checkbox\" name=\"cannotbegreen\" value=\"no_green\"" . no_checked ($use_green) . ">Can't have green</input><br>\n";
         $form .= "<input id=yuc type=\"checkbox\" name=\"mustbeuncoloured\" value=\"m_uncoloured\"" . do_checked ($use_uncoloured) . ">Must have uncoloured</input>";
         $form .= "<input id=nuc type=\"checkbox\" name=\"cannotbeuncoloured\" value=\"no_uncoloured\"" . no_checked ($use_uncoloured) . ">Can't have uncoloured</input><br>\n";
-        $form .= "<input id=full_format type=\"checkbox\" name=\"full_format_only\" value=\"m_full_format\"" . do_checked ($use_full_format) . ">Full format</input>&nbsp;&nbsp;\n";
-        $form .= "<input id=block type=\"checkbox\" name=\"blockonly\" value=\"m_block\"" . do_checked ($use_block) . ">Only use current block</input><br>\n";
+        $form .= "<input id=full_format type=\"checkbox\" name=\"full_format_only\" value=\"m_full_format\"" . do_checked ($use_full_format) . ">Full format</input>&nbsp;&nbsp;<br>\n";
+        $form .= "<input id=colorid type=\"checkbox\" name=\"colorid_only\" value=\"m_colorid_only\"" . do_checked ($use_colorid) . ">Use color identity</input>&nbsp;&nbsp;<br>\n";
         $form .= "<input id=uniquenames type=\"checkbox\" name=\"uniquenames\" value=\"m_block\"" . do_checked ($use_unique) . ">Unique names</input><br>\n";
-        $form .= "<a onclick=\"javascript: var ct=document.getElementById('ct').value; var cn=document.getElementById('cn').value; var cr=document.getElementById('cr').value; var mc=document.getElementById('mc').value; var mxc=document.getElementById('mxc').value; var yg=document.getElementById('yg').checked; var ng=document.getElementById('ng').checked; var fg=0;if(yg==true&&ng==false){fg=2;}else if(yg==false&&ng==true){fg=1;} var yr=document.getElementById('yr').checked; var nr=document.getElementById('nr').checked; var fr=0;if(yr==true&&nr==false){fr=2;}else if(yr==false&&nr==true){fr=1;} var yu=document.getElementById('yu').checked; var nu=document.getElementById('nu').checked; var fu=0;if(yu==true&&nu==false){fu=2;}else if(yu==false&&nu==true){fu=1;} var yb=document.getElementById('yb').checked; var nb=document.getElementById('nb').checked; var fb=0;if(yb==true&&nb==false){fb=2;}else if(yb==false&&nb==true){fb=1;} var yw=document.getElementById('yw').checked; var nw=document.getElementById('nw').checked; var fw=0;if(yw==true&&nw==false){fw=2;}else if(yw==false&&nw==true){fw=1;} var yuc=document.getElementById('yuc').checked; var nuc=document.getElementById('nuc').checked; var fuc=0;if(yuc==true&&nuc==false){fuc=2;}else if(yuc==false&&nuc==true){fuc=1;} var std=document.getElementById('full_format').checked; var blk=document.getElementById('block').checked; var uniquenames=document.getElementById('uniquenames').checked; var full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter/filter?'+mc+'&'+mxc+'&'+fr+'&'+fg+'&'+fu+'&'+fb+'&'+fw+'&'+fuc+'&'+std+'&'+blk+'&'+uniquenames+'&'+ct+'&'+cn+'&'+cr; var resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>&nbsp;&nbsp;";
+        $form .= "<a onclick=\"javascript: \nvar ct=document.getElementById('ct').value; \nvar cn=document.getElementById('cn').value; \nvar mc=document.getElementById('mc').value; \nvar mxc=document.getElementById('mxc').value; \nvar yg=document.getElementById('yg').checked; \nvar ng=document.getElementById('ng').checked; \nvar fg=0;if(yg==true&&ng==false){fg=2;}else if(yg==false&&ng==true){fg=1;} \nvar yr=document.getElementById('yr').checked; \nvar nr=document.getElementById('nr').checked; \nvar fr=0;if(yr==true&&nr==false){fr=2;}else if(yr==false&&nr==true){fr=1;} \nvar yu=document.getElementById('yu').checked; \nvar nu=document.getElementById('nu').checked; \nvar fu=0;if(yu==true&&nu==false){fu=2;}else if(yu==false&&nu==true){fu=1;} \nvar yb=document.getElementById('yb').checked; \nvar nb=document.getElementById('nb').checked; \nvar fb=0;if(yb==true&&nb==false){fb=2;}else if(yb==false&&nb==true){fb=1;} \nvar yw=document.getElementById('yw').checked; \nvar nw=document.getElementById('nw').checked; \nvar fw=0;if(yw==true&&nw==false){fw=2;}else if(yw==false&&nw==true){fw=1;} \nvar yuc=document.getElementById('yuc').checked; \nvar nuc=document.getElementById('nuc').checked; \nvar fuc=0;if(yuc==true&&nuc==false){fuc=2;}else if(yuc==false&&nuc==true){fuc=1;} \nvar std=document.getElementById('full_format').checked; \nvar cid=document.getElementById('colorid').checked; \nvar uniquenames=document.getElementById('uniquenames').checked; \nvar full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter/filter?'+mc+'&'+mxc+'&'+fr+'&'+fg+'&'+fu+'&'+fb+'&'+fw+'&'+fuc+'&'+std+'&0&'+uniquenames+'&'+ct+'&'+cn+'&'+cid; \nvar resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>&nbsp;&nbsp;";
         my $x_card_name = $card_text;
         
         
@@ -1240,12 +1263,12 @@ sub edh_lands
 #        $form .= "&#950; -> 950 &#951; -> 951 &#952; -> 952 &#953; -> 953<br> &#954; -> 954 &#955; -> 955 &#956; -> 956 &#957; -> 957 &#958; -> 958 &#959; -> 959 &#960; -> 960 &#961; -> 961 &#962; -> 962<br> &#963; -> 963 &#964; -> 964 &#965; -> 965 &#966; -> 966 &#967; -> 967 &#968; -> 968 &#969; -> 969 &#970; -> 970 &#971; -> 971<br> &#972; -> 972 &#973; -> 973 &#974; -> 974";
 #        $form .= "&#975; -> 975 &#976; -> 976 &#977; -> 977 &#978; -> 978 &#979; -> 979 &#980; -> 980<br> &#981; -> 981<br> &#982; -> 982<br> &#983; -> 983<br> &#984; -> 984<br> &#985; -> 985<br> &#986; -> 986<br> &#987; -> 987<br> &#988; -> 988<br> &#989; -> 989<br> &#990; -> 990<br> &#991; -> 991<br> &#992; -> 992<br> &#993; -> 993<br> &#994; -> 994<br> &#995; -> 995<br> &#996; -> 996<br> &#997; -> 997<br> &#998; -> 998<br> &#999; -> 999<br>";
 
-        $form .= "<a id=\"resubmit\" href=\"$min_cmc&$max_cmc&$use_red&$use_green&$use_blue&$use_black&$use_white&$use_uncoloured&$use_full_format&$use_block&$use_unique&$card_text&$community_rating\">Resubmit</a><br>";
+        $form .= "<a id=\"resubmit\" href=\"$min_cmc&$max_cmc&$use_red&$use_green&$use_blue&$use_black&$use_white&$use_uncoloured&$use_full_format&$use_block&$use_unique&$card_text&$use_colorid\">Resubmit</a><br>";
         $form .= "</form>";
 
         {
-            print ("calling = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $community_rating);\n");
-            my $txt = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $community_rating);
+            print ("calling = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $use_colorid);\n");
+            my $txt = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $use_colorid);
             $txt =~ s/\n\n/\n/gim;
             $txt =~ s/\n\n/\n/gim;
             my $copy = $txt;
