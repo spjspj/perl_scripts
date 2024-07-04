@@ -508,10 +508,28 @@ sub read_all_cards
             $card_type {$combined_name} = $fields [5];
             $card_text {$combined_name} = $fields [8];
 
-            $fields [4] =~ s/{X//g;
-            $fields [4] =~ s/{Y//g;
-            $fields [4] =~ s/[^{]//g;
-            $card_converted_cost {$combined_name} = length($fields [4]);
+            my $CMC = $fields [4];
+            print ("$CMC === ");
+            $CMC =~ s/P//g;
+            $CMC =~ s/X//g;
+            $CMC =~ s/Y//g;
+            $CMC =~ s/Z//g;
+            $CMC =~ s/{2\/.}/{2}/g;
+            $CMC =~ s/{W}/{1}/g;
+            $CMC =~ s/{U}/{1}/g;
+            $CMC =~ s/{B}/{1}/g;
+            $CMC =~ s/{R}/{1}/g;
+            $CMC =~ s/{G}/{1}/g;
+            $CMC =~ s/{S}/{1}/g;
+            $CMC =~ s/{C}/{1}/g;
+            $CMC =~ s/{[WUBRGSC][WUBRGSC]}/{1}/g;
+            $CMC =~ s/{[WUBRGSC]\/[WUBRGSC]}/{1}/g;
+            $CMC =~ s/[^0-9]/+/g;
+            $CMC =~ s/\++/+/g;
+            $CMC =~ s/\+*$//g;
+            $CMC =~ s/^\+*//g;
+            my $cmc = eval ($CMC);
+            $card_converted_cost {$combined_name} = $cmc;
         }
     }
     print ("Read in: $cards_count cards in total\n");
