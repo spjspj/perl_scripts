@@ -17,12 +17,14 @@ my %card_names;
 my %original_lines;
 my %original_lines_just_card_names;
 my %card_text;
+my %card_text_not_like;
 my %card_cost;
 my %card_type;
 my %card_converted_cost;
 my %card_colour_identity;
 my %all_cards_abilities;
 my %expansion;
+my $number_cards = 0;
 
 sub print_card
 {
@@ -57,6 +59,7 @@ sub get_filtered_cards_advanced
     my $card_text = $_ [12];
     my $card_name = $_ [13];
     my $use_colorid = $_ [14];
+    my $card_text_not_like = $_ [15];
     my $order_by_rating = 0;
     my $ret;
     my %names_of_cards;
@@ -78,12 +81,21 @@ sub get_filtered_cards_advanced
     print ("no_uncoloured  $no_uncoloured\n");
     print ("use_full_format  $use_full_format\n");
     print ("use_colorid  $use_colorid\n");
+    if ($_ [14] eq "true") { $use_colorid = 1; }
+    if ($_ [14] eq "false") { $use_colorid = 0; }
     print ("use_block  $use_block\n");
-    $card_text =~ s/%20/./img;
+    $card_text =~ s/%20/.*/img;
+    $card_text_not_like =~ s/%20/.*/img;
     print ("card_text  $card_text\n");
+    my $use_ctnl = 0;
+    
+    if ($card_text_not_like =~ m/./)
+    {
+        $use_ctnl = 1;
+    }
+    print ("card_text_not_like  $card_text_not_like (use?? $use_ctnl)\n");
     print ("card_name  $card_name\n");
     print ("\n\n\n\n\n\nStarting checking all the cards...\n");
-
     my $c;
     my @filtered;
     my $i;
@@ -124,8 +136,7 @@ sub get_filtered_cards_advanced
                 if ($no_white == 2 && $cc !~ m/\{[^\}]*w[^\}]*\}/i) { next; }
                 if ($no_uncoloured == 2 && $cc !~ m/\{[^\}]*\d+[^\}]*\}/i) { next; }
             }
-
-            if ($use_colorid)
+            elsif ($use_colorid)
             {
                 my $cc = card_colour_identity ($c);
                 # Must not have a color
@@ -160,8 +171,18 @@ sub get_filtered_cards_advanced
 
 
                         $ct =~ s/\W//g;
-                        if ($ct =~ m/$card_text/i || $ol =~ m/$card_text/i || $condense_ol =~ m/$card_text/i)
+                        
+                        if ($ct =~ m/kenrith/img)
                         {
+                            print $ct, "\n";
+                        }
+                        if (($ct =~ m/$card_text/i || $ol =~ m/$card_text/i || $condense_ol =~ m/$card_text/i) && !($use_ctnl && $condense_ol =~ m/$card_text_not_like/i))
+                        # 1 0 >> 0  !=1 
+                        # 1 1 >> 1  !=0 
+                        # 0 0 >> 0  !=1 
+                        # 0 1 >> 0  !=1 
+                        {
+                            print (" >> $ol made it through\n");
                             my $ol = original_line ($c);
                             my $exp = expansion ($c);
                             $ol =~ s/^([^\|]*)\|([^\|]*)\|(.*)/$1|$exp|$3/gim;
@@ -179,6 +200,50 @@ sub get_filtered_cards_advanced
         }
     }
     return $ret . "\nHave found $count cards - and here it endth\n";
+}
+
+# Random card details!
+my $random_card_name = "";
+my $random_card_cmc = "";
+my $random_card_cost = "";
+my $random_card_cid = "";
+my $random_card_text = "";
+my $random_card_set = "";
+my $random_card_type = "";
+my $random_card_rarity = "";
+my $random_card_rarity_num = "";
+my $random_date = "";
+my %random_choices;
+my $random_num_choices = 0;
+
+sub get_random_card
+{
+    my @c_nums = sort keys (%card_names);
+    my $rand_num = rand ($number_cards);
+    $rand_num =~ s/\..*//;
+    my $c = @c_nums [$rand_num];
+    print ("Rand_num?? $c_nums[255], $c, $rand_num vs $number_cards\n");
+    
+    $random_card_name = card_name ($c);
+    $random_card_cmc = card_converted_cost ($c);
+    $random_card_cost = card_cost ($c);
+    $random_card_cid = card_colour_identity ($c);
+    $random_card_text = card_text ($c);
+    $random_card_set = expansion ($c);
+    $random_card_type = card_type ($c);
+
+    my $l = original_line ($c);
+    if ($l =~ m/\|Special\|/im) { $random_card_rarity = "Special"; $random_card_rarity_num = 6; }
+    if ($l =~ m/\|Mythic Rare\|/im) { $random_card_rarity = "Mythic"; $random_card_rarity_num = 5; }
+    if ($l =~ m/\|Rare\|/im) { $random_card_rarity = "Rare"; $random_card_rarity_num = 4; }
+    if ($l =~ m/\|Uncommon\|/im) { $random_card_rarity = "Uncommon"; $random_card_rarity_num = 3; }
+    if ($l =~ m/\|Common\|/im) { $random_card_rarity = "Common"; $random_card_rarity_num = 2; }
+    if ($l =~ m/\|Land\|/im) { $random_card_rarity = "Common"; $random_card_rarity_num = 2; }
+
+    my %new_choices;
+    %random_choices = %new_choices;
+    $random_num_choices = 0;
+    print ("Random card was:<br>(set=$random_card_set) " . $random_card_name . "," .  $random_card_cmc  . "," .  $random_card_cost  . "," .  $random_card_cid  . "," .  $random_card_text  . "," .  $random_card_set  . "," .  $random_card_type, " RARITY>>>=$random_card_rarity\n(based on $l)\n");
 }
 
 sub original_line
@@ -238,8 +303,12 @@ sub expansion
 sub expansion_trigraph
 {
     my $expansion = $_ [0];
-
     # This part is from: c:\xmage_release\mage\Mage.Client\src\main\java\org\mage\plugins\card\dl\sources\WizardCardsImageSource.java
+    #if ($expansion =~ m/^Core Sets/i) { $expansion .= " [M13]"; }
+    #if ($expansion =~ m/^Core Sets/i) { $expansion .= " [M19]"; }
+    #if ($expansion =~ m/^Core Sets/i) { $expansion .= " [ORI]"; }
+    #if ($expansion =~ m/^Invasion/i) { $expansion .= " [AP]"; }
+    #if ($expansion =~ m/^Urza/i) { $expansion .= " [UD]"; }
     if ($expansion =~ m/^Aether Revolt/i) { $expansion .= " [AER]"; }
     if ($expansion =~ m/^Alara Reborn/i) { $expansion .= " [ARB]"; }
     if ($expansion =~ m/^Alliances/i) { $expansion .= " [ALL]"; }
@@ -277,9 +346,6 @@ sub expansion_trigraph
     if ($expansion =~ m/^Core Set 2019/i) { $expansion .= " [M19]"; }
     if ($expansion =~ m/^Core Set 2020/i) { $expansion .= " [M20]"; }
     if ($expansion =~ m/^Core Set 2021/i) { $expansion .= " [M21]"; }
-    #if ($expansion =~ m/^Core Sets/i) { $expansion .= " [M13]"; }
-    #if ($expansion =~ m/^Core Sets/i) { $expansion .= " [M19]"; }
-    #if ($expansion =~ m/^Core Sets/i) { $expansion .= " [ORI]"; }
     if ($expansion =~ m/^Dark Ascension/i) { $expansion .= " [DKA]"; }
     if ($expansion =~ m/^Darksteel/i) { $expansion .= " [DST]"; }
     if ($expansion =~ m/^Deckmasters/i) { $expansion .= " [DKM]"; }
@@ -352,7 +418,6 @@ sub expansion_trigraph
     if ($expansion =~ m/^Iconic Masters/i) { $expansion .= " [IMA]"; }
     if ($expansion =~ m/^Ikoria: Lair of Behemoths/i) { $expansion .= " [IKO]"; }
     if ($expansion =~ m/^Innistrad/i) { $expansion .= " [ISD]"; }
-    #if ($expansion =~ m/^Invasion/i) { $expansion .= " [AP]"; }
     if ($expansion =~ m/^Invasion/i) { $expansion .= " [INV]"; }
     if ($expansion =~ m/^Ixalan/i) { $expansion .= " [XLN]"; }
     if ($expansion =~ m/^Journey into Nyx/i) { $expansion .= " [JOU]"; }
@@ -366,7 +431,6 @@ sub expansion_trigraph
     if ($expansion =~ m/^Legions/i) { $expansion .= " [LGN]"; }
     if ($expansion =~ m/^Limited Edition Alpha/i) { $expansion .= " [LEA]"; }
     if ($expansion =~ m/^Limited Edition Beta/i) { $expansion .= " [LEB]"; }
-    if ($expansion =~ m/^Eventide/i) { $expansion .= " [EVE]"; }
     if ($expansion =~ m/^Lorwyn/i) { $expansion .= " [LRW]"; }
     if ($expansion =~ m/^MTGO Vanguard/i) { $expansion .= " [VGO]"; }
     if ($expansion =~ m/^Magic 2010/i) { $expansion .= " [M10]"; }
@@ -378,8 +442,9 @@ sub expansion_trigraph
     if ($expansion =~ m/^Magic Origins/i) { $expansion .= " [ORI]"; }
     if ($expansion =~ m/^Magic Player Rewards/i) { $expansion .= " [MPRP]"; }
     if ($expansion =~ m/^Magic: The Gathering-Commander/i) { $expansion .= " [CMD]"; }
-    if ($expansion =~ m/^Magic: The Gathering.*Conspiracy/i) { $expansion .= "[CNS]"; }
     if ($expansion =~ m/^Magic: The Gathering.*Conspiracy/i) { $expansion .= " [CNS]"; }
+    if ($expansion =~ m/^Magic: The Gathering.*Conspiracy/i) { $expansion .= "[CNS]"; }
+    if ($expansion =~ m/^Magic: The Gathering—Conspiracy/i) { $expansion .= " [CNS]"; }
     if ($expansion =~ m/^Masques/i) { $expansion .= " [PR]"; }
     if ($expansion =~ m/^Masterpiece Series MED/i) { $expansion .= " [WAR]"; }
     if ($expansion =~ m/^Masterpiece Series/i) { $expansion .= " [MPS]"; }
@@ -395,9 +460,9 @@ sub expansion_trigraph
     if ($expansion =~ m/^Mirage/i) { $expansion .= " [WL]"; }
     if ($expansion =~ m/^Mirrodin Besieged/i) { $expansion .= " [MBS]"; }
     if ($expansion =~ m/^Mirrodin/i) { $expansion .= " [MRD]"; }
+    if ($expansion =~ m/^Modern Horizons/i) { $expansion .= " [MH1]"; }
     if ($expansion =~ m/^Modern Masters 2015/i) { $expansion .= " [MM2]"; }
     if ($expansion =~ m/^Modern Masters 2017/i) { $expansion .= " [MM3]"; }
-    if ($expansion =~ m/^Modern Horizons/i) { $expansion .= " [MH1]"; }
     if ($expansion =~ m/^Modern Masters/i) { $expansion .= " [MMA]"; }
     if ($expansion =~ m/^Morningtide/i) { $expansion .= " [MOR]"; }
     if ($expansion =~ m/^Nemesis/i) { $expansion .= " [NEM]"; }
@@ -452,8 +517,9 @@ sub expansion_trigraph
     if ($expansion =~ m/^Theros.*Beyond Death/i) { $expansion .= " [THB]"; }
     elsif ($expansion =~ m/^Theros/i) { $expansion .= " [THS]"; }
     if ($expansion =~ m/^Throne of Eldraine/i) { $expansion .= " [ELD]"; }
-    if ($expansion =~ m/^Time Spiral.*Timeshifted/) { $expansion .= " [TSB]"; }
+    if ($expansion =~ m/^Time Spiral.*Timeshifted/i) { $expansion .= " [TSB]"; }
     elsif ($expansion =~ m/^Time Spiral/i) { $expansion .= " [TSP]"; }
+    if ($expansion =~ m/^Time Spiral/i) { $expansion .= " [TSP]"; }
     if ($expansion =~ m/^Torment/i) { $expansion .= " [TOR]"; }
     if ($expansion =~ m/^Un-Sets/i) { $expansion .= " [UND]"; }
     if ($expansion =~ m/^Unglued/i) { $expansion .= " [UGL]"; }
@@ -462,7 +528,6 @@ sub expansion_trigraph
     if ($expansion =~ m/^Urza's Destiny/i) { $expansion .= " [UDS]"; }
     if ($expansion =~ m/^Urza's Legacy/i) { $expansion .= " [ULG]"; }
     if ($expansion =~ m/^Urza's Saga/i) { $expansion .= " [USG]"; }
-    if ($expansion =~ m/^Urza/i) { $expansion .= " [UD]"; }
     if ($expansion =~ m/^Vanguard Set 1/i) { $expansion .= " [VG1]"; }
     if ($expansion =~ m/^Vanguard Set 2/i) { $expansion .= " [VG2]"; }
     if ($expansion =~ m/^Vanguard Set 3/i) { $expansion .= " [VG3]"; }
@@ -494,7 +559,6 @@ sub read_all_cards
     open ALL, $CURRENT_FILE; 
     print ("Reading from $CURRENT_FILE\n");
 
-    my $count = 0;
     my $cards_count = 0;
     while (<ALL>)
     {
@@ -502,18 +566,19 @@ sub read_all_cards
         my $line = $_;
         $line =~ s/\|\|/| |/g;
         $line =~ s/\|\|/| |/g;
+        $line =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|S\|(.*)/$1|$2|$3|Special|$4/gim;
         $line =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|M\|(.*)/$1|$2|$3|Mythic Rare|$4/gim;
         $line =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|R\|(.*)/$1|$2|$3|Rare|$4/gim;
         $line =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|U\|(.*)/$1|$2|$3|Uncommon|$4/gim;
         $line =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|C\|(.*)/$1|$2|$3|Common|$4/gim;
         $line =~ s/^([^\|]*)\|([^\|]*)\|([^\|]*)\|L\|(.*)/$1|$2|$3|Land|$4/gim;
         #print $line, "\n";
-        $count ++;
+        $number_cards ++;
         my @fields = split /\|/, $line;
         my $combined_name = $fields [0] . " - " . $fields [1];
-        if ($count % 1000 == 0)
+        if ($number_cards % 5000 == 4999)
         {
-            print ("$count lines ($combined_name)\n");
+            print ("$number_cards lines ($combined_name)\n");
         }
 
         $all_cards {$combined_name} = $line;
@@ -559,12 +624,6 @@ sub read_all_cards
             if ($line =~ m/{[^}]*?[R]/) { $cid .= "R"; }
             if ($line =~ m/{[^}]*?[G]/) { $cid .= "G"; }
             $card_colour_identity {$combined_name} = $cid;
-        
-            if ($count % 1000 == 0)
-            {
-                print ("$count lines ($combined_name) $cid\n");
-            }
-
         }
     }
     print ("Read in: $cards_count cards in total\n");
@@ -699,6 +758,136 @@ sub no_checked
 {
     if ($_ [0] == 1) { return " checked "; }
     return "";
+}
+
+sub compare_to_random
+{
+    my $card_name = $_ [0];
+
+    if ($random_card_name eq $card_name) { return "Exact match!"; }
+    
+    my $comp_string;
+    my @ac = sort (keys (%all_cards));
+    my $c;
+    foreach $c (@ac)
+    {
+        if ($c =~ m/^$card_name/i)
+        {
+            my $this_card_cmc = card_converted_cost ($c);
+            my $this_card_cid = card_colour_identity ($c);
+            my $this_card_type = card_type ($c) . " ";
+
+            my $orig_card_cmc = $this_card_cmc;
+            my $orig_card_cid = $this_card_cid;
+            my $orig_card_type = $this_card_type;
+
+            if ($this_card_cmc == $random_card_cmc) { $comp_string = "<font color=darkgreen>Same cmc ($orig_card_cmc)</font>";}
+            if ($this_card_cmc < $random_card_cmc) { $comp_string = "<font color=darkred>Higher cmc ($orig_card_cmc)</font>,";}
+            if ($this_card_cmc > $random_card_cmc) { $comp_string = "<font color=burntorange>Lower cmc ($orig_card_cmc)</font>,";}
+
+            if ($this_card_cid eq $random_card_cid)
+            {
+                $comp_string .= "<font color=darkgreen>Same coloridentity ($orig_card_cid)</font>,"; 
+            }
+            else
+            {
+                my $partial = 0;
+                while ($this_card_cid =~ s/^(.)//)
+                {
+                    my $c = $1;
+                    if ($random_card_cid =~ m/$c/) 
+                    {
+                        $partial = 1;
+                    }
+                }
+                if (!$partial)
+                {
+                    $comp_string .= "nonmatching coloridentity ($orig_card_cid),"; 
+                }
+                else
+                {
+                    $comp_string .= "<font color=burntorange>partially matching coloridentity ($orig_card_cid)</font>,"; 
+                }
+            }
+
+            my $this_card_set = expansion ($c);
+            print (">>> $this_card_set === set (vs $random_card_set) for this card $c\n");
+            
+            if ($this_card_set eq $random_card_set)
+            {
+                $comp_string .= "<font color=darkgreen>same set ($this_card_set)</font>,"; 
+            }
+            elsif (($this_card_set cmp $random_card_set) > 0)
+            {
+                $comp_string .= "<font color=darkred>$this_card_set higher alphabetically</font>,"; 
+            }
+            elsif (($this_card_set cmp $random_card_set) < 0)
+            {
+                $comp_string .= "<font color=burntorange>$this_card_set lower alphabetically</font>,"; 
+            }
+            
+            my $ct1 = $this_card_type . "    ";
+            my $rt1 = $random_card_type . "    ";
+            $ct1 =~ s/\W/ /img;
+            $ct1 =~ s/  */ /img;
+            $rt1 =~ s/\W/ /img;
+            $rt1 =~ s/  */ /img;
+            if ($ct1 eq $rt1)
+            {
+                $comp_string .= "<font color=darkgreen>same type ($orig_card_type)</font>,"; 
+            }
+            else
+            {
+                my $partial = 0;
+                $this_card_type =~ s/-//img;
+                $this_card_type =~ s/  / /img;
+                while ($this_card_type =~ s/^([^ ]+)( |$)//)
+                {
+                    my $t = $1;
+                    #$comp_string .= " (Comp:($t))"; 
+                    if ($random_card_type =~ m/$t/) 
+                    {
+                        $partial = 1;
+                    }
+                }
+                if (!$partial)
+                {
+                    $comp_string .= "nonmatching types ($orig_card_type),"; 
+                }
+                else
+                {
+                    $comp_string .= "<font color=burntorange>partially matching types ($orig_card_type)</font>,"; 
+                }
+            }
+            
+            my $l = original_line ($c);
+            my $this_card_rarity;
+            my $this_card_rarity_num;
+            if ($l =~ m/\|Special\|/im) { $this_card_rarity = "Special"; $this_card_rarity_num = 6; }
+            if ($l =~ m/\|Mythic Rare\|/im) { $this_card_rarity = "Mythic"; $this_card_rarity_num = 5; }
+            if ($l =~ m/\|Rare\|/im) { $this_card_rarity = "Rare"; $this_card_rarity_num = 4; }
+            if ($l =~ m/\|Uncommon\|/im) { $this_card_rarity = "Uncommon"; $this_card_rarity_num = 3; }
+            if ($l =~ m/\|Common\|/im) { $this_card_rarity = "Common"; $this_card_rarity_num = 2; }
+            if ($l =~ m/\|Land\|/im) { $this_card_rarity = "Common"; $this_card_rarity_num = 2; }
+            print ("Your chosen card was:<br>" . $card_name . "," .  $orig_card_cmc . "," .  $orig_card_cid . "," .  $ct1, " RARITY>>>=$this_card_rarity\n(based on $l)\n");
+
+            if ($this_card_rarity eq $random_card_rarity)
+            {
+                $comp_string .= "<font color=darkgreen>Same rarities ($this_card_rarity)</font>."; 
+            }
+            elsif ($this_card_rarity_num > $random_card_rarity_num)
+            {
+                $comp_string .= "<font color=darkred>higher rarity ($this_card_rarity)</font>."; 
+            }
+            elsif ($this_card_rarity_num < $random_card_rarity_num)
+            {
+                $comp_string .= "<font color=burntorange>lower rarity ($this_card_rarity)</font>."; 
+            }
+
+            print ("\nComparison::: $comp_string ($c)\n");
+            return $comp_string . " (Compared to $c)";
+        }
+    }
 }
 
 sub get_sets
@@ -881,6 +1070,45 @@ sub edh_lands
     return "Found this number of cards: " . (scalar (@count)) . "<br>$just_cards";
 }
 
+sub fix_url
+{
+    my $txt = $_ [0]; 
+    $txt =~ s/%20/ /g;
+    $txt =~ s/%21/!/g;
+    $txt =~ s/%22/"/g;
+    $txt =~ s/%23/#/g;
+    $txt =~ s/%24/\$/g;
+    $txt =~ s/%25/%/g;
+    $txt =~ s/%26/&/g;
+    $txt =~ s/%27/'/g;
+    $txt =~ s/%28/(/g;
+    $txt =~ s/%29/)/g;
+    $txt =~ s/%2A/*/g;
+    $txt =~ s/%2B/+/g;
+    $txt =~ s/%2C/,/g;
+    $txt =~ s/%2D/-/g;
+    $txt =~ s/%2E/./g;
+    $txt =~ s/%2F/\//g;
+    $txt =~ s/%3A/:/g;
+    $txt =~ s/%3B/;/g;
+    $txt =~ s/%3C/</g;
+    $txt =~ s/%3D/=/g;
+    $txt =~ s/%3E/>/g;
+    $txt =~ s/%3F/?/g;
+    $txt =~ s/%40/@/g;
+    $txt =~ s/%5B/[/g;
+    $txt =~ s/%5C/\\/g;
+    $txt =~ s/%5D/]/g;
+    $txt =~ s/%5E/\^/g;
+    $txt =~ s/%5F/_/g;
+    $txt =~ s/%60/`/g;
+    $txt =~ s/%7B/{/g;
+    $txt =~ s/%7C/|/g;
+    $txt =~ s/%7D/}/g;
+    $txt =~ s/%7E/~/g;
+    return $txt;
+}
+
 # Main
 {
     my $paddr;
@@ -981,6 +1209,118 @@ sub edh_lands
             next;
         }
 
+        if ($original_get =~ m/enchantwordle/)
+        {
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+            my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+            my $random_card = "";
+
+            if ($random_date ne $yyyymmdd)
+            {
+                $random_date = $yyyymmdd;
+                get_random_card ();
+                $random_card = "Random card was:<br>" . $random_card_name . "," .  $random_card_cmc  . "," .  $random_card_cost  . "," .  $random_card_cid  . "," .  $random_card_text  . "," .  $random_card_set  . "," .  $random_card_type;
+            }
+
+
+            my $v1; my $v1_disabled = "enabled"; my $v1_bold = "** "; my $v1_cmp = "";
+            my $v2; my $v2_disabled = "disabled"; my $v2_bold = ""; my $v2_cmp = "";
+            my $v3; my $v3_disabled = "disabled"; my $v3_bold = ""; my $v3_cmp = "";
+            my $v4; my $v4_disabled = "disabled"; my $v4_bold = ""; my $v4_cmp = "";
+            my $v5; my $v5_disabled = "disabled"; my $v5_bold = ""; my $v5_cmp = "";
+            my $v6; my $v6_disabled = "disabled"; my $v6_bold = ""; my $v6_cmp = "";
+            my $v7; my $v7_disabled = "disabled"; my $v7_bold = ""; my $v7_cmp = "";
+            my $v8; my $v8_disabled = "disabled"; my $v8_bold = ""; my $v8_cmp = "";
+            my $v9; my $v9_disabled = "disabled"; my $v9_bold = ""; my $v9_cmp = "";
+            my $v10; my $v10_disabled = "disabled"; my $v10_bold = ""; my $v10_cmp = "";
+            my $v11; my $v11_disabled = "disabled"; my $v11_bold = ""; my $v11_cmp = "";
+            my $v12; my $v12_disabled = "disabled"; my $v12_bold = ""; my $v12_cmp = "";
+            my $v13; my $v13_disabled = "disabled"; my $v13_bold = ""; my $v13_cmp = "";
+            my $v14; my $v14_disabled = "disabled"; my $v14_bold = ""; my $v14_cmp = "";
+            my $v15; my $v15_disabled = "disabled"; my $v15_bold = ""; my $v15_cmp = "";
+            my $v16; my $v16_disabled = "disabled"; my $v16_bold = ""; my $v16_cmp = "";
+
+            $original_get =~  s/ HTTP.*//;
+            if ($original_get =~ m/enchantwordle\?([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)&([^&]*)/)
+            {
+                $v1 = fix_url ($1);
+                $v2 = fix_url ($2);
+                $v3 = fix_url ($3);
+                $v4 = fix_url ($4);
+                $v5 = fix_url ($5);
+                $v6 = fix_url ($6);
+                $v7 = fix_url ($7);
+                $v8 = fix_url ($8);
+                $v9 = fix_url ($9);
+                $v10 = fix_url ($10);
+                $v11 = fix_url ($11);
+                $v12 = fix_url ($12);
+                $v13 = fix_url ($13);
+                $v14 = fix_url ($14);
+                $v15 = fix_url ($15);
+                $v16 = fix_url ($16);
+            }
+
+            if ($v1 =~ m/.../) { $v2_disabled = "enabled"; $v1_disabled = "disabled"; $v1_bold = ""; $v2_bold = "** "; $v1_cmp = compare_to_random ($v1); }
+            if ($v2 =~ m/.../) { $v3_disabled = "enabled"; $v2_disabled = "disabled"; $v2_bold = ""; $v3_bold = "** "; $v2_cmp = compare_to_random ($v2); }
+            if ($v3 =~ m/.../) { $v4_disabled = "enabled"; $v3_disabled = "disabled"; $v3_bold = ""; $v4_bold = "** "; $v3_cmp = compare_to_random ($v3); }
+            if ($v4 =~ m/.../) { $v5_disabled = "enabled"; $v4_disabled = "disabled"; $v4_bold = ""; $v5_bold = "** "; $v4_cmp = compare_to_random ($v4); }
+            if ($v5 =~ m/.../) { $v6_disabled = "enabled"; $v5_disabled = "disabled"; $v5_bold = ""; $v6_bold = "** "; $v5_cmp = compare_to_random ($v5); }
+            if ($v6 =~ m/.../) { $v7_disabled = "enabled"; $v6_disabled = "disabled"; $v6_bold = ""; $v7_bold = "** "; $v6_cmp = compare_to_random ($v6); }
+            if ($v7 =~ m/.../) { $v8_disabled = "enabled"; $v7_disabled = "disabled"; $v7_bold = ""; $v8_bold = "** "; $v7_cmp = compare_to_random ($v7); }
+            if ($v8 =~ m/.../) { $v9_disabled = "enabled"; $v8_disabled = "disabled"; $v8_bold = ""; $v9_bold = "** "; $v8_cmp = compare_to_random ($v8); }
+            if ($v9 =~ m/.../) { $v10_disabled = "enabled"; $v9_disabled = "disabled"; $v9_bold = ""; $v10_bold = "** "; $v9_cmp = compare_to_random ($v9); }
+            if ($v10 =~ m/.../) { $v11_disabled = "enabled"; $v10_disabled = "disabled"; $v10_bold = ""; $v11_bold = "** "; $v10_cmp = compare_to_random ($v10); }
+            if ($v11 =~ m/.../) { $v12_disabled = "enabled"; $v11_disabled = "disabled"; $v11_bold = ""; $v12_bold = "** "; $v11_cmp = compare_to_random ($v11); }
+            if ($v12 =~ m/.../) { $v13_disabled = "enabled"; $v12_disabled = "disabled"; $v12_bold = ""; $v13_bold = "** "; $v12_cmp = compare_to_random ($v12); }
+            if ($v13 =~ m/.../) { $v14_disabled = "enabled"; $v13_disabled = "disabled"; $v13_bold = ""; $v14_bold = "** "; $v13_cmp = compare_to_random ($v13); }
+            if ($v14 =~ m/.../) { $v15_disabled = "enabled"; $v14_disabled = "disabled"; $v14_bold = ""; $v15_bold = "** "; $v14_cmp = compare_to_random ($v14); }
+            if ($v15 =~ m/.../) { $v16_disabled = "enabled"; $v15_disabled = "disabled"; $v16 = $random_card_name; $v15_bold = ""; $v16_bold = "** "; $v15_cmp = compare_to_random ($v15); }
+
+            my $form;
+            #$form = "<form action=\"\">\n" . $random_card_name . "<br>";
+            $form = "<form action=\"\">\n<br>";
+            $form .= "$v1_bold Choice I: <input id=c1 type=\"text\" size=30 $v1_disabled value=\"$v1\">$v1_cmp<br>\n";
+            $form .= "$v2_bold Choice II: <input id=c2 type=\"text\" size=30 $v2_disabled value=\"$v2\">$v2_cmp<br>\n";
+            $form .= "$v3_bold Choice III: <input id=c3 type=\"text\" size=30 $v3_disabled value=\"$v3\">$v3_cmp<br>\n";
+            $form .= "$v4_bold Choice IV: <input id=c4 type=\"text\" size=30 $v4_disabled value=\"$v4\">$v4_cmp<br>\n";
+            $form .= "$v5_bold Choice V: <input id=c5 type=\"text\" size=30 $v5_disabled value=\"$v5\">$v5_cmp<br>\n";
+            $form .= "$v6_bold Choice VI: <input id=c6 type=\"text\" size=30 $v6_disabled value=\"$v6\">$v6_cmp<br>\n";
+            $form .= "$v7_bold Choice VII: <input id=c7 type=\"text\" size=30 $v7_disabled value=\"$v7\">$v7_cmp<br>\n";
+            $form .= "$v8_bold Choice VIII: <input id=c8 type=\"text\" size=30 $v8_disabled value=\"$v8\">$v8_cmp<br>\n";
+            $form .= "$v9_bold Choice IX: <input id=c9 type=\"text\" size=30 $v9_disabled value=\"$v9\">$v9_cmp<br>\n";
+            $form .= "$v10_bold Choice X: <input id=c10 type=\"text\" size=30 $v10_disabled value=\"$v10\">$v10_cmp<br>\n";
+            $form .= "$v11_bold Choice XI: <input id=c11 type=\"text\" size=30 $v11_disabled value=\"$v11\">$v11_cmp<br>\n";
+            $form .= "$v12_bold Choice XII: <input id=c12 type=\"text\" size=30 $v12_disabled value=\"$v12\">$v12_cmp<br>\n";
+            $form .= "$v13_bold Choice XIII: <input id=c13 type=\"text\" size=30 $v13_disabled value=\"$v13\">$v13_cmp<br>\n";
+            $form .= "$v14_bold Choice XIV: <input id=c14 type=\"text\" size=30 $v14_disabled value=\"$v14\">$v14_cmp<br>\n";
+            $form .= "$v15_bold Choice XV: <input id=c15 type=\"text\" size=30 $v15_disabled value=\"$v15\">$v15_cmp<br>\n";
+            $form .= "$v16_bold Choice XVI: <input id=c16 type=\"text\" size=30 $v16_disabled value=\"$v16\">$v16_cmp<br>\n";
+            $form .= "<a onclick=\"javascript: \n";
+            $form .= "var c1=document.getElementById('c1').value; \n";
+            $form .= "var c2=document.getElementById('c2').value; \n";
+            $form .= "var c3=document.getElementById('c3').value; \n";
+            $form .= "var c4=document.getElementById('c4').value; \n";
+            $form .= "var c5=document.getElementById('c5').value; \n";
+            $form .= "var c6=document.getElementById('c6').value; \n";
+            $form .= "var c7=document.getElementById('c7').value; \n";
+            $form .= "var c8=document.getElementById('c8').value; \n";
+            $form .= "var c9=document.getElementById('c9').value; \n";
+            $form .= "var c10=document.getElementById('c10').value; \n";
+            $form .= "var c11=document.getElementById('c11').value; \n";
+            $form .= "var c12=document.getElementById('c12').value; \n";
+            $form .= "var c13=document.getElementById('c13').value; \n";
+            $form .= "var c14=document.getElementById('c14').value; \n";
+            $form .= "var c15=document.getElementById('c15').value; \n";
+            $form .= "var c16=document.getElementById('c16').value; \n";
+            $form .= "var full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter/enchantwordle?'+c1+'&'+c2+'&'+c3+'&'+c4+'&'+c5+'&'+c6+'&'+c7+'&'+c8+'&'+c9+'&'+c10+'&'+c11+'&'+c12+'&'+c13+'&'+c14+'&'+c15+'&'+c16+'&&&&';\n";
+            $form .= "var resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>\n";
+            $form .= "<a id=\"resubmit\" href=\"0&89&0&0&0&0&0&0&false&false&false&dockside.*extor&.*&\">Resubmit</a><br></form>\n";
+
+            write_to_socket (\*CLIENT, $form, "", "noredirect");
+            next;
+        }
+
         if ($original_get =~ m/edh_filter_(.*)/)
         {
             my $edh_lands_filtered = edh_lands ($1);
@@ -1049,6 +1389,7 @@ sub edh_lands
         my $card_text = $strs [11];
         my $card_name = $strs [12];
         my $use_colorid = $strs [13];
+        my $card_text_not_like = $strs [14];
         my $min_cmc = $strs [0];
         my $max_cmc = $strs [1];
 
@@ -1058,6 +1399,7 @@ sub edh_lands
         $form = "<form action=\"\">";
         $form .= "Card name: <input id=cn type=\"text\" size=30 value=\"$card_name\"><br>";
         $form .= "Card text: <input id=ct type=\"text\" size=30 value=\"$card_text\"><br>";
+        $form .= "Card text not like: <input id=ctnl type=\"text\" size=30 value=\"$card_text_not_like\"><br>";
         $form .= "Min CMC&nbsp;: <input id=mc type=\"text\" size=15 value=\"$min_cmc\">";
         $form .= "Max CMC&nbsp;: <input id=mxc type=\"text\" size=15 value=\"$max_cmc\"><br>";
 
@@ -1076,7 +1418,7 @@ sub edh_lands
         $form .= "<input id=full_format type=\"checkbox\" name=\"full_format_only\" value=\"m_full_format\"" . do_checked ($use_full_format) . ">Full format</input>&nbsp;&nbsp;<br>\n";
         $form .= "<input id=colorid type=\"checkbox\" name=\"colorid_only\" value=\"m_colorid_only\"" . do_checked ($use_colorid) . ">Use color identity</input>&nbsp;&nbsp;<br>\n";
         $form .= "<input id=uniquenames type=\"checkbox\" name=\"uniquenames\" value=\"m_block\"" . do_checked ($use_unique) . ">Unique names</input><br>\n";
-        $form .= "<a onclick=\"javascript: \nvar ct=document.getElementById('ct').value; \nvar cn=document.getElementById('cn').value; \nvar mc=document.getElementById('mc').value; \nvar mxc=document.getElementById('mxc').value; \nvar yg=document.getElementById('yg').checked; \nvar ng=document.getElementById('ng').checked; \nvar fg=0;if(yg==true&&ng==false){fg=2;}else if(yg==false&&ng==true){fg=1;} \nvar yr=document.getElementById('yr').checked; \nvar nr=document.getElementById('nr').checked; \nvar fr=0;if(yr==true&&nr==false){fr=2;}else if(yr==false&&nr==true){fr=1;} \nvar yu=document.getElementById('yu').checked; \nvar nu=document.getElementById('nu').checked; \nvar fu=0;if(yu==true&&nu==false){fu=2;}else if(yu==false&&nu==true){fu=1;} \nvar yb=document.getElementById('yb').checked; \nvar nb=document.getElementById('nb').checked; \nvar fb=0;if(yb==true&&nb==false){fb=2;}else if(yb==false&&nb==true){fb=1;} \nvar yw=document.getElementById('yw').checked; \nvar nw=document.getElementById('nw').checked; \nvar fw=0;if(yw==true&&nw==false){fw=2;}else if(yw==false&&nw==true){fw=1;} \nvar yuc=document.getElementById('yuc').checked; \nvar nuc=document.getElementById('nuc').checked; \nvar fuc=0;if(yuc==true&&nuc==false){fuc=2;}else if(yuc==false&&nuc==true){fuc=1;} \nvar std=document.getElementById('full_format').checked; \nvar cid=document.getElementById('colorid').checked; \nvar uniquenames=document.getElementById('uniquenames').checked; \nvar full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter/filter?'+mc+'&'+mxc+'&'+fr+'&'+fg+'&'+fu+'&'+fb+'&'+fw+'&'+fuc+'&'+std+'&0&'+uniquenames+'&'+ct+'&'+cn+'&'+cid; \nvar resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>&nbsp;&nbsp;";
+        $form .= "<a onclick=\"javascript: \nvar ct=document.getElementById('ct').value; \nvar ctnl=document.getElementById('ctnl').value; \nvar cn=document.getElementById('cn').value; \nvar mc=document.getElementById('mc').value; \nvar mxc=document.getElementById('mxc').value; \nvar yg=document.getElementById('yg').checked; \nvar ng=document.getElementById('ng').checked; \nvar fg=0;if(yg==true&&ng==false){fg=2;}else if(yg==false&&ng==true){fg=1;} \nvar yr=document.getElementById('yr').checked; \nvar nr=document.getElementById('nr').checked; \nvar fr=0;if(yr==true&&nr==false){fr=2;}else if(yr==false&&nr==true){fr=1;} \nvar yu=document.getElementById('yu').checked; \nvar nu=document.getElementById('nu').checked; \nvar fu=0;if(yu==true&&nu==false){fu=2;}else if(yu==false&&nu==true){fu=1;} \nvar yb=document.getElementById('yb').checked; \nvar nb=document.getElementById('nb').checked; \nvar fb=0;if(yb==true&&nb==false){fb=2;}else if(yb==false&&nb==true){fb=1;} \nvar yw=document.getElementById('yw').checked; \nvar nw=document.getElementById('nw').checked; \nvar fw=0;if(yw==true&&nw==false){fw=2;}else if(yw==false&&nw==true){fw=1;} \nvar yuc=document.getElementById('yuc').checked; \nvar nuc=document.getElementById('nuc').checked; \nvar fuc=0;if(yuc==true&&nuc==false){fuc=2;}else if(yuc==false&&nuc==true){fuc=1;} \nvar std=document.getElementById('full_format').checked; \nvar cid=document.getElementById('colorid').checked; \nvar uniquenames=document.getElementById('uniquenames').checked; \nvar full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''); full = full+'/filter/filter?'+mc+'&'+mxc+'&'+fr+'&'+fg+'&'+fu+'&'+fb+'&'+fw+'&'+fuc+'&'+std+'&0&'+uniquenames+'&'+ct+'&'+cn+'&'+cid+'&'+ctnl; \nvar resubmit=document.getElementById('resubmit'); resubmit.href=full;\"><font color=blue size=+2><u>Update the query (click here):</u></font></a>&nbsp;&nbsp;";
         my $x_card_name = $card_text;
         
         
@@ -1263,12 +1605,12 @@ sub edh_lands
 #        $form .= "&#950; -> 950 &#951; -> 951 &#952; -> 952 &#953; -> 953<br> &#954; -> 954 &#955; -> 955 &#956; -> 956 &#957; -> 957 &#958; -> 958 &#959; -> 959 &#960; -> 960 &#961; -> 961 &#962; -> 962<br> &#963; -> 963 &#964; -> 964 &#965; -> 965 &#966; -> 966 &#967; -> 967 &#968; -> 968 &#969; -> 969 &#970; -> 970 &#971; -> 971<br> &#972; -> 972 &#973; -> 973 &#974; -> 974";
 #        $form .= "&#975; -> 975 &#976; -> 976 &#977; -> 977 &#978; -> 978 &#979; -> 979 &#980; -> 980<br> &#981; -> 981<br> &#982; -> 982<br> &#983; -> 983<br> &#984; -> 984<br> &#985; -> 985<br> &#986; -> 986<br> &#987; -> 987<br> &#988; -> 988<br> &#989; -> 989<br> &#990; -> 990<br> &#991; -> 991<br> &#992; -> 992<br> &#993; -> 993<br> &#994; -> 994<br> &#995; -> 995<br> &#996; -> 996<br> &#997; -> 997<br> &#998; -> 998<br> &#999; -> 999<br>";
 
-        $form .= "<a id=\"resubmit\" href=\"$min_cmc&$max_cmc&$use_red&$use_green&$use_blue&$use_black&$use_white&$use_uncoloured&$use_full_format&$use_block&$use_unique&$card_text&$use_colorid\">Resubmit</a><br>";
+        $form .= "<a id=\"resubmit\" href=\"$min_cmc&$max_cmc&$use_red&$use_green&$use_blue&$use_black&$use_white&$use_uncoloured&$use_full_format&$use_block&$use_unique&$card_text&$use_colorid&$card_text_not_like\">Resubmit</a><br>";
         $form .= "</form>";
 
         {
-            print ("calling = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $use_colorid);\n");
-            my $txt = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $use_colorid);
+            print ("calling = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $use_colorid, $card_text_not_like);\n");
+            my $txt = get_filtered_cards_advanced (\@ac, $min_cmc, $max_cmc, $use_red, $use_green, $use_blue, $use_black, $use_white, $use_uncoloured, $use_full_format, $use_block, $use_unique, $card_text, $card_name, $use_colorid, $card_text_not_like);
             $txt =~ s/\n\n/\n/gim;
             $txt =~ s/\n\n/\n/gim;
             my $copy = $txt;
@@ -1289,7 +1631,7 @@ sub edh_lands
                 '<a href="https://scryfall.com/search?q=name:/' . $card_name . '/">Scryfall name</a><br>' .
                 '<a href="https://scryfall.com/search?q=oracle:/' . $card_text . '/ name:/' . $card_name . '/">Scryfall both name/text</a><br>';
 
-            $txt = "<style>p.a{font-family:\"Courier New\", Times, serif;}</style><font color=blue size=+3>MAGIC CARDS </font><font color=green size=+1><a href='http://127.0.0.1:60001/blah'>Deck input </a></font>&nbsp;&nbsp;<font color=red size=+1><a href='http://127.0.0.1:60000/dragons.*tarkir&dragons.*tarkir&fate.*reforged&8&1&1'>Draft (DTK,DTK,FRF)</a></font><br>$form<br>Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir&.*&.*'>DTK</a>&nbsp;&nbsp; Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir.*rare&.*&.*'>DTK (Rare)</a><br>Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged&.*&.*'>FRF</a>&nbsp;&nbsp; Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged.*rare&.*&.*'>FRF (Rare)</a> <br> Only planeswalkers: <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&.*types.*planeswalker.*cardtext.*&.*&[1234]..*'>Planewalkers</a> <br> View by expansion set: <a href='all_sets'>See the sets</a></br> <br> 
+            $txt = "<style>p.a{font-family:\"Courier New\", Times, serif;}</style><font color=blue size=+3>MAGIC CARDS </font><font color=green size=+1><a href='http://127.0.0.1:60001/blah'>Deck input </a></font>&nbsp;&nbsp;<font color=red size=+1><a href='http://127.0.0.1:60000/dragons.*tarkir&dragons.*tarkir&fate.*reforged&8&1&1'>Draft (DTK,DTK,FRF)</a></font><br>$form<br>Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir&.*&.*'>DTK</a>&nbsp;&nbsp; Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&dragons.*tarkir.*rare&.*&.*'>DTK (Rare)</a><br>Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged&.*&.*'>FRF</a>&nbsp;&nbsp; Example <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&Fate.*Reforged.*rare&.*&.*'>FRF (Rare)</a> <br> Only planeswalkers: <a href='/filter/filter?0&89&0&0&0&0&0&0&false&false&false&.*types.*planeswalker.*cardtext.*&.*&[1234]..*'>Planewalkers</a> <br> View by expansion set: <a href='all_sets'>See the sets</a></br>Play Enchant Wordle: <a href='enchantwordle'>Enchant Wordle</a></br><br> 
             $set <br> <p class=\"a\">$txt</p>
             View EDH lands: <a href='edh_lands'>See EDH lands</a><br>
             b lands <a href='edh_filter_notc_notw_notu_notr_notg'>b</a>
