@@ -16,6 +16,8 @@ use DateTime;
 #use DateTime::Format::Duration;
 
 my %csv_data;
+my $in_safe_csv_data = 0;
+my %safe_csv_data;
 my $csv_block;
 my %meta_data;
 my %calculated_data;
@@ -27,6 +29,7 @@ my $show_formulas = 0;
 my $count = 0;
 my %each_element;
 my $each_element_count = 0;
+my $SELF_ELEMENT = 0;
 
 sub write_to_socket
 {
@@ -191,13 +194,11 @@ sub process_csv_data
     %col_types = %new_col_types;
     $max_field_num = 0;
     $max_rows = 0;
-    print (">>$csv_block<<\n");
 
     if ($posted eq "POSTED")
     {
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
         my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
-        print "Saving to d:\\perl_programs\\csv_ingest\\CSV_$yyyymmddhhmmss.txt\n";
         open CSV_FILE, ("> d:\\perl_programs\\csv_ingest\\CSV_$yyyymmddhhmmss.txt");
         print CSV_FILE $block;
         close CSV_FILE;
@@ -241,6 +242,18 @@ sub process_csv_data
                 }
             }
 
+            while ($field =~ m/([A-Z])([\^])([2-9])/ && $row_num > 1)
+            {
+                my $col = $1;
+                my $line_mod = $2;
+                my $line_mod_2 = $3;
+                my $field_orig = "$1\\$2$3";
+                
+                my $go_up_lines = $line_mod_2;
+                my $up_field = $col . ($row_num-$go_up_lines);
+                $field =~ s/$field_orig/$up_field/;
+            }
+
             # Special case of G__ (G+number two below)  
             while ($field =~ m/([A-Z])(_)(_)/ && $row_num > 1)
             {
@@ -255,18 +268,26 @@ sub process_csv_data
                     my $field_down = $field_orig;
                     $go_down_lines = 2;
 
-                    print ("Below: >$field_orig< >$field_down<\n");
                     while ($field_down =~ s/$col(_)(_)(_)/$col$1$2/)
                     {
                         $go_down_lines++;
-                        print (" ** Below: >$field_orig< >$field_down< $go_down_lines\n");
                     }
 
                     my $down_field = $col . ($row_num+$go_down_lines);
-                    print (" FInally >$down_field<\n");
                     $field =~ s/$field_orig/$down_field/;
-                    print (" FInally >$field<\n");
                 }
+            }
+            
+            while ($field =~ m/([A-Z])(_)([2-9])/ && $row_num > 1)
+            {
+                my $col = $1;
+                my $line_mod = $2;
+                my $line_mod_2 = $3;
+                my $field_orig = "$1$2$3";
+                
+                my $go_down_lines = $line_mod_2;
+                my $down_field = $col . ($row_num+$go_down_lines);
+                $field =~ s/$field_orig/$down_field/;
             }
 
             # Special case of G^ (G+Number one above) G^^ (G+Number two above) G_ (G+number one below) or G> (G+same number) or G!(G+thethingabovebutincrementedownum..)
@@ -754,7 +775,6 @@ sub do_concat_expansion
         my $to_check = $1;
         if (simple_parentheses_only_two_arguments ($to_check, "CONCATENATE"))
         {
-            print ($field_val);
             if ($field_val =~ m/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/)
             {
                 $field_val =~ s/CONCATENATE\(([^\|]+?)\|([^\|]+?)\)/fix_quotes ($1$2)/;
@@ -795,18 +815,13 @@ sub do_bold_expansion
     if ($field_val =~ m/(BOLD\(.*)/)
     {
         my $to_check = $1;
-        print ("Checking with $to_check\n");
         if (simple_parentheses_only_two_arguments ($to_check, "BOLD"))
         {
-            print ("aa Checking with $to_check\n");
-            print ($field_val);
             if ($field_val =~ m/BOLD\(([^\|]+?)\|([^\|]+?)\)/)
             {
-                print ("bbb Checking with $field_val\n");
                 $field_val =~ s/BOLD\(([^\|]+?)\|([^\|]+?)\)/'<font size=+1 color=$2><b>$1<\/b><\/font>'/;
                 $field_val =~ s/""/"/g;
                 $field_val =~ s/""/"/g;
-                print ("ccc BOLD done Checking with $field_val\n");
             }
         }
         return $field_val;
@@ -1309,7 +1324,6 @@ sub is_exponent
     my $field = $_ [0];
     if ($field =~ m/^([\+\-]|)\d+($|\.\d+)E([+\-]|)\d+$/i)
     {
-        print ("Small exp - $field found\n");
         return 1;
     }
     return 0;
@@ -1334,7 +1348,6 @@ sub is_small_exponent
     my $field = $_ [0];
     if ($field =~ m/^([\+\-]|)\d+($|\.\d+)E-\d+$/i)
     {
-        print ("Small exp - $field found\n");
         return 1;
     }
     return 0;
@@ -1566,6 +1579,7 @@ sub recreate_perl
     foreach $k (sort keys (%each_element))
     {
         my $str = $each_element {$k};
+        $SELF_ELEMENT = $k;
         $str = perl_expansions ($str);
         $each_element {$k} = $str;
     }
@@ -1590,7 +1604,6 @@ sub recreate_perl
         {
             $str = fix_quotes ($str);
         }
-        #print ("Doing eval on print($str)\n");
 
         # Print a value into a variable as read from STDOUT that eval prints out
         my $output;
@@ -1889,7 +1902,6 @@ sub get_graph_html
             elsif ($k =~ m/_total/ && $graph_totals)
             {
                 my $x = $meta_data {$k};
-                print ("LOOKING at $x for $k\n");
                 $x =~ s/^$/0/;
                 $x =~ s/,//g;
                 $x =~ s/\$//g;
@@ -3256,6 +3268,22 @@ sub is_authorized
     return 1;
 }
 
+my %safe_csv_data;
+sub switch_to_safe_csv
+{
+    my $switch_to_safe = $_ [0];
+    if ($switch_to_safe && !$in_safe_csv_data)
+    {
+        $in_safe_csv_data = 1;
+        my $new_csv = `type  d:\\perl_programs\\csv_ingest\\safe_example.txt`;
+        process_csv_data ($new_csv, "DONT_SAVE");
+    }
+    elsif (!$switch_to_safe)
+    {
+        $in_safe_csv_data = 0;
+    }
+}
+
 my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Unauthorized access</h1><a href=\"\/csv_analyse\/refresh_server_ip\">Refresh cached server IP here</a><br>Attempted function:&nbsp;";
 
 # Main
@@ -3309,15 +3337,17 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
         my $x_forwarded_for_addr = $1;
         my $authorized = is_authorized ($x_forwarded_for_addr, $server_ip);
         
-        #if (!$authorized)
-        #{
-        #    write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . " Please try later", "", "noredirect");
-        #    next;
-        #}
+        if (!$authorized)
+        {
+            switch_to_safe_csv (1);
+        }
+        elsif ($authorized)
+        {
+            switch_to_safe_csv (0);
+        }
 
         print ("X_FORWARDED: $x_forwarded_for_addr\n");
 
-        print ("Raw data was $txt\n");
         $txt =~ s/csv_data\/csv_data/csv_data\//img;
         $txt =~ s/csv_data\/csv_data/csv_data\//img;
         $txt =~ s/csv_data\/csv_data/csv_data\//img;
@@ -3334,7 +3364,6 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
         if ($txt =~ m/.*favico.*/m)
         {
             my $size = -s ("d:/perl_programs/aaa.jpg");
-            print (">>>>> size = $size\n");
             my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
             print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
             syswrite (\*CLIENT, $h);
@@ -3439,7 +3468,6 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
             my $listing = `dir /a /b /s d:\\perl_programs\\csv_ingest\\*$safe*.txt`;
             $listing =~ s/d:\\.*\\//img;
-            print ("Found >>> $listing\n");
             $listing =~ s/(.*?)\n/<a href="\/csv_analyse\/old_csv?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing<br>(Note, automatically authorized as IPs are as follows: (yours:$client_addr), (server:$server_ip))</body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
@@ -3584,7 +3612,6 @@ $//img;
             $file =~ s/ HTTP.*//;
             $file =~ s/\n//img;
             $file =~ s/^.*old_csv.CSV/CSV/;
-            print ("Going to look at... d:\\perl_programs\\csv_ingest\\$file\n");
             my $new_csv = `type  d:\\perl_programs\\csv_ingest\\$file`;
             process_csv_data ($new_csv, "DONT_SAVE");
         }
@@ -3608,6 +3635,7 @@ $//img;
         
         my $group_column = "";
         my $group_column_num = "";
+        my $group_column_num2 = "";
         if ($txt =~ m/group_column.columns=(.*)$/im)
         {
             $group_column = "$1";
@@ -3766,10 +3794,12 @@ $//img;
         $f2 =~ s/\W/./img;
         $f2 =~ s/^(...)..*$/$1../img;
         my $dual_example = "(20[123]\\d).*($f2)";
+        my $dual_example2 = "%23" . get_col_header (0) . get_col_name_of_number_type_col ();
 
         $dual_example = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example" . get_col_name_of_number_type_col () . "\"";
+        $dual_example2 = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example2\"";
         $html_text .= "<form action=\"/csv_analyse/dualgroupby\">
-                <label for=\"dualgroup\">Dual groups <font size=-2><a href=$dual_example>Example</a></font></label><br>
+                <label for=\"dualgroup\">Dual groups <font size=-2><a href=$dual_example>Dual Example</a>&nbsp;<a href=$dual_example2>Dual Example2</a></font></label><br>
                 <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Dual Group By\" >
                 </form></td>";
@@ -3842,7 +3872,7 @@ $//img;
         my $only_one_group = 1;
         my $first_group_only = 0;
         my $group_by_column = 0;
-        my $group_by_column = 0;
+        my $dual_group_by_columns = 0;
         my $dual_groups = 0;
         my $group2 = "";
         my $chosen_col = "";
@@ -3878,6 +3908,29 @@ $//img;
             $group2 = "$2";
             $overall_match = $dual_group;
         }
+        elsif ($dual_group =~ m/\((.*)\)/)
+        {
+            $only_one_group = 0;
+            $first_group_only = 0;
+            $group_by_column = 0;
+            $dual_groups = 1;
+            $group = "$1";
+            $group2 = "$2";
+            $overall_match = $dual_group;
+        }
+        elsif ($dual_group =~ m/#([^#]+)#([^#]+)$/)
+        {
+            $only_one_group = 0;
+            $first_group_only = 0;
+            $dual_group_by_columns = 1;
+            $dual_groups = 0;
+            $group = "$1";
+            $group2 = "$2";
+            $overall_match = ".*";
+            
+            $group_column_num = get_num_of_col_header ($group);
+            $group_column_num2 = get_num_of_col_header ($group2);
+        }
 
         my %new_meta_data;
         my %new_calculated_data;
@@ -3894,7 +3947,7 @@ $//img;
             $use_regex = 0;
         }
 
-        if ($use_regex)
+        if ($use_regex || $dual_group_by_columns)
         {
             $html_text .= "<th> <button><font size=-1>Group<span aria-hidden=\"true\"></span> </font></button> </th> \n";
             $html_text .= "<th> <button><font size=-1>Group_Total<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -3918,7 +3971,7 @@ $//img;
             $overall_match = $group;
         }
 
-        if ($dual_group =~ s/#(.*)//)
+        if ($dual_group =~ s/#([^#]+)$//)
         {
             $chosen_col = "$1";
             $overall_match = $group;
@@ -4038,19 +4091,6 @@ $//img;
 
                     my $xrow = $row;
                     my $current_col_letter = $col_letter;
-                    if ($use_regex)
-                    {
-                        print ("\nAA INSIDE HERE 3633 - $use_regex $fake_row (vs $overall_match)");
-                        
-                        if ($use_regex && $fake_row =~ m/$overall_match/im)
-                        {
-                            print ("\nBB INSIDE HERE 3633 - $use_regex $fake_row ");
-                            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
-                            {
-                                print ("\nCC INSIDE HERE 3633 - $use_regex $fake_row ");
-                            }
-                        }
-                    }
                     
                     if ($group_by_column)
                     {
@@ -4072,10 +4112,38 @@ $//img;
                         $row =~ s/<\/font><\/td>/<\/td>/im;
                     }
 
-                    if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
+                    if ($dual_group_by_columns)
+                    {
+                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                        my $this_group_val = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num2), 0, $show_formulas);
+
+                        $group_prices {$this_group} = add_price ($group_prices {$this_group}, $this_group_val);
+                        $group_prices {$this_group . "_calc"} .= "+$this_group_val (CC $old_row_num,$chosen_col)";
+
+                        $group_counts {$this_group}++;
+                        $current_col_letter = get_next_field_letter ($current_col_letter);
+                        $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+
+                        if (!defined ($group_colours {$this_group}))
+                        {
+                            $group_colours {$this_group} = $group_colours {$group_count};
+                            $group_count++;
+                        }
+                        $row =~ s/(<td[^>]+>)/$1<font color=$group_colours{$this_group}>/img;
+                        $row =~ s/<\/td>/<\/font><\/td>/img;
+                        # Leave first td alone..
+                        $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
+                        $row =~ s/<\/font><\/td>/<\/td>/im;
+                    }
+                    
+                    if ($dual_group_by_columns)
+                    {
+                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                        $row .= " <td>GPRICE_$this_group</td> </tr>\n";
+                    }
+                    elsif ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "" || $dual_group_by_columns)
                     {
                         $force_row = 1;
-                        print (" INSIDE HERE 3636 - ");
                         if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                         {
                             my $this_group = $1;
@@ -4099,10 +4167,8 @@ $//img;
                             $group_counts {$this_group}++;
 
                             $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
-                            print (">>> AA group price - $pot_group_price = get_field_value ($old_row_num, COLUMn=??" . get_num_of_col_header ($chosen_col) . ", 0, $show_formulas)\n");
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price (AA $old_row_num,$chosen_col)";
-                            print ("$this_group --- $pot_group_price\n");
                         }
                         elsif ($first_group_only && $fake_row =~ m/$overall_match/im && ($fake_row =~ m/($group)/mg))
                         {
@@ -4138,7 +4204,6 @@ $//img;
                                 $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No aaa group Total</font></td></tr>\n";
                             }
                         }
-                        
                         elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
                         {
                             $fake_row =~ m/($group)/im;
@@ -4234,10 +4299,17 @@ $//img;
                 $row =~ s/<\/font><\/td>/<\/td>/im;
             }
 
-            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
+            if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "" || $dual_group_by_columns)
             {
                 $force_row = 1;
-                if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
+
+                if ($dual_group_by_columns)
+                {
+                    my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                    $row .= " <td>$this_group</td>\n";
+                    $row .= " <td>GPRICE_$this_group</td> </tr>\n";
+                }
+                elsif ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                 {
                     my $this_group = $1;
                     $group_counts {$this_group}++;
@@ -4320,7 +4392,7 @@ $//img;
             }
         }
 
-        if (($only_one_group || $first_group_only || $dual_groups) && $use_regex)
+        if (($only_one_group || $first_group_only || $dual_groups) && $use_regex || $dual_group_by_columns)
         {
             $group_block .= "<button onclick=\"location.href='dograph_group_counts'\">Graph group counts</button>";
             $group_block .= "<button onclick=\"location.href='dograph_group_totals'\">Graph group totals</button>";
@@ -4823,7 +4895,6 @@ $//img;
                     $world_y = $3;
                     $world_z = $5;
                     $use_auto = 1;
-                    print $world_x . ">>" . $world_y . ">>" . $world_z;
                 }
                 $row_shape_data .= "\n\n" . $has_shape_data;
                 my $title = $col_header1 . " x " . $col_header2 . " x " . $col_header3;
