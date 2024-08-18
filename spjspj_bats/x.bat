@@ -1,0 +1,11 @@
+copy spjones_build.bat spjspj_build.bat
+copy spjones_build_client.bat spjspj_build_client.bat
+copy spjones_build_console.bat spjspj_build_console.bat
+copy spjones_build_sets.bat spjspj_build_sets.bat
+copy spjones_client.bat spjspj_client.bat
+copy spjones_client2.bat spjspj_client2.bat
+copy spjones_poms.bat spjspj_poms.bat
+copy spjones_runmefirst.bat spjspj_runmefirst.bat
+copy spjones_server.bat spjspj_server.bat
+copy spjones_server_console.bat spjspj_server_console.bat
+copy spjones_set_mage_verrsion.bat spjspj_set_mage_verrsion.bat
