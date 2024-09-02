@@ -160,10 +160,12 @@ sub round_over
 
 sub get_game_won
 {
-    if ($GAME_WON == 0)
+    if ($GAME_WON eq "0")
     {
+        print ("$GAME_WON so returning blank<<<<");
         return "";
     }
+    print ("$GAME_WON so returning FULL<<<<");
     my $t = "Won..";
     return $t;
 }
@@ -192,6 +194,11 @@ sub only_has_hearts
 sub get_round_over
 {
     return $ROUND_OVER;
+}
+
+sub get_game_over
+{
+    return $GAME_WON ne "0";
 }
 
 sub do_shuffle
@@ -2045,7 +2052,7 @@ sub new_game
     }
     print ("Found $num_players_in_lobby are now in the game!!\n");
 
-    $GAME_WON = 0;
+    $GAME_WON = "0";
     $ROUND_OVER = 0;
     $USER_SHOT_MOON = 0;
 
@@ -2075,7 +2082,7 @@ sub new_game
 sub reset_game
 {
     $num_players_in_game = -1;
-    $GAME_WON = 0;
+    $GAME_WON = "0";
     $ROUND_OVER = 0;
     $USER_SHOT_MOON = 0;
     my @new_deck;
@@ -2480,6 +2487,15 @@ sub get_board
     {
         return " NO BOARD TO SEE..";
     }
+
+    print (">>>>>>>>>>>$GAME_WON<<<\n");
+    if (get_game_won () ne "")
+    {
+        print "<br>$GAME_WON!!<br>";
+        exit;
+        return "<br>$GAME_WON!!<br>";
+    }
+
     my $blank_td = "<td width=33% bgcolor=\"ffffff\">&nbsp;&nbsp;&nbsp;</td>";
     my $start_tr = "<tr>";
     my $end_tr = "</tr>";
@@ -2498,12 +2514,12 @@ sub get_board
         $out .= $start_tr . player_cell (3, $IP) . $blank_td            . player_cell (1, $IP) . $end_tr;
         $out .= $start_tr . $blank_td            . player_cell (2, $IP) . $blank_td            . $end_tr;
         $out .= "</table>";
-        if ($trick_number >= 1 || $trick_number >= 1 && $current_trick_card_count == 4)
-        {
-            $out .= "Last Trick Led by: " . get_player_name ($last_trick_led_by) . "<br>$last_trick_table<br>";
-        }
-        #$out .= get_images_from_cards ($current_trick, $id, 1, 1, 0, 0, 0);
         $out .= get_trick_table (0);
+        $out .= "<br>Trick $trick_number, led by " . get_player_name ($current_trick_led_by). "\n";
+        if ($trick_number >= 1)
+        {
+            $out .= "<br>$last_trick_table<br>Last Trick Led by: " . get_player_name ($last_trick_led_by);
+        }
     }
 
     $out =~ s/<\/tr><\/tr>/<\/tr>/img;
@@ -2515,6 +2531,17 @@ sub get_faceup_image
     my $id = $_ [0];
 }
 
+sub get_scores
+{
+    my $x;
+    my $ss = "<font size=-2>";
+    for ($x = 0; $x < 4; $x++)
+    {
+        $ss .= get_player_name ($x) . "(Score = " . get_player_score ($x) . ")&nbsp;";
+    }
+    $ss .= "</font>";
+}
+
 sub print_game_state
 {
     my $IP = $_ [0];
@@ -2523,18 +2550,13 @@ sub print_game_state
         return "";
     }
 
-    my $x;
-    my $ss = "<font size=-2>";
-    for ($x = 0; $x < 4; $x++)
-    {
-        $ss .= get_player_name ($x) . "(Score = " . get_player_score ($x) . ")&nbsp;";
-    }
-    $ss .= "</font>";
+    my $ss = get_scores ();
     my $out = "You are in the $GAME game! (Info: $ss)<br>";
 
     if (get_game_won () ne "")
     {
         $out .= get_game_won ();
+        return "SOMEONE WON!";
     }
 
     $out .= "<style>table.blueTable { border: 1px solid #1C6EA4; background-color: #ABE6EE; width: 100%; text-align: left; border-collapse: collapse; }\n table.blueTable td, table.blueTable th { width:33%; border: 1px solid #AAAAAA; padding: 3px 2px; }\n table.blueTable tbody td { font-size: 13px; }\n table.blueTable tr:nth-child(even)\n { background: #D0E4F5; }\n table.blueTable tfoot td { font-size: 14px; }\n table.blueTable tfoot .links { text-align: right; }\n\n<br></style>\n";
@@ -2684,7 +2706,7 @@ sub get_game_state
         }
         $out =~ s/xyz/User$next_num/img;
         $out .= "<a href=\"new_game\">Start new game!<\/a>&nbsp;&nbsp;<a href=\"new_game_debug\">Start new game (with debug)!<\/a>";
-        $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a>&nbsp;<a href=\"toggle_debug\">Toggle debug</a><br><br><br>";
+        $out .= "<br>Reset the game here: <a href=\"reset_game\">Reset<\/a>&nbsp;<a href=\"toggle_debug\">Toggle debug</a><br><br><br>";
         $out .= "</font>";
     }
     else
@@ -2693,16 +2715,19 @@ sub get_game_state
         if (in_game ($IP))
         {
             $out = print_game_state ($IP);
-            $out .= "<br>Trick $trick_number, led by " . get_player_name ($current_trick_led_by). "\n";
 
-            if (get_round_over ())
+            if (get_game_over ())
+            {
+                $out .= "<br>$GAME_WON!!<br>";
+            }
+            elsif (get_round_over ())
             {
                 $out .= "<br>Player " . get_player_name (0) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {0}, $id, 1, 1, 1, 0, 0);
                 $out .= "<br>Player " . get_player_name (1) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {1}, $id, 1, 1, 1, 0, 0);
                 $out .= "<br>Player " . get_player_name (2) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {2}, $id, 1, 1, 1, 0, 0);
                 $out .= "<br>Player " . get_player_name (3) . " won<br>"; $out .= get_images_from_cards ($player_won_cards {3}, $id, 1, 1, 1, 0, 0);
             }
-            $out .= "Reset the game here: <a href=\"reset_game\">Reset<\/a>&nbsp;<a href=\"toggle_debug\">Toggle debug</a><br><br><br>";
+            $out .= "<br>Reset the game here: <a href=\"reset_game\">Reset<\/a>&nbsp;<a href=\"toggle_debug\">Toggle debug</a><br><br><br>";
         }
         elsif (!game_started ())
         {
@@ -2804,7 +2829,7 @@ sub set_scores
 
     my $total = $p0_score + $p1_score + $p2_score + $p3_score;
     my $total_round_points = $total % $ROUND_POINTS;
-    add_to_debug ("SCORES: $p0_score $p1_score $p2_score $p3_score (total = $total ($total_round_points))");
+    add_to_debug ("SCORES: $p0_score $p1_score $p2_score $p3_score (total = $total ($total_round_points)) - someone has won? $someone_won");
 
     if ($someone_won)
     {
@@ -2814,7 +2839,7 @@ sub set_scores
         if ($p2_score < $lowest_score) { $winner = 2; $lowest_score = $p2_score; }
         if ($p3_score < $lowest_score) { $winner = 3; $lowest_score = $p3_score; }
 
-        game_won (get_player_name ($winner) . " was the winner!");
+        game_won (get_player_name ($winner) . " was the winner!<br><br>Final scores were: " . get_scores ());
     }
 }
 
@@ -3186,6 +3211,8 @@ sub pass_3_cards
         if ($txt =~ m/.*toggle.*debug.*/m)
         {
             $DO_DEBUG = !$DO_DEBUG;
+            write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
+            next;
         }
 
         $txt =~ s/$GAME_URL.*$GAME_URL/$GAME_URL/img;
