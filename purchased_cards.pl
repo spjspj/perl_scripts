@@ -14,15 +14,8 @@ use LWP::Simple;
 use Socket;
 use File::Copy;
 
-my %card_names;
-my %original_lines;
-my %original_lines_just_card_names;
-my %card_text;
-my %card_cost;
 my %card_type;
-my %card_converted_cost;
 my %all_cards_abilities;
-my %expansion;
 my $SUPPLIED_PASSWORD;
 
 #####
@@ -127,6 +120,7 @@ sub add_new_card
         my $place_of_purchase = $5;
         my $color = $6;
         my $price = $7;
+        $price =~ s/^\$*/\$/g;
         $card =~ s/\+/ /g;
 
         $all_cards {$card} = 1;
@@ -162,39 +156,39 @@ sub add_new_card
         print ("$type -- Found error with: $line\n");
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\d+\.\d\d|\$*\d+|)(;|$)/)
         {
-            print ("1 failed ($line) here\n");
+            print ("1 $type failed ($line) here\n");
         }
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);(\$\d+\.\d\d|\$*\d+|)/)
         {
-            print ("2 failed ($line) here\n");
+            print ("2 $type failed ($line) here\n");
         }
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);([^;]+?);/)
         {
-            print ("3 failed ($line) here\n");
+            print ("3 $type failed ($line) here\n");
         }
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);([^;]+?);/)
         {
-            print ("4 failed ($line) here\n");
+            print ("4 $type failed ($line) here\n");
         }
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?);/)
         {
-            print ("5 failed ($line) here\n");
+            print ("5 $type failed ($line) here\n");
         }
         if ($line !~ m/^([^;]+?);(already);(.);([^;]+?)/)
         {
-            print ("6 failed ($line) here\n");
+            print ("6 $type failed ($line) here\n");
         }
         if ($line !~ m/^([^;]+?);(already);(.);/)
         {
-            print ("7 failed ($line) here\n");
+            print ("7 $type failed ($line) here\n");
         }
     }
 }
 
-sub read_all_cards
+sub read_all_purchased_cards2
 {
     my $CURRENT_FILE = "D:/D_Downloads/apache_lounge/Apache24/cgibin/cards_list.txt";
-    open ALL, $CURRENT_FILE; 
+    open ALL, $CURRENT_FILE;
     print ("Reading from $CURRENT_FILE\n");
 
     #"Shorikai, Genesis Engine",already,c,20230218,ronin
@@ -218,7 +212,7 @@ my %purchased_cards;
 sub read_all_purchased_cards
 {
     my $CURRENT_FILE = "D:/D_Downloads/apache_lounge/Apache24/cgibin/purchases.txt";
-    open ALL, $CURRENT_FILE; 
+    open ALL, $CURRENT_FILE;
     print ("Reading from $CURRENT_FILE\n");
 
     while (<ALL>)
@@ -227,16 +221,148 @@ sub read_all_purchased_cards
         my $line = $_;
         $purchased_cards {$line} = 1;
         $line =~ s/"//g;
-        $line =~ s/,/;/g;
+        #$line =~ s/,/;/g;
         add_new_card ($line, "purchase");
     }
     close ALL;
 }
 
+# Read all cards
+my %card_colour_identity;
+
+sub read_all_cards
+{
+    my $CURRENT_FILE = "c:/xmage_clean/mage/Utils/mtg-cards-data.txt";
+    open ALL, $CURRENT_FILE;
+    print ("Reading from $CURRENT_FILE\n");
+
+    while (<ALL>)
+    {
+        chomp $_;
+        my $line = $_;
+        $line =~ s/\|\|/| |/g;
+        $line =~ s/\|\|/| |/g;
+        #print $line, "\n";
+        my @fields = split /\|/, $line;
+        my $combined_name = $fields [0] . " - " . $fields [1];
+
+        my $f;
+
+        {
+            my $cid;
+            if ($line =~ m/{[^}]*?[W]/) { $cid .= "W"; }
+            if ($line =~ m/{[^}]*?[U]/) { $cid .= "U"; }
+            if ($line =~ m/{[^}]*?[B]/) { $cid .= "B"; }
+            if ($line =~ m/{[^}]*?[R]/) { $cid .= "R"; }
+            if ($line =~ m/{[^}]*?[G]/) { $cid .= "G"; }
+            $card_colour_identity {$fields [0]} = $cid;
+        }
+    }
+}
+
+my %col_ids;
+$col_ids {""} = "colourless-text";
+$col_ids {"W"} = "white-text";
+$col_ids {"U"} = "blue-text";
+$col_ids {"B"} = "black-text";
+$col_ids {"R"} = "red-text";
+$col_ids {"G"} = "green-text";
+$col_ids {"WU"} = "azorius-text";
+$col_ids {"UW"} = "azorius-text";
+$col_ids {"WB"} = "orzhov-text";
+$col_ids {"BW"} = "orzhov-text";
+$col_ids {"UB"} = "dimir-text";
+$col_ids {"BU"} = "dimir-text";
+$col_ids {"UR"} = "izzet-text";
+$col_ids {"RU"} = "izzet-text";
+$col_ids {"RB"} = "rakdos-text";
+$col_ids {"BR"} = "rakdos-text";
+$col_ids {"BG"} = "golgari-text";
+$col_ids {"GB"} = "golgari-text";
+$col_ids {"RG"} = "gruul-text";
+$col_ids {"GR"} = "gruul-text";
+$col_ids {"RW"} = "boros-text";
+$col_ids {"WR"} = "boros-text";
+$col_ids {"GU"} = "simic-text";
+$col_ids {"UG"} = "simic-text";
+$col_ids {"GW"} = "selesneya-text";
+$col_ids {"WG"} = "selesneya-text";
+$col_ids {"WUB"} = "esper-text";
+$col_ids {"WBU"} = "esper-text";
+$col_ids {"BWU"} = "esper-text";
+$col_ids {"BUW"} = "esper-text";
+$col_ids {"UWB"} = "esper-text";
+$col_ids {"UBW"} = "esper-text";
+$col_ids {"UBR"} = "grixis-text";
+$col_ids {"URB"} = "grixis-text";
+$col_ids {"RUB"} = "grixis-text";
+$col_ids {"RBU"} = "grixis-text";
+$col_ids {"BUR"} = "grixis-text";
+$col_ids {"BRU"} = "grixis-text";
+$col_ids {"BRG"} = "jund-text";
+$col_ids {"BGR"} = "jund-text";
+$col_ids {"GBR"} = "jund-text";
+$col_ids {"GRB"} = "jund-text";
+$col_ids {"RBG"} = "jund-text";
+$col_ids {"RGB"} = "jund-text";
+$col_ids {"RGW"} = "naya-text";
+$col_ids {"RWG"} = "naya-text";
+$col_ids {"WRG"} = "naya-text";
+$col_ids {"WGR"} = "naya-text";
+$col_ids {"GRW"} = "naya-text";
+$col_ids {"GWR"} = "naya-text";
+$col_ids {"GWU"} = "bant-text";
+$col_ids {"GUW"} = "bant-text";
+$col_ids {"UGW"} = "bant-text";
+$col_ids {"UWG"} = "bant-text";
+$col_ids {"WGU"} = "bant-text";
+$col_ids {"WUG"} = "bant-text";
+$col_ids {"WBG"} = "abzan-text";
+$col_ids {"WGB"} = "abzan-text";
+$col_ids {"GWB"} = "abzan-text";
+$col_ids {"GBW"} = "abzan-text";
+$col_ids {"BWG"} = "abzan-text";
+$col_ids {"BGW"} = "abzan-text";
+$col_ids {"URW"} = "jeskai-text";
+$col_ids {"UWR"} = "jeskai-text";
+$col_ids {"WUR"} = "jeskai-text";
+$col_ids {"WRU"} = "jeskai-text";
+$col_ids {"RUW"} = "jeskai-text";
+$col_ids {"RWU"} = "jeskai-text";
+$col_ids {"BGU"} = "sultai-text";
+$col_ids {"BUG"} = "sultai-text";
+$col_ids {"UBG"} = "sultai-text";
+$col_ids {"UGB"} = "sultai-text";
+$col_ids {"GBU"} = "sultai-text";
+$col_ids {"GUB"} = "sultai-text";
+$col_ids {"RWB"} = "mardu-text";
+$col_ids {"RBW"} = "mardu-text";
+$col_ids {"BRW"} = "mardu-text";
+$col_ids {"BWR"} = "mardu-text";
+$col_ids {"WRB"} = "mardu-text";
+$col_ids {"WBR"} = "mardu-text";
+$col_ids {"GUR"} = "temur-text";
+$col_ids {"GRU"} = "temur-text";
+$col_ids {"RGU"} = "temur-text";
+$col_ids {"RUG"} = "temur-text";
+$col_ids {"UGR"} = "temur-text";
+$col_ids {"URG"} = "temur-text";
+$col_ids {""} = "colorless-text";
+
+sub get_card_colour_identity
+{
+    my $id = $_ [0];
+    if (defined ($col_ids {$card_colour_identity{$id}}))
+    {
+        return $col_ids {$card_colour_identity{$id}}
+    }
+    return "multicoloured-text";
+}
+
 sub is_authorized
 {
     my $pw = $_ [0];
-    if ($pw eq "IReallySmellLikeJig")
+    if ($pw eq "spjwashere")
     {
         # Check that the other programs are running..
         return 1;
@@ -295,8 +421,9 @@ sub fix_url_code
     my $trusted_client;
     my $data_from_client;
     $|=1;
-    read_all_cards;
+    read_all_purchased_cards2;
     read_all_purchased_cards;
+    read_all_cards;
 
     socket (SERVER, PF_INET, SOCK_STREAM, $proto) or die "Failed to create a socket: $!";
     setsockopt (SERVER, SOL_SOCKET, SO_REUSEADDR, 1) or die "setsocketopt: $!";
@@ -350,7 +477,7 @@ sub fix_url_code
             copy "d:/perl_programs/aaa.jpg", \*CLIENT;
             next;
         }
-        
+
         if ($txt =~ m/.*get_list.*/m)
         {
             my $html_text;
@@ -381,10 +508,9 @@ sub fix_url_code
             $color =~ m/^(.)/;
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
             my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
-            
+
             my $card_type_fl = $card_type;
             $card_type_fl =~ s/^(.).*/$1/;
-
 
             # name;have;type;date;place;color;price;currency;
             my $card_line = "$card;already;$card_type_fl;$yyyymmdd;$place;$color;$price";
@@ -405,7 +531,7 @@ sub fix_url_code
             $color =~ m/^(.)/;
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
             my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
-            
+
             my $card_type_fl = $card_type;
             $card_type_fl =~ s/^(.).*/$1/;
 
@@ -429,7 +555,7 @@ sub fix_url_code
             my $html_text;# = "Noted - $card purchased in $place on the date: $yyyymmddhhmmss<br>Return to <a href=\"\/purchasedcards\/\">List here<\/a>\n";
             # Example: "War Tax",already,e,20230329,endgames,blue
                 #<input type=\"text\" id=\"color\" name=\"color\" list=value>
-            
+
             $html_text = "<font color=red>Card information:</font><br><br>";
             $card =~ s/%20/ /img;
             $html_text .= "<form action=\"/purchasedcards/card_info\">
@@ -473,7 +599,7 @@ sub fix_url_code
         {
             my $card = $1;
             my $html_text;
-            
+
             $html_text = "<font color=red>New Wanted Card information:</font><br><br>";
             $card =~ s/%20/ /img;
             $html_text .= "<form action=\"/purchasedcards/card_wanted\">
@@ -524,19 +650,18 @@ sub fix_url_code
         $txt =~ s/ http.*//i;
         $txt = fix_url_code ($txt);
 
-        
         my $search = ".*";
         if ($txt =~ m/searchstr=(.*)/im)
         {
             $search = "$1";
         }
-        
+
         my $group = ".*";
         if ($txt =~ m/groupstr=(.*)/im)
         {
             $group = "$1";
         }
-        
+
         my $multi_group = ".*";
         if ($txt =~ m/multigroup=(.*)/im)
         {
@@ -647,13 +772,42 @@ sub fix_url_code
         $html_text .= "  top: 0;\n";
         $html_text .= "}\n";
         $html_text .= "</style>\n";
+        $html_text .= "<style>\n";
+        $html_text .= "    .white-text { text-align: center; background: linear-gradient(to right, grey, grey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .blue-text { text-align: center; background: linear-gradient(to right, blue, blue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .black-text { text-align: center; background: linear-gradient(to right, black, black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .red-text { text-align: center; background: linear-gradient(to right, red, red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .green-text { text-align: center; background: linear-gradient(to right, green, green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .azorius-text { text-align: center; background: linear-gradient(to right, grey, blue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .orzhov-text { text-align: center; background: linear-gradient(to right ,grey,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .dimir-text { text-align: center; background: linear-gradient(to right ,blue,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .izzet-text { text-align: center; background: linear-gradient(to right ,blue,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .rakdos-text { text-align: center; background: linear-gradient(to right ,black,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .golgari-text { text-align: center; background: linear-gradient(to right ,black,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .gruul-text { text-align: center; background: linear-gradient(to right ,red,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .boros-text { text-align: center; background: linear-gradient(to right ,red,grey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .simic-text { text-align: center; background: linear-gradient(to right ,green,blue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .selesneya-text { text-align: center; background: linear-gradient(to right ,green,grey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .esper-text { text-align: center; background: linear-gradient(to right, grey,blue,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .grixis-text { text-align: center; background: linear-gradient(to right, blue,black,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .jund-text { text-align: center; background: linear-gradient(to right, black,red,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .naya-text { text-align: center; background: linear-gradient(to right, red,green,grey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .bant-text { text-align: center; background: linear-gradient(to right, green,grey,blue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .abzan-text { text-align: center; background: linear-gradient(to right, grey,black,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .jeskai-text { text-align: center; background: linear-gradient(to right, blue,red,grey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .sultai-text { text-align: center; background: linear-gradient(to right, black,green,blue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .mardu-text { text-align: center; background: linear-gradient(to right, red,grey,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .temur-text { text-align: center; background: linear-gradient(to right, green,blue,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .colorless-text { text-align: center; background: linear-gradient(to right, purple, purple); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .multicoloured-text { text-align: center; background: linear-gradient(to right, darkyellow, darkyellow); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "</style>\n";
         $html_text .= "</head>\n";
         $html_text .= "<body>\n";
         $html_text .= "<script>\n";
         $html_text .= "var xyz = 'bbbbbbb';";
         $html_text .= "xyz = xyz.replace (/b/, 'x');";
         $html_text .= "</script>\n";
-        
+
         $html_text .= "<table><tr><td>\n";
         $html_text .= "<form action=\"/purchasedcards/search\">
                 <label for=\"searchstr\">Search:</label><br>
@@ -666,7 +820,7 @@ sub fix_url_code
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
-                
+
         $html_text .= "<form action=\"/purchasedcards/multigroupby\">
                 <label for=\"multigroup\">Multi group (row must match, 2 groups):</label><br>
                 <input type=\"text\" id=\"multigroup\" name=\"multigroup\" value=\"$multi_group\">
@@ -681,7 +835,7 @@ sub fix_url_code
         $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
         $html_text .= "</script>\n";
         $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
-                
+
         if ($authorized != 1)
         {
             $SUPPLIED_PASSWORD = "";
@@ -698,7 +852,7 @@ sub fix_url_code
         $html_text .= "<br>Overall price was: \$XXX (from YYY cards)";
         $html_text .= "&nbsp;&nbsp;&nbsp;<a href=\"card_wanted?card_name=Library of Congress\">New card wanted</a> </font>\n </td>\n";
         $html_text .= "<br>QQQ<br>";
-       
+
         $html_text .= "<tr>\n";
         $html_text .= "<th> <button><font size=-1>Name<span aria-hidden=\"true\"></span> </font></button> </th> \n";
         $html_text .= "<th> <button><font size=-1>Type<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -728,7 +882,7 @@ sub fix_url_code
         my $overall_count = 0;
         my %group_prices;
         my %group_counts;
-                
+
         my $only_one_group = 1;
         my $first_group_only = 0;
         my $many_groups = 0;
@@ -743,7 +897,7 @@ sub fix_url_code
             $group = "$1";
             $group2 = "$2";
         }
-        
+
         if ($multi_group =~ m/\((.*)\).*\((.*)\)/)
         {
             $only_one_group = 0;
@@ -765,15 +919,19 @@ sub fix_url_code
             {
                 my $row = "";
                 my $fake_row = "";
+                my $cid_style = get_card_colour_identity ($card);
+
                 if ($all_cards_have{$card} ne "already")
                 {
-                    $row .= "<tr class=\"$even_odd\"><td> <font color=\"$fontcolor\">$card</font></td>\n";
+                    my $display_card = "<div class=\"$cid_style\">$card</div>";
+                    $row .= "<tr class=\"$even_odd\"><td> <font color=\"$fontcolor\">$display_card</font></td>\n";
                     $fake_row .= "cardname=$card ; ";
                     $deck .= "1 $card<br>";
                 }
                 else
                 {
-                    $row .= "<tr class=\"$even_odd\"><td> <font size=-2 color=\"darkred\">zzz $card</font></td>\n";
+                    my $display_card = "<div class=\"$cid_style\">zzz $card</div>";
+                    $row .= "<tr class=\"$even_odd\"><td> <font size=-2 color=\"darkred\">$display_card</font></td>\n";
                     $fake_row .= "cardname=$card ; ";
                 }
 
@@ -850,7 +1008,7 @@ sub fix_url_code
                 {
                     $row .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
                 }
-                
+
                 my $url = "https://roningames.com.au/search?type=product&options[prefix]=last&q=$card $card_type";
                 $fake_row .= "cardtype=$card_type ; ";
                 $row .= " <td> <font size=-2 color=\"$fontcolor\"><a href=\"$url\">$card</a> </font></td>\n";
@@ -886,15 +1044,15 @@ sub fix_url_code
 
                 $fake_row = $row;
                 $fake_row =~ s/<[^>]*>//img;
-                if ($fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "") 
+                if ($fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                 {
                     $force_row = 1;
-                    if ($only_one_group == 1 && $fake_row =~ m/($group)/im) 
+                    if ($only_one_group == 1 && $fake_row =~ m/($group)/im)
                     {
                         my $this_group = $1;
                         $group_counts {$this_group}++;
                         $row .= " <td>$this_group</td> </tr>\n";
-                        if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                        if ($current_price =~ m/\$(\d+)\.(\d\d)/)
                         {
                             $group_prices {$this_group} += $1*100 + $2;
                         }
@@ -906,7 +1064,7 @@ sub fix_url_code
                         {
                             $group_counts {$this_group}++;
                             $row .= " <td>$this_group</td> </tr>\n";
-                            if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                            if ($current_price =~ m/\$(\d+)\.(\d\d)/)
                             {
                                 $group_prices {$this_group} += $1*100 + $2;
                             }
@@ -924,7 +1082,7 @@ sub fix_url_code
                             $this_group .= " " . $1;
                             $group_counts {$this_group}++;
                             $row .= " <td>$this_group</td> </tr>\n";
-                            if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                            if ($current_price =~ m/\$(\d+)\.(\d\d)/)
                             {
                                 $group_prices {$this_group} += $1*100 + $2;
                             }
@@ -944,15 +1102,15 @@ sub fix_url_code
                 {
                     $overall_count++;
                     $html_text .= "$row";
-                    if ($current_price =~ m/\$(\d+)\.(\d\d)/) 
+                    if ($current_price =~ m/\$(\d+)\.(\d\d)/)
                     {
                         $overall_price += $1*100 + $2;
                         $overall_price_str .= " + $1*100 + $2 ";
                     }
                 }
 
-                if ($even_odd eq "even") { $even_odd = "odd"; } 
-                else { $even_odd = "even"; } 
+                if ($even_odd eq "even") { $even_odd = "odd"; }
+                else { $even_odd = "even"; }
             }
         }
 
@@ -1017,7 +1175,7 @@ sub fix_url_code
                 $total_g_count += $g_count;
                 $total_g_price += $g_price;
             }
-            $group_block .= "Total cost: $total_g_price, Total count: $total_g_count"; 
+            $group_block .= "Total cost: $total_g_price, Total count: $total_g_count";
             $html_text =~ s/QQQ/<font size=-3>$group_block<\/font>/im;
         }
         $html_text =~ s/QQQ//im;
