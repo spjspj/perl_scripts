@@ -347,6 +347,127 @@ $col_ids {"RGU"} = "temur-text";
 $col_ids {"RUG"} = "temur-text";
 $col_ids {"UGR"} = "temur-text";
 $col_ids {"URG"} = "temur-text";
+
+$col_ids {"UBRG"} = "whiteless-text";
+$col_ids {"UBGR"} = "whiteless-text";
+$col_ids {"URBG"} = "whiteless-text";
+$col_ids {"URGB"} = "whiteless-text";
+$col_ids {"UGBR"} = "whiteless-text";
+$col_ids {"UGRB"} = "whiteless-text";
+$col_ids {"BURG"} = "whiteless-text";
+$col_ids {"BUGR"} = "whiteless-text";
+$col_ids {"BRUG"} = "whiteless-text";
+$col_ids {"BRGU"} = "whiteless-text";
+$col_ids {"BGUR"} = "whiteless-text";
+$col_ids {"BGRU"} = "whiteless-text";
+$col_ids {"RUBG"} = "whiteless-text";
+$col_ids {"RUGB"} = "whiteless-text";
+$col_ids {"RBUG"} = "whiteless-text";
+$col_ids {"RBGU"} = "whiteless-text";
+$col_ids {"RGUB"} = "whiteless-text";
+$col_ids {"RGBU"} = "whiteless-text";
+$col_ids {"GUBR"} = "whiteless-text";
+$col_ids {"GURB"} = "whiteless-text";
+$col_ids {"GBUR"} = "whiteless-text";
+$col_ids {"GBRU"} = "whiteless-text";
+$col_ids {"GRUB"} = "whiteless-text";
+
+$col_ids {"WBRG"} = "blueless-text";
+$col_ids {"WBGR"} = "blueless-text";
+$col_ids {"WRBG"} = "blueless-text";
+$col_ids {"WRGB"} = "blueless-text";
+$col_ids {"WGBR"} = "blueless-text";
+$col_ids {"WGRB"} = "blueless-text";
+$col_ids {"BWRG"} = "blueless-text";
+$col_ids {"BWGR"} = "blueless-text";
+$col_ids {"BRWG"} = "blueless-text";
+$col_ids {"BRGW"} = "blueless-text";
+$col_ids {"BGWR"} = "blueless-text";
+$col_ids {"BGRW"} = "blueless-text";
+$col_ids {"RWBG"} = "blueless-text";
+$col_ids {"RWGB"} = "blueless-text";
+$col_ids {"RBWG"} = "blueless-text";
+$col_ids {"RBGW"} = "blueless-text";
+$col_ids {"RGWB"} = "blueless-text";
+$col_ids {"RGBW"} = "blueless-text";
+$col_ids {"GWBR"} = "blueless-text";
+$col_ids {"GWRB"} = "blueless-text";
+$col_ids {"GBWR"} = "blueless-text";
+$col_ids {"GBRW"} = "blueless-text";
+$col_ids {"GRWB"} = "blueless-text";
+
+$col_ids {"WURG"} = "blackless-text";
+$col_ids {"WUGR"} = "blackless-text";
+$col_ids {"WRUG"} = "blackless-text";
+$col_ids {"WRGU"} = "blackless-text";
+$col_ids {"WGUR"} = "blackless-text";
+$col_ids {"WGRU"} = "blackless-text";
+$col_ids {"UWRG"} = "blackless-text";
+$col_ids {"UWGR"} = "blackless-text";
+$col_ids {"URWG"} = "blackless-text";
+$col_ids {"URGW"} = "blackless-text";
+$col_ids {"UGWR"} = "blackless-text";
+$col_ids {"UGRW"} = "blackless-text";
+$col_ids {"RWUG"} = "blackless-text";
+$col_ids {"RWGU"} = "blackless-text";
+$col_ids {"RUWG"} = "blackless-text";
+$col_ids {"RUGW"} = "blackless-text";
+$col_ids {"RGWU"} = "blackless-text";
+$col_ids {"RGUW"} = "blackless-text";
+$col_ids {"GWUR"} = "blackless-text";
+$col_ids {"GWRU"} = "blackless-text";
+$col_ids {"GUWR"} = "blackless-text";
+$col_ids {"GURW"} = "blackless-text";
+$col_ids {"GRWU"} = "blackless-text";
+
+$col_ids {"WUBG"} = "redless-text";
+$col_ids {"WUGB"} = "redless-text";
+$col_ids {"WBUG"} = "redless-text";
+$col_ids {"WBGU"} = "redless-text";
+$col_ids {"WGUB"} = "redless-text";
+$col_ids {"WGBU"} = "redless-text";
+$col_ids {"UWBG"} = "redless-text";
+$col_ids {"UWGB"} = "redless-text";
+$col_ids {"UBWG"} = "redless-text";
+$col_ids {"UBGW"} = "redless-text";
+$col_ids {"UGWB"} = "redless-text";
+$col_ids {"UGBW"} = "redless-text";
+$col_ids {"BWUG"} = "redless-text";
+$col_ids {"BWGU"} = "redless-text";
+$col_ids {"BUWG"} = "redless-text";
+$col_ids {"BUGW"} = "redless-text";
+$col_ids {"BGWU"} = "redless-text";
+$col_ids {"BGUW"} = "redless-text";
+$col_ids {"GWUB"} = "redless-text";
+$col_ids {"GWBU"} = "redless-text";
+$col_ids {"GUWB"} = "redless-text";
+$col_ids {"GUBW"} = "redless-text";
+$col_ids {"GBWU"} = "redless-text";
+
+$col_ids {"WUBR"} = "greenless-text";
+$col_ids {"WURB"} = "greenless-text";
+$col_ids {"WBUR"} = "greenless-text";
+$col_ids {"WBRU"} = "greenless-text";
+$col_ids {"WRUB"} = "greenless-text";
+$col_ids {"WRBU"} = "greenless-text";
+$col_ids {"UWBR"} = "greenless-text";
+$col_ids {"UWRB"} = "greenless-text";
+$col_ids {"UBWR"} = "greenless-text";
+$col_ids {"UBRW"} = "greenless-text";
+$col_ids {"URWB"} = "greenless-text";
+$col_ids {"URBW"} = "greenless-text";
+$col_ids {"BWUR"} = "greenless-text";
+$col_ids {"BWRU"} = "greenless-text";
+$col_ids {"BUWR"} = "greenless-text";
+$col_ids {"BURW"} = "greenless-text";
+$col_ids {"BRWU"} = "greenless-text";
+$col_ids {"BRUW"} = "greenless-text";
+$col_ids {"RWUB"} = "greenless-text";
+$col_ids {"RWBU"} = "greenless-text";
+$col_ids {"RUWB"} = "greenless-text";
+$col_ids {"RUBW"} = "greenless-text";
+$col_ids {"RBWU"} = "greenless-text";
+
 $col_ids {""} = "colorless-text";
 
 sub get_card_colour_identity
@@ -354,9 +475,14 @@ sub get_card_colour_identity
     my $id = $_ [0];
     if (defined ($col_ids {$card_colour_identity{$id}}))
     {
-        return $col_ids {$card_colour_identity{$id}}
+        return $col_ids {$card_colour_identity{$id}};
     }
-    return "multicoloured-text";
+    
+    if ($card_colour_identity{$id} =~ m/...../)
+    {
+        return ("fivecolour-text");
+    }
+    return "colorless-text";
 }
 
 sub is_authorized
@@ -773,33 +899,38 @@ sub fix_url_code
         $html_text .= "}\n";
         $html_text .= "</style>\n";
         $html_text .= "<style>\n";
-        $html_text .= "    .white-text { text-align: center; background: linear-gradient(to right, grey, grey); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .blue-text { text-align: center; background: linear-gradient(to right, blue, blue); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .black-text { text-align: center; background: linear-gradient(to right, black, black); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .red-text { text-align: center; background: linear-gradient(to right, red, red); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .green-text { text-align: center; background: linear-gradient(to right, green, green); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .azorius-text { text-align: center; background: linear-gradient(to right, grey, blue); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .orzhov-text { text-align: center; background: linear-gradient(to right ,grey,black); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .dimir-text { text-align: center; background: linear-gradient(to right ,blue,black); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .izzet-text { text-align: center; background: linear-gradient(to right ,blue,red); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .rakdos-text { text-align: center; background: linear-gradient(to right ,black,red); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .golgari-text { text-align: center; background: linear-gradient(to right ,black,green); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .gruul-text { text-align: center; background: linear-gradient(to right ,red,green); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .boros-text { text-align: center; background: linear-gradient(to right ,red,grey); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .simic-text { text-align: center; background: linear-gradient(to right ,green,blue); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .selesneya-text { text-align: center; background: linear-gradient(to right ,green,grey); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .esper-text { text-align: center; background: linear-gradient(to right, grey,blue,black); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .grixis-text { text-align: center; background: linear-gradient(to right, blue,black,red); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .jund-text { text-align: center; background: linear-gradient(to right, black,red,green); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .naya-text { text-align: center; background: linear-gradient(to right, red,green,grey); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .bant-text { text-align: center; background: linear-gradient(to right, green,grey,blue); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .abzan-text { text-align: center; background: linear-gradient(to right, grey,black,green); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .jeskai-text { text-align: center; background: linear-gradient(to right, blue,red,grey); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .sultai-text { text-align: center; background: linear-gradient(to right, black,green,blue); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .mardu-text { text-align: center; background: linear-gradient(to right, red,grey,black); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .temur-text { text-align: center; background: linear-gradient(to right, green,blue,red); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .colorless-text { text-align: center; background: linear-gradient(to right, purple, purple); -webkit-background-clip: text; color: transparent; }\n";
-        $html_text .= "    .multicoloured-text { text-align: center; background: linear-gradient(to right, darkyellow, darkyellow); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .white-text { text-align: center; background: linear-gradient(to bottom right, lightgrey, lightgrey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .blue-text { text-align: center; background: linear-gradient(to bottom right, cornflowerblue, cornflowerblue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .black-text { text-align: center; background: linear-gradient(to bottom right, black, black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .red-text { text-align: center; background: linear-gradient(to bottom right, red, red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .green-text { text-align: center; background: linear-gradient(to bottom right, green, green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .azorius-text { text-align: center; background: linear-gradient(to bottom right, lightgrey, cornflowerblue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .orzhov-text { text-align: center; background: linear-gradient(to bottom right ,lightgrey,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .dimir-text { text-align: center; background: linear-gradient(to bottom right ,cornflowerblue,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .izzet-text { text-align: center; background: linear-gradient(to bottom right ,cornflowerblue,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .rakdos-text { text-align: center; background: linear-gradient(to bottom right ,black,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .golgari-text { text-align: center; background: linear-gradient(to bottom right ,black,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .gruul-text { text-align: center; background: linear-gradient(to bottom right ,red,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .boros-text { text-align: center; background: linear-gradient(to bottom right ,red,lightgrey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .simic-text { text-align: center; background: linear-gradient(to bottom right ,green,cornflowerblue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .selesneya-text { text-align: center; background: linear-gradient(to bottom right ,green,lightgrey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .esper-text { text-align: center; background: linear-gradient(to bottom right, lightgrey,cornflowerblue,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .grixis-text { text-align: center; background: linear-gradient(to bottom right, cornflowerblue,black,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .jund-text { text-align: center; background: linear-gradient(to bottom right, black,red,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .naya-text { text-align: center; background: linear-gradient(to bottom right, red,green,lightgrey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .bant-text { text-align: center; background: linear-gradient(to bottom right, green,lightgrey,cornflowerblue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .abzan-text { text-align: center; background: linear-gradient(to bottom right, lightgrey,black,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .jeskai-text { text-align: center; background: linear-gradient(to bottom right, cornflowerblue,red,lightgrey); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .sultai-text { text-align: center; background: linear-gradient(to bottom right, black,green,cornflowerblue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .mardu-text { text-align: center; background: linear-gradient(to bottom right, red,lightgrey,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .temur-text { text-align: center; background: linear-gradient(to bottom right, green,cornflowerblue,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .colorless-text { text-align: center; background: linear-gradient(to bottom right, purple, purple); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .whiteless-text { text-align: center; background: linear-gradient(to bottom right, cornflowerblue,black,red,green); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .blueless-text { text-align: center; background: linear-gradient(to bottom right, black,red,green,white); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .blackless-text { text-align: center; background: linear-gradient(to bottom right, red,green,white,cornflowerblue); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .redless-text { text-align: center; background: linear-gradient(to bottom right, green,white,cornflowerblue,black); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .greenless-text { text-align: center; background: linear-gradient(to bottom right, white,cornflowerblue,black,red); -webkit-background-clip: text; color: transparent; }\n";
+        $html_text .= "    .fivecolour-text { text-align: center; background: linear-gradient(to bottom right, white,cornflowerblue,black,red,green); -webkit-background-clip: text; color: transparent; }\n";
         $html_text .= "</style>\n";
         $html_text .= "</head>\n";
         $html_text .= "<body>\n";
@@ -914,12 +1045,12 @@ sub fix_url_code
             my $fontcolor = $color;
             if ($fontcolor eq "white") { $fontcolor = "darkgrey"; }
             if ($fontcolor eq "colorless") { $fontcolor = "purple"; }
-            if ($fontcolor eq "multicolored") { $fontcolor = "darkyellow"; }
+            if ($fontcolor eq "multicolored") { $fontcolor = "darkorange"; }
+            my $cid_style = get_card_colour_identity ($card);
             #if (lc ($all_cards_have{$card}) eq "want")
             {
                 my $row = "";
                 my $fake_row = "";
-                my $cid_style = get_card_colour_identity ($card);
 
                 if ($all_cards_have{$card} ne "already")
                 {
@@ -930,7 +1061,7 @@ sub fix_url_code
                 }
                 else
                 {
-                    my $display_card = "<div class=\"$cid_style\">zzz $card</div>";
+                    my $display_card = "<div class=\"$cid_style\"><p hidden>zzz</p>$card</div>";
                     $row .= "<tr class=\"$even_odd\"><td> <font size=-2 color=\"darkred\">$display_card</font></td>\n";
                     $fake_row .= "cardname=$card ; ";
                 }
@@ -969,20 +1100,22 @@ sub fix_url_code
                     $card_type = "battle";
                 }
 
-                $row .= " <td> <font color=\"$fontcolor\">$card_type</a> </font>\n </td>\n";
+                my $div_start = "<div class=\"$cid_style\">";
+                my $div_end = "</div>";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$card_type$div_end</a> </font>\n </td>\n";
                 $fake_row .= "type=$all_cards_card_type{$card} ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$color</a> </font>\n</td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$color$div_end</a> </font>\n</td>\n";
                 $fake_row .= "color=$color ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$all_cards_have{$card}</a></font></td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$all_cards_have{$card}$div_end</a></font></td>\n";
                 $fake_row .= "have=$all_cards_have{$card} ; ";
 
                 my $price_div_name = $all_cards_price_div_name {$card};
                 my $d = $all_cards_date{$card};
-                $row .= " <td> <font color=\"$fontcolor\">$d</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$d$div_end</a> </font>\n </td>\n";
                 $fake_row .= "date=$d ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$all_cards_place{$card}</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$all_cards_place{$card}$div_end</a> </font>\n </td>\n";
                 $fake_row .= "place=$all_cards_place{$card} ; ";
-                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$all_cards_price{$card}</a></font></div>\n </td>\n";
+                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$div_start$all_cards_price{$card}$div_end</a></font></div>\n </td>\n";
                 $fake_row .= "price=$all_cards_price{$card} ; ";
                 my $current_price = $all_cards_price{$card};
                 $row .= " <td> <font color=\"$fontcolor\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
