@@ -21,6 +21,7 @@ $| = 1;
 my $GAME = "Hearts";
 my $GAME_URL = "hearts";
 my $BCK = "back";
+my $HALF_BCK = "half_back";
 my $NUM_CARDS_IN_FULL_DECK = 52;
 my $NUM_CARDS_TO_REMOVE = 8;
 my $GAME_WON;
@@ -162,10 +163,8 @@ sub get_game_won
 {
     if ($GAME_WON eq "0")
     {
-        print ("$GAME_WON so returning blank<<<<");
         return "";
     }
-    print ("$GAME_WON so returning FULL<<<<");
     my $t = "Won..";
     return $t;
 }
@@ -661,10 +660,10 @@ sub deal_deck
         $dealt_cards {$pn} ++;
     }
 
-    add_to_debug ("Dealt out for player 0 - $dealt_cards{0}");
-    add_to_debug ("Dealt out for player 1 - $dealt_cards{1}");
-    add_to_debug ("Dealt out for player 2 - $dealt_cards{2}");
-    add_to_debug ("Dealt out for player 3 - $dealt_cards{3}");
+    add_to_debug ("Dealt out for player 0 - $dealt_cards{0} --- $player_cards{0}");
+    add_to_debug ("Dealt out for player 1 - $dealt_cards{1} --- $player_cards{1}");
+    add_to_debug ("Dealt out for player 2 - $dealt_cards{2} --- $player_cards{2}");
+    add_to_debug ("Dealt out for player 3 - $dealt_cards{3} --- $player_cards{3}");
 
     for ($pn = 0; $pn < 3; $pn++)
     {
@@ -2041,10 +2040,10 @@ sub new_game
 
     add_to_debug ("MUST LEAD $TWO_CLUBS aaa..\n");
 
-    if ($num_players_in_lobby < 4) { add_new_user ("name=Billy Bob Jr", "192.185.155.150", 1); }
-    if ($num_players_in_lobby < 4) { add_new_user ("name=Gaius Julius Caesar", "192.186.155.150", 1); }
-    if ($num_players_in_lobby < 4) { add_new_user ("name=Richard Feynman", "192.187.155.150", 1); }
-    if ($num_players_in_lobby < 4) { add_new_user ("name=William R Robertson 3rd", "192.188.155.150", 1); }
+    if ($num_players_in_lobby < 4) { add_new_user ("name=BBobJr", "192.185.155.150", 1); }
+    if ($num_players_in_lobby < 4) { add_new_user ("name=GJCaesar", "192.186.155.150", 1); }
+    if ($num_players_in_lobby < 4) { add_new_user ("name=RFeynman", "192.187.155.150", 1); }
+    if ($num_players_in_lobby < 4) { add_new_user ("name=WRRobertson", "192.188.155.150", 1); }
     $num_players_in_game = $num_players_in_lobby;
     if ($num_players_in_game > 4)
     {
@@ -2262,7 +2261,7 @@ sub get_images_from_cards
     my $vars_for_javascript_cards_strings;
     my $get_url_strs = "var url_str = '';";
 
-    add_to_debug ("get_images_from_cards :$cards:$id;known=$known_to_user:make_urls=$make_urls\n");
+    #add_to_debug ("get_images_from_cards :$cards:$id;known=$known_to_user:make_urls=$make_urls\n");
     while ($cards =~ s/^(\w+),//)
     {
         my $c = $1;
@@ -2325,7 +2324,7 @@ sub get_images_from_cards
             }
             else
             {
-                $cards {"$adder$c"} = "<img width=\"30\" height=\"43\" src=\"hearts/$BCK.jpg\"><\/img>";
+                $cards {"$adder$c"} = "<img width=\"17\" height=\"47\" src=\"hearts/$HALF_BCK.jpg\"><\/img>";
             }
         }
     }
@@ -2342,8 +2341,9 @@ sub get_images_from_cards
     my $k;
     for $k (sort (keys %cards))
     {
-        $actual_card_cell .= $cards {$k} . "\n";
+        $actual_card_cell .= $cards {$k};
     }
+    $actual_card_cell =~ s/^(.*)=.17.(.*)$HALF_BCK(.*?)$/$1=34$2$BCK$3/;
     $actual_card_cell = $javascript_passing . $actual_card_cell;
     return $actual_card_cell;
 }
@@ -2420,6 +2420,67 @@ sub get_trick_table
     }
     return $table;
 }
+    
+sub get_middle_cell_table
+{
+    my $mini = 1;
+
+    my $card0 = $current_trick_cards {0};
+    my $card1 = $current_trick_cards {1};
+    my $card2 = $current_trick_cards {2};
+    my $card3 = $current_trick_cards {3};
+
+    $card0 =~ s/,//;
+    $card1 =~ s/,//;
+    $card2 =~ s/,//;
+    $card3 =~ s/,//;
+    $card0 =~ s/^/card/;
+    $card1 =~ s/^/card/;
+    $card2 =~ s/^/card/;
+    $card3 =~ s/^/card/;
+
+    my $keep0 = 0;
+    my $keep1 = 0;
+    my $keep2 = 0;
+    my $keep3 = 0;
+
+    my $position = $current_trick_led_by;
+    my $c = 0;
+    while ($c < $current_trick_card_count)
+    {
+        if ($position == 0) { $keep0 = 1; }
+        if ($position == 1) { $keep1 = 1; }
+        if ($position == 2) { $keep2 = 1; }
+        if ($position == 3) { $keep3 = 1; }
+
+        $c++;
+        $position ++;
+        if ($position > 3)
+        {
+            $position = 0;
+        }
+    }
+
+    if ($keep0 == 0) { $card0 = "back"; }
+    if ($keep1 == 0) { $card1 = "back"; }
+    if ($keep2 == 0) { $card2 = "back"; }
+    if ($keep3 == 0) { $card3 = "back"; }
+
+    my $table = "<td><div text-align: center>
+<img width=\"60\" height=\"86\" class=\"left_player\" src=\"hearts/$card3.jpg\"><\/img>
+<img width=\"60\" height=\"86\" class=\"top_player\" src=\"hearts/$card0.jpg\"><\/img>
+<img width=\"60\" height=\"86\" class=\"right_player\" src=\"hearts/$card1.jpg\"><\/img>
+<img width=\"60\" height=\"86\" class=\"bottom_player\" src=\"hearts/$card2.jpg\"><\/img>
+    </div></td>";
+
+    if ($mini)
+    {
+        $table =~ s/60/30/img;
+        $table =~ s/86/43/img;
+        $table =~ s/-1/-3/img;
+    }
+    return $table;
+}
 
 sub player_cell
 {
@@ -2430,24 +2491,37 @@ sub player_cell
     my $known_to_user = 0;
     my $who_has_card_cell = "";
 
+    if ($id == $this_player_id)
+    {
+        $known_to_user = 1;
+    }
+
     my $this_players_turn = "";
     if ($id == $whos_turn)
     {
         $this_players_turn = "*";
     }
 
-    my $name_cell = "<td bgcolor=\"ffefef\"><font size= color=darkgreen>" . get_player_name ($id) . "$this_players_turn </font>";
-    if ($id == $this_player_id)
-    {
-        $name_cell = "<td bgcolor=\"efefff\"><font size=+1 color=darkblue>" . get_player_name ($id) . "$this_players_turn </font>";
-        $known_to_user = 1;
-    }
-
+    my $name_cell = "<td bgcolor=\"ffefef\">";
+    
     my $out;
 
     my $cards = $player_cards {$id};
     my $score = get_player_score ($id);
     my $cards_in_hand = get_images_from_cards ($cards, $id, 0, $known_to_user | $DO_DEBUG, 1, $known_to_user, 0);
+
+    my $name_bit = "";
+    if ($id == $this_player_id)
+    {
+        $name_cell = "<td bgcolor=\"efefff\">";
+        $name_bit = "<br><font size=+1 color=darkblue>" . get_player_name ($id) . "$this_players_turn </font>";
+        $known_to_user = 1;
+    }
+    else
+    {
+        $name_bit = "<br><font size= color=darkgreen>" . get_player_name ($id) . "$this_players_turn </font>";
+    }
+
     $cards_in_hand .= "<br>(Round Score: " . get_score_from_cards ($player_won_cards {$id}) . ")"; 
     if ($trick_number < 2)
     {
@@ -2455,7 +2529,7 @@ sub player_cell
         $cards_in_hand .= " Received: $passed_cards</td>";
     }
 
-    $out .= "$name_cell$cards_in_hand\n";
+    $out .= "$name_cell$name_bit<br>$cards_in_hand\n";
 
     return $out;
 }
@@ -2488,19 +2562,16 @@ sub get_board
         return " NO BOARD TO SEE..";
     }
 
-    print (">>>>>>>>>>>$GAME_WON<<<\n");
     if (get_game_won () ne "")
     {
-        print "<br>$GAME_WON!!<br>";
-        exit;
         return "<br>$GAME_WON!!<br>";
     }
 
-    my $blank_td = "<td width=33% bgcolor=\"ffffff\">&nbsp;&nbsp;&nbsp;</td>";
+    my $blank_td = "<td wxxxxxxxxxidth=33% bgcolor=\"ffffff\">&nbsp;&nbsp;&nbsp;</td>";
     my $start_tr = "<tr>";
     my $end_tr = "</tr>";
     my $out;
-
+    my $middle_td = get_middle_cell_table ();
 
     # Passing cards
     if ($must_pass_3_cards)
@@ -2511,7 +2582,7 @@ sub get_board
     {
         # Cross pattern
         $out .= $start_tr . $blank_td            . player_cell (0, $IP) . $blank_td            . $end_tr;
-        $out .= $start_tr . player_cell (3, $IP) . $blank_td            . player_cell (1, $IP) . $end_tr;
+        $out .= $start_tr . player_cell (3, $IP) . $middle_td          . player_cell (1, $IP) . $end_tr;
         $out .= $start_tr . $blank_td            . player_cell (2, $IP) . $blank_td            . $end_tr;
         $out .= "</table>";
         $out .= get_trick_table (0);
@@ -2559,7 +2630,13 @@ sub print_game_state
         return "SOMEONE WON!";
     }
 
-    $out .= "<style>table.blueTable { border: 1px solid #1C6EA4; background-color: #ABE6EE; width: 100%; text-align: left; border-collapse: collapse; }\n table.blueTable td, table.blueTable th { width:33%; border: 1px solid #AAAAAA; padding: 3px 2px; }\n table.blueTable tbody td { font-size: 13px; }\n table.blueTable tr:nth-child(even)\n { background: #D0E4F5; }\n table.blueTable tfoot td { font-size: 14px; }\n table.blueTable tfoot .links { text-align: right; }\n\n<br></style>\n";
+    $out .= "<style>table.blueTable { border: 1px solid #1C6EA4; background-color: #ABE6EE; wxxxxxxxxxidth: 100%; text-align: left; border-collapse: collapse; }\n table.blueTable td, table.blueTable th { wxxxxxxxxxidth:33%; border: 1px solid #AAAAAA; padding: 3px 2px; }\n table.blueTable tbody td { font-size: 13px; }\n table.blueTable tr:nth-child(even)\n { background: #D0E4F5; }\n table.blueTable tfoot td { font-size: 14px; }\n table.blueTable tfoot .links { text-align: right; }\n\n<br></style>\n";
+    $out .= "<style>
+.left_player   { position: relative; top: 0px;   left: 34px; }
+.top_player    { position: relative; top: -10px; left: +15px; }
+.right_player  { position: relative; top: 0px;   left: +0px; }
+.bottom_player { position: relative; top: +10px; left: -48px; }
+    </style>\n";
 
     $out .= "\n<table class=blueTable>\n";
 
