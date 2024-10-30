@@ -673,6 +673,29 @@ sub simple_parentheses_many_arguments
     return 0;
 }
 
+sub simple_parentheses_n_arguments
+{
+    my $field_val = $_ [0];
+    my $func = $_ [1];
+    if (simple_parentheses_only_one_argument ($field_val, $func))
+    {
+        return 1;
+    }
+    if (simple_parentheses_only_two_arguments ($field_val, $func))
+    {
+        return 1;
+    }
+    if (simple_parentheses_only_three_arguments ($field_val, $func))
+    {
+        return 1;
+    }
+    if (simple_parentheses_many_arguments ($field_val, $func))
+    {
+        return 1;
+    }
+    return 0;
+}
+
 sub breakdown_excel
 {
     my $excel_function = $_ [0];
@@ -809,6 +832,50 @@ sub do_concat_expansion
     return $field_val;
 }
 
+sub do_tax_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((TAX)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/tax($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub tax
+{
+    my $salary = $_ [0];
+    
+    if ($salary<18200)
+    {
+        return 0;
+    }
+    if ($salary<=45000)
+    {
+        return 0.16 * ($salary-18200);
+    }
+    if ($salary<=135000)
+    {
+        return 0.16 * (45000-18200)+0.30 * ($salary-45000);
+    }
+    if ($salary<=190000)
+    {
+        return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * ($salary-135000);
+    }
+    if ($salary>190000)
+    {
+        return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * (190000-135000)+0.45 * ($salary-190000);
+    }
+    return 0;
+}
+
 sub do_bold_expansion
 {
     my $field_val = $_ [0];
@@ -909,6 +976,7 @@ sub days
 sub do_int_expansion
 {
     my $field_val = $_ [0];
+    
     if ($field_val =~ m/((INT)\(.*)/)
     {
         my $to_check = $1;
@@ -1564,6 +1632,10 @@ sub perl_expansions
     if ($str =~ m/DAYS\(/)
     {
         $str = do_days_between_expansion ($str);
+    }
+    if ($str =~ m/TAX\(/)
+    {
+        $str = do_tax_expansion ($str);
     }
  
     # General cleanup..
