@@ -3,7 +3,7 @@
 #   File : nothanks.pl
 #   Date : 19/Jun/2022
 #   Author : spjspj
-#   Purpose : Implement No Thanks! 
+#   Purpose : Implement No Thanks!
 #   Purpose : Requires having an Apache service setup (see conf file)
 ##
 
@@ -20,9 +20,9 @@ $| = 1;
 
 my %revealed_cards_imgs;
 my $BCK = "back";
-my $NUM_COUNTERS_AT_START_OF_GAME = 10;
-my $NUM_CARDS_IN_FULL_DECK = 35;
-my $NUM_CARDS_TO_REMOVE = 7;
+my $NUM_COUNTERS_AT_START_OF_GAME = 7;
+my $NUM_CARDS_IN_FULL_DECK = 25;
+my $NUM_CARDS_TO_REMOVE = 8;
 my $GAME_WON = 0;
 my $reason_for_game_end = "";
 my $CURRENT_LOGIN_NAME = "";
@@ -32,7 +32,7 @@ my $IN_DEBUG_MODE = 0;
 my $BAD_GUYS = -1;
 my $GOOD_GUYS = 1;
 my $PATH = "d:\\perl_programs\\nothanks";
-my $nothanks = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"big_c.jpg\"><\/img>";
+my $nothanks = "<img id=\"xxx\" width=\"80\" height=\"131\" src=\"big_c.png\"><\/img>";
 my %rand_colors;
 
 my $DEBUG = "";
@@ -406,7 +406,7 @@ sub flip_top_card
     my $i = 1;
     my $index = 0;
     my @new_deck;
-    while ($i < $cards_left_in_deck) 
+    while ($i < $cards_left_in_deck)
     {
         $new_deck [$index] = $deck [$i];
         $i++;
@@ -419,16 +419,17 @@ sub flip_top_card
 sub setup_deck
 {
     # Cards in deck currently..
-    my $total_number_cards_in_deck = $NUM_CARDS_IN_FULL_DECK - 3 + 1 - $NUM_CARDS_TO_REMOVE;
+    my $num_cards_to_ban = int (rand ($NUM_CARDS_TO_REMOVE + 3));
+    my $total_number_cards_in_deck = $NUM_CARDS_IN_FULL_DECK - $num_cards_to_ban;
     my %banned_cards;
 
     my $i;
-    for ($i = 0; $i < $NUM_CARDS_TO_REMOVE; $i++)
+    for ($i = 0; $i < $num_cards_to_ban; $i++)
     {
-        my $banned = int (rand ($NUM_CARDS_IN_FULL_DECK - 3)) + 3;
-        if (!defined ($banned_cards {$banned}))
+        my $banned_card = int (rand ($NUM_CARDS_IN_FULL_DECK - 3)) + 3;
+        if (!defined ($banned_cards {$banned_card}))
         {
-            $banned_cards {$banned} = 1;
+            $banned_cards {$banned_card} = 1;
         }
         else
         {
@@ -453,7 +454,7 @@ sub setup_deck
     $cards_left_in_deck = $total_number_cards_in_deck;
     do_shuffle ();
     flip_top_card ();
-    
+
     add_to_debug ("Setup deck with: $str");
     add_to_debug ("Ignoring these cards: " . join (",", sort (keys %banned_cards)));
     add_to_debug (join (",", @deck));
@@ -516,17 +517,30 @@ sub noone_else_wants
         if ($i != $ignore_id)
         {
             my $cards = $player_cards {$i};
-            
+
             # One up, one down
             print ("Farming - checking $cards vs $one_up and $one_down\n");
             if ($cards =~ m/$one_up/ || $cards =~ m/$one_down/)
             {
-                print ("Farming MATCHED!! - checking $cards vs $one_up and $one_down\n");
                 return 0;
             }
         }
     }
     return 1;
+}
+
+sub others_on_zero
+{
+    my $this_bot = $_ [0];
+    my $i = 0;
+    for ($i = 0; $i < $num_players_in_game; $i++)
+    {
+        if ($this_bot != $i && $player_counters {$i} == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 sub handle_bot_next_go
@@ -542,8 +556,14 @@ sub handle_bot_next_go
     {
         my $cards = $player_cards {$whos_turn};
         my $current_score = get_score_from_cards ($cards, $whos_turn) + 1;
-        $cards .= "$current_flipped_card,"; 
+        $cards .= "$current_flipped_card,";
         my $poss_score = get_score_from_cards ($cards, $whos_turn) - $current_number_of_counters;
+
+        if (others_on_zero ($whos_turn))
+        {
+            pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn);
+            return;
+        }
 
         if ($current_score >= $poss_score)
         {
@@ -552,13 +572,13 @@ sub handle_bot_next_go
             {
                 if (noone_else_wants ($current_flipped_card, $whos_turn))
                 {
-                    #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " is counterfarming.. for $current_flipped_card ($current_score vs $poss_score)<br>"; 
-                    pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
+                    #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " is counterfarming.. for $current_flipped_card ($current_score vs $poss_score)<br>";
+                    pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn);
                     return;
                 }
             }
 
-            #$taken_cards .= "&nbsp;Bot " . get_player_name ($whos_turn) . " is taking $current_flipped_card ($current_score vs $poss_score)<br>"; 
+            #$taken_cards .= "&nbsp;Bot " . get_player_name ($whos_turn) . " is taking $current_flipped_card ($current_score vs $poss_score)<br>";
             take_card_with_id ("takecard.$current_flipped_card.$current_number_of_counters", $whos_turn);
             handle_bot_next_go ();
             return;
@@ -573,8 +593,8 @@ sub handle_bot_next_go
             return;
         }
 
-        #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " $whos_turn is passing.. for $current_flipped_card ($current_score vs $poss_score)<br>"; 
-        pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn); 
+        #$taken_cards .= "Bot " . get_player_name ($whos_turn) . " $whos_turn is passing.. for $current_flipped_card ($current_score vs $poss_score)<br>";
+        pass_card_w_id ("passcard.$current_flipped_card." . ($current_number_of_counters + 1), $whos_turn);
         return;
     }
     take_card_with_id ("takecard.$current_flipped_card.$current_number_of_counters", $whos_turn);
@@ -584,7 +604,7 @@ sub handle_bot_next_go
 sub set_next_turn
 {
     $whos_turn++;
-    if ($whos_turn >= $num_players_in_game) 
+    if ($whos_turn >= $num_players_in_game)
     {
         $whos_turn = 0;
     }
@@ -592,7 +612,7 @@ sub set_next_turn
     my $is_bot = is_bot ("", $whos_turn);
     if ($is_bot)
     {
-        #$taken_cards .= "&nbsp;&nbsp;$whos_turn is a bot!!<br>"; 
+        #$taken_cards .= "&nbsp;&nbsp;$whos_turn is a bot!!<br>";
         handle_bot_next_go ();
     }
 }
@@ -771,7 +791,7 @@ sub get_needs_refresh
     return 0;
 }
 
-sub pass_card_w_id 
+sub pass_card_w_id
 {
     my $in = $_ [0];
     my $id = $_ [1];
@@ -793,7 +813,7 @@ sub pass_card_w_id
     force_needs_refresh ();
 }
 
-sub pass_card 
+sub pass_card
 {
     my $in = $_ [0];
     my $IP = $_ [1];
@@ -816,9 +836,9 @@ sub take_card_with_id
         my $card_taken = $1;
         my $num_tokens = $2;
         my $name_of_card_picked = $deck [$card_taken];
-        #$taken_cards .= get_player_name ($id) . " took $card_taken (and had $player_counters{$id} counters and will gain $num_tokens)<br>"; 
-        $taken_cards .= get_player_name ($id) . " took $card_taken <br>"; #(and had $player_counters{$id} counters and will gain $num_tokens)<br>"; 
-        print ("TOOK name_of_card_picked=$name_of_card_picked by $id!!!\n"); 
+        #$taken_cards .= get_player_name ($id) . " took $card_taken (and had $player_counters{$id} counters and will gain $num_tokens)<br>";
+        $taken_cards .= get_player_name ($id) . " took $card_taken <br>"; #(and had $player_counters{$id} counters and will gain $num_tokens)<br>";
+        print ("TOOK name_of_card_picked=$name_of_card_picked by $id!!!\n");
         add_to_debug ("KNOWS $name_of_card_picked\n");
         $needs_shuffle_but_before_next_card_picked = 0;
         $player_cards {$id} .= "$card_taken,";
@@ -850,7 +870,7 @@ sub new_game
 
     $num_players_in_game = $num_players_in_lobby;
     set_whos_turn (int (rand ($num_players_in_game)));
-    
+
     $GAME_WON = 0;
     $NUM_EXPOSED_CARDS = 0;
 
@@ -884,7 +904,7 @@ sub new_game
     %already_shuffled = %new_already_shuffled;
     $needs_shuffle_but_before_next_card_picked = 0;
     $taken_cards = "";
-    
+
     my $is_bot = is_bot ("", $whos_turn);
     if ($is_bot)
     {
@@ -909,7 +929,7 @@ sub reset_game
     my %new_NOT_HIDDEN_INFO;
     %NOT_HIDDEN_INFO = %new_NOT_HIDDEN_INFO;
     $needs_shuffle_but_before_next_card_picked = 0;
-    
+
     $player_counters {0} = $NUM_COUNTERS_AT_START_OF_GAME;
     $player_counters {1} = $NUM_COUNTERS_AT_START_OF_GAME;
     $player_counters {2} = $NUM_COUNTERS_AT_START_OF_GAME;
@@ -952,7 +972,7 @@ sub get_score_from_cards
     while ($cards =~ s/^(\d+),//)
     {
         my $c = $1;
-        $cards {$c} = "<img width=\"30\" height=\"43\" src=\"card$1.jpg\"><\/img>";
+        $cards {$c} = "<img width=\"30\" height=\"43\" src=\"card$1.png\"><\/img>";
     }
     my $k;
     my $score = 0;
@@ -963,8 +983,12 @@ sub get_score_from_cards
         $total_cards ++;
         if (exists ($cards {$k - 1}))
         {
-            $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card.jpg\"><\/img>";
+            $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card.png\"><\/img>";
             $score -= $k;
+        }
+        if (exists ($cards {$k + 1}))
+        {
+            $cards {$k} = "<img width=\"30\" height=\"43\" src=\"card$1_lead.png\"><\/img>";
         }
     }
     return $score;
@@ -978,7 +1002,7 @@ sub get_images_from_cards
     while ($cards =~ s/^(\d+),//)
     {
         my $c = $1;
-        $cards {$c} = "<img width=\"30\" height=\"43\" src=\"card$1.jpg\"><\/img>";
+        $cards {$c} = "<img width=\"30\" height=\"43\" src=\"card$1.png\"><\/img>";
     }
     my $k;
     my $score = 0;
@@ -987,11 +1011,22 @@ sub get_images_from_cards
         $score += $k;
         if (exists ($cards {$k - 1}))
         {
-            $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card.jpg\"><\/img>";
-            $score -= $k;
+            $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card.png\"><\/img>";
+            if (exists ($cards {$k + 1}))
+            {
+                $cards {$k} = "<img width=\"12\" height=\"43\" src=\"half_card_lead.png\"><\/img>";
+            }
+        }
+        if (exists ($cards {$k + 1}) && !(exists ($cards {$k - 1})))
+        {
+            $cards {$k} = "<img width=\"30\" height=\"43\" src=\"card0$k" . "_lead.png\"><\/img>";
+            if ($k >= 10)
+            {
+                $cards {$k} = "<img width=\"30\" height=\"43\" src=\"card$k" . "_lead.png\"><\/img>";
+            }
         }
     }
-    
+
     my $actual_card_cell = "<td>";
     for $k (sort {$a <=> $b} (keys %cards))
     {
@@ -1011,7 +1046,7 @@ sub player_row
     my $who_has_card_cell = "<td></td>";
     if ($id == $whos_turn)
     {
-        $who_has_card_cell = "<td><img width=\"61\" height=\"87\" src=\"card$current_flipped_card.jpg\"><\/img></td>";
+        $who_has_card_cell = "<td><img width=\"61\" height=\"87\" src=\"card$current_flipped_card.png\"><\/img></td>";
     }
     my $name_cell = "<td><font size=+1 color=darkgreen>" . get_player_name ($id) . "</font></td>";
     if ($id == $this_player_id || $current_flipped_card eq "GAME_OVER" || $current_flipped_card eq "")
@@ -1085,7 +1120,7 @@ sub get_faceup_image
 
 sub get_faceup_elements
 {
-    return "<img src=\"card$current_flipped_card.jpg\"><\/img>&nbsp;&nbsp;&nbsp;(Card currently has $current_number_of_counters X <img width=\"30\" height=\"30\" src=\"counter.jpg\">) ";
+    return "<img src=\"card$current_flipped_card.png\"><\/img>&nbsp;&nbsp;&nbsp;(Card currently has $current_number_of_counters X <img width=\"30\" height=\"30\" src=\"counter.png\">) ";
 }
 
 sub print_game_state
@@ -1224,9 +1259,11 @@ sub get_game_state
     $out .= "<br><br><font size=-2>You can boot players here whilst the game is not started:</font><br>";
 
     my $n;
+    my %pns;
     foreach $n (sort @player_names)
     {
         $out .= "&nbsp;&nbsp;&nbsp;<font size=-2><a href=\"boot_person?name=$n\">Boot $n</a></font><br>";
+        $pns {$n} = 1;
     }
 
     if (scalar keys (%BANNED_NAMES) > 0)
@@ -1247,6 +1284,10 @@ sub get_game_state
             </form>";
         #$out .= "<a href=\"quick_start\">Begin Quick Debug<\/a><br>";
         my $next_num = $num_players_in_lobby +1;
+        while (defined ($pns {"User$next_num"}) || defined ($BANNED_NAMES {"User$next_num"}))
+        {
+            $next_num++;
+        }
         $out =~ s/xyz/User$next_num/img;
     }
     else
@@ -1264,7 +1305,7 @@ sub get_game_state
             if ($num_players_in_lobby >= 2)
             {
                 $out .= "<a href=\"new_game\">Start new game!<\/a>";
-                $out .= "<br><font size=-1>"; 
+                $out .= "<br><font size=-1>";
                 $out .= "<br><a href=\"simulate_game_1\">Add 1 bot<\/a>";
                 $out .= "<br><a href=\"simulate_game_2\">Add 2 bots<\/a>";
                 $out .= "<br><a href=\"simulate_game_3\">Add 3 bots<\/a>";
@@ -1272,11 +1313,11 @@ sub get_game_state
             else
             {
                 $out .= "Need 2 players minimum to play Quest (The 'Start' URL will be here when there are enough players!)";
-                $out .= "<br><font size=-1>"; 
+                $out .= "<br><font size=-1>";
                 $out .= "<br><a href=\"simulate_game_1\">Add 1 bot<\/a>";
                 $out .= "<br><a href=\"simulate_game_2\">Add 2 bots<\/a>";
                 $out .= "<br><a href=\"simulate_game_3\">Add 3 bots<\/a>";
-                $out .= "</font>"; 
+                $out .= "</font>";
             }
         }
         else
@@ -1398,12 +1439,12 @@ sub simulate_game
 
         if ($txt =~ m/.*favico.*/m)
         {
-            my $size = -s ("d:/perl_programs/nothanks/_nothanks.jpg");
+            my $size = -s ("d:/perl_programs/nothanks/_nothanks.png");
             print (">>>>> size = $size\n");
             my $h = "HTTP/1.1 200 OK\nLast-Modified: 20150202020202\nConnection: close\nContent-Type: image/jpeg\nContent-Length: $size\n\n";
             print "===============\n", $h, "\n^^^^^^^^^^^^^^^^^^^\n";
             syswrite (\*CLIENT, $h);
-            copy "d:/perl_programs/nothanks/_nothanks.jpg", \*CLIENT;
+            copy "d:/perl_programs/nothanks/_nothanks.png", \*CLIENT;
             next;
         }
 
@@ -1428,7 +1469,7 @@ sub simulate_game
             print ("\n\n\n\n\n\n$page\n\n");
             next;
         }
-        
+
         if ($txt =~ m/.*pass.*card.*/mi)
         {
             pass_card ("$txt", $client_addr);
