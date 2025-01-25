@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://xmage.au/mastermind/bootstrap.min.css">
+    <script src="https://xmage.au/mastermind/jquery-3.5.1.min.js"></script>
+    <script src="https://xmage.au/mastermind/popper.min.js"></script>
+    <script src="https://xmage.au/mastermind/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <center>
+        <h1 style="color: royalblue"> Master Mind </h1>
+        <table>
+            <tr>
+                <td>
+                        <img src="https://xmage.au/yellow.png" width="20" height="15"> Yellow</img>
+                </td>
+                <td>
+                        <img src="https://xmage.au/white.png" width="20" height="15"> White</img>
+                </td>
+                <td>
+                        <img src="https://xmage.au/blue.png" width="20" height="15"> Blue</img>
+                </td>
+                <td>
+                        <img src="https://xmage.au/green.png" width="20" height="15"> Green</img>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle" type="button" id="bead1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Bead 1</button>
+                    <ul class="dropdown-menu" aria-labelledby="bead1">
+                        <li class="dropdown-item" onclick="changeText('White', 'https://xmage.au/white.png', 'bead1')"> <img src="https://xmage.au/white.png" width="20" height="15"> White</li>
+                        <li class="dropdown-item" onclick="changeText('Blue', 'https://xmage.au/blue.png', 'bead1')"> <img src="https://xmage.au/blue.png" width="20" height="15"> Blue</li>
+                        <li class="dropdown-item" onclick="changeText('Black', 'https://xmage.au/black.png', 'bead1')"> <img src="https://xmage.au/black.png" width="20" height="15"> Black</li>
+                        <li class="dropdown-item" onclick="changeText('Red', 'https://xmage.au/red.png', 'bead1')"> <img src="https://xmage.au/red.png" width="20" height="15"> Red</li>
+                        <li class="dropdown-item" onclick="changeText('Green', 'https://xmage.au/green.png', 'bead1')"> <img src="https://xmage.au/green.png" width="20" height="15"> Green</li>
+                        <li class="dropdown-item" onclick="changeText('Yellow', 'https://xmage.au/yellow.png', 'bead1')"> <img src="https://xmage.au/yellow.png" width="20" height="15"> Yellow</li>
+                    </ul>
+                </div>
+                </td>
+                <td>
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle" type="button" id="bead2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Bead 2</button>
+                    <ul class="dropdown-menu" aria-labelledby="bead2">
+                        <li class="dropdown-item" onclick="changeText('White', 'https://xmage.au/white.png', 'bead2')"> <img src="https://xmage.au/white.png" width="20" height="15"> White</li>
+                        <li class="dropdown-item" onclick="changeText('Blue', 'https://xmage.au/blue.png', 'bead2')"> <img src="https://xmage.au/blue.png" width="20" height="15"> Blue</li>
+                        <li class="dropdown-item" onclick="changeText('Black', 'https://xmage.au/black.png', 'bead2')"> <img src="https://xmage.au/black.png" width="20" height="15"> Black</li>
+                        <li class="dropdown-item" onclick="changeText('Red', 'https://xmage.au/red.png', 'bead2')"> <img src="https://xmage.au/red.png" width="20" height="15"> Red</li>
+                        <li class="dropdown-item" onclick="changeText('Green', 'https://xmage.au/green.png', 'bead2')"> <img src="https://xmage.au/green.png" width="20" height="15"> Green</li>
+                        <li class="dropdown-item" onclick="changeText('Yellow', 'https://xmage.au/yellow.png', 'bead2')"> <img src="https://xmage.au/yellow.png" width="20" height="15"> Yellow</li>
+                    </ul>
+                </div>
+                </td>
+                <td>
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle" type="button" id="bead3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Bead 3</button>
+                    <ul class="dropdown-menu" aria-labelledby="bead3">
+                        <li class="dropdown-item" onclick="changeText('White', 'https://xmage.au/white.png', 'bead3')"> <img src="https://xmage.au/white.png" width="20" height="15"> White</li>
+                        <li class="dropdown-item" onclick="changeText('Blue', 'https://xmage.au/blue.png', 'bead3')"> <img src="https://xmage.au/blue.png" width="20" height="15"> Blue</li>
+                        <li class="dropdown-item" onclick="changeText('Black', 'https://xmage.au/black.png', 'bead3')"> <img src="https://xmage.au/black.png" width="20" height="15"> Black</li>
+                        <li class="dropdown-item" onclick="changeText('Red', 'https://xmage.au/red.png', 'bead3')"> <img src="https://xmage.au/red.png" width="20" height="15"> Red</li>
+                        <li class="dropdown-item" onclick="changeText('Green', 'https://xmage.au/green.png', 'bead3')"> <img src="https://xmage.au/green.png" width="20" height="15"> Green</li>
+                        <li class="dropdown-item" onclick="changeText('Yellow', 'https://xmage.au/yellow.png', 'bead3')"> <img src="https://xmage.au/yellow.png" width="20" height="15"> Yellow</li>
+                    </ul>
+                </div>
+                </td>
+                <td>
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle" type="button" id="bead4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Bead 4</button>
+                    <ul class="dropdown-menu" aria-labelledby="bead4">
+                        <li class="dropdown-item" onclick="changeText('White', 'https://xmage.au/white.png', 'bead4')"> <img src="https://xmage.au/white.png" width="20" height="15"> White</li>
+                        <li class="dropdown-item" onclick="changeText('Blue', 'https://xmage.au/blue.png', 'bead4')"> <img src="https://xmage.au/blue.png" width="20" height="15"> Blue</li>
+                        <li class="dropdown-item" onclick="changeText('Black', 'https://xmage.au/black.png', 'bead4')"> <img src="https://xmage.au/black.png" width="20" height="15"> Black</li>
+                        <li class="dropdown-item" onclick="changeText('Red', 'https://xmage.au/red.png', 'bead4')"> <img src="https://xmage.au/red.png" width="20" height="15"> Red</li>
+                        <li class="dropdown-item" onclick="changeText('Green', 'https://xmage.au/green.png', 'bead4')"> <img src="https://xmage.au/green.png" width="20" height="15"> Green</li>
+                        <li class="dropdown-item" onclick="changeText('Yellow', 'https://xmage.au/yellow.png', 'bead4')"> <img src="https://xmage.au/yellow.png" width="20" height="15"> Yellow</li>
+                    </ul>
+                </div>
+                </td>
+            </tr>
+        </table>
+    </center>
+
+    <script>
+        function changeText(country, flagUrl, nameofId) {
+            document.getElementById(nameofId).innerHTML = `<img src="${flagUrl}" width="20" height="15"> ${country}`;
+        }
+    </script>
+</body>
+</html>
