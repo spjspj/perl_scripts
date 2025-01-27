@@ -16,12 +16,6 @@ use DateTime;
 
 my $PI = 3.14159265358979323;
 my %all_json_fields;
-my $last_statement_date = "";
-my $last_statement_total = "";
-my $credit_line_length = "";
-my $running_total;
-my $last_statement_details = "";
-my $statement_eq = "";
 
 sub read_json_values
 {
@@ -78,6 +72,88 @@ sub read_json_values
     if ($print_it)
     {
         print ("\n");
+    }
+}
+
+my %all_wordle;
+my %wordle_matches;
+my %wordle_matches_full;
+sub find_matches
+{
+    my $input = $_ [0];
+    my $num_misses = $_ [1];
+    my $term = $_ [2];
+    my $level = $_ [3];
+    my $max_level = $_ [4];
+    my $orig_word = $_ [5];
+    my @chars;
+    my $i = 0;
+
+    if ($level > $max_level)
+    {
+        return;
+    }
+
+    while ($input =~ s/^(.)//)
+    {
+        $chars [$i] = lc($1);
+        $i++;
+    }
+
+    my $k;
+    my $orig_k;
+    foreach $k (keys (%all_wordle))
+    {
+        my $i = 0;
+        my $count = 0;
+        $orig_k = $k;
+
+        while ($k =~ s/^(.)//)
+        {
+            my $ch = $1;
+            if ($chars [$i] eq lc($ch))
+            {
+                $count++;
+            }
+            $i++;
+        }
+
+        if ($count == 5 - $num_misses)
+        {
+            if ($term eq "term")
+            {
+                if (lc($orig_k) eq $orig_word) { next; }
+                if ($wordle_matches {$orig_k} <= 1)
+                {
+                    $wordle_matches {$orig_k} += 2;
+                }
+                print (" $level $orig_k\n");
+                find_matches ($orig_k, 1, $term, $level+1, $max_level, $orig_word);
+                $wordle_matches_full {$orig_k} .= ", $orig_k";
+            }
+            elsif ($term eq "helper")
+            {
+                if (lc($orig_k) eq $orig_word) { next; }
+                if ($wordle_matches {$orig_k} == 2 || $wordle_matches {$orig_k} == 0)
+                {
+                    $wordle_matches {$orig_k} += 1;
+                }
+                if ($level < 3)
+                {
+                    print (" $level $orig_k\n");
+                }
+                find_matches ($orig_k, 1, $term, $level+1, $max_level, $orig_word);
+                $wordle_matches_full {$orig_k} .= ", $orig_k";
+            }
+        }
+        if ($wordle_matches {$orig_k} == 3)
+        {
+            print ("$level SUPER DUPER $orig_k ($wordle_matches_full{$orig_k})\n");$wordle_matches {$orig_k} += 0.1;
+        }
+        else
+        {
+            #print ("\n");
+        }
     }
 }
 
@@ -534,7 +610,7 @@ sub print_months_html
         $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
         $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
         $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
-        print $line;
+        print $line . " xxxx ";
 
         if ($month2 =~ s/^(.*)\n//)
         {
@@ -544,7 +620,7 @@ sub print_months_html
             $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
             $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
             $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
-            print $line;
+            print $line . " yyyy ";
 
             if ($month3 =~ s/^(.*)\n//)
             {
@@ -554,7 +630,7 @@ sub print_months_html
                 $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
                 $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
                 $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
-                print $line;
+                print $line . " zzzz ";
             }
         }
     }
@@ -592,6 +668,35 @@ my $allup_x = 0;
 my $allup_y = 0;
 my $allup_z = 0;
 
+sub do_d3_replace
+{
+    my $d3_lines = $_ [0];
+
+    while ($d3_lines =~ s/([ABCDEFGHIJ])0/$1A/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])1/$1B/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])2/$1C/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])3/$1D/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])4/$1E/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])5/$1F/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])6/$1G/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])7/$1H/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])8/$1I/g) {}
+    while ($d3_lines =~ s/([ABCDEFGHIJ])9/$1J/g) {}
+
+    while ($d3_lines =~ s/0([ABCDEFGHIJ])/A$1/g) {}
+    while ($d3_lines =~ s/1([ABCDEFGHIJ])/B$1/g) {}
+    while ($d3_lines =~ s/2([ABCDEFGHIJ])/C$1/g) {}
+    while ($d3_lines =~ s/3([ABCDEFGHIJ])/D$1/g) {}
+    while ($d3_lines =~ s/4([ABCDEFGHIJ])/E$1/g) {}
+    while ($d3_lines =~ s/5([ABCDEFGHIJ])/F$1/g) {}
+    while ($d3_lines =~ s/6([ABCDEFGHIJ])/G$1/g) {}
+    while ($d3_lines =~ s/7([ABCDEFGHIJ])/H$1/g) {}
+    while ($d3_lines =~ s/8([ABCDEFGHIJ])/I$1/g) {}
+    while ($d3_lines =~ s/9([ABCDEFGHIJ])/J$1/g) {}
+
+    return $d3_lines;
+}
+
 # Main
 {
     if (scalar (@ARGV) == 0 || (scalar (@ARGV) > 2 && scalar (@ARGV) < 4))
@@ -599,7 +704,7 @@ my $allup_z = 0;
         print ("xxxxxxUsage: cut.pl <file> <term> <helper> <operation>!\n");
         print (" .   File can be - list, STDIN, or an actual file\n");
         print (" .   Term can be - a regex you're looking for\n");
-        print (" .   Operation can be - grep, filegrep, count, size, strip_http, matrix_flip(for converting ringing touches!), oneupcount, allupcount, oneup, wget\n");
+        print (" .   Operation can be - grep, filegrep, count, size, head, tail, strip_http, matrix_flip(for converting ringing touches!), oneupcount, allupcount, oneup, wget\n");
         print (" .   Helper is dependent on the operation you're doing.  A number for grep will go +/- that amount \n");
         print ("   cut.pl bob.txt dave 5 grep\n");
         print ("   cut.pl all_java2.java TOKEN_STARTS_HERE TOKEN_ENDS_HERE grep_between\n");
@@ -647,6 +752,10 @@ my $allup_z = 0;
         print ("   cut.pl  stdin start_ _end letters\n");
         print ("   cut.pl  file banner hashmod word2word\n");
         print ("   cut.pl all_java21.java  thing_to_search xxxxxx egrep | cut.pl stdin thing_to_search -1 grep    rem for search_in_output..\n");
+        print ("   echo \"1\" | cut.pl stdin 0 0 git\n");
+        print ("   echo \"1\" | cut.pl stdin colorizing 0 gitgrep\n");
+        print ("   echo \"1\" | cut.pl stdin knack grate flipple\n");
+        print ("   cut.pl pj_d3_advent_code.txt  0 0 d3_code\n");
         print ("   cut.pl all_java.java  \"thing_to_search\" 0 search_in_output\n");
         print ("   cut.pl all_java.java  \"thing_to_search\" 0 edit_files\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 sinewave\n");
@@ -677,6 +786,10 @@ my $allup_z = 0;
         print ("\n");
         print ('echo "1" | cut.pl stdin 1 "HermanCainAward" get_reddit\n');
         print ("\n");
+        print ('echo "1" | cut.pl stdin "gwub,rgwu,yrgw,ybwg,uywr" "1100,1200,1120,1120,1200" master_mind');
+        print ("\n");
+        print ('echo "1" | cut.pl stdin "ryry,ugug,ggww,wgrg,ugyw" "1000,2200,1200,1120,1120" master_mind');
+        print ("\n");
         print ('echo "1" | cut.pl stdin "1,2,3,4,5" "stuff?" replace_maths');
         print ("\n");
         exit 0;
@@ -688,12 +801,17 @@ my $allup_z = 0;
     my $operation;
     my %json_headers;
     my $last_line;
+    my %output_fields;
     
     my $ot_ringing;
     my $tf_ringing;
     my $fs_ringing;
     my $se_ringing;
     my $nt_ringing;
+    my $first_d3_line;
+    my $d3_line_length;
+    my $d3_lines;
+    my $d3_p2_equation;
 
     my %calls;
     my $slopes;
@@ -801,7 +919,6 @@ my $allup_z = 0;
     my %grep_past_lines;
     my $grep_past_lines_index  = 1;
     my $grep_forward_lines = -1;
-
 
     # Grep variables:
     # Before and or after!
@@ -941,6 +1058,22 @@ my $allup_z = 0;
             $kkks {"^$_"} = 1;
         }
     }
+
+    if ($operation eq "flipple")
+    {
+        open WORDLE, "d:\\perl_programs\\wordle_words.txt";
+        while (<WORDLE>)
+        {
+            chomp;
+            $all_wordle {$_} = 1;
+        }
+
+        print ("Term $term:\n=======================\n");
+        find_matches ($term, 1, "term", 1, 3, lc($term));
+        print ("Helper $helper:\n=======================\n");
+        find_matches ($helper, 1, "helper", 1, 3, lc($helper));
+    }
+
     if ($operation eq "make_code_bat")
     {
         print ("\@echo off\n");
@@ -1074,6 +1207,7 @@ my $allup_z = 0;
                 $url =~ s/XXX/$line/;
                 print ("Looking at :$url:\n");
                 my $curl_command = "D:\\perl_programs\\curl.exe -L -H \"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36\"  \"$line\"";
+                print $curl_command;
                 my $content = `$curl_command`;
                 $content =~ s/\s\s/ /gim;
                 $content =~ s/\s\s/ /gim;
@@ -1173,7 +1307,7 @@ my $allup_z = 0;
                 my $content = get $url;
                 my $orig_content = $content;
                 $content =~ s/\n//img;
-                $content =~ s/{/\n{/img;
+                $content =~ s/\{/\n\{/img;
                 $content =~ s/  / /img;
                 $content =~ s/  / /img;
                 $content =~ s/  / /img;
@@ -1423,6 +1557,70 @@ my $allup_z = 0;
             }
         }
 
+        if ($operation eq "head")
+        {
+            if ($line_number <= 10 && $term == 0)
+            {
+                print $line, "\n";
+            }
+            elsif ($line_number <= $term)
+            {
+                print $line, "\n";
+            }
+            else 
+            {
+                exit;
+            }
+        }
+
+        if ($operation eq "solve_for_principal_and_interest" || $operation =~ m/^solve_for_princ/)
+        {
+            # Formula - MonthlyPayment = (Principal * MonthlyRate * ((1+MonthlyRate)^(NumMonths))/((1+MonthlyRate)^(NumMonths) - 1))
+            my $pr = $term;
+            if ($helper =~ m/^([\dY]+),([\d+\.]+),\?\?$/)
+            {
+                # pr=Principal, nm=Number Months, ir=MonthlyInterest, re=Repayments 
+                # Solve for re, have (pr,nm,ir)
+                my $nm = $1;
+                my $ir = $2;
+                if ($nm =~ m/^(\d+)Y/)
+                {
+                    $nm *= 12;
+                    $ir /= 12;
+                }
+                print ("Working out: ($pr * $ir * ((1+$ir)^($nm))/((1+$ir)^($nm) - 1))\n");
+                my $repayment = $pr * $ir * ((1+$ir)^($nm))/((1+$ir)^($nm) - 1);
+                print "Monthly = $repayment\n";
+                exit;
+            }
+            elsif ($helper =~ m/^([\dY]+),??,([\d+\.]+)$/)
+            {
+                #cut.pl stdin pr nm,ir,re solve_for_princ
+                # Solve for ir, have (pr,nm,re)
+                #  re = (pr * ir * (((1+ir)^nm)/((1+ir)^nm - 1)))
+                #  B/A = (pr * ir / re)
+                my $nm = $1;
+                my $re = $2;
+                my $ir = 55;
+                if ($nm =~ m/^(\d+)Y/)
+                {
+                    $nm *= 12;
+                }
+                my $val = $pr * $ir / $re;
+                # $val = ((1+$ir)^$nm)/((1+$ir)^$nm - 1)
+                # $val = (C/(C - 1)
+                # C*$val - $val = C
+                #print ("C*$val - $val = C --> C is ((1+ir)^$nm\n";
+                exit;
+            }
+            else
+            {
+                print ("Bad input.  Need something like:\necho \"0\" | $0 stdin 500000 25,0.0543,?? solve_for_princ\n");
+                print ("\nor\necho \"0\" | $0 stdin 500000 25Y,0.0543,?? solve_for_princ\n");
+                #cut.pl stdin pr nm,ir,re solve_for_princ
+            }
+        }
+
         if ($operation eq "allupcount")
         {
             my $i = 0;
@@ -1477,7 +1675,6 @@ my $allup_z = 0;
                             $k++;
                             next;
                         }
-
 
                         $wubrg = $orig_wubrg;
                         $wubrg =~ m/^.{$i}(.)/;
@@ -1640,6 +1837,103 @@ my $allup_z = 0;
             }
         }
         
+        if ($operation eq "git")
+        {
+            print ("Git information:\n");
+            my $top = `git rev-parse --show-toplevel`;
+            chomp $top;
+            print "\n===================\n";
+            print $top;
+            print "git fetch\ngit pull\n";
+            print "git log --pretty=oneline\n";
+            my $version = $term;
+            if ($term == 0) { $version = 1; }
+            print "git diff HEAD~$version..HEAD\n";
+            print "git diff HEAD HEAD~$version --name-only\n";
+            my $diff_list = `git diff HEAD HEAD~$version --name-only`;
+            chomp $diff_list;
+            $diff_list .= "\n";
+            my $patches;
+            while ($diff_list =~ s/^(.*?)\n//m)
+            {
+                print ("git diff HEAD HEAD~$version $top\/$1\n");
+                $patches .= "git log -p --follow $top\/$1\n";
+            }
+            print "\n$patches\n";
+            print "\nAlso can call:\n";
+            print ("   echo \"1\" | cut.pl stdin colorizing 0 gitgrep\n");
+            print (" >> spjones\@jollah MINGW64 /c/xmage_clean_2024<<\n");
+            print (" \$ git clone https://github.com/spjspj/mage.git\n");
+        }
+        
+        my %gitgrep;
+        if ($operation eq "gitgrep")
+        {
+            print ("Git Grep:\n");
+            print "git grep $term";
+            my $top = `git rev-parse --show-toplevel`;
+            chomp $top;
+            print "\n===================\n";
+            print $top, "\n\n";
+            #%gitgrep;
+            my $ggrep = `git grep $term`;
+            chomp $ggrep;
+            $ggrep .= "\n";
+            while ($ggrep =~ s/^(.*?):(.*?)\n//m)
+            {
+                my $f = "$top\/$1";
+                if (!defined ($gitgrep {$f}))
+                {
+                    $gitgrep {$f} = 1;
+                    print ("git log -p --follow $top\/$1\n");
+                    print ("   gvim $top\/$1\n");
+                }
+            }
+            my $dir = `dir /a /b /s | find /I \"$term\"`;
+            $dir =~ s/^/  gvim /mg; 
+            print "\n==========\nFound the following files:\n$dir\n";
+        }
+
+        # Line  : 1;; ;;1;;1;; ;
+        # Line  : 1;;1;; ;; ;;1;
+        # reset : ------------;
+        # Output: 1;;1;;1;;1;;1;
+
+        if ($operation eq "collapse_fields")
+        {
+            if ($line =~ m/----------/)
+            {
+                my $key;
+                my $output_line;
+                foreach $key (sort { $a <=> $b } (keys (%output_fields)))
+                {
+                    $output_line .= $output_fields {$key} . ";";
+                }
+                $output_line =~ s/\s//img;
+                print $output_line, "\n";
+                my %new_output_fields;
+                %output_fields = %new_output_fields;
+            }
+
+            my $taline = $line;
+            my $field_num = 0;
+            while ($taline =~ s/^([^;]+?)(;|$)//)
+            {
+                $output_fields {$field_num} .= $1;
+                $field_num++;
+            }
+        }
+
+        if ($operation eq "d3_code" || $operation eq "d3_code_p2")
+        {
+            if ($first_d3_line eq "")
+            {
+                $first_d3_line = $line;
+                $d3_line_length = length ($first_d3_line);
+            }
+            $d3_lines .= $line;
+        }
+
         if ($operation eq "mtg_history_line")
         {
             my $ok_name_fields = 0;
@@ -1762,8 +2056,8 @@ my $allup_z = 0;
 
         if ($operation eq "sinewave")
         {
-            my $x = 40;
-            my $y = 40;
+            my $x = 15;
+            my $y = 15;
             my $counter = 0;
             print ("counter,counter2,counter3,i.float,j.float,actual_x.float,actual_y.float,dist_from_center.float,sin_value.float,thedate.datetime,circle,grid.color,counter...counter2;;;thedate.datetime\n");
             my $the_date = "2021-08-26T05:51:";
@@ -2125,7 +2419,6 @@ my $allup_z = 0;
                 $new_line =~ m/^(.)(.)(.)(.)/;
                 my $bob_bit = "$1$3$2$4";
 
-
                 my $old_call_number = $call_number;
                 if ($last_line =~ m/^$single_bit/) { print ("  -- SINGLE\n"); $calls {$call_number} = "Single"; $call_number++; }
                 elsif ($last_line =~ m/^$bob_bit/) { print ("  -- BOB\n"); $calls {$call_number} = "Bob"; $call_number++; }
@@ -2352,7 +2645,13 @@ my $allup_z = 0;
                                         if ($g == 1) { $equation =~ s/,/-/; }
                                         if ($g == 2) { $equation =~ s/,/\//; }
                                         if ($g == 3) { $equation =~ s/,/*/; }
-                                        $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
+                                        $equations {"=" . $equation} = 1;
+                                        $equation =~ s/(\d+)\+(\d+)/($1+$2)/;
+                                        $equations {"=" . $equation} = 1;
+                                        $equation =~ s/[()]//img;
+                                        $equation =~ s/(\d+)-(\d+)/($1-$2)/;
+                                        $equations {"=" . $equation} = 1;
+                                        $equation =~ s/[()]//img;
                                     }
                                     $equations {"=" . $equation} = 1; $equation =~ s/(\d+)\+(\d+)/($1+$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img; $equation =~ s/(\d+)-(\d+)/($1-$2)/; $equations {"=" . $equation} = 1; $equation =~ s/[()]//img;
                                 }
@@ -2368,6 +2667,25 @@ my $allup_z = 0;
             }
 
             print join ("\n", sort keys(%equations));
+            
+            $term =~ s/^(\d+),(.*)/$2,$1/;
+            open PROC, "echo '1' | cut.pl $file $term $helper $operation |";
+            print "Running: cut.pl $file $term $helper $operation |\n";
+            my $found_output = 0;
+            while (<PROC>)
+            {
+                if ($found_output == 0)
+                {
+                    print ("\n\n==================\nProcessing file: $file\n");
+                    $found_output = 1;
+                }
+                print ($_);
+            }
+            if ($found_output > 0)
+            {
+                print ("\n******************xx\n");
+            }
+            close PROC;
 
             exit;
         }
@@ -2743,7 +3061,8 @@ my $allup_z = 0;
         if ($operation eq "fix_date")
         {
             my $orig_line = $line;
-            if ($line =~ m/(Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) *(\d{1,2}),{0,1} *(\d{2,4})/im)
+            #print ("Checking against >>$orig_line<<\n");
+            if ($line =~ m/^(Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) *(\d{1,2}),{0,1} *(\d{2,4})/im)
             {
                 my $year = $14;
                 my $oth = $2;
@@ -2779,10 +3098,10 @@ my $allup_z = 0;
                 {
                     $yyyymmdd .= "$helper";
                 }
-                $line =~ s/(Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) *(\d{1,2}),{0,1} *(\d{2,4})/$yyyymmdd/im;
+                $line =~ s/^(Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) *(\d{1,2}),{0,1} *(\d{2,4})/$yyyymmdd/im;
             }
 
-            if ($line =~ m/\d{1,2} (Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) \d{2,4}/im)
+            if ($line =~ m/^(\d{1,2}) (Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) (\d{2,4})/im)
             {
                 my $year = $14;
                 my $day = $1;
@@ -2814,100 +3133,12 @@ my $allup_z = 0;
                 {
                     $yyyymmdd .= "$helper";
                 }
-                $line =~ s/\d{1,2} (Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) \d{2,4}/$yyyymmdd/im;
+                $line =~ s/^\d{1,2} (Jan(uary|)|Feb(ruary|)|Mar(ch|)|Apr(il|)|May|Jun(e|)|Jul(y|)|Aug(ust|)|Sep(tember|t|)|Oct(ober|)|Nov(ember|)|Dec(ember|)) \d{2,4}/$yyyymmdd/im;
             }
 
             print "$line\n";
         }
 
-        if ($operation eq "do_nab_statement")
-        {
-            my $print_line = 0;
-            $line =~ s/,//g;
-            my $og = $line;
-            if ($line =~ m/^\s+(\d{1,2}  *[A-Z][a-z][a-z]  *20\d\d)/)
-            {
-                $last_statement_date = $1;
-                $print_line = 1;
-            }
-            $credit_line_length = length ($line);
-            if ($line =~ m/(\d+\.\d\d)  *Cr/)
-            {
-                $last_statement_total = "$1$2";
-                print ("\nSetting statement to $last_statement_total for $last_statement_date (from $statement_eq)");
-                $statement_eq = "$last_statement_total ";
-                $print_line = 1;
-            }
-            $line =~ s/\s+/ /g;
-            $last_statement_details .= "$line";
-            if ($line =~ m/\.\.\.\. \d/ || $print_line)
-            {
-                my $transaction_val;
-                $print_line = 0;
-                if ($line =~ m/\.\.\.\. (\d+.\d\d)/)
-                {
-                    $transaction_val = -1 * $1;
-                    $print_line = 1;
-                }
-                if ($line =~ m/^\s*\.+\.\.\. (\d+.\d\d)/)
-                {
-                    $transaction_val = $1;
-                    $print_line = 1;
-                }
-                $last_statement_details =~ s/\n//img;
-                if ($print_line)
-                {
-                    my $trans_type = "??";
-                    if ($last_statement_details =~ m/\.\. \.\./)
-                    {
-                        $transaction_val = abs ($transaction_val);
-                        $trans_type = "CR1";
-                    }
-                    $transaction_val = abs ($transaction_val);
-                    if ($credit_line_length < 183)
-                    {
-                        $transaction_val = -1 * $transaction_val;
-                        $trans_type = "DR1";
-                    }
-                    elsif ($og =~ m/.*\.\d\d            *\d+\.\d\d  *Cr/)
-                    {
-                        $transaction_val = -1 * $transaction_val;
-                        $trans_type = "DR3";
-                    }
-                    elsif ($credit_line_length < 210)
-                    {
-                        $transaction_val = $transaction_val;
-                        $trans_type = "CR2";
-                    }
-
-                    $running_total += $transaction_val;
-                    #print ("\n$last_statement_date (latest_total = $last_statement_total ($running_total) -- $transaction_val ** ll=$credit_line_length type=$trans_type)>>> $line ($last_statement_details)");
-                    print ("\n$last_statement_date (latest_total = $last_statement_total ($running_total) -- $transaction_val ** ll=$credit_line_length type=$trans_type)>>> $og ($last_statement_details)");
-                    #print ("\n$last_statement_date (ll=$credit_line_length) $og");
-                    #print ("\n(ll=$credit_line_length) $transaction_val");
-                    $last_statement_details = "";
-                    $statement_eq .= " + $transaction_val ";
-                    if ($line =~ m/(\d+\.\d\d) Cr/)
-                    {
-                        $running_total =~ s/\.(\d+)0*$/.$1/;
-                        $last_statement_total =~ s/\.(\d+)0*$/.$1/;
-                        $running_total =~ s/\.00//;
-                        $last_statement_total =~ s/\.00//;
-                        if ($running_total == $last_statement_total || $running_total eq $last_statement_total)
-                        {
-                            print ("\n *** $last_statement_date (matches $running_total)");
-                        }
-                        else
-                        {
-                            print ("\n ### $last_statement_date (no matches running=$running_total vs last=$last_statement_total ( $statement_eq != $last_statement_total ))");
-                        }
-                        $running_total = $last_statement_total;
-                        $statement_eq = "$last_statement_total ";
-                    }
-                }
-            }
-        }
-        
         if ($operation eq "uniquelines")
         {
             if (!defined ($ulines {$line}))
@@ -3216,9 +3447,830 @@ my $allup_z = 0;
             my $k2;
             foreach $k2 (sort keys (%as))
             {
-                print "$term$k$k2$helper\n";
+                print "$term$k$k2$helper\n";   
             }
         }
+    }
+
+    if ($operation eq "master_mind")
+    {
+        my %mm;
+        my %num_cols_in_mm;
+
+        my %colors;
+        $colors {"W"} = 1;
+        $colors {"U"} = 1;
+        $colors {"B"} = 1;
+        $colors {"R"} = 1;
+        $colors {"G"} = 1;
+        $colors {"Y"} = 1;
+        my $orig_helper = $helper;
+
+        my $c = 0;
+        my $c1;
+        my $c2;
+        my $c3;
+        my $c4;
+        foreach $c1 (sort (keys (%colors)))
+        {
+            foreach $c2 (sort (keys (%colors)))
+            {
+                foreach $c3 (sort (keys (%colors)))
+                {
+                    foreach $c4 (sort (keys (%colors)))
+                    {
+                        $c++;
+                        my $code = "$c1$c2$c3$c4";
+                        my $code2 = "$c1$c2$c3$c4";
+                        $mm {$code} = 1;
+
+                        my $num_same = 0;
+                        if ($c1 eq $c2) { $num_same++; }
+                        if ($c1 eq $c3) { $num_same++; }
+                        if ($c1 eq $c4) { $num_same++; }
+                        if ($c2 eq $c3 && $c2 ne $c1) { $num_same++; }
+                        if ($c2 eq $c4 && $c2 ne $c1) { $num_same++; }
+                        if ($c3 eq $c4 && $c3 ne $c1 && $c3 ne $c2) { $num_same++; }
+
+                        my $num_cols = 4 - $num_same;
+                        $num_cols_in_mm {$code} = $num_cols;
+                    }
+                }
+            }
+        }
+
+        my $num_eliminated = 0;
+        $term = uc ($term);
+        while ($term =~ s/^([WUBRGY][WUBRGY][WUBRGY][WUBRGY])(,|$)//)
+        {
+            my $guess_orig = $1;
+            my $guess = $1;
+            my %cols_in_guess;
+            my $cols_in_guess_re = "[";
+            my $number_cols_in_guess = 0;
+            my $number_correct_cols_in_guess = 0;
+
+            while ($guess =~ s/^([WUBRGY])//i)
+            {
+                my $col = $1;
+                if (!defined ($cols_in_guess {$col}))
+                {
+                    $number_cols_in_guess ++;
+                    $cols_in_guess_re .= $col;
+                }
+                $cols_in_guess {$col}++;
+            }
+
+            $cols_in_guess_re .= "]";
+            my $real_helper = $helper;
+            if ($orig_helper =~ m/^([WUBRGY])([WUBRGY])([WUBRGY])([WUBRGY])/i)
+            {
+                $real_helper = "0000";
+
+                my $sac_helper = $orig_helper;
+                my $sac_guess = $guess_orig;
+                my $left_over_answer = "";
+                my $left_over_guess = "";
+                while ($sac_helper =~ s/^(.)//)
+                {
+                    my $c = $1;
+                    if ($sac_guess =~ m/^$c/i)
+                    {
+                        $real_helper =~ s/0/2/;
+                    }
+                    else
+                    {
+                        $left_over_answer .= "$c";
+                        $sac_guess =~ m/^(.)/;
+                        $left_over_guess .= "$1";
+                    }
+
+                    $sac_guess =~ s/^.//;
+                }
+
+                if ($left_over_answer =~ m/W/i && $left_over_guess =~ m/W/i) { $real_helper =~ s/0/1/; }
+                if ($left_over_answer =~ m/U/i && $left_over_guess =~ m/U/i) { $real_helper =~ s/0/1/; }
+                if ($left_over_answer =~ m/B/i && $left_over_guess =~ m/B/i) { $real_helper =~ s/0/1/; }
+                if ($left_over_answer =~ m/R/i && $left_over_guess =~ m/R/i) { $real_helper =~ s/0/1/; }
+                if ($left_over_answer =~ m/G/i && $left_over_guess =~ m/G/i) { $real_helper =~ s/0/1/; }
+                if ($left_over_answer =~ m/Y/i && $left_over_guess =~ m/Y/i) { $real_helper =~ s/0/1/; }
+                print ("  <<<<< $real_helper for $helper ($left_over_answer) vs guess of leftoverguess=$left_over_guess vs guessorig=$guess_orig\n");
+                $helper = $real_helper;
+            }
+
+            print ("  after <<<<< $helper for $helper vs $guess_orig\n");
+
+            if ($helper =~ s/^([012][012][012][012])(,|$)//)
+            {
+                #print (" ==============================\n Comparing $1 vs $guess_orig\n");
+                my $guess_result = $1;
+                my $guess_result_orig = $1;
+                my $num_absolutely_correct = 0;
+                my $num_half_correct = 0;
+                my $num_incorrect = 4;
+                #print ("$guess_orig => $guess_result\n");
+
+                while ($guess_result =~ s/1//)
+                {
+                    $num_half_correct ++;
+                    $number_correct_cols_in_guess ++;
+                    $num_incorrect --;
+
+                    if ($cols_in_guess {"W"} > 1) { $cols_in_guess {"W"} --; }
+                    elsif ($cols_in_guess {"U"} > 1) { $cols_in_guess {"U"} --; }
+                    elsif ($cols_in_guess {"B"} > 1) { $cols_in_guess {"B"} --; }
+                    elsif ($cols_in_guess {"R"} > 1) { $cols_in_guess {"R"} --; }
+                    elsif ($cols_in_guess {"G"} > 1) { $cols_in_guess {"G"} --; }
+                    elsif ($cols_in_guess {"Y"} > 1) { $cols_in_guess {"Y"} --; }
+                    elsif ($cols_in_guess {"W"} == 1) { $cols_in_guess {"W"} --; }
+                    elsif ($cols_in_guess {"U"} == 1) { $cols_in_guess {"U"} --; }
+                    elsif ($cols_in_guess {"B"} == 1) { $cols_in_guess {"B"} --; }
+                    elsif ($cols_in_guess {"R"} == 1) { $cols_in_guess {"R"} --; }
+                    elsif ($cols_in_guess {"G"} == 1) { $cols_in_guess {"G"} --; }
+                    elsif ($cols_in_guess {"Y"} == 1) { $cols_in_guess {"Y"} --; }
+                }
+
+                while ($guess_result =~ s/2//)
+                {
+                    $num_absolutely_correct ++;
+                    $number_correct_cols_in_guess ++;
+                    $num_incorrect --;
+
+                    if ($cols_in_guess {"W"} > 1) { $cols_in_guess {"W"} --; }
+                    elsif ($cols_in_guess {"U"} > 1) { $cols_in_guess {"U"} --; }
+                    elsif ($cols_in_guess {"B"} > 1) { $cols_in_guess {"B"} --; }
+                    elsif ($cols_in_guess {"R"} > 1) { $cols_in_guess {"R"} --; }
+                    elsif ($cols_in_guess {"G"} > 1) { $cols_in_guess {"G"} --; }
+                    elsif ($cols_in_guess {"Y"} > 1) { $cols_in_guess {"Y"} --; }
+                    elsif ($cols_in_guess {"W"} == 1) { $cols_in_guess {"W"} --; }
+                    elsif ($cols_in_guess {"U"} == 1) { $cols_in_guess {"U"} --; }
+                    elsif ($cols_in_guess {"B"} == 1) { $cols_in_guess {"B"} --; }
+                    elsif ($cols_in_guess {"R"} == 1) { $cols_in_guess {"R"} --; }
+                    elsif ($cols_in_guess {"G"} == 1) { $cols_in_guess {"G"} --; }
+                    elsif ($cols_in_guess {"Y"} == 1) { $cols_in_guess {"Y"} --; }
+                }
+
+                my $col;
+                foreach $col (sort (keys (%cols_in_guess)))
+                {
+                    #print ("$col => $cols_in_guess{$col}\n");
+                }
+
+                my $min_number_cols_correct_in_guess = 4;
+                $min_number_cols_correct_in_guess -= $cols_in_guess {"W"};
+                $min_number_cols_correct_in_guess -= $cols_in_guess {"U"};
+                $min_number_cols_correct_in_guess -= $cols_in_guess {"B"};
+                $min_number_cols_correct_in_guess -= $cols_in_guess {"R"};
+                $min_number_cols_correct_in_guess -= $cols_in_guess {"G"};
+                $min_number_cols_correct_in_guess -= $cols_in_guess {"Y"};
+                #print (" xxxx  min_number_cols_correct_in_guess  = $min_number_cols_correct_in_guess\n");
+
+                my $all_correct;
+                if ($min_number_cols_correct_in_guess == 4)
+                {
+                    $all_correct = "^[$guess_orig][$guess_orig][$guess_orig][$guess_orig]\$";
+                }
+
+                if ($num_absolutely_correct == 4)
+                {
+                    print ("Solution was: $guess_orig\n");
+                    exit;
+                }
+                else
+                {
+                    if ($mm {$guess_orig} == 1)
+                    {
+                        print (" yyy Eliminate $guess_orig\n");
+                        $num_eliminated ++;
+                        $mm {$guess_orig} = 0;
+                    }
+                }
+
+                if ($num_incorrect == 4)
+                {
+                    my $code;
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if ($code =~ m/$cols_in_guess_re/)
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print ("## $code has no matching colours [$cols_in_guess_re]\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+
+                my $partial_count = 0;
+                my $check_partial;
+                while ($partial_count + $num_incorrect < 4)
+                {
+                    # check what must exist in solution
+                    $check_partial .= $cols_in_guess_re . ".*";
+                    $partial_count++;
+                }
+
+                print ("Partial count = $partial_count -- $check_partial -- $min_number_cols_correct_in_guess\n");
+                if ($partial_count > 0)
+                {
+                    my $code;
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if ($mm {$code} == 1 && $min_number_cols_correct_in_guess > $num_cols_in_mm {$code} && $min_number_cols_correct_in_guess < 4)
+                        {
+                            $num_eliminated ++;
+                            print ("## $code too few colors so elimimate it [$num_cols_in_mm{$code} vs $min_number_cols_correct_in_guess]\n");
+                            #$mm {$code} = 0;
+                            #$num_eliminated ++;
+                        }
+
+                        if ($mm {$code} == 1 && $min_number_cols_correct_in_guess == 4)
+                        {
+                            if ($code !~ m/$all_correct/img)
+                            {
+                                $num_eliminated ++;
+                                print ("## all right but code ($code) doesn't match $all_correct\n");
+                                $mm {$code} = 0;
+                            }
+                        }
+
+                        if ($mm {$code} == 1 && !($code =~ m/$check_partial/))
+                        {
+                            $num_eliminated ++;
+                            print ("## $code partial elimimate [$check_partial] for $partial_count\n");
+                            $mm {$code} = 0;
+                        }
+
+                    }
+                }
+
+                # all greys!
+                if ($num_absolutely_correct == 0 && $num_half_correct > 0)
+                {
+                    my $code;
+                    $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                    my $a = $1;
+                    my $b = $2;
+                    my $c = $3;
+                    my $d = $4;
+
+                    my $wrong_1 = "$a...";
+                    my $wrong_2 = ".$b..";
+                    my $wrong_3 = "..$c.";
+                    my $wrong_4 = "...$d";
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if ($code =~ m/$wrong_1/ || $code =~ m/$wrong_2/ || $code =~ m/$wrong_3/ || $code =~ m/$wrong_4/)
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print (" >>> Wrong bead in position ($code) vs $guess_orig\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+                
+                # more than 1 partially correct
+                if ($num_half_correct > 1)
+                {
+                    my $code;
+                    $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                    my $a = $1;
+                    my $b = $2;
+                    my $c = $3;
+                    my $d = $4;
+
+                    my $right_1 = "($a.*$b|$a.*$c|$a.*$d|$b.*$c|$b.*$d|$c.*$d)";
+                    my $right_2 = "($b.*$a|$c.*$a|$d.*$a|$c.*$b|$d.*$b|$d.*$c)";
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if (!($code =~ m/$right_1/ || $code =~ m/$right_2/))
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print (" >>> Multi Partial elim ($code) vs $guess_orig\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+                
+                # more than 2 partially correct
+                if ($num_half_correct > 2)
+                {
+                    my $code;
+                    $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                    my $a = $1;
+                    my $b = $2;
+                    my $c = $3;
+                    my $d = $4;
+
+                    my $right_1 = "($a.*$b.*$c|$a.*$b.*$d|$a.*$c.*$b|$a.*$c.*$d|$a.*$d.*$b|$a.*$d.*$c|$b.*$a.*$c|$b.*$a.*$d|$b.*$c.*$a|$b.*$c.*$d|$b.*$d.*$a|$b.*$d.*$c|$c.*$a.*$b|$c.*$a.*$d|$c.*$b.*$a|$c.*$b.*$d|$c.*$d.*$a|$c.*$d.*$b|$d.*$a.*$b|$d.*$a.*$c|$d.*$b.*$a|$d.*$b.*$c|$d.*$c.*$a|$d.*$c.*$b)";
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if (!($code =~ m/$right_1/))
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print (" >>> Tri Partial elim ($code) vs $guess_orig\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+
+                if ($num_absolutely_correct == 1 && $num_half_correct == 0)
+                {
+                    my $code;
+                    $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                    my $a = $1;
+                    my $b = $2;
+                    my $c = $3;
+                    my $d = $4;
+
+                    my $wrong_1a = "$a" . "[$b$c$d]..";
+                    my $wrong_1b = "$a" . ".[$b$c$d].";
+                    my $wrong_1c = "$a" . "..[$b$c$d]";
+
+                    my $wrong_2a = "[$a$c$d]$b" . "..";
+                    my $wrong_2b = ".$b" . "[$a$c$d].";
+                    my $wrong_2c = ".$b" . ".[$a$c$d]";
+
+                    my $wrong_3a = "[$a$b$d].$c" . ".";
+                    my $wrong_3b = ".[$a$b$d]$c" . ".";
+                    my $wrong_3c = "..$c" . "[$a$b$d]";
+
+                    my $wrong_4a = "[$a$b$c].." . "$d";
+                    my $wrong_4b = ".[$a$b$c]." . "$d";
+                    my $wrong_4c = "..[$a$b$c]" . "$d";
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if ($code =~ m/$wrong_1a/ || $code =~ m/$wrong_1b/ || $code =~ m/$wrong_1c/ || 
+                            $code =~ m/$wrong_2a/ || $code =~ m/$wrong_2b/ || $code =~ m/$wrong_2c/ || 
+                            $code =~ m/$wrong_3a/ || $code =~ m/$wrong_3b/ || $code =~ m/$wrong_3c/ || 
+                            $code =~ m/$wrong_4a/ || $code =~ m/$wrong_4b/ || $code =~ m/$wrong_4c/)
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                print (">> Single elim $code\n");
+                                $num_eliminated ++;
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+                
+                if ($num_absolutely_correct == 0 && $num_half_correct == 1)
+                {
+                    my $code;
+                    $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                    my $a = $1;
+                    my $b = $2;
+                    my $c = $3;
+                    my $d = $4;
+
+                    my $wrong_1 = "($a.*$b|$a.*$c|$a.*$d|$b.*$c|$b.*$d|$c.*$d)";
+                    my $wrong_2 = "($b.*$a|$c.*$a|$d.*$a|$c.*$b|$d.*$b|$d.*$c)";
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if ($code =~ m/$wrong_1/ || $code =~ m/$wrong_2/)
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                print (">> Single elim partial $code\n");
+                                $num_eliminated ++;
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+                
+                if ($num_absolutely_correct == 2 && $num_half_correct == 2)
+                {
+                    my $code;
+                    $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                    my $a = $1;
+                    my $b = $2;
+                    my $c = $3;
+                    my $d = $4;
+
+                    my $right_1 = "$a$b$d$c";
+                    my $right_2 = "$a$c$b$d";
+                    my $right_3 = "$a$d$c$b";
+                    my $right_4 = "$b$a$c$d";
+                    my $right_5 = "$c$b$a$d";
+                    my $right_6 = "$d$b$c$a";
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/ || $code =~ m/$right_5/ || $code =~ m/$right_6/))
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                            }
+                            $mm {$code} = 0;
+                        }
+                    }
+                }
+
+                # some blacks!
+                if ($num_absolutely_correct >= 1)
+                {
+                    my $code;
+                    my $right_1 = $guess_orig; $right_1 =~ s/...$/.../;
+                    my $right_2 = $guess_orig; $right_2 =~ s/^././;  $right_2 =~ s/..$/../;
+                    my $right_3 = $guess_orig; $right_3 =~ s/^../../ ;$right_3 =~ s/.$/./;
+                    my $right_4 = $guess_orig; $right_4 =~ s/^.../.../;
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/))
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print (" >>> Has to have a given bead in position ($code) vs $guess_orig\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+
+                    }
+                }
+
+                if ($num_absolutely_correct >= 2)
+                {
+                    my $code;
+                    my $right_1 = $guess_orig; $right_1 =~ s/^(.)(.)../$1$2../;
+                    my $right_2 = $guess_orig; $right_2 =~ s/^(.).(.)./$1.$2./;
+                    my $right_3 = $guess_orig; $right_3 =~ s/^(.)..(.)/$1..$2/;
+                    my $right_4 = $guess_orig; $right_4 =~ s/^.(.).(.)/.$1.$2/;
+                    my $right_5 = $guess_orig; $right_5 =~ s/^.(.)(.)./.$1$2./;
+                    my $right_6 = $guess_orig; $right_6 =~ s/^..(.)(.)/..$1$2/;
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/ || $code =~ m/$right_5/ || $code =~ m/$right_6/))
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print (" >>> multi Has to have a given bead in position ($code) vs $guess_orig\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+
+                    }
+                }
+
+                if ($num_absolutely_correct >= 3)
+                {
+                    my $code;
+                    my $right_1 = $guess_orig; $right_1 =~ s/^(.)(.)(.)./$1$2$3./;
+                    my $right_2 = $guess_orig; $right_2 =~ s/^(.)(.).(.)/$1$2.$3/;
+                    my $right_3 = $guess_orig; $right_3 =~ s/^(.).(.)(.)/$1.$2$3/;
+                    my $right_4 = $guess_orig; $right_4 =~ s/^.(.)(.)(.)/.$1$2$3/;
+
+                    foreach $code (sort (keys (%mm)))
+                    {
+                        if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/))
+                        {
+                            if ($mm {$code} == 1)
+                            {
+                                $num_eliminated ++;
+                                print (" >>> trimulti Has to have a given bead in position ($code) vs $guess_orig\n");
+                            }
+                            $mm {$code} = 0;
+                        }
+
+                    }
+                }
+
+                my $left_over = 0;
+                my $code;
+                foreach $code (sort (keys (%mm)))
+                {
+                    $left_over += $mm {$code};
+                }
+
+                #print ("Checked: $check_partial - $num_eliminated were eliminated (vs $left_over remaining)\n");
+            }
+        }
+
+        my $code;
+        foreach $code (sort (keys (%mm)))
+        {
+            if ($mm {$code} == 1)
+            {
+                print ("Possible solution = $code\n");
+            }
+        }
+    }
+
+    if ($operation eq "master_mind_code")
+    {
+        my $next_guess;
+        for (my $i = 0; $i < 4; $i++)
+        {
+            my $n = int (rand (6));
+            if ($n == 0) { $next_guess .= "W"; }
+            if ($n == 1) { $next_guess .= "U"; }
+            if ($n == 2) { $next_guess .= "B"; }
+            if ($n == 3) { $next_guess .= "R"; }
+            if ($n == 4) { $next_guess .= "G"; }
+            if ($n == 5) { $next_guess .= "Y"; }
+        }
+        print ("\nCode= $next_guess\n");
+    }
+
+
+
+
+    if ($operation eq "d3_code")
+    {
+        print (">>>>$first_d3_line\n");
+        print (">>>>$d3_line_length\n");
+        my $orig_d3_lines = $d3_lines;
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})0/z$1A/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})1/z$1B/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})2/z$1C/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})3/z$1D/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})4/z$1E/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})5/z$1F/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})6/z$1G/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})7/z$1H/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})8/z$1I/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ](.{138,140})9/z$1J/) { }
+
+        #while ($d3_lines =~ s/(\d)(.{138,140})[^\.0123456789z]/$1$2z/) { }
+        while ($d3_lines =~ s/0(.{138,140})[^\.0123456789ABCDEFGHIJ]/A$1z/) { }
+        while ($d3_lines =~ s/1(.{138,140})[^\.0123456789ABCDEFGHIJ]/B$1z/) { }
+        while ($d3_lines =~ s/2(.{138,140})[^\.0123456789ABCDEFGHIJ]/C$1z/) { }
+        while ($d3_lines =~ s/3(.{138,140})[^\.0123456789ABCDEFGHIJ]/D$1z/) { }
+        while ($d3_lines =~ s/4(.{138,140})[^\.0123456789ABCDEFGHIJ]/E$1z/) { }
+        while ($d3_lines =~ s/5(.{138,140})[^\.0123456789ABCDEFGHIJ]/F$1z/) { }
+        while ($d3_lines =~ s/6(.{138,140})[^\.0123456789ABCDEFGHIJ]/G$1z/) { }
+        while ($d3_lines =~ s/7(.{138,140})[^\.0123456789ABCDEFGHIJ]/H$1z/) { }
+        while ($d3_lines =~ s/8(.{138,140})[^\.0123456789ABCDEFGHIJ]/I$1z/) { }
+        while ($d3_lines =~ s/9(.{138,140})[^\.0123456789ABCDEFGHIJ]/J$1z/) { }
+
+        #while ($d3_lines =~ s/(\d)[^\.0123456789z]/$1z/) { }
+        while ($d3_lines =~ s/0[^\.0123456789ABCDEFGHIJ]/Az/) { }
+        while ($d3_lines =~ s/1[^\.0123456789ABCDEFGHIJ]/Bz/) { }
+        while ($d3_lines =~ s/2[^\.0123456789ABCDEFGHIJ]/Cz/) { }
+        while ($d3_lines =~ s/3[^\.0123456789ABCDEFGHIJ]/Dz/) { }
+        while ($d3_lines =~ s/4[^\.0123456789ABCDEFGHIJ]/Ez/) { }
+        while ($d3_lines =~ s/5[^\.0123456789ABCDEFGHIJ]/Fz/) { }
+        while ($d3_lines =~ s/6[^\.0123456789ABCDEFGHIJ]/Gz/) { }
+        while ($d3_lines =~ s/7[^\.0123456789ABCDEFGHIJ]/Hz/) { }
+        while ($d3_lines =~ s/8[^\.0123456789ABCDEFGHIJ]/Iz/) { }
+        while ($d3_lines =~ s/9[^\.0123456789ABCDEFGHIJ]/Jz/) { }
+
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]0/zA/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]1/zB/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]2/zC/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]3/zD/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]4/zE/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]5/zF/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]6/zG/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]7/zH/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]8/zI/) { }
+        while ($d3_lines =~ s/[^\.0123456789ABCDEFGHIJ]9/zJ/) { }
+
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+
+        my $equation_d3_lines = $d3_lines; 
+        $equation_d3_lines =~ s/[^ABCDEFGHIJ]+/ + /g;
+        $equation_d3_lines =~ s/A/0/g;
+        $equation_d3_lines =~ s/B/1/g;
+        $equation_d3_lines =~ s/C/2/g;
+        $equation_d3_lines =~ s/D/3/g;
+        $equation_d3_lines =~ s/E/4/g;
+        $equation_d3_lines =~ s/F/5/g;
+        $equation_d3_lines =~ s/G/6/g;
+        $equation_d3_lines =~ s/H/7/g;
+        $equation_d3_lines =~ s/I/8/g;
+        $equation_d3_lines =~ s/J/9/g;
+        $equation_d3_lines .= " + 0";
+        $equation_d3_lines =~ s/ //g;
+        $equation_d3_lines =~ s/\+\+/+/g;
+        print $equation_d3_lines, "\n=";
+        print (eval ($equation_d3_lines));
+
+        while ($d3_lines =~ s/^(.{140})//)
+        {
+            #print $1, "\n";
+        }
+        print "\n=======================\n";
+        while ($orig_d3_lines =~ s/^(.{140})//)
+        {
+            #print $1, "\n";
+        }
+    }
+
+    if ($operation eq "d3_code_p2")
+    {
+        print (">>>>$first_d3_line\n");
+        print (">>>>$d3_line_length\n");
+
+        my $orig_d3_lines = $d3_lines;
+
+        while ($d3_lines =~ s/\*(.{138,140})0/z$1A/) { }
+        while ($d3_lines =~ s/\*(.{138,140})1/z$1B/) { }
+        while ($d3_lines =~ s/\*(.{138,140})2/z$1C/) { }
+        while ($d3_lines =~ s/\*(.{138,140})3/z$1D/) { }
+        while ($d3_lines =~ s/\*(.{138,140})4/z$1E/) { }
+        while ($d3_lines =~ s/\*(.{138,140})5/z$1F/) { }
+        while ($d3_lines =~ s/\*(.{138,140})6/z$1G/) { }
+        while ($d3_lines =~ s/\*(.{138,140})7/z$1H/) { }
+        while ($d3_lines =~ s/\*(.{138,140})8/z$1I/) { }
+        while ($d3_lines =~ s/\*(.{138,140})9/z$1J/) { }
+
+        #while ($d3_lines =~ s/(\d)(.{138,140})\*/$1$2z/) { }
+        while ($d3_lines =~ s/0(.{138,140})\*/A$1z/) { }
+        while ($d3_lines =~ s/1(.{138,140})\*/B$1z/) { }
+        while ($d3_lines =~ s/2(.{138,140})\*/C$1z/) { }
+        while ($d3_lines =~ s/3(.{138,140})\*/D$1z/) { }
+        while ($d3_lines =~ s/4(.{138,140})\*/E$1z/) { }
+        while ($d3_lines =~ s/5(.{138,140})\*/F$1z/) { }
+        while ($d3_lines =~ s/6(.{138,140})\*/G$1z/) { }
+        while ($d3_lines =~ s/7(.{138,140})\*/H$1z/) { }
+        while ($d3_lines =~ s/8(.{138,140})\*/I$1z/) { }
+        while ($d3_lines =~ s/9(.{138,140})\*/J$1z/) { }
+
+        #while ($d3_lines =~ s/(\d)\*/$1z/) { }
+        while ($d3_lines =~ s/0\*/Az/) { }
+        while ($d3_lines =~ s/1\*/Bz/) { }
+        while ($d3_lines =~ s/2\*/Cz/) { }
+        while ($d3_lines =~ s/3\*/Dz/) { }
+        while ($d3_lines =~ s/4\*/Ez/) { }
+        while ($d3_lines =~ s/5\*/Fz/) { }
+        while ($d3_lines =~ s/6\*/Gz/) { }
+        while ($d3_lines =~ s/7\*/Hz/) { }
+        while ($d3_lines =~ s/8\*/Iz/) { }
+        while ($d3_lines =~ s/9\*/Jz/) { }
+
+        while ($d3_lines =~ s/\*0/zA/) { }
+        while ($d3_lines =~ s/\*1/zB/) { }
+        while ($d3_lines =~ s/\*2/zC/) { }
+        while ($d3_lines =~ s/\*3/zD/) { }
+        while ($d3_lines =~ s/\*4/zE/) { }
+        while ($d3_lines =~ s/\*5/zF/) { }
+        while ($d3_lines =~ s/\*6/zG/) { }
+        while ($d3_lines =~ s/\*7/zH/) { }
+        while ($d3_lines =~ s/\*8/zI/) { }
+        while ($d3_lines =~ s/\*9/zJ/) { }
+
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+
+        # SECOND PASS!!
+        while ($d3_lines =~ s/z(.{138,140})0/Z$1A/) { }
+        while ($d3_lines =~ s/z(.{138,140})1/Z$1B/) { }
+        while ($d3_lines =~ s/z(.{138,140})2/Z$1C/) { }
+        while ($d3_lines =~ s/z(.{138,140})3/Z$1D/) { }
+        while ($d3_lines =~ s/z(.{138,140})4/Z$1E/) { }
+        while ($d3_lines =~ s/z(.{138,140})5/Z$1F/) { }
+        while ($d3_lines =~ s/z(.{138,140})6/Z$1G/) { }
+        while ($d3_lines =~ s/z(.{138,140})7/Z$1H/) { }
+        while ($d3_lines =~ s/z(.{138,140})8/Z$1I/) { }
+        while ($d3_lines =~ s/z(.{138,140})9/Z$1J/) { }
+
+        #while ($d3_lines =~ s/(\d)(.{138,140})z/$1$2Z/) { }
+        while ($d3_lines =~ s/0(.{138,140})z/A$1Z/) { }
+        while ($d3_lines =~ s/1(.{138,140})z/B$1Z/) { }
+        while ($d3_lines =~ s/2(.{138,140})z/C$1Z/) { }
+        while ($d3_lines =~ s/3(.{138,140})z/D$1Z/) { }
+        while ($d3_lines =~ s/4(.{138,140})z/E$1Z/) { }
+        while ($d3_lines =~ s/5(.{138,140})z/F$1Z/) { }
+        while ($d3_lines =~ s/6(.{138,140})z/G$1Z/) { }
+        while ($d3_lines =~ s/7(.{138,140})z/H$1Z/) { }
+        while ($d3_lines =~ s/8(.{138,140})z/I$1Z/) { }
+        while ($d3_lines =~ s/9(.{138,140})z/J$1Z/) { }
+
+        #while ($d3_lines =~ s/(\d)z/$1Z/) { }
+        while ($d3_lines =~ s/0z/AZ/) { }
+        while ($d3_lines =~ s/1z/BZ/) { }
+        while ($d3_lines =~ s/2z/CZ/) { }
+        while ($d3_lines =~ s/3z/DZ/) { }
+        while ($d3_lines =~ s/4z/EZ/) { }
+        while ($d3_lines =~ s/5z/FZ/) { }
+        while ($d3_lines =~ s/6z/GZ/) { }
+        while ($d3_lines =~ s/7z/HZ/) { }
+        while ($d3_lines =~ s/8z/IZ/) { }
+        while ($d3_lines =~ s/9z/JZ/) { }
+
+        while ($d3_lines =~ s/z0/ZA/) { }
+        while ($d3_lines =~ s/z1/ZB/) { }
+        while ($d3_lines =~ s/z2/ZC/) { }
+        while ($d3_lines =~ s/z3/ZD/) { }
+        while ($d3_lines =~ s/z4/ZE/) { }
+        while ($d3_lines =~ s/z5/ZF/) { }
+        while ($d3_lines =~ s/z6/ZG/) { }
+        while ($d3_lines =~ s/z7/ZH/) { }
+        while ($d3_lines =~ s/z8/ZI/) { }
+        while ($d3_lines =~ s/z9/ZJ/) { }
+
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+        $d3_lines = do_d3_replace ($d3_lines);
+
+        my $equation_d3_lines = $d3_lines; 
+        $equation_d3_lines =~ s/[^ABCDEFGHIJZ]+/ + /g;
+        $equation_d3_lines =~ s/A/0/g;
+        $equation_d3_lines =~ s/B/1/g;
+        $equation_d3_lines =~ s/C/2/g;
+        $equation_d3_lines =~ s/D/3/g;
+        $equation_d3_lines =~ s/E/4/g;
+        $equation_d3_lines =~ s/F/5/g;
+        $equation_d3_lines =~ s/G/6/g;
+        $equation_d3_lines =~ s/H/7/g;
+        $equation_d3_lines =~ s/I/8/g;
+        $equation_d3_lines =~ s/J/9/g;
+        $equation_d3_lines .= " + 0";
+        $equation_d3_lines =~ s/ //g;
+        $equation_d3_lines =~ s/\+\+/+/g;
+        print $equation_d3_lines, "\n=";
+        print (eval ($equation_d3_lines));
+
+        while ($d3_lines =~ s/(.......)(.{133})(...)Z(...)(.{133})(.......)/$1$2$3Y$4$5$6/)
+        {
+            print "\n==================\n$1\n$3*$4\n$6\n";
+            my $top_row = $1;
+            my $mid_row = "$3*$4";
+            my $bot_row = "$6";
+
+            $top_row =~ s/^(....\.)../$1../;
+            $top_row =~ s/^..(\.....)/..$1/;
+            $mid_row =~ s/^(....\.)../$1../;
+            $mid_row =~ s/^..(\.....)/..$1/;
+            $bot_row =~ s/^(....\.)../$1../;
+            $bot_row =~ s/^..(\.....)/..$1/;
+
+            $top_row =~ s/^(.....)\../$1../;
+            $top_row =~ s/^.\.(.....)/..$1/;
+            $bot_row =~ s/^(.....)\../$1../;
+            $bot_row =~ s/^.\.(.....)/..$1/;
+            $mid_row =~ s/^(.....)\../$1../;
+            $mid_row =~ s/^.\.(.....)/..$1/;
+
+            #my $x = "$1$3$4$6";
+            my $x = "$top_row$mid_row$bot_row";
+            print $x, "\n";
+            $x =~ s/[^ABCDEFGHIJ]+/ /g;
+            
+            $x =~ s/[0-9]//g;
+            $x =~ s/A/0/g;
+            $x =~ s/B/1/g;
+            $x =~ s/C/2/g;
+            $x =~ s/D/3/g;
+            $x =~ s/E/4/g;
+            $x =~ s/F/5/g;
+            $x =~ s/G/6/g;
+            $x =~ s/H/7/g;
+            $x =~ s/I/8/g;
+            $x =~ s/J/9/g;
+            $x =~ s/([0-9]) ([0-9])/$1 * $2/g;
+            $x =~ s/([0-9]{3})([0-9]{3})/$1 * $2/g;
+            $d3_p2_equation .= "$x + ";
+            print $x, "\n";
+        }
+        $d3_p2_equation .= " 0";
+
+        while ($d3_lines =~ s/^(.{140})//)
+        {
+            print $1, "\n";
+        }
+        print "\n=======================\n";
+        while ($orig_d3_lines =~ s/^(.{140})//)
+        {
+            print $1, "\n";
+        }
+        print ($d3_p2_equation, "\n ==>> ");
+        print (eval ($d3_p2_equation));
     }
     
     my $x = 0;
