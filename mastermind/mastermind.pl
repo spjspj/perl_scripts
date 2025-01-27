@@ -18,6 +18,7 @@ use POSIX qw(strftime);
 $| = 1;
 
 my $GAME_WON = 0;
+my $GAME_TYPE = "";
 my $GAME_STARTED = 0;
 my $GAME_WAITING_FOR_CHOOSE = 0;
 my $GAME_WAITING_FOR_NEXT_TURN = 0;
@@ -26,15 +27,11 @@ my $CURRENT_LOGIN_NAME = "";
 my %rand_colors;
 my @player_names;
 my @NEEDS_REFRESH;
-my $current_number_of_counters;
-my %already_shuffled;
 my %BANNED_NAMES;
 my $whos_turn;
 my $num_players_in_game = -1;
 my @player_ips;
 my $num_players_in_lobby = 0;
-my @beads;
-my $number_beads = 10;
 my $NUMBER_TIMES_FOR_DRAW = 10;
 my $player = "";
 my $player_num = 1;
@@ -332,7 +329,7 @@ sub get_needs_refresh
 
 sub set_next_turn
 {
-    if ($whos_turn >= $num_players_in_game) 
+    if ($whos_turn >= $num_players_in_game)
     {
         $whos_turn = 0;
     }
@@ -344,20 +341,18 @@ sub new_game
 {
     my $level = $_ [0];
     $num_players_in_game = $num_players_in_lobby;
-    $whos_turn = int (rand ($num_players_in_game)); 
+    $whos_turn = int (rand ($num_players_in_game));
     set_next_turn ();
     $player = get_player_name ($whos_turn);
 
     $GAME_WON = 0;
+    $GAME_TYPE = "human";
     $GAME_STARTED = 1;
     $GAME_WAITING_FOR_CHOOSE = 0;
     $GAME_WAITING_FOR_NEXT_TURN = 0;
     print ("STARTING GAME!!! $GAME_STARTED\n");
 
     force_needs_refresh ();
-    
-    my @new_beads;
-    @beads = @new_beads;
 
     my %CURRENT_GUESSES_NEW;
     %CURRENT_GUESSES = %CURRENT_GUESSES_NEW;
@@ -365,7 +360,41 @@ sub new_game
     $CURRENT_CODE = "";
     for (my $i = 0; $i < 4; $i++)
     {
-        my $n = int (rand (6));      
+        my $n = int (rand (6));
+        if ($n == 0) { $CURRENT_CODE .= "W"; }
+        if ($n == 1) { $CURRENT_CODE .= "U"; }
+        if ($n == 2) { $CURRENT_CODE .= "B"; }
+        if ($n == 3) { $CURRENT_CODE .= "R"; }
+        if ($n == 4) { $CURRENT_CODE .= "G"; }
+        if ($n == 5) { $CURRENT_CODE .= "Y"; }
+    }
+    print ("$CURRENT_CODE\n");
+}
+
+sub new_bot_game
+{
+    my $level = $_ [0];
+    $num_players_in_game = $num_players_in_lobby;
+    $whos_turn = int (rand ($num_players_in_game));
+    set_next_turn ();
+    $player = get_player_name ($whos_turn);
+
+    $GAME_WON = 0;
+    $GAME_TYPE = "bot";
+    $GAME_STARTED = 1;
+    $GAME_WAITING_FOR_CHOOSE = 0;
+    $GAME_WAITING_FOR_NEXT_TURN = 0;
+    print ("STARTING BOT GAME!!! $GAME_STARTED\n");
+
+    force_needs_refresh ();
+
+    my %CURRENT_GUESSES_NEW;
+    %CURRENT_GUESSES = %CURRENT_GUESSES_NEW;
+    $CURRENT_GUESSES_NUM = 0;
+    $CURRENT_CODE = "";
+    for (my $i = 0; $i < 4; $i++)
+    {
+        my $n = int (rand (6));
         if ($n == 0) { $CURRENT_CODE .= "W"; }
         if ($n == 1) { $CURRENT_CODE .= "U"; }
         if ($n == 2) { $CURRENT_CODE .= "B"; }
@@ -379,19 +408,15 @@ sub new_game
 sub reset_game
 {
     $GAME_WON = 0;
+    $GAME_TYPE = "";
     $GAME_STARTED = 0;
     $GAME_WAITING_FOR_CHOOSE = 0;
     $GAME_WAITING_FOR_NEXT_TURN = 0;
     $reason_for_game_end = "";
     $CURRENT_LOGIN_NAME = "";
-    $current_number_of_counters;
-    %already_shuffled;
     %BANNED_NAMES;
     $whos_turn;
     $num_players_in_game = -1;
-    my @new_beads;
-    @beads = @new_beads;
-    $number_beads = 10;
     $NUMBER_TIMES_FOR_DRAW = 10;
     $player = "";
     $CURRENT_CODE = 0;
@@ -478,7 +503,6 @@ sub print_game_state
     if ($id == $whos_turn)
     {
         $out .= "<b>YOUR TURN!!</b>";
-        $out .= "&nbsp;&nbsp;<a href=\"takecard.$current_number_of_counters.html\">Take this card!</a><br>";
     }
 
     return $out;
@@ -571,6 +595,562 @@ sub get_refresh_code
     return $txt;
 }
 
+sub get_valid_choices
+{
+    my $term = $_ [0];
+    my $helper = $_ [1];
+    print (" >>>>>\necho \"1\" | cut.pl stdin \"$term\" \"$helper\" master_mind\n");
+
+    my %mm;
+    my %num_cols_in_mm;
+    my %colors;
+    $colors {"W"} = 1;
+    $colors {"U"} = 1;
+    $colors {"B"} = 1;
+    $colors {"R"} = 1;
+    $colors {"G"} = 1;
+    $colors {"Y"} = 1;
+    my $orig_helper = $helper;
+
+    my $c = 0;
+    my $c1;
+    my $c2;
+    my $c3;
+    my $c4;
+    foreach $c1 (sort (keys (%colors)))
+    {
+        foreach $c2 (sort (keys (%colors)))
+        {
+            foreach $c3 (sort (keys (%colors)))
+            {
+                foreach $c4 (sort (keys (%colors)))
+                {
+                    $c++;
+                    my $code = "$c1$c2$c3$c4";
+                    my $code2 = "$c1$c2$c3$c4";
+                    $mm {$code} = 1;
+
+                    my $num_same = 0;
+                    if ($c1 eq $c2) { $num_same++; }
+                    if ($c1 eq $c3) { $num_same++; }
+                    if ($c1 eq $c4) { $num_same++; }
+                    if ($c2 eq $c3 && $c2 ne $c1) { $num_same++; }
+                    if ($c2 eq $c4 && $c2 ne $c1) { $num_same++; }
+                    if ($c3 eq $c4 && $c3 ne $c1 && $c3 ne $c2) { $num_same++; }
+
+                    my $num_cols = 4 - $num_same;
+                    $num_cols_in_mm {$code} = $num_cols;
+                }
+            }
+        }
+    }
+
+    my $num_eliminated = 0;
+    $term = uc ($term);
+    while ($term =~ s/^([WUBRGY][WUBRGY][WUBRGY][WUBRGY])(,|$)//)
+    {
+        my $guess_orig = $1;
+        my $guess = $1;
+        my %cols_in_guess;
+        my $cols_in_guess_re = "[";
+        my $number_cols_in_guess = 0;
+        my $number_correct_cols_in_guess = 0;
+
+        while ($guess =~ s/^([WUBRGY])//i)
+        {
+            my $col = $1;
+            if (!defined ($cols_in_guess {$col}))
+            {
+                $number_cols_in_guess ++;
+                $cols_in_guess_re .= $col;
+            }
+            $cols_in_guess {$col}++;
+        }
+
+        $cols_in_guess_re .= "]";
+        my $real_helper = $helper;
+        if ($orig_helper =~ m/^([WUBRGY])([WUBRGY])([WUBRGY])([WUBRGY])/i)
+        {
+            $real_helper = "0000";
+
+            my $sac_helper = $orig_helper;
+            my $sac_guess = $guess_orig;
+            my $left_over_answer = "";
+            my $left_over_guess = "";
+            while ($sac_helper =~ s/^(.)//)
+            {
+                my $c = $1;
+                if ($sac_guess =~ m/^$c/i)
+                {
+                    $real_helper =~ s/0/2/;
+                }
+                else
+                {
+                    $left_over_answer .= "$c";
+                    $sac_guess =~ m/^(.)/;
+                    $left_over_guess .= "$1";
+                }
+
+                $sac_guess =~ s/^.//;
+            }
+
+            if ($left_over_answer =~ m/W/i && $left_over_guess =~ m/W/i) { $real_helper =~ s/0/1/; }
+            if ($left_over_answer =~ m/U/i && $left_over_guess =~ m/U/i) { $real_helper =~ s/0/1/; }
+            if ($left_over_answer =~ m/B/i && $left_over_guess =~ m/B/i) { $real_helper =~ s/0/1/; }
+            if ($left_over_answer =~ m/R/i && $left_over_guess =~ m/R/i) { $real_helper =~ s/0/1/; }
+            if ($left_over_answer =~ m/G/i && $left_over_guess =~ m/G/i) { $real_helper =~ s/0/1/; }
+            if ($left_over_answer =~ m/Y/i && $left_over_guess =~ m/Y/i) { $real_helper =~ s/0/1/; }
+            print ("  <<<<< $real_helper for $helper ($left_over_answer) vs guess of leftoverguess=$left_over_guess vs guessorig=$guess_orig\n");
+            $helper = $real_helper;
+        }
+
+        print ("  after <<<<< $helper for $helper vs $guess_orig\n");
+
+        if ($helper =~ s/^([012][012][012][012])(,|$)//)
+        {
+            #print (" ==============================\n Comparing $1 vs $guess_orig\n");
+            my $guess_result = $1;
+            my $guess_result_orig = $1;
+            my $num_absolutely_correct = 0;
+            my $num_half_correct = 0;
+            my $num_incorrect = 4;
+            #print ("$guess_orig => $guess_result\n");
+
+            while ($guess_result =~ s/1//)
+            {
+                $num_half_correct ++;
+                $number_correct_cols_in_guess ++;
+                $num_incorrect --;
+
+                if ($cols_in_guess {"W"} > 1) { $cols_in_guess {"W"} --; }
+                elsif ($cols_in_guess {"U"} > 1) { $cols_in_guess {"U"} --; }
+                elsif ($cols_in_guess {"B"} > 1) { $cols_in_guess {"B"} --; }
+                elsif ($cols_in_guess {"R"} > 1) { $cols_in_guess {"R"} --; }
+                elsif ($cols_in_guess {"G"} > 1) { $cols_in_guess {"G"} --; }
+                elsif ($cols_in_guess {"Y"} > 1) { $cols_in_guess {"Y"} --; }
+                elsif ($cols_in_guess {"W"} == 1) { $cols_in_guess {"W"} --; }
+                elsif ($cols_in_guess {"U"} == 1) { $cols_in_guess {"U"} --; }
+                elsif ($cols_in_guess {"B"} == 1) { $cols_in_guess {"B"} --; }
+                elsif ($cols_in_guess {"R"} == 1) { $cols_in_guess {"R"} --; }
+                elsif ($cols_in_guess {"G"} == 1) { $cols_in_guess {"G"} --; }
+                elsif ($cols_in_guess {"Y"} == 1) { $cols_in_guess {"Y"} --; }
+            }
+
+            while ($guess_result =~ s/2//)
+            {
+                $num_absolutely_correct ++;
+                $number_correct_cols_in_guess ++;
+                $num_incorrect --;
+
+                if ($cols_in_guess {"W"} > 1) { $cols_in_guess {"W"} --; }
+                elsif ($cols_in_guess {"U"} > 1) { $cols_in_guess {"U"} --; }
+                elsif ($cols_in_guess {"B"} > 1) { $cols_in_guess {"B"} --; }
+                elsif ($cols_in_guess {"R"} > 1) { $cols_in_guess {"R"} --; }
+                elsif ($cols_in_guess {"G"} > 1) { $cols_in_guess {"G"} --; }
+                elsif ($cols_in_guess {"Y"} > 1) { $cols_in_guess {"Y"} --; }
+                elsif ($cols_in_guess {"W"} == 1) { $cols_in_guess {"W"} --; }
+                elsif ($cols_in_guess {"U"} == 1) { $cols_in_guess {"U"} --; }
+                elsif ($cols_in_guess {"B"} == 1) { $cols_in_guess {"B"} --; }
+                elsif ($cols_in_guess {"R"} == 1) { $cols_in_guess {"R"} --; }
+                elsif ($cols_in_guess {"G"} == 1) { $cols_in_guess {"G"} --; }
+                elsif ($cols_in_guess {"Y"} == 1) { $cols_in_guess {"Y"} --; }
+            }
+
+            my $col;
+            foreach $col (sort (keys (%cols_in_guess)))
+            {
+                #print ("$col => $cols_in_guess{$col}\n");
+            }
+
+            my $min_number_cols_correct_in_guess = 4;
+            $min_number_cols_correct_in_guess -= $cols_in_guess {"W"};
+            $min_number_cols_correct_in_guess -= $cols_in_guess {"U"};
+            $min_number_cols_correct_in_guess -= $cols_in_guess {"B"};
+            $min_number_cols_correct_in_guess -= $cols_in_guess {"R"};
+            $min_number_cols_correct_in_guess -= $cols_in_guess {"G"};
+            $min_number_cols_correct_in_guess -= $cols_in_guess {"Y"};
+            #print (" xxxx  min_number_cols_correct_in_guess  = $min_number_cols_correct_in_guess\n");
+
+            my $all_correct;
+            if ($min_number_cols_correct_in_guess == 4)
+            {
+                $all_correct = "^[$guess_orig][$guess_orig][$guess_orig][$guess_orig]\$";
+            }
+
+            if ($num_absolutely_correct == 4)
+            {
+                print ("Solution was: $guess_orig\n");
+            }
+            else
+            {
+                if ($mm {$guess_orig} == 1)
+                {
+                    print (" yyy Eliminate $guess_orig\n");
+                    $num_eliminated ++;
+                    $mm {$guess_orig} = 0;
+                }
+            }
+
+            if ($num_incorrect == 4)
+            {
+                my $code;
+                foreach $code (sort (keys (%mm)))
+                {
+                    if ($code =~ m/$cols_in_guess_re/)
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print ("## $code has no matching colours [$cols_in_guess_re]\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+
+            my $partial_count = 0;
+            my $check_partial;
+            while ($partial_count + $num_incorrect < 4)
+            {
+                # check what must exist in solution
+                $check_partial .= $cols_in_guess_re . ".*";
+                $partial_count++;
+            }
+
+            print ("Partial count = $partial_count -- $check_partial -- $min_number_cols_correct_in_guess\n");
+            if ($partial_count > 0)
+            {
+                my $code;
+                foreach $code (sort (keys (%mm)))
+                {
+                    if ($mm {$code} == 1 && $min_number_cols_correct_in_guess > $num_cols_in_mm {$code} && $min_number_cols_correct_in_guess < 4)
+                    {
+                        $num_eliminated ++;
+                        print ("## $code too few colors so elimimate it [$num_cols_in_mm{$code} vs $min_number_cols_correct_in_guess]\n");
+                        #$mm {$code} = 0;
+                        #$num_eliminated ++;
+                    }
+
+                    if ($mm {$code} == 1 && $min_number_cols_correct_in_guess == 4)
+                    {
+                        if ($code !~ m/$all_correct/img)
+                        {
+                            $num_eliminated ++;
+                            print ("## all right but code ($code) doesn't match $all_correct\n");
+                            $mm {$code} = 0;
+                        }
+                    }
+
+                    if ($mm {$code} == 1 && !($code =~ m/$check_partial/))
+                    {
+                        $num_eliminated ++;
+                        print ("## $code partial elimimate [$check_partial] for $partial_count\n");
+                        $mm {$code} = 0;
+                    }
+
+                }
+            }
+
+            # all greys!
+            if ($num_absolutely_correct == 0 && $num_half_correct > 0)
+            {
+                my $code;
+                $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                my $a = $1;
+                my $b = $2;
+                my $c = $3;
+                my $d = $4;
+
+                my $wrong_1 = "$a...";
+                my $wrong_2 = ".$b..";
+                my $wrong_3 = "..$c.";
+                my $wrong_4 = "...$d";
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if ($code =~ m/$wrong_1/ || $code =~ m/$wrong_2/ || $code =~ m/$wrong_3/ || $code =~ m/$wrong_4/)
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print (" >>> Wrong bead in position ($code) vs $guess_orig\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+            
+            # all greys!
+            if ($num_absolutely_correct == 0 && $num_half_correct > 1)
+            {
+                my $code;
+                $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                my $a = $1;
+                my $b = $2;
+                my $c = $3;
+                my $d = $4;
+
+                my $right_1 = "($a.*$b|$a.*$c|$a.*$d|$b.*$c|$b.*$d|$c.*$d)";
+                my $right_2 = "($b.*$a|$c.*$a|$d.*$a|$c.*$b|$d.*$b|$d.*$c)";
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if (!($code =~ m/$right_1/ || $code =~ m/$right_2/))
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print (" >>> Multi Partial elim ($code) vs $guess_orig\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+            
+            # all greys!
+            if ($num_absolutely_correct == 0 && $num_half_correct > 2)
+            {
+                my $code;
+                $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                my $a = $1;
+                my $b = $2;
+                my $c = $3;
+                my $d = $4;
+
+                my $right_1 = "($a.*$b.*$c|$a.*$b.*$d|$a.*$c.*$b|$a.*$c.*$d|$a.*$d.*$b|$a.*$d.*$c|$b.*$a.*$c|$b.*$a.*$d|$b.*$c.*$a|$b.*$c.*$d|$b.*$d.*$a|$b.*$d.*$c|$c.*$a.*$b|$c.*$a.*$d|$c.*$b.*$a|$c.*$b.*$d|$c.*$d.*$a|$c.*$d.*$b|$d.*$a.*$b|$d.*$a.*$c|$d.*$b.*$a|$d.*$b.*$c|$d.*$c.*$a|$d.*$c.*$b)";
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if (!($code =~ m/$right_1/))
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print (" >>> Tri Partial elim ($code) vs $guess_orig\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+
+            if ($num_absolutely_correct == 1 && $num_half_correct == 0)
+            {
+                my $code;
+                $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                my $a = $1;
+                my $b = $2;
+                my $c = $3;
+                my $d = $4;
+
+                my $wrong_1a = "$a" . "[$b$c$d]..";
+                my $wrong_1b = "$a" . ".[$b$c$d].";
+                my $wrong_1c = "$a" . "..[$b$c$d]";
+
+                my $wrong_2a = "[$a$c$d]$b" . "..";
+                my $wrong_2b = ".$b" . "[$a$c$d].";
+                my $wrong_2c = ".$b" . ".[$a$c$d]";
+
+                my $wrong_3a = "[$a$b$d].$c" . ".";
+                my $wrong_3b = ".[$a$b$d]$c" . ".";
+                my $wrong_3c = "..$c" . "[$a$b$d]";
+
+                my $wrong_4a = "[$a$b$c].." . "$d";
+                my $wrong_4b = ".[$a$b$c]." . "$d";
+                my $wrong_4c = "..[$a$b$c]" . "$d";
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if ($code =~ m/$wrong_1a/ || $code =~ m/$wrong_1b/ || $code =~ m/$wrong_1c/ || 
+                        $code =~ m/$wrong_2a/ || $code =~ m/$wrong_2b/ || $code =~ m/$wrong_2c/ || 
+                        $code =~ m/$wrong_3a/ || $code =~ m/$wrong_3b/ || $code =~ m/$wrong_3c/ || 
+                        $code =~ m/$wrong_4a/ || $code =~ m/$wrong_4b/ || $code =~ m/$wrong_4c/)
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            print (">> Single elim $code\n");
+                            $num_eliminated ++;
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+            
+            if ($num_absolutely_correct == 0 && $num_half_correct == 1)
+            {
+                my $code;
+                $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                my $a = $1;
+                my $b = $2;
+                my $c = $3;
+                my $d = $4;
+
+                my $wrong_1 = "($a.*$b|$a.*$c|$a.*$d|$b.*$c|$b.*$d|$c.*$d)";
+                my $wrong_2 = "($b.*$a|$c.*$a|$d.*$a|$c.*$b|$d.*$b|$d.*$c)";
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if ($code =~ m/$wrong_1/ || $code =~ m/$wrong_2/)
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            print (">> Single elim partial $code\n");
+                            $num_eliminated ++;
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+            
+            if ($num_absolutely_correct == 2 && $num_half_correct == 2)
+            {
+                my $code;
+                $guess_orig =~ m/(.)(.)(.)(.)/;
+
+                my $a = $1;
+                my $b = $2;
+                my $c = $3;
+                my $d = $4;
+
+                my $right_1 = "$a$b$d$c";
+                my $right_2 = "$a$c$b$d";
+                my $right_3 = "$a$d$c$b";
+                my $right_4 = "$b$a$c$d";
+                my $right_5 = "$c$b$a$d";
+                my $right_6 = "$d$b$c$a";
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/ || $code =~ m/$right_5/ || $code =~ m/$right_6/))
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                        }
+                        $mm {$code} = 0;
+                    }
+                }
+            }
+
+            # some blacks!
+            if ($num_absolutely_correct >= 1)
+            {
+                my $code;
+                my $right_1 = $guess_orig; $right_1 =~ s/...$/.../;
+                my $right_2 = $guess_orig; $right_2 =~ s/^././;  $right_2 =~ s/..$/../;
+                my $right_3 = $guess_orig; $right_3 =~ s/^../../ ;$right_3 =~ s/.$/./;
+                my $right_4 = $guess_orig; $right_4 =~ s/^.../.../;
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/))
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print (" >>> Has to have a given bead in position ($code) vs $guess_orig\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+
+                }
+            }
+
+            if ($num_absolutely_correct >= 2)
+            {
+                my $code;
+                my $right_1 = $guess_orig; $right_1 =~ s/^(.)(.)../$1$2../;
+                my $right_2 = $guess_orig; $right_2 =~ s/^(.).(.)./$1.$2./;
+                my $right_3 = $guess_orig; $right_3 =~ s/^(.)..(.)/$1..$2/;
+                my $right_4 = $guess_orig; $right_4 =~ s/^.(.).(.)/.$1.$2/;
+                my $right_5 = $guess_orig; $right_5 =~ s/^.(.)(.)./.$1$2./;
+                my $right_6 = $guess_orig; $right_6 =~ s/^..(.)(.)/..$1$2/;
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/ || $code =~ m/$right_5/ || $code =~ m/$right_6/))
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print (" >>> multi Has to have a given bead in position ($code) vs $guess_orig\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+
+                }
+            }
+
+            if ($num_absolutely_correct >= 3)
+            {
+                my $code;
+                my $right_1 = $guess_orig; $right_1 =~ s/^(.)(.)(.)./$1$2$3./;
+                my $right_2 = $guess_orig; $right_2 =~ s/^(.)(.).(.)/$1$2.$3/;
+                my $right_3 = $guess_orig; $right_3 =~ s/^(.).(.)(.)/$1.$2$3/;
+                my $right_4 = $guess_orig; $right_4 =~ s/^.(.)(.)(.)/.$1$2$3/;
+
+                foreach $code (sort (keys (%mm)))
+                {
+                    if (!($code =~ m/$right_1/ || $code =~ m/$right_2/ || $code =~ m/$right_3/ || $code =~ m/$right_4/))
+                    {
+                        if ($mm {$code} == 1)
+                        {
+                            $num_eliminated ++;
+                            print (" >>> trimulti Has to have a given bead in position ($code) vs $guess_orig\n");
+                        }
+                        $mm {$code} = 0;
+                    }
+
+                }
+            }
+
+            my $left_over = 0;
+            my $code;
+            foreach $code (sort (keys (%mm)))
+            {
+                $left_over += $mm {$code};
+            }
+
+            #print ("Checked: $check_partial - $num_eliminated were eliminated (vs $left_over remaining)\n");
+        }
+    }
+
+    my $code;
+    my $final_code = "INVALID";
+
+    my $rand_code = int (rand ((scalar keys %mm) - $num_eliminated));
+    my $solution_count = 0;
+
+    foreach $code (sort (keys (%mm)))
+    {
+        if ($mm {$code} == 1)
+        {
+            $solution_count++;
+        }
+    }
+    
+    my $rand_code = int (rand ($solution_count));
+    my $rr_count = 0;
+    foreach $code (sort (keys (%mm)))
+    {
+        if ($mm {$code} == 1)
+        {
+            print ("Found $code as a solution (#$rr_count from $rand_code vs $num_eliminated)\n");
+            if ($rand_code == $rr_count)
+            {
+                $final_code = $code;
+            }
+            $rr_count++;
+            $solution_count++;
+        }
+    }
+    return $final_code;
+}
+
 sub get_game_state
 {
     my $IP = $_ [0];
@@ -622,7 +1202,7 @@ sub get_game_state
         {
             if ($num_players_in_lobby >= 1)
             {
-                $out .= "<a href=\"\/reset_game\">Reset<\/a> or start a new game here <a href=\"\/new_game\">New game!<\/a>";
+                $out .= "<a href=\"\/reset_game\">Reset<\/a>, <a href=\"\/new_game\">new game<\/a> or play against the bot <a href=\"\/new_bot_game\">play against bot<\/a>";
             }
             else
             {
@@ -643,13 +1223,13 @@ sub get_game_state
         $do_refresh = 0;
     }
     $out .= get_refresh_code ($do_refresh, $id, $whos_turn);
- 
+
     return $out;
 }
 
 #####  BEAD HTML ####
 my $header = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"> <link rel=\"stylesheet\" href=\"\/maastermind\/bootstrap.min.css\"> <script src=\"\/maastermind\/jquery-3.5.1.min.js\"><\/script> <script src=\"\/maastermind\/popper.min.js\"><\/script> <script src=\"\/maastermind\/bootstrap.min.js\"><\/script> <\/head> <body> <center> <h1 style=\"color: royalblue\"> Master Mind <\/h1><table>";
-my $footer = " <tr> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 1</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead1\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead1')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead1')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead1')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead1')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead1')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead1')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead2\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 2</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead2\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead2')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead2')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead2')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead2')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead2')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead2')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 3</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead3\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead3')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead3')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead3')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead3')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead3')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead3')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead4\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 4</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead4\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead4')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead4')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead4')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead4')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead4')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead4')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> 
+my $footer = " <tr> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 1</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead1\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead1')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead1')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead1')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead1')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead1')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead1')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead2\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 2</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead2\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead2')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead2')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead2')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead2')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead2')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead2')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 3</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead3\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead3')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead3')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead3')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead3')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead3')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead3')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead4\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 4</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead4\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead4')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead4')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead4')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead4')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead4')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead4')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td>
             <td>
                 <button id=\"submitButton\" onclick=\"location.href='http://www.example.com'\" disabled>Submit</button>
             </td></tr> </table> </center>
@@ -667,8 +1247,8 @@ function changeText(bead, beadUrl, nameofId)
     if (nameofId == 'bead4') { b4 = bead; numBeadsSet = numBeadsSet | 8; }
     document.getElementById(nameofId).innerHTML = `<img src=\"\${beadUrl}\" width=\"20\" height=\"15\"> \${bead}`;
     if (numBeadsSet == 15)
-    { 
-        document.getElementById(\"submitButton\").disabled = false; 
+    {
+        document.getElementById(\"submitButton\").disabled = false;
         var hhh = \"nextChoice?\" + b1 + \"&\" + b2 + \"&\" + b3 + \"&\" + b4;
         document.getElementById(\"submitButton\").href = hhh;
         document.getElementById(\"submitButton\").onclick = \"location.href='\" + hhh + \"'\";
@@ -676,7 +1256,7 @@ function changeText(bead, beadUrl, nameofId)
     }
     else { document.getElementById(\"submitButton\").disabled = true; }
 }
-<\/script> <br><a href=\"\/reset_game\">Reset<\/a> or start a new game here <a href=\"\/new_game\">New game!<\/a><\/body> <\/html> ";
+<\/script> <br><a href=\"\/reset_game\">Reset<\/a> or <a href=\"\/new_game\">new game<\/a> or play against the bot <a href=\"\/new_bot_game\">play against bot<\/a><\/body> <\/html> ";
 
 sub print_beads
 {
@@ -695,12 +1275,12 @@ sub print_beads
         {
             my $col = uc($1);
             my $color = $1;
-            if ($col eq "W") { $color = "white"; } 
-            if ($col eq "U") { $color = "blue"; } 
-            if ($col eq "B") { $color = "black"; } 
-            if ($col eq "R") { $color = "red"; } 
-            if ($col eq "G") { $color = "green"; } 
-            if ($col eq "Y") { $color = "yellow"; } 
+            if ($col eq "W") { $color = "white"; }
+            if ($col eq "U") { $color = "blue"; }
+            if ($col eq "B") { $color = "black"; }
+            if ($col eq "R") { $color = "red"; }
+            if ($col eq "G") { $color = "green"; }
+            if ($col eq "Y") { $color = "yellow"; }
             $middle .= "<td> <img src=\"$color.png\" width=\"20\" height=\"15\"></img> </td>";
         }
         my $extra = " (from $CURRENT_CODE to $copy_guess)";
@@ -732,10 +1312,173 @@ sub print_beads
 
     if ($num_right == 4)
     {
-        return ("$header$middle</tr> </td></table> <br> You won!<br><a href=\"\/reset_game\">Reset<\/a> or start a new game here <a href=\"\/new_game\">New game!<\/a><\/body> <\/html> ");
+        return ("$header$middle</tr> </td></table> <br> You won!<br><a href=\"\/reset_game\">Reset<\/a>, <a href=\"\/new_game\">new game<\/a> or play against the bot <a href=\"\/new_bot_game\">play against bot<\/a><\/body> <\/html>");
     }
     return ("$header$middle$footer");
-                
+}
+
+my $bot_footer = "<td>
+    <form>
+        <label for=\"numberRight\">Exact:</label>
+        <select id=\"numberRight\" onchange=\"validateForm()\">
+            <option value=\"\">Choose:</option>
+            <option value=\"0\">0</option>
+            <option value=\"1\">1</option>
+            <option value=\"2\">2</option>
+            <option value=\"3\">3</option>
+            <option value=\"4\">4</option>
+        </select>
+        <br>
+        <label for=\"numberPartial\">Partial:</label>
+        <select id=\"numberPartial\" onchange=\"validateForm()\">
+            <option value=\"\">Choose:</option>
+            <option value=\"0\">0</option>
+            <option value=\"1\">1</option>
+            <option value=\"2\">2</option>
+            <option value=\"3\">3</option>
+            <option value=\"4\">4</option>
+        </select>
+    </form><button id=\"humanCoderBtn\" onclick=\"location.href='http://www.example.com'\" disabled>Submit</button></td>
+    <script>
+        function validateForm()
+        {
+            let numberRight = parseInt(document.getElementById(\"numberRight\").value);
+            let numberPartial = parseInt(document.getElementById(\"numberPartial\").value);
+            if (!isNaN(numberRight) && !isNaN(numberPartial))
+            {
+                if (numberRight + numberPartial <= 4)
+                {
+                    var hhh = \"humanCoder?exact=\" + numberRight + \"&partial=\" + numberPartial;
+                    document.getElementById(\"humanCoderBtn\").href = hhh;
+                    document.getElementById(\"humanCoderBtn\").onclick = \"location.href='\" + hhh + \"'\";
+                    document.getElementById(\"humanCoderBtn\").setAttribute(\"onClick\", \"location.href='\" + hhh + \"'\");
+                    document.getElementById(\"humanCoderBtn\").disabled = false;
+                }
+                else
+                {
+                    document.getElementById(\"humanCoderBtn\").disabled = true;
+                }
+            }
+            else
+            {
+                document.getElementById(\"humanCoderBtn\").disabled = true;
+            }
+        }
+    </script>
+";
+
+sub print_bot_beads
+{
+    my $middle = "";
+    my $middle = "<tr>";
+
+    my $guess = 0;
+    my $num_right = 0;
+
+    my $next_guess = "";
+    print ("vvvvvv Currently on $CURRENT_GUESSES_NUM << guess number\n");
+    if ($CURRENT_GUESSES_NUM == 0)
+    {
+        for (my $i = 0; $i < 4; $i++)
+        {
+            my $n = int (rand (6));
+            if ($n == 0) { $next_guess .= "W"; }
+            if ($n == 1) { $next_guess .= "U"; }
+            if ($n == 2) { $next_guess .= "B"; }
+            if ($n == 3) { $next_guess .= "R"; }
+            if ($n == 4) { $next_guess .= "G"; }
+            if ($n == 5) { $next_guess .= "Y"; }
+        }
+
+        $next_guess = lc ($next_guess);
+        $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = "$next_guess";
+        $CURRENT_GUESSES {$CURRENT_GUESSES_NUM . "_response"} = "-1,-1";
+        $CURRENT_GUESSES_NUM++;
+    }
+    elsif ($CURRENT_GUESSES_NUM > 0)
+    {
+        my $gg = 0;
+        my $term = "";
+        my $helper = "";
+        
+        while (exists ($CURRENT_GUESSES {$gg}) && $CURRENT_GUESSES {$gg . "_response"} ne "-1,-1")
+        {
+            $term .= "$CURRENT_GUESSES{$gg},";
+            
+            my $exact = 0;
+            my $partial = 0;
+            if ($CURRENT_GUESSES {$gg . "_response"} =~ m/^(\d+),(\d+)/)
+            {
+                $exact = $1;
+                $partial = $2;
+            }
+
+            my $cc = 4;
+            while ($exact > 0)
+            {
+                $helper .= "2";
+                $cc--;
+                $exact--;
+            }
+            while ($partial > 0)
+            {
+                $helper .= "1";
+                $cc--;
+                $partial--;
+            }
+            while ($cc > 0)
+            {
+                $helper .= "0";
+                $cc--;
+            }
+            $helper .= ",";
+            $gg++;
+        }
+
+        my $k;
+        foreach $k (sort keys (%CURRENT_GUESSES))
+        {
+            print ("$k  --> $CURRENT_GUESSES{$k}\n");
+        }
+
+        print ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII$term,$helper\n");
+        $next_guess = lc (get_valid_choices ($term, $helper));
+        $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = "$next_guess";
+        $CURRENT_GUESSES {$CURRENT_GUESSES_NUM . "_response"} = "-1,-1";
+        $CURRENT_GUESSES_NUM++;
+    }
+
+    while (exists ($CURRENT_GUESSES {$guess}))
+    {
+        my $new_guess = uc ($CURRENT_GUESSES {$guess});
+        my $copy_guess = $new_guess;
+
+        $middle .= "<td>";
+        while ($new_guess =~ s/^([wubrgy])//im)
+        {
+            my $col = uc($1);
+            my $color = $1;
+            if ($col eq "W") { $color = "white"; }
+            if ($col eq "U") { $color = "blue"; }
+            if ($col eq "B") { $color = "black"; }
+            if ($col eq "R") { $color = "red"; }
+            if ($col eq "G") { $color = "green"; }
+            if ($col eq "Y") { $color = "yellow"; }
+            $middle .= "<img src=\"$color.png\" width=\"20\" height=\"15\"></img>";
+        }
+
+        my $user_guess = "<td></td>";
+        if ($CURRENT_GUESSES {$guess . "_response"} ne "-1,-1")
+        {
+            $user_guess = "<td>" . $CURRENT_GUESSES {$guess . "_response"} . "</td>";
+        }
+
+        $middle .= "<tr>$user_guess</tr>";
+        $guess++;
+    }
+    $middle .= "$bot_footer</tr></table>";
+
+    return ("$header$middle");
 }
 #####  // BEAD HTML ####
 
@@ -799,7 +1542,7 @@ sub print_beads
         if ($CURRENT_LOGIN_NAME ne "" && get_player_id_from_name ($CURRENT_LOGIN_NAME, "ggg") == -1)
         {
             add_new_user ("name=$CURRENT_LOGIN_NAME", $client_addr);
-            
+
             my $xyz = get_game_state($client_addr);
             print ("749             <<< line number\n");
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "noredirect");
@@ -817,6 +1560,15 @@ sub print_beads
         if ($txt =~ m/GET.*new_game/m)
         {
             new_game ();
+            print ("765             <<< line number\n");
+            write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
+            next;
+        }
+
+        # HTTP
+        if ($txt =~ m/GET.*new_bot_game/m)
+        {
+            new_bot_game ();
             print ("765             <<< line number\n");
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "redirect");
             next;
@@ -890,19 +1642,9 @@ sub print_beads
             next;
         }
 
-        # HTTP
-        if ($txt =~ m/.*boot.*person.*name=(\w\w\w[\w_]+)/mi)
-        {
-            my $person_to_boot = $1;
-            boot_person ($person_to_boot);
-            print ("843             <<< line number\n");
-            write_to_socket (\*CLIENT, "$person_to_boot was booted <a href=\"\/DONEDASBOOT\">Lobby or Game window<\/a>", "", "redirect");
-            next;
-        }
-
         my $this_player_id = get_player_id_from_name ($CURRENT_LOGIN_NAME, "ddd");
         my $this_players_go = $this_player_id == $whos_turn;
-        
+
         # HTTP
         if ($txt =~ m/.*next_turn.*/mi && !$GAME_WAITING_FOR_NEXT_TURN)
         {
@@ -911,9 +1653,9 @@ sub print_beads
             write_to_socket (\*CLIENT, "$info", "", "redirect");
             next;
         }
-        
+
         # HTTP
-        # Choice made!
+        # Human game choice made! (aka human is the codebreaker against the bot)
         if ($txt =~ m/.*nextChoice.*(White|Blue|Black|Red|Green|Yellow).(White|Blue|Black|Red|Green|Yellow).(White|Blue|Black|Red|Green|Yellow).(White|Blue|Black|Red|Green|Yellow).*/mi)
         {
             my $b1 = lc($1);
@@ -937,12 +1679,34 @@ sub print_beads
             $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = "$b1$b2$b3$b4";
             $CURRENT_GUESSES_NUM++;
 
-            my $person_to_boot = $1;
-            boot_person ($person_to_boot);
-            print ("843             <<< line number\n");
-            write_to_socket (\*CLIENT, "$person_to_boot was booted <a href=\"\/DONEDASBOOT\">Lobby or Game window<\/a>", "", "redirect");
+            write_to_socket (\*CLIENT, "Choice made", "", "redirect");
             next;
         }
+        
+        # Bot game choice made! (aka human is the coder)
+        print ("\n=================\nChecking $txt\n=============\n");
+        if ($txt =~ m/.*humanCoder\?exact=([01234])&partial=([01234]).*/i)
+        {
+            my $exact = $1;
+            my $partial = $2;
+            $CURRENT_GUESSES {($CURRENT_GUESSES_NUM-1) . "_response"} = "$exact,$partial";
+
+            my $k;
+            foreach $k (sort keys (%CURRENT_GUESSES))
+            {
+                print (" modifying here:::: $k  --> $CURRENT_GUESSES{$k}\n");
+            }
+
+            if ($exact == 4)
+            {
+                game_won ("Bot chose the code correctly!");
+            }
+            my $info = print_bot_beads ();
+            $info .= "$reason_for_game_end <a href=\"\/reset_game\">Reset<\/a> or start a new game here <a href=\"\/reset_game\">Reset<\/a>, <a href=\"\/new_game\">new game<\/a> or play against the bot <a href=\"\/new_bot_game\">play against bot<\/a>";
+            write_to_socket (\*CLIENT, $info, "", "noredirect");
+            next;
+        }
+        print ("\n=================\nEXIT\n=============\n");
 
         if ($GAME_WAITING_FOR_NEXT_TURN)
         {
@@ -967,14 +1731,20 @@ sub print_beads
         if ($won =~ m/^./)
         {
             game_won ($won);
-            my $info = "Game Over! $won..<br><a href=\"\/reset_game\">Reset<\/a> or start a new game here <a href=\"\/new_game\">New game!!<\/a>";
+            my $info = "Game Over! $won..<br><a href=\"\/reset_game\">Reset<\/a> or start a new game here <a href=\"\/reset_game\">Reset<\/a>, <a href=\"\/new_game\">new game<\/a> or play against the bot <a href=\"\/new_bot_game\">play against bot<\/a>";
             print ("899             <<< line number\n");
             write_to_socket (\*CLIENT, $info, "", "noredirect");
             next;
         }
-        else
+        elsif ($GAME_TYPE =~ m/human/)
         {
             my $info = print_beads ();
+            write_to_socket (\*CLIENT, $info, "", "noredirect");
+            next;
+        }
+        elsif ($GAME_TYPE =~ m/bot/)
+        {
+            my $info = print_bot_beads ();
             write_to_socket (\*CLIENT, $info, "", "noredirect");
             next;
         }
