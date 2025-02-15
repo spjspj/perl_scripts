@@ -666,7 +666,7 @@ sub simple_parentheses_many_arguments
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
-    if ($field_val =~ m/^$func\(([^(\|]+\|){3,10}[^(\|]+\)/)
+    if ($field_val =~ m/^$func\(([^(\|]+\|){3,35}[^(\|]+\)/)
     {
         return 1;
     }
@@ -842,14 +842,32 @@ sub do_tax_expansion
         my $num = $3;
         if (simple_parentheses_only_one_argument ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\)/tax($1)/;
+            $field_val =~ s/$func\((.+)\)/perl_tax($1)/;
             return $field_val;
         }
     }
     return $field_val;
 }
 
-sub tax
+sub do_url_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((URL)\((.*)\))/)
+    {
+        my $to_check = $3;
+        $to_check =~ s/\|/"."/g;
+        $to_check =~ s/^/"/;
+        $to_check =~ s/$/"/;
+        $to_check =~ s/""/"/g;
+        $to_check =~ s/""/"/g;
+        $to_check =~ s/""/"/g;
+        $field_val = "perl_url($to_check)";
+        return $field_val;
+    }
+    return "URLGOESHERE";
+}
+
+sub perl_tax
 {
     my $salary = $_ [0];
     
@@ -874,6 +892,13 @@ sub tax
         return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * (190000-135000)+0.45 * ($salary-190000);
     }
     return 0;
+}
+
+sub perl_url
+{
+    my $input = $_ [0];
+    my $url = "<a href=\"https://" . $input . "\">URL</a>"; 
+    return $url;
 }
 
 sub do_bold_expansion
@@ -1637,6 +1662,10 @@ sub perl_expansions
     {
         $str = do_tax_expansion ($str);
     }
+    if ($str =~ m/URL\(/)
+    {
+        $str = do_url_expansion ($str);
+    }
  
     # General cleanup..
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
@@ -1677,6 +1706,7 @@ sub recreate_perl
             $str = fix_quotes ($str);
         }
 
+        print ("$str\n");
         # Print a value into a variable as read from STDOUT that eval prints out
         my $output;
         open (my $outputFH, '>', \$output) or die;
