@@ -218,13 +218,13 @@ sub process_csv_data
         while ($line =~ m/./ && $line =~ s/^([^;\t]*)([;\t]|$)//)
         {
             my $field = $1;
-            # Special case of G^^ (G+Number two above) G__ (G+number two below)  
+            # Special case of G^^ (G+Number two above) G__ (G+number two below)
             while ($field =~ m/([A-Z])([\^])([\^])/ && $row_num > 1)
             {
                 my $col = $1;
                 my $line_mod = $2;
                 my $line_mod_2 = $3;
-                
+
                 my $go_up_lines = 2;
                 while ($field =~ m/([A-Z])([\^])([\^])([\^]*)/)
                 {
@@ -248,19 +248,19 @@ sub process_csv_data
                 my $line_mod = $2;
                 my $line_mod_2 = $3;
                 my $field_orig = "$1\\$2$3";
-                
+
                 my $go_up_lines = $line_mod_2;
                 my $up_field = $col . ($row_num-$go_up_lines);
                 $field =~ s/$field_orig/$up_field/;
             }
 
-            # Special case of G__ (G+number two below)  
+            # Special case of G__ (G+number two below)
             while ($field =~ m/([A-Z])(_)(_)/ && $row_num > 1)
             {
                 my $col = $1;
                 my $line_mod = $2;
                 my $line_mod_2 = $3;
-                
+
                 my $go_down_lines = 2;
                 while ($field =~ m/([A-Z])(_)(_)(_*)/)
                 {
@@ -277,14 +277,14 @@ sub process_csv_data
                     $field =~ s/$field_orig/$down_field/;
                 }
             }
-            
+
             while ($field =~ m/([A-Z])(_)([2-9])/ && $row_num > 1)
             {
                 my $col = $1;
                 my $line_mod = $2;
                 my $line_mod_2 = $3;
                 my $field_orig = "$1$2$3";
-                
+
                 my $go_down_lines = $line_mod_2;
                 my $down_field = $col . ($row_num+$go_down_lines);
                 $field =~ s/$field_orig/$down_field/;
@@ -720,9 +720,9 @@ sub breakdown_excel
     }
 
     $count ++;
-    if ($count > 500) 
+    if ($count > 500)
     {
-        return "giving up"; 
+        return "giving up";
     }
     while ($excel_function =~ m/(([A-Z]+)\(.*)/)
     {
@@ -825,7 +825,14 @@ sub do_concat_expansion
         }
         else
         {
-            $field_val =~ s/CONCATENATE\(([^\|]+?)|(.+?)\)/$1 . CONCATENATE($2)/;
+            my $str;
+            while ($field_val =~ m/CONCATENATE\(([^|]+?)(\||\))/)
+            {
+                $field_val =~ s/CONCATENATE\(([^|]+?)(\||\))/CONCATENATE(/;
+                $str .= $1;
+                print ("CONCAT STR IS: $str\n");
+            }
+            $field_val = fix_quotes($str);
         }
         return $field_val;
     }
@@ -843,6 +850,40 @@ sub do_tax_expansion
         if (simple_parentheses_only_one_argument ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\)/perl_tax($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_money_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((MONEY)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/perl_money($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_today_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((TODAY)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_zero_argument($to_check, "$func"))
+        {
+            $field_val =~ s/$func\(\)/perl_today()/;
             return $field_val;
         }
     }
@@ -870,7 +911,7 @@ sub do_url_expansion
 sub perl_tax
 {
     my $salary = $_ [0];
-    
+
     if ($salary<18200)
     {
         return 0;
@@ -894,11 +935,66 @@ sub perl_tax
     return 0;
 }
 
+sub perl_money
+{
+    my $amount = $_ [0];
+    my $neg = "green";
+    if (!is_number ($amount))
+    {
+        return $amount;
+    }
+
+    $amount =~ m/^([\+\-]|)(\d+)($|\.\d+)$/;
+    my $dollars = $2;
+    my $cents = $3;
+
+    if ($amount =~ m/^-(\d+)($|\.\d+)/)
+    {
+        $amount =~ s/^-//;
+        $neg = "red";
+    }
+
+    my $dollars;
+    my $cents;
+    if ($amount =~ m/^(\d+)($|\.\d+)/)
+    {
+        $dollars = $1;
+        $cents = $2;
+        if ($cents =~ m/^\.(\d\d)($|\d)/)
+        {
+            $cents = $1;
+            my $round = $2;
+            if ($round >= 5)
+            {
+                $cents++;
+            }
+            $cents = ".$cents";
+        }
+        elsif ($cents =~ m/^\.\d/)
+        {
+            $cents .= "0";
+        }
+        elsif ($cents =~ m/^$/)
+        {
+            $cents = ".00";
+        }
+        return "<font color=$neg><bold>\$$dollars$cents</bold></font>";
+    }
+    return $amount;
+}
+
 sub perl_url
 {
     my $input = $_ [0];
-    my $url = "<a href=\"https://" . $input . "\">URL</a>"; 
+    my $url = "<a href=\"https://" . $input . "\">URL</a>";
     return $url;
+}
+
+sub perl_today
+{
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+    return $yyyymmdd;
 }
 
 sub do_bold_expansion
@@ -924,7 +1020,13 @@ sub do_bold_expansion
 sub fix_quotes
 {
     my $str = $_ [0];
-    $str =~ s/fix_quotes *\(([^)]*)\)/$1/;
+    while ($str =~ m/fix_quotes *\(([^)]*)\)/)
+    {
+        my $concat_str = $1;
+        $concat_str =~ s/"//img; 
+        $concat_str =~ s/'//img; 
+        $str =~ s/fix_quotes *\(([^)]*)\)/$concat_str/;
+    }
     $str =~ s/\)$//;
     $str =~ s/"/\\"/g;
     $str =~ s/'//g;
@@ -1001,7 +1103,7 @@ sub days
 sub do_int_expansion
 {
     my $field_val = $_ [0];
-    
+
     if ($field_val =~ m/((INT)\(.*)/)
     {
         my $to_check = $1;
@@ -1031,7 +1133,7 @@ sub do_max_expansion
     return $field_val;
 }
 
-sub do_standard_expansion 
+sub do_standard_expansion
 {
     my $field_val = $_ [0];
     my $func = $_ [1];
@@ -1119,7 +1221,7 @@ sub do_left_expansion
     return $field_val;
 }
 
-sub do_pi_expansion 
+sub do_pi_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((PI)\(.*)/)
@@ -1136,7 +1238,7 @@ sub do_pi_expansion
     return $field_val;
 }
 
-#sub new_do_sin_expansion 
+#sub new_do_sin_expansion
 #{
 #    my $field_val = $_ [0];
 #    if ($field_val =~ m/((PI)\(.*)/)
@@ -1151,7 +1253,7 @@ sub do_pi_expansion
 #    }
 #    return $field_val;
 #}
-#sub new_do_asin_expansion 
+#sub new_do_asin_expansion
 #{
 #    my $field_val = $_ [0];
 #    if ($field_val =~ m/((PI)\(.*)/)
@@ -1166,7 +1268,7 @@ sub do_pi_expansion
 #    }
 #    return $field_val;
 #}
-#sub new_do_cos_expansion 
+#sub new_do_cos_expansion
 #{
 #    my $field_val = $_ [0];
 #    if ($field_val =~ m/((PI)\(.*)/)
@@ -1181,7 +1283,7 @@ sub do_pi_expansion
 #    }
 #    return $field_val;
 #}
-#sub new_do_acos_expansion 
+#sub new_do_acos_expansion
 #{
 #    my $field_val = $_ [0];
 #    if ($field_val =~ m/((PI)\(.*)/)
@@ -1271,7 +1373,7 @@ sub do_len_expansion
     return $field_val;
 }
 
-sub do_abs_expansion 
+sub do_abs_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((ABS)\(.*)/)
@@ -1287,7 +1389,7 @@ sub do_abs_expansion
     return $field_val;
 }
 
-sub do_rand_expansion 
+sub do_rand_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((RAND)\(.*)/)
@@ -1303,7 +1405,7 @@ sub do_rand_expansion
     return $field_val;
 }
 
-sub do_round_expansion 
+sub do_round_expansion
 {
     my $field_val = $_ [0];
     if ($field_val =~ m/((ROUND)\(.*)/)
@@ -1562,11 +1664,11 @@ sub fix_up_field_vals
     my $next_field_id = has_field_id ($field_val, $field_id, 1);
     while ($next_field_id ne "")
     {
-        if ($next_field_id eq $field_id) { return "ERROR (self-ref)"; } 
+        if ($next_field_id eq $field_id) { return "ERROR (self-ref)"; }
         my $rn = get_row_num ($next_field_id);
         my $cl = get_col_letter ($next_field_id);
         my $that_field_val = get_field_value ($rn, $cl, 0, $show_formulas);
-        $field_val =~ s/$next_field_id/$that_field_val/; 
+        $field_val =~ s/$next_field_id/$that_field_val/;
         $next_field_id = has_field_id ($field_val, $field_id, 1);
     }
     $field_val =~ s/\+\+/+/img;
@@ -1666,7 +1768,15 @@ sub perl_expansions
     {
         $str = do_url_expansion ($str);
     }
- 
+    if ($str =~ m/MONEY\(/)
+    {
+        $str = do_money_expansion ($str);
+    }
+    if ($str =~ m/TODAY\(/)
+    {
+        $str = do_today_expansion ($str);
+    }
+
     # General cleanup..
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
     return $str;
@@ -2078,7 +2188,7 @@ sub get_graph_html
     return $graph_html;
 }
 
-sub max 
+sub max
 {
     my ($max, @vars) = @_;
     for (@vars) {
@@ -2155,7 +2265,7 @@ sub get_3dgraph_html
     $graph3d_html .= "            gc.clearCanvas();\n";
     my $tan_val = tan (13.5/180*3.14159265358979323);
     my $proper_z_offset = ($x_span / 2) / $tan_val;
-    my $max_dim = max ($max_x,$max_y, $max_z); 
+    my $max_dim = max ($max_x,$max_y, $max_z);
     if ($max_z  < 1.2)
     {
         $max_z = 1.25;
@@ -2180,7 +2290,7 @@ sub get_3dgraph_html
     $graph3d_html .= "            console.warn (\"DOING INITZOOM\");\n";
     $graph3d_html .= "            gc.initZoomTurn(grf);\n";
     $graph3d_html .= "            console.warn (\"DONE INITZOOM\");\n";
-    
+
     if ($use_user_set)
     {
         $graph3d_html .= "            gc.setWorldCoords3D(" . $max_x*$xmult . "," . $max_y*$ymult . "," . ((abs($max_z) + abs($min_z)) * $zmult) . ");   // put the origin in center of canvas NOAUTO=$use_user_set\n";
@@ -2203,7 +2313,7 @@ sub get_3dgraph_html
     $graph3d_html .= "    <body>\n";
 
     my $stats = " x: $max_x , $min_x, y: $max_y, $min_y, z: $max_z, $min_z<br>";
- 
+
     if ($is_mesh)
     {
         $graph3d_html .= "    <h1>Mesh 3D Graph for $title</h1><br>\n";
@@ -2349,21 +2459,21 @@ sub set_examples
 0.5801;0;-0.81;-0.81\n0.5801;0.08;-0.81;-0.81\n0.5801;0.17;-0.79;-0.79\n0.5801;0.25;-0.77;-0.77\n0.5801;0.33;-0.74;-0.74\n0.5801;0.42;-0.70;-0.70\n0.5801;0.50;-0.64;-0.64\n0.5801;0.58;-0.57;-0.57\n0.5801;0.67;-0.46;-0.46\n0.5801;0.75;-0.31;-0.31\n0.6701;0;-0.75;-0.75\n0.6701;0.08;-0.74;-0.74\n0.6701;0.17;-0.73;-0.73\n0.6701;0.25;-0.70;-0.70\n0.6701;0.33;-0.67;-0.67\n0.6701;0.42;-0.62;-0.62\n
 0.6701;0.50;-0.55;-0.55\n0.6701;0.58;-0.46;-0.46\n0.6701;0.67;-0.33;-0.33\n0.7501;0;-0.66;-0.66\n0.7501;0.08;-0.66;-0.66\n0.7501;0.17;-0.64;-0.64\n0.7501;0.25;-0.61;-0.61\n0.7501;0.33;-0.57;-0.57\n0.7501;0.42;-0.51;-0.51\n0.7501;0.50;-0.43;-0.43\n0.7501;0.58;-0.31;-0.31\n0.8301;0;-0.55;-0.55\n0.8301;0.08;-0.55;-0.55\n0.8301;0.17;-0.53;-0.53\n0.8301;0.25;-0.49;-0.49\n0.8301;0.33;-0.44;-0.44\n0.8301;0.42;-0.36;-0.36\n0.8301;0.50;-0.24;-0.24\n0.9201;0;-0.40;-0.40\n0.9201;0.08;-0.39;-0.39\n0.9201;0.17;-0.36;-0.36\n0.9201;0.25;-0.31;-0.31\n0.9201;0.33;-0.22;-0.22";
 
-    $examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal\n" . 
+    $examples_three= "X;Y;DisttoOrig;Multiplier;Row;Col;RealCol;CosZVal;DropletZVal\n" .
         "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));1;=E>;=MOD(F>|24);=cos(C>);=H>*D>\n";
     my $ord_line  = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
     my $last_line = "=-1*PI()+E>*PI()/12;=-1*PI()+G>*PI()/12;=sqrt(A>*A>+B>*B>);=cos(C>*PI()/sqrt(2*PI()*PI()));=E^+1;=F^+1;=MOD(F>|24);=cos(C>);=H>*D>";
     my $build_e3 = 0;
-    for ($build_e3 = 0; $build_e3 < 23; $build_e3++) 
+    for ($build_e3 = 0; $build_e3 < 23; $build_e3++)
     {
         $examples_three .= "$ord_line\n";
     }
 
     my $num_times;
-    for ($num_times = 0; $num_times < 23; $num_times++) 
+    for ($num_times = 0; $num_times < 23; $num_times++)
     {
         $examples_three .= "$last_line\n";
-        for ($build_e3 = 0; $build_e3 < 23; $build_e3++) 
+        for ($build_e3 = 0; $build_e3 < 23; $build_e3++)
         {
             $examples_three .= "$ord_line\n";
         }
@@ -2406,7 +2516,7 @@ sub set_examples
     for ($zzz = 0; $zzz < 50*12; $zzz++)
     {
         $examples_six .= $l;
-    } 
+    }
 
     $examples_four = "YearMon;DaysInMonth;LoanOwing;AnnualInterest;DailyInterest;MonthlyInterest;TotalOwing;InterestPerMonth;LeftOwing;Payments;TotalInterest
 201901;=IF(MOD(A>|100)=1|31| IF(MOD(A>|100)=2|28| IF(MOD(A>|100)=3|31| IF(MOD(A>|100)=4|30| IF(MOD(A>|100)=5|31| IF(MOD(A>|100)=6|30| IF(MOD(A>|100)=7|31| IF(MOD(A>|100)=8|31| IF(MOD(A>|100)=9|30| IF(MOD(A>|100)=10|31| IF(MOD(A>|100)=11|30| IF(MOD(A>|100)=12|31|30))))))))))));650000;0.0500;=D2/365;=POWER(1+E>|B>);=C>*F>;=G>-C>;=G>-J>;4500;=H2
@@ -3438,7 +3548,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
         $txt =~ m/X-Forwarded-For: *([\d\.]+)/im;
         my $x_forwarded_for_addr = $1;
         my $authorized = is_authorized ($x_forwarded_for_addr, $server_ip);
-        
+
         if (!$authorized)
         {
             switch_to_safe_csv (1);
@@ -3490,7 +3600,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
         if ($txt =~ m/GET.*show_examples.*/m)
         {
             $txt =~ m/(........show_examples.......)/im;
-            
+
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Show Examples</h1> <br>
 <form action=\"examples\" id=\"examples\" name=\"examples\" method=\"post\">
 <textarea id=\"examples1\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples1\">$examples_one</textarea>
@@ -3734,7 +3844,7 @@ $//img;
         {
             $group = "$1";
         }
-        
+
         my $group_column = "";
         my $group_column_num = "";
         my $group_column_num2 = "";
@@ -3872,7 +3982,7 @@ $//img;
                 <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\" style=\"width:210px;\">
                 <input type=\"submit\" value=\"Group By\">
                 </form></td><td>";
-                
+
         # Group by column name
         $html_text .= "<form action=\"/csv_analyse/group_column\">
                 <label for=\"group_column\">Group by column</label><br>
@@ -4029,7 +4139,7 @@ $//img;
             $group = "$1";
             $group2 = "$2";
             $overall_match = ".*";
-            
+
             $group_column_num = get_num_of_col_header ($group);
             $group_column_num2 = get_num_of_col_header ($group2);
         }
@@ -4193,7 +4303,7 @@ $//img;
 
                     my $xrow = $row;
                     my $current_col_letter = $col_letter;
-                    
+
                     if ($group_by_column)
                     {
                         my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
@@ -4237,7 +4347,7 @@ $//img;
                         $row =~ s/(<td[^>]+>)<font color=$group_colours{$this_group}>/$1/im;
                         $row =~ s/<\/font><\/td>/<\/td>/im;
                     }
-                    
+
                     if ($dual_group_by_columns)
                     {
                         my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
@@ -4795,7 +4905,7 @@ $//img;
                 $straight_rn++;
                 $rn++;
             }
-            
+
             $mesh .= "\n";
 
             $rn = 2;
@@ -4821,7 +4931,7 @@ $//img;
                         $mesh .= $val_lookup1{"$k,$k2"} . ",";
                         my $r = $k;
                         my $c = $k2;
-                        
+
                         my $val = 0;
                         if (defined ($val_lookup1{"$k,$k2"}))
                         {
@@ -4836,12 +4946,12 @@ $//img;
                             }
                             if ($val =~ m/[0-9]/)
                             {
-                                $shape_data .= "shape_data[$x][$y] = {x:$k, y:$k2, z:$val}; //$k,$k2\n"; 
+                                $shape_data .= "shape_data[$x][$y] = {x:$k, y:$k2, z:$val}; //$k,$k2\n";
                                 $last_good_data_point = "{x:$k, y:$k2, z:$val}; //$k,$k2";
                             }
                             else
                             {
-                                $shape_data .= "shape_data[$x][$y] = $last_good_data_point // using last known good val\n"; 
+                                $shape_data .= "shape_data[$x][$y] = $last_good_data_point // using last known good val\n";
                             }
                         }
 
@@ -4868,7 +4978,7 @@ $//img;
                 }
                 $y = 0;
             }
-            
+
             my $i;
             my $j;
             my $has_shape_data;
@@ -4890,11 +5000,11 @@ $//img;
                     }
                 }
             }
-            
+
             $has_shape_data .= "// Overall count = $count ($max_x * $max_y) - matched $mc\n";
             my $r;
             my $row_shape_data;
-            
+
             foreach $r (sort { $a<=>$b } keys (%row_lookup))
             {
                 my $val = 0;
@@ -4908,14 +5018,14 @@ $//img;
                         my $field3 = $3;
                         my $x = $4;
                         my $y = $5;
-                        $row_shape_data .= "shape_data[$x][$y] = {x:$field1, y:$field2, z:$field3}; // Explicit Row from $val\n"; 
+                        $row_shape_data .= "shape_data[$x][$y] = {x:$field1, y:$field2, z:$field3}; // Explicit Row from $val\n";
                         $hash_shape_data {"[$x][$y]"} = 1;
                         #$has_shape_data .= "//[$x][$y] = ok\n";
                         $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
                     }
                 }
             }
-            
+
             foreach $r (sort { $a<=>$b } keys (%straight_row_lookup))
             {
                 my $val = 0;
@@ -4938,20 +5048,20 @@ $//img;
                             {
                                 if ($straight_max_row_num < $row_number)
                                 {
-                                    $straight_max_row_num = $row_number; 
+                                    $straight_max_row_num = $row_number;
                                 }
                                 if (is_small_exponent ($field1)) { $field1 = 0; }
                                 if (is_small_exponent ($field2)) { $field2 = 0; }
                                 if (is_small_exponent ($field3)) { $field3 = 0; }
 
-                                $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
+                                $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n";
                             }
                             else
                             {
-                                $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n"; 
+                                $straight_shape_data .= "shape_data[$row_number][$col_number] = {x:$field1, y:$field2, z:$field3}; // Straight Row from $val\n";
                                 if ($straight_max_row_num < $row_number)
                                 {
-                                    $straight_max_row_num = $row_number; 
+                                    $straight_max_row_num = $row_number;
                                 }
                                 $last_good_data_point = "{x:$field1, y:$field2, z:$field3};";
                             }
@@ -4962,17 +5072,17 @@ $//img;
 
             while ($straight_last_mod_2 == 0)
             {
-                $straight_last_mod_2++; 
-                $straight_shape_data .= "shape_data[$straight_max_row_num][$straight_last_mod_2] = $last_good_data_point; // Adding in last one..\n"; 
+                $straight_last_mod_2++;
+                $straight_shape_data .= "shape_data[$straight_max_row_num][$straight_last_mod_2] = $last_good_data_point; // Adding in last one..\n";
             }
 
             my $bsr;
             foreach $bsr (sort keys (%hash_shape_data))
             {
-                if ($hash_shape_data {$bsr} == 0) 
+                if ($hash_shape_data {$bsr} == 0)
                 {
                     #$row_shape_data .= "//delete shape_data$bsr;\n";
-                    $row_shape_data .= "shape_data$bsr = $last_good_data_point // aslkdjasd using last known good val\n"; 
+                    $row_shape_data .= "shape_data$bsr = $last_good_data_point // aslkdjasd using last known good val\n";
                     #$has_shape_data .= "//$bsr = AA NOT ok\n";
                 }
             }
