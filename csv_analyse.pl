@@ -3610,7 +3610,6 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
 <textarea id=\"examples5\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples5\">$examples_five</textarea>
 <textarea id=\"examples6\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples6\">$examples_six</textarea>
 <textarea id=\"examples7\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples7\">$examples_seven</textarea>
-<textarea id=\"examples8\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples8\">$examples_eight</textarea>
 <input type=\"submit\" value=\"Done\" class=\"submitButton\">
 </form>
 </body> </html>";
