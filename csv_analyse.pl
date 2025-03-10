@@ -57,8 +57,6 @@ sub write_to_socket
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body =~ s/\n\n/\n/mig;
     $msg_body = $header . $msg_body;
-    $msg_body =~ s/\.png/\.npg/;
-    $msg_body =~ s/img/mgi/;
     $msg_body .= chr(13) . chr(10) . "0";
     print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
     syswrite ($sock_ref, $msg_body);
@@ -829,8 +827,7 @@ sub do_concat_expansion
             while ($field_val =~ m/CONCATENATE\(([^|]+?)(\||\))/)
             {
                 $field_val =~ s/CONCATENATE\(([^|]+?)(\||\))/CONCATENATE(/;
-                $str .= $1;
-                print ("CONCAT STR IS: $str\n");
+                $str .= $1;                
             }
             $field_val = fix_quotes($str);
         }
@@ -850,6 +847,78 @@ sub do_tax_expansion
         if (simple_parentheses_only_one_argument ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\)/perl_tax($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_audio_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((AUDIO)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/perl_audio($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_video_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((VIDEO)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/perl_video($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_image_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((IMAGE)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/perl_image($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_strcmp_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((STRCMP)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            if ($field_val =~ m/STRCMP\(([^\|]+?)\|([^\|]+?)\)/)
+            {
+                $field_val =~ s/$func\((.+)\|(.+)\)/perl_strcmp("$1","$2")/;
+                return $field_val;
+            }
             return $field_val;
         }
     }
@@ -884,6 +953,34 @@ sub do_today_expansion
         if (simple_parentheses_zero_argument($to_check, "$func"))
         {
             $field_val =~ s/$func\(\)/perl_today()/;
+            return $field_val;
+        }
+        else #if (simple_parentheses_only_one_argument($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.*)\)/perl_today($num)/;            
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_weekday_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((WEEKDAY)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_zero_argument($to_check, "$func"))
+        {
+            $field_val =~ s/$func\(\)/perl_weekday()/;
+            return $field_val;
+        }
+        else #if (simple_parentheses_only_one_argument($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.*)\)/perl_weekday($num)/;
+            print ("zzzzzzzzzzzzzzz $field_val\n");
             return $field_val;
         }
     }
@@ -935,6 +1032,50 @@ sub perl_tax
     return 0;
 }
 
+sub perl_audio
+{
+    my $audio_file = $_ [0];
+    $audio_file =~ s/BACKSLASH/\\/img;
+    my $audio_id = $audio_file;
+    $audio_id =~ s/\W/_/g;
+    $audio_id =~ s/__/_/g;
+    $audio_id =~ s/__/_/g;
+    $audio_id =~ s/__/_/g;
+    my $audio_name = $audio_file;
+    $audio_name =~ s/.*\///;
+    return "Audio: $audio_name<br><audio id=\"audio_$audio_id\" controls=\"\" src=\"$audio_file\"></audio><button onclick=\"speed_$audio_id(1)\" type=\"button\">1x</button><button onclick=\"speed_$audio_id(1.5)\" type=\"button\">1.5x</button><button onclick=\"speed_$audio_id(2)\" type=\"button\">quick</button><script> function speed_$audio_id(val) { var x = document.getElementById(\"audio_$audio_id\"); x.playbackRate = val; }</script>";
+}
+
+sub perl_video
+{
+    my $video_file = $_ [0];
+    $video_file =~ s/BACKSLASH/\\/img;
+    my $video_type = $video_file;
+    my $video_id = $video_file;
+    $video_id =~ s/\W/_/g;
+    $video_id =~ s/__/_/g;
+    $video_id =~ s/__/_/g;
+    $video_id =~ s/__/_/g;
+    $video_type =~ s/^.*\.//;
+    return "<video id=\"video_$video_id\" height=640 width=480 controls src=\"$video_file\" type=\"video\/$video_type\"></video>";
+}
+
+sub perl_image
+{
+    my $image_file = $_ [0];
+    $image_file =~ s/BACKSLASH/\\/img;
+    my $image_type = $image_file;
+    my $image_id = $image_file;
+    $image_id =~ s/\W/_/g;
+    $image_id =~ s/__/_/g;
+    $image_id =~ s/__/_/g;
+    $image_id =~ s/__/_/g;
+    $image_type =~ s/^.*\.//;
+    my $image_name = $image_file;
+    $image_name =~ s/.*\///;
+    return "Image: $image_name<br><a href=\"\" onclick=\"window.open('$image_file','targetWindow', 'toolbar=no, location=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width=1200px, height=800px, top=25px left=120px'); return false;\"><img height=350 width=250 src=\"$image_file\"/></a>";
+}
+
 sub perl_money
 {
     my $amount = $_ [0];
@@ -983,18 +1124,58 @@ sub perl_money
     return $amount;
 }
 
+sub perl_strcmp
+{
+    my $str1 = $_ [0];
+    my $str2 = $_ [1];
+
+    if (lc ($str1) eq lc($str2)) { return "0"; }
+    if ($str1 eq $str2) { return "0"; }
+    if ($str1 > $str2) { return "1"; }
+    return "-1";
+}
+
 sub perl_url
 {
     my $input = $_ [0];
+    $input =~ s/['"]//img;
     my $url = "<a href=\"https://" . $input . "\">URL</a>";
+    $input =~ s/https:\/\/.*https:/https:/img;
     return $url;
 }
 
 sub perl_today
 {
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my $adder = $_ [0];
+    if ($adder =~ m/^$/)
+    {
+        $adder = 0;
+    }
+    my $t = time;
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($t + $adder * 24*3600);
     my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
     return $yyyymmdd;
+}
+
+sub perl_weekday
+{
+    # Give either today if it's a weekday or a day prior if it's not
+    my $adder = $_ [0];
+    if ($adder =~ m/^$/)
+    {
+        $adder = 0;
+    }
+    my $t = time;
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($t + $adder * 24*3600);
+    if ($wday >= 1 && $wday <= 5)
+    {
+        my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+        return $yyyymmdd;
+    }
+    else
+    {
+        return perl_weekday ($adder+1);
+    }
 }
 
 sub do_bold_expansion
@@ -1023,8 +1204,8 @@ sub fix_quotes
     while ($str =~ m/fix_quotes *\(([^)]*)\)/)
     {
         my $concat_str = $1;
-        $concat_str =~ s/"//img; 
-        $concat_str =~ s/'//img; 
+        $concat_str =~ s/"//img;
+        $concat_str =~ s/'//img;
         $str =~ s/fix_quotes *\(([^)]*)\)/$concat_str/;
     }
     $str =~ s/\)$//;
@@ -1065,6 +1246,23 @@ sub do_days_between_expansion
     return $field_val;
 }
 
+sub do_absdays_between_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ABSDAYS)\(.*)/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/absdays($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+# Return first date TO the second date.  If first date is ealier than second, returns positive.. otherwise negavtive
 sub days
 {
     my $date1 = $_ [0];
@@ -1094,10 +1292,50 @@ sub days
         time_zone => 'America/Chicago',
     );
 
-    my $dur = ($d1 > $d2 ? ($d1->subtract_datetime_absolute($d2)) : ($d2->subtract_datetime_absolute($d1)));
+    #my $dur = ($d1 > $d2 ? ($d1->subtract_datetime_absolute($d2)) : ($d2->subtract_datetime_absolute($d1)));
 
     my $days = $d1->delta_days($d2)->delta_days();
+    if ($date1 > $date2)
+    {
+        return -$days;
+    }
     return $days;
+}
+
+# Return first date TO the second date.  If first date is ealier than second, returns positive.. otherwise negavtive
+sub absdays
+{
+    my $date1 = $_ [0];
+    my $date2 = $_ [1];
+    my $dummy = 1;
+    #my $d1 = DateTime->new(year => $1, month => $2, day => $3, hour => $dummy, minute => $dummy, second => $dummy, 'UTC');
+
+    $date1 =~ m/^(\d\d\d\d)(\d\d)(\d\d)/;
+    my $d1 = DateTime->new(
+        year      => $1,
+        month     => $2,
+        day       => $3,
+        hour      => $dummy,
+        minute    => $dummy,
+        second    => $dummy,
+        time_zone => 'America/Chicago',
+    );
+
+    $date2 =~ m/^(\d\d\d\d)(\d\d)(\d\d)/;
+    my $d2 = DateTime->new(
+        year      => $1,
+        month     => $2,
+        day       => $3,
+        hour      => $dummy,
+        minute    => $dummy,
+        second    => $dummy,
+        time_zone => 'America/Chicago',
+    );
+
+    #my $dur = ($d1 > $d2 ? ($d1->subtract_datetime_absolute($d2)) : ($d2->subtract_datetime_absolute($d1)));
+
+    my $days = $d1->delta_days($d2)->delta_days();
+    return abs($days);
 }
 
 sub do_int_expansion
@@ -1756,6 +1994,10 @@ sub perl_expansions
     {
         $str = do_round_expansion ($str);
     }
+    if ($str =~ m/ABSDAYS\(/)
+    {
+        $str = do_absdays_between_expansion ($str);
+    }
     if ($str =~ m/DAYS\(/)
     {
         $str = do_days_between_expansion ($str);
@@ -1763,6 +2005,22 @@ sub perl_expansions
     if ($str =~ m/TAX\(/)
     {
         $str = do_tax_expansion ($str);
+    }
+    if ($str =~ m/AUDIO\(/)
+    {
+        $str = do_audio_expansion ($str);
+    }
+    if ($str =~ m/VIDEO\(/)
+    {
+        $str = do_video_expansion ($str);
+    }
+    if ($str =~ m/IMAGE\(/)
+    {
+        $str = do_image_expansion ($str);
+    }
+    if ($str =~ m/STRCMP\(/)
+    {
+        $str = do_strcmp_expansion ($str);
     }
     if ($str =~ m/URL\(/)
     {
@@ -1775,6 +2033,10 @@ sub perl_expansions
     if ($str =~ m/TODAY\(/)
     {
         $str = do_today_expansion ($str);
+    }
+    if ($str =~ m/WEEKDAY\(/)
+    {
+        $str = do_weekday_expansion ($str);
     }
 
     # General cleanup..
@@ -2232,9 +2494,9 @@ sub get_3dgraph_html
     $graph3d_html .= "      border: 1px solid white;\n";
     $graph3d_html .= "    }\n";
     $graph3d_html .= "    </style>\n";
-    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Cango3D-13v00.js\"></script>\n";
-    $graph3d_html .= "    <script src=\"https://xmage.au/cango/CanvasStack-2v01.js\"></script>\n";
-    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Graph3D-3v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"cango/Cango3D-13v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"cango/CanvasStack-2v01.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"cango/Graph3D-3v00.js\"></script>\n";
     $graph3d_html .= "    <script>\n";
     $graph3d_html .= "        function generateTopography (xmin, xmax, ymin, ymax, rows, columns)\n";
     $graph3d_html .= "        {\n";
