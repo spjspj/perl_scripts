@@ -24,7 +24,6 @@ $perl_ports {"get_magic_deck.pl"} = "d:\\perl_programs\\get_magic_deck.pl";
 $perl_ports {"hearts.pl"} = "d:\\perl_programs\\hearts\\hearts.pl";
 $perl_ports {"mastermind.pl"} = "d:\\perl_programs\\mastermind\\mastermind.pl";
 $perl_ports {"math_game_web.pl"} = "d:\\perl_programs\\math_game_web.pl";
-$perl_ports {"mk_pss_html.pl"} = "d:\\perl_programs\\pss\\mk_pss_html.pl";
 $perl_ports {"nothanks.pl"} = "d:\\perl_programs\\nothanks\\nothanks.pl";
 $perl_ports {"purchased_cards.pl"} = "d:\\perl_programs\\purchased_cards.pl";
 $perl_ports {"quest.pl"} = "d:\\perl_programs\\quest\\quest.pl";
@@ -33,7 +32,7 @@ $perl_ports {"secure_copy_paste_w_images.pl"} = "d:\\perl_programs\\secure_copy_
 $perl_ports {"solve_wordle.pl"} = "d:\\perl_programs\\solve_wordle.pl";
 $perl_ports {"ALL"} = "all";
 
-# All kill??
+# All restart
 if ($port =~ m/all/img)
 {
     print "Starting all perl processes:<br>\n";
