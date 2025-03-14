@@ -25,7 +25,6 @@ $perl_ports {"get_magic_deck.pl"} = 60001;
 $perl_ports {"hearts.pl"} = 2718;
 $perl_ports {"mastermind.pl"} = 6663;
 $perl_ports {"math_game_web.pl"} = 1234;
-#$perl_ports {"mk_pss_html.pl"} = 7732;
 $perl_ports {"nothanks.pl"} = 3967;
 $perl_ports {"purchased_cards.pl"} = 6723;
 $perl_ports {"quest.pl"} = 3672;
