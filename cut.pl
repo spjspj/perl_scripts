@@ -607,8 +607,8 @@ sub print_months_html
         my $line = $1 . "..";
         $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
         $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
-        $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
-        $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
+        $line =~ s/!([\d]+)/&nbsp;<code style="background-color:MediumVioletRed;color:lightpurple">$1<\/code>/img;
+        $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:cyan">$1<\/code>/img;
         $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
         print $line . " xxxx ";
 
@@ -617,8 +617,8 @@ sub print_months_html
             my $line = $1 . "..";
             $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
             $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
-            $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
-            $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
+            $line =~ s/!([\d]+)/&nbsp;<code style="background-color:MediumVioletRed;color:lightpurple">$1<\/code>/img;
+            $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:cyan">$1<\/code>/img;
             $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
             print $line . " yyyy ";
 
@@ -627,8 +627,8 @@ sub print_months_html
                 my $line = $1 . "<br>\n";
                 $line =~ s/\*([\d]+)/&nbsp;<code style="background-color:powderblue;color:olivedrab">$1<\/code>/img;
                 $line =~ s/#([\d]+)/&nbsp;<code style="background-color:sandybrown;color:darkslateblue">$1<\/code>/img;
-                $line =~ s/!([\d]+)/&nbsp;<code style="background-color:darkcyan;color:yellowgreen">$1<\/code>/img;
-                $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:darkgreen">$1<\/code>/img;
+                $line =~ s/!([\d]+)/&nbsp;<code style="background-color:MediumVioletRed;color:lightpurple">$1<\/code>/img;
+                $line =~ s/=([\d]+)/&nbsp;<code style="background-color:purple;color:cyan">$1<\/code>/img;
                 $line =~ s/"([\d]+)/&nbsp;<code style="background-color:darkblue;color:darkorange">$1<\/code>/img;
                 print $line . " zzzz ";
             }
@@ -709,6 +709,7 @@ sub do_d3_replace
         print ("   cut.pl bob.txt dave 5 grep\n");
         print ("   cut.pl all_java2.java TOKEN_STARTS_HERE TOKEN_ENDS_HERE grep_between\n");
         print ("   cut.pl full_text.txt keys 0 filegrep\n");
+        print ("   cut.pl d:\\xmage_decks\\jumpstart_cube_decks\\jumpstart_packs_202503.txt d:\\xmage_decks\\jumpstart_cube_decks\\jumpstart_202503.dck 0 fixjumpstart\n");
         print ("   cut.pl pbm_72.txt 0 0 ringing\n");
         print ("   dir /a:-d /b /s | find /I \"epub\" | cut.pl stdin 0 0 make_cp_bat\n");
         print ("   dir /a:-d /b /s | find /I /V \".git\" | cut.pl stdin 0 0 nobinary | cut.pl stdin 0  0 make_code_bat > bob.bat\n");
@@ -736,6 +737,7 @@ sub do_d3_replace
         print ("   cut.pl bob.txt 0 0 condense   (Used for making similar lines in files smaller..)\n");
         print ("   cut.pl bob.txt 0 0 str_condense   (Used for making similar lines in files smaller..)\n");
         print ("   cut.pl stdin \"http://bob.com/a=XXX.id\" 1000 oneupcount   \n");
+        print ("   echo \"1\" | cut.pl stdin \"20240101\" 7 weekcount\n");
         print ("   cut.pl stdin \"XXX, YYY, ZZZ\" \"255,0,10,25\" allupcount   \n");
         print ("   type xyz.txt | cut.pl stdin '' 1000 oneup\n");
         print ("   cut.pl all_java9.java 0 0 get_strings > _all_strings5.txt\n");
@@ -759,11 +761,11 @@ sub do_d3_replace
         print ("   cut.pl all_java.java  \"thing_to_search\" 0 search_in_output\n");
         print ("   cut.pl all_java.java  \"thing_to_search\" 0 edit_files\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 sinewave\n");
-        print ("   echo \"1\" | cut.pl stdin 2022 0 calendar\n");
-        print ("   echo \"1\" | cut.pl stdin 2022 1 calendar_pay\n");
-        print ("   echo \"1\" | cut.pl stdin 2023 0 calendar_pay\n");
         print ("   echo \"1\" | cut.pl stdin 2024 1 calendar_pay\n");
         print ("   echo \"1\" | cut.pl stdin 2025 0 calendar_pay\n");
+        print ("   echo \"1\" | cut.pl stdin 2026 1 calendar_pay\n");
+        print ("   echo \"1\" | cut.pl stdin 2027 0 calendar_pay\n");
+        print ("   echo \"1\" | cut.pl stdin 2028 1 calendar_pay\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 palindrome\n");
         print ("   echo \"1\" | cut.pl stdin 0 0 water\n");
         print ("   echo \"1\" | cut.pl stdin 0  0 find_and_copy_missing # looks for missing.txt in directory..\n");
@@ -989,6 +991,27 @@ sub do_d3_replace
         }
         exit;
     }
+
+    if ($operation eq "weekcount")
+    {
+        my $i = 0;
+        my $now = time();
+        my $yyyymmdd;
+        for ($i = 0; $i < 100; $i ++)
+        {
+            $yyyymmdd = strftime "%Y%m%d", localtime($now - $i*$helper * 24*3600);
+            print ("$yyyymmdd\n");
+        }
+
+        $now = $now - $i * $helper * 24*3600;
+
+        for ($i = 0; $i < 500; $i++)
+        {
+            $yyyymmdd = strftime "%Y%m%d", localtime($now + $i*$helper * 24*3600);
+            print ("$yyyymmdd\n");
+        }
+        exit;
+    }
     
     if ($operation eq "do_circle")
     {
@@ -1059,6 +1082,53 @@ sub do_d3_replace
             chomp;
             $kkks {"^$_"} = 1;
         }
+    }
+
+    if ($operation eq "fixjumpstart")
+    {
+        print "type $file\n";
+        print "type $term\n";
+        my $actual_decks = `type $file`;
+        my $updated_cards = `type $term`;
+        #print $updated_cards;
+        my %cards;
+
+        while ($updated_cards =~ s/^(.*?)\n//m)
+        {
+            my $card = $1;
+            #print "   ----> $card\n";
+            if ($card =~ m/1 [\[]*(.*?)[ :](.*?)[\]]* (.*) *$/)
+            {
+                my $cn = $3;
+                my $set = $1;
+                my $number = $2;
+                $number =~ s/\*//img;
+                #print ("$cn ==> $set $number\n");
+                $cards {$cn} = "$set $number";
+            }
+        }
+
+        while ($actual_decks =~ s/^(.*?)\n//m)
+        {
+            my $card = $1;
+            $card =~ s/ *$//;
+            if ($card =~ m/1 [\[]*(.*?)[ :](.*?)[\]]* (.*) *$/)
+            {
+                my $cn = $3;
+                my $set = $1;
+                my $number = $2;
+                $number =~ s/\*//img;
+                if ("$set $number" ne $cards{$cn} && $cn ne "Plains" && $cn ne "Island" && $cn ne "Swamp" && $cn ne "Mountain" && $cn ne "Forest")
+                {
+                    #print (" >>$cn<< ==> '$set $number' vs '$cards{$cn}'\n");
+                    my $old = "$set $number";
+                    my $new = $cards {$cn};
+                    $card =~ s/$old/$new/;
+                }
+            }
+            print $card, "\n";
+        }
+        #while ($actual_decks = `type $file`;
     }
 
     if ($operation eq "flipple")
@@ -2013,6 +2083,190 @@ sub do_d3_replace
                 print ("$line\n");
             }
         }
+        
+        if ($operation eq "email_takeout")
+        {
+            # Remove base64 stuff..
+            $line =~ s/([A-Za-z=0-9\+\/]{55}) ([A-Za-z=0-9\+\/]{55})/$1$2/img;
+            $line =~ s/([A-Za-z=0-9\+\/]{55}) ([A-Za-z=0-9\+\/]{45})/$1$2/img;
+            $line =~ s/([A-Za-z=0-9\+\/]{55}) ([A-Za-z=0-9\+\/]{35})/$1$2/img;
+            $line =~ s/([A-Za-z=0-9\+\/]{55}) ([A-Za-z=0-9\+\/]{25})/$1$2/img;
+            $line =~ s/([A-Za-z=0-9\+\/]{55}) ([A-Za-z=0-9\+\/]{20})/$1$2/img;
+            $line =~ s/([A-Za-z=0-9\+\/]{55}[A-Za-z=0-9\+\/]+)/<base64removed>/img;
+            print $line, "\n";
+        }
+        
+        if ($operation eq "do_dates")
+        {
+            my $orig_line = $line;
+            $line = $orig_line;
+
+            my $full_year = "20\\d\\d|19\\d\\d";
+            my $short_year = "[^0-9][0123]\\d[^0-9]";
+            my $year = "($full_year|$short_year)";
+
+            my $short_month = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept|Oct|Nov|Dec";
+            my $long_month = "January|February|March|April|May|June|July|August|September|October|November|December";
+            my $month = "(0\\d|1[012]|$short_month|$long_month)";
+            my $day = "([012]\\d|3[012])";
+            my $nd = "[^0-9:]";
+
+            my $test1 = "$year$month$day";
+            my $test2 = "$year$nd$month$nd$day";
+            my $test3 = "$day$month$year";
+            my $test4 = "$day$nd$month$nd$year";
+            my $test5 = "$month$year";
+            #my $test6 = "$day$month";
+            my $test7 = "$month$nd$year";
+            #my $test8 = "$day$nd$month";
+
+            #print ("test1 :: $test1\n");
+            #print ("test2 :: $test2\n");
+            #print ("test3 :: $test3\n");
+            #print ("test4 :: $test4\n");
+            #print ("test5 :: $test5\n");
+            #print ("test6 :: $test6\n");
+            #print ("test7 :: $test7\n");
+            #print ("test8 :: $test8\n");
+
+            my %dates;
+            
+            while ($line =~ s/($test1)//) { $dates {$1} = 1; ; } $line = $orig_line;
+            while ($line =~ s/($test2)//) { $dates {$1} = 1; ; } $line = $orig_line;
+            while ($line =~ s/($test3)//) { my $ymd = "$4$3$2"; $dates {$ymd} = 1; ; } $line = $orig_line;
+            while ($line =~ s/($test4)//) { my $ymd = "$4$3$2"; $dates {$ymd} = 1; ; } $line = $orig_line;
+            #while ($line =~ s/($test5)//) { $dates {$1} = 1; } $line = $orig_line;
+            #while ($line =~ s/($test6)//) { $dates {$1} = 1; } $line = $orig_line;
+            #while ($line =~ s/($test7)//) { $dates {$1} = 1; } $line = $orig_line;
+            #while ($line =~ s/($test8)//) { $dates {$1} = 1; }
+
+            my $d;
+            my %dates2;
+            
+            my $d_count = 0;
+            $orig_line =~ m/^Date: (\d+)-(\d+)-(\d+)/;
+            my $latest_date = "$1$2$3";
+            
+            foreach $d (sort keys (%dates))
+            {
+                $d =~ s/January/01/img;
+                $d =~ s/February/02/img;
+                $d =~ s/March/03/img;
+                $d =~ s/April/04/img;
+                $d =~ s/May/05/img;
+                $d =~ s/June/06/img;
+                $d =~ s/July/07/img;
+                $d =~ s/August/08/img;
+                $d =~ s/September/09/img;
+                $d =~ s/October/10/img;
+                $d =~ s/November/11/img;
+                $d =~ s/December/12/img;
+
+                $d =~ s/Jan/01/img;
+                $d =~ s/Feb/02/img;
+                $d =~ s/Mar/03/img;
+                $d =~ s/Apr/04/img;
+                $d =~ s/May/05/img;
+                $d =~ s/Jun/06/img;
+                $d =~ s/Jul/07/img;
+                $d =~ s/Aug/08/img;
+                $d =~ s/Sep/09/img;
+                $d =~ s/Oct/10/img;
+                $d =~ s/Nov/11/img;
+                $d =~ s/Dec/12/img;
+
+                #if ($d !~ m/(.)$1$1$1/)
+                {
+                    #print $d, "\n";
+                    $d =~ s/\W//g;
+                    if ($d eq $latest_date)
+                    {
+                        $dates2 {$d . "****"} = 1;
+                    }
+                    $dates2 {$d} = 1;
+                    $d_count++;
+                }
+            }
+
+            if ($d_count > 1)
+            {
+                print ("\n======================\n$orig_line :::\n");
+                foreach $d (sort keys (%dates2))
+                {
+                    print (" $d -- ");
+                    if ($d > $latest_date)
+                    {
+                        print ("  BAD!!!");
+                    }
+                    print ("\n");
+                }
+                print "\n";
+            }
+
+        }
+        
+        if ($operation eq "git")
+        {
+            print ("Git information:\n");
+            my $top = `git rev-parse --show-toplevel`;
+            chomp $top;
+            print "\n===================\n";
+            print $top;
+            print "git fetch\ngit pull\n";
+            print "git log --pretty=oneline\n";
+            my $version = $term;
+            if ($term == 0) { $version = 1; }
+            print "git diff HEAD~$version..HEAD\n";
+            print "git diff HEAD HEAD~$version --name-only\n";
+            my $diff_list = `git diff HEAD HEAD~$version --name-only`;
+            chomp $diff_list;
+            $diff_list .= "\n";
+            my $patches;
+            while ($diff_list =~ s/^(.*?)\n//m)
+            {
+                print ("git diff HEAD HEAD~$version $top\/$1\n");
+                $patches .= "git log -p --follow $top\/$1\n";
+            }
+            print "\n$patches\n";
+            print "\nAlso can call:\n";
+            print ("   echo \"1\" | cut.pl stdin colorizing 0 gitgrep\n");
+            print (" >> spjones\@jollah MINGW64 /c/xmage_clean_2024<<\n");
+            print (" \$ git clone https://github.com/spjspj/mage.git\n");
+        }
+        
+        my %gitgrep;
+        if ($operation eq "gitgrep")
+        {
+            print ("Git Grep:\n");
+            print "git grep $term";
+            my $top = `git rev-parse --show-toplevel`;
+            chomp $top;
+            print "\n===================\n";
+            print $top, "\n\n";
+            #%gitgrep;
+            my $ggrep = `git grep $term`;
+            chomp $ggrep;
+            $ggrep .= "\n";
+            while ($ggrep =~ s/^(.*?):(.*?)\n//m)
+            {
+                my $f = "$top\/$1";
+                if (!defined ($gitgrep {$f}))
+                {
+                    $gitgrep {$f} = 1;
+                    print ("git log -p --follow $top\/$1\n");
+                    print ("   gvim $top\/$1\n");
+                }
+            }
+            my $dir = `dir /a /b /s | find /I \"$term\"`;
+            $dir =~ s/^/  gvim /mg; 
+            print "\n==========\nFound the following files:\n$dir\n";
+        }
+
+        # Line  : 1;; ;;1;;1;; ;
+        # Line  : 1;;1;; ;; ;;1;
+        # reset : ------------;
+        # Output: 1;;1;;1;;1;;1;
+
         
         if ($operation eq "git")
         {
@@ -3139,25 +3393,25 @@ sub do_d3_replace
         if ($operation eq "calendar_pay")
         {
             $thursday_is_payday = 555;
-            my $month1_string = print_month_w_payday ($term, 1, 2, 26, "Z", "Z", "Z", "Z"); 
-               $month1_string = add_school_holidays ($month1_string, 1, 30);
-               $month1_string = add_my_school_holidays ($month1_string, 25, 25);
+            my $month1_string = print_month_w_payday ($term, 1, 2, 27, "Z", "Z", "Z", "Z"); 
+               $month1_string = add_school_holidays ($month1_string, 1, 31);
             my $month2_string = print_month_w_payday ($term, 2, "Z", "Z", "Z", "Z"); 
-            my $month3_string = print_month_w_payday ($term, 3, 13, "Z", "Z", "Z", "Z");
+               $month2_string = add_school_holidays ($month2_string, 1, 4);
+            my $month3_string = print_month_w_payday ($term, 3, 10, "Z", "Z", "Z", "Z");
             print_months_html ($month1_string, $month2_string, $month3_string, $term);
-            $month1_string = print_month_w_payday ($term, 4, 7, 8, 9, 10, 25, "Z", "Z");
-               $month1_string = add_school_holidays ($month1_string, 7, 23);
-            $month2_string = print_month_w_payday ($term, 5, 29, "Z", "Z", "Z", "Z");
-            $month3_string = print_month_w_payday ($term, 6, 12, "Z", "Z", "Z", "Z");
+            $month1_string = print_month_w_payday ($term, 4, 18, 19, 20, 21, 25, "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 12, 29);
+            $month2_string = print_month_w_payday ($term, 5, "Z", "Z", "Z", "Z", "Z");
+            $month3_string = print_month_w_payday ($term, 6, 2, 9, "Z", "Z", "Z");
             print_months_html ($month1_string, $month2_string, $month3_string, 0);
             $month1_string = print_month_w_payday ($term, 7, "Z", "Z", "Z", "Z");
-               $month1_string = add_school_holidays ($month1_string, 1, 16);
+               $month1_string = add_school_holidays ($month1_string, 5, 20);
             $month2_string = print_month_w_payday ($term, 8, "Z", "Z", "Z", "Z");
             $month3_string = print_month_w_payday ($term, 9, "Z", "Z", "Z", "Z");
-               $month3_string = add_school_holidays ($month3_string, 23, 30);
+               $month3_string = add_school_holidays ($month3_string, 27, 30);
             print_months_html ($month1_string, $month2_string, $month3_string, 0);
-            $month1_string = print_month_w_payday ($term, 10, 2, "Z", "Z", "Z", "Z");
-               $month1_string = add_school_holidays ($month1_string, 1, 8);
+            $month1_string = print_month_w_payday ($term, 10, 6, "Z", "Z", "Z", "Z");
+               $month1_string = add_school_holidays ($month1_string, 1, 13);
             $month2_string = print_month_w_payday ($term, 11, "Z", "Z", "Z", "Z");
             $month3_string = print_month_w_payday ($term, 12, 25, 26, "Z", "Z", "Z", "Z");
                $month3_string = add_school_holidays ($month3_string, 16, 31);
