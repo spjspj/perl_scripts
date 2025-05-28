@@ -13,7 +13,9 @@ use Socket;
 use File::Copy;
 use Math::Trig;
 use DateTime;
+use Time::Local;
 #use DateTime::Format::Duration;
+use Digest::MD5 qw(md5_hex);
 
 my %csv_data;
 my $in_safe_csv_data = 0;
@@ -30,6 +32,19 @@ my $count = 0;
 my %each_element;
 my $each_element_count = 0;
 my $SELF_ELEMENT = 0;
+
+# Add in an option to directly edit cells in a particular column, a row, a particular cell as an inbuilt select box with supplied values or edit box only
+my $use_edit_model = 0;
+my $edit_model_column = 0;
+my $edit_model_column_to_edit = 0;
+my $edit_model_row = 0;
+my $edit_model_row_to_edit = 0;
+my $edit_model_cell = 0;
+my $edit_model_select_box = 0;
+my $edit_model_edit_box = 0;
+my %edit_model_values_for_select;
+my $edit_model_min_row = -1;
+my $edit_model_min_col = -1;
 
 sub write_to_socket
 {
@@ -351,6 +366,95 @@ sub process_csv_data
     }
     $max_rows++;
     $show_formulas = 0;
+}
+
+sub update_csv_data_on_disk
+{
+    my $cell_to_update = $_ [0];
+    my $new_value = $_ [1];
+    my $current_file = $_ [2];
+    print ("UPDATING SHITE for >$current_file<\n");
+    $current_file =~ s/\.\.//g;
+
+    my $row_num = 1;
+    my $col_letter = "A";
+    my $block = `type $current_file`;
+    print ("$block\n==================\n");
+    my $updated_block = "";
+    my $orig_line = "";
+    my $actually_updated = 0;
+
+    while ($block =~ s/^(.*?)\n//im)
+    {
+        my $line = $1;
+        chomp $line;
+        $orig_line = $line;
+
+        if ($line =~ m/^$/)
+        {
+            next;
+        }
+        $col_letter = "A";
+        my $this_line_changed = 0;
+        my $build_this_line = "";
+        while ($line =~ m/./ && $line =~ s/^([^;\t]*)([;\t]|$)//)
+        {
+            my $field = $1;
+            set_field_value ($row_num, $col_letter, $field, "");
+            
+            if ("$col_letter$row_num" eq $cell_to_update)
+            {
+                set_field_value ($row_num, $col_letter, $new_value, "");
+                $this_line_changed = 1;
+                $build_this_line .= "$new_value;";
+            }
+            else
+            {
+                $build_this_line .= "$field;";
+            }
+
+            $col_letter = get_next_field_letter ($col_letter);
+            if ($max_field_num < get_field_num_from_field_letter ($col_letter))
+            {
+                $max_field_num = get_field_num_from_field_letter ($col_letter);
+            }
+        }
+        $row_num++;
+        $max_rows++;
+        if ($this_line_changed == 0)
+        {
+            $updated_block .= "$orig_line\n";
+        }
+        else
+        {
+            $updated_block .= "$build_this_line\n";
+            $actually_updated = 1;
+            print (">>>>\n\n$build_this_line\n\n\n<<<<<\n");
+        }
+    }
+
+    $col_letter = "A";
+    while ($block =~ s/^([^;\t]*)([;\t]|$)// && $block =~ m/./)
+    {
+        my $field = $1;
+        set_field_value ($row_num, $col_letter, $field, "");
+        $col_letter = get_next_field_letter ($col_letter);
+        if ($max_field_num < get_field_num_from_field_letter ($col_letter))
+        {
+            $max_field_num = get_field_num_from_field_letter ($col_letter);
+        }
+    }
+    $max_rows++;
+    print $updated_block;
+
+    if ($actually_updated)
+    {
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        my $yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+        open CSV_FILE, ("> $current_file");
+        print CSV_FILE $updated_block;
+        close CSV_FILE;
+    }
 }
 
 sub add_price
@@ -827,7 +931,8 @@ sub do_concat_expansion
             while ($field_val =~ m/CONCATENATE\(([^|]+?)(\||\))/)
             {
                 $field_val =~ s/CONCATENATE\(([^|]+?)(\||\))/CONCATENATE(/;
-                $str .= $1;                
+                $str .= $1;
+                #print ("CONCAT STR IS: $str\n");
             }
             $field_val = fix_quotes($str);
         }
@@ -957,7 +1062,97 @@ sub do_today_expansion
         }
         else #if (simple_parentheses_only_one_argument($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.*)\)/perl_today($num)/;            
+            $field_val =~ s/$func\((.*)\)/perl_today($num)/;
+            print ("zzzzzzzzzzzzzzz $field_val\n");
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_adddays_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ADDDAYS)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/perl_adddays($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_addmonths_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ADDMONTHS)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/perl_addmonths($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_equals_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((EQUALS)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            my $arg1;
+            my $arg2;
+            if ($field_val =~ m/$func\(([^|]+)\|([^|]*?)\)/)
+            {
+                $arg1 = $1;
+                $arg2 = $2;
+                if (!is_number ($arg1))
+                {
+                    $arg1 = "\"$arg1\"";
+                    $arg1 =~ s/""/"/g;
+                }
+                if (!is_number ($arg2))
+                {
+                    $arg2 = "\"$arg2\"";
+                    $arg2 =~ s/""/"/g;
+                }
+            }
+
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\)/perl_equals($arg1,$arg2)/;
+            print (">>>Equals $field_val<<<\n");
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+sub do_recurring_expansion
+{
+    my $field_val = $_ [0];
+            print (">>>111 $field_val<<<\n");
+    if ($field_val =~ m/((RECURRING)\((.*)\))/)
+    {
+            print (">>>222 $field_val<<<\n");
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_three_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/perl_recurring($1,$2,"$3")/;
+            print (">>>333 $field_val<<<\n");
             return $field_val;
         }
     }
@@ -1178,6 +1373,123 @@ sub perl_weekday
     }
 }
 
+sub perl_adddays
+{
+    # Add days to the incoming date
+    my $adder = $_ [0];
+    my $days_to_add = $_ [1];
+    if ($adder =~ m/^$/)
+    {
+        $adder = perl_today ();
+    }
+
+    $adder =~ s/\s//;
+    if ($adder =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+        my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time + $days_to_add * 24*3600);
+        my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+        return $yyyymmdd;
+    }
+    return perl_today ();
+}
+
+sub perl_addmonths
+{
+    # Add months to the incoming date (calendar months)
+    my $adder = $_ [0];
+    my $months_to_add = $_ [1];
+    if ($adder =~ m/^$/)
+    {
+        $adder = perl_today ();
+    }
+
+    $adder =~ s/\s//;
+    if ($adder =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2 + $months_to_add;
+        my $d = $3;
+
+        while ($m > 12) { $y++; $m -= 12; }
+        while ($m < 1) { $y--; $m += 12; }
+
+        my $time;
+        eval
+        {
+            $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        };
+        while ($@)
+        {
+            if ($d > 28) { $d--; }
+
+            eval
+            {
+                $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+            };
+        }
+
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+
+        my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+        return $yyyymmdd;
+    }
+    return perl_today ();
+}
+
+sub perl_recurring
+{
+    # Recurring bill timing =RECURRING(20250501|3|MONTHS)
+    # Recurring bill timing =RECURRING(20250501|7|DAYS)
+    # Returns the next billing day that is either today or after today, based on Origin date and increasing by amount_to_add of months or days
+    my $origin_date = $_ [0];
+    my $amount_to_add = $_ [1];
+    my $days_or_months = $_ [2];
+
+    my $today = perl_today ();
+    if ($origin_date =~ m/^$/)
+    {
+        $origin_date = perl_today ();
+    }
+
+    $origin_date =~ s/\s//;
+    my $potential_date = $origin_date;
+
+    while ($potential_date =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/ && $potential_date < $today)
+    {
+        my $time;
+        if (uc($days_or_months) eq "MONTH" || uc($days_or_months) eq "MONTHS")
+        {
+            $potential_date = perl_addmonths ($potential_date, $amount_to_add);
+        }
+        elsif (uc($days_or_months) eq "DAY" || uc($days_or_months) eq "DAYS")
+        {
+            $potential_date = perl_adddays ($potential_date, $amount_to_add);
+        }
+    }
+
+    return $potential_date;
+}
+
+sub perl_equals
+{
+    # Recurring bill timing =RECURRING(20250501|3|MONTHS)
+    # Recurring bill timing =RECURRING(20250501|7|DAYS)
+    # Returns the next billing day that is either today or after today, based on Origin date and increasing by amount_to_add of months or days
+    my $arg1 = $_ [0];
+    my $arg2 = $_ [1];
+
+    if ($arg1 eq $arg2)
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
 sub do_bold_expansion
 {
     my $field_val = $_ [0];
@@ -1302,7 +1614,7 @@ sub days
     return $days;
 }
 
-# Return first date TO the second date.  If first date is ealier than second, returns positive.. otherwise negavtive
+# Return first date TO the second date.  Returns the absolute number of days.
 sub absdays
 {
     my $date1 = $_ [0];
@@ -1765,10 +2077,11 @@ sub is_exponent
 sub is_number
 {
     my $field = $_ [0];
-    if ($field =~ m/^([\+\-]|)\d+($|\.\d+)$/)
+    if ($field =~ m/^\s*([\+\-]|)\d+($|\.\d+)\s*$/)
     {
         return 1;
     }
+
     if (is_exponent ($field))
     {
         return 1;
@@ -1886,7 +2199,6 @@ sub do_sum_expansion
         }
         $sum_str =~ s/\+$//;
         $sum_str =~ s/\+\+/+/img;
-        $sum_str .= "";
         return $sum_str;
     }
     return $field_val;
@@ -1994,6 +2306,18 @@ sub perl_expansions
     {
         $str = do_round_expansion ($str);
     }
+    if ($str =~ m/ADDMONTHS\(/)
+    {
+        $str = do_addmonths_expansion ($str);
+    }
+    if ($str =~ m/EQUALS\(/)
+    {
+        $str = do_equals_expansion ($str);
+    }
+    if ($str =~ m/ADDDAYS\(/)
+    {
+        $str = do_adddays_expansion ($str);
+    }
     if ($str =~ m/ABSDAYS\(/)
     {
         $str = do_absdays_between_expansion ($str);
@@ -2038,7 +2362,10 @@ sub perl_expansions
     {
         $str = do_weekday_expansion ($str);
     }
-
+    if ($str =~ m/RECURRING\(/)
+    {
+        $str = do_recurring_expansion ($str);
+    }
     # General cleanup..
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
     return $str;
@@ -3940,7 +4267,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
 
             $txt =~ m/(........show_examples.......)/im;
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
-            my $listing = `dir /a /b /s d:\\perl_programs\\csv_ingest\\*$safe*.txt`;
+            my $listing = `dir /a /o:d /b /s d:\\perl_programs\\csv_ingest\\*$safe*.txt`;
             $listing =~ s/d:\\.*\\//img;
             $listing =~ s/(.*?)\n/<a href="\/csv_analyse\/old_csv?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing<br>(Note, automatically authorized as IPs are as follows: (yours:$client_addr), (server:$server_ip))</body> </html>";
@@ -4080,19 +4407,147 @@ $//img;
             process_csv_data ($new_csv_data, "POSTED");
         }
 
-        if (($authorized && $txt =~ m/GET.*old_csv.(.*)/i) || (!$authorized && $txt =~ m/GET.*old_csv.(.*safe.*)/i))
+        my $current_file = "";
+        if (($txt =~ m/old_csv.(.*)/im))
+        {
+            my $file = $1;
+            $file =~ s/ HTTP.*//;
+            $file =~ s/&.*//;
+            $file =~ s/\n//img;
+            $file =~ s/^.*old_csv.CSV/CSV/;
+            print ("111 LOOKING AT A FILE OF : $file\n");
+            $current_file = "d:\\perl_programs\\csv_ingest\\$file";
+        }
+        print ("2222 LOOKING AT A FILE OF : $current_file\n from >>>$txt<<<\nmofo\n");
+
+        if (($authorized && $txt =~ m/GET.*old_csv.(.*?)(\&|\n|$)/im) || (!$authorized && $txt =~ m/GET.*old_csv.(.*safe.*?)(\&|\n|$)/im))
         {
             my $file = $1;
             $file =~ s/ HTTP.*//;
             $file =~ s/\n//img;
             $file =~ s/^.*old_csv.CSV/CSV/;
             my $new_csv = `type  d:\\perl_programs\\csv_ingest\\$file`;
+            $current_file = "d:\\perl_programs\\csv_ingest\\$file";
+            $current_file =~ s/\.\./xxxx/img;
             process_csv_data ($new_csv, "DONT_SAVE");
         }
         elsif (!$authorized && $txt =~ m/GET.*old_csv/i)
         {
             write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . "old_csv", "", "noredirect");
             next;
+        }
+
+        # Allow editting via a select box only for certain column..
+        $use_edit_model = 0;
+        if ($txt =~ m/edit\?([a-z0-9]+):(.+?)&editdone/im)
+        {
+            # <select> <option value="1" selected>1</option> <option value="2">2</option> </select>
+            my $hash = $1;
+            my $vals = $2;
+            
+            my $check_sum = $vals . "$current_file._I_WAS_'ERE";
+            $check_sum = md5_hex($check_sum);
+
+            if ($check_sum eq $hash)
+            {
+                $use_edit_model = 1;
+                # Handle update_cell calls in here.
+                # GET /update_cell?newval=C3&value=1
+                # Host: myserver.co.uk
+                # User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0
+                # Accept: */*
+                # Accept-Language: en-US,en;q=0.5
+                # Accept-Encoding: gzip, deflate, br, zstd
+                # Referer: https://myserver.coke.uk/csv_analyse/old_csv?safe_bellringing.txt&edit?86c9f93d190697ef156cc8da377b66bd:column,2,2,select;0;1;&editdone
+                if ($txt =~ m/update_cell.newval=([A-Z])(\d+)&value=(.*)/im)
+                {
+                    update_csv_data_on_disk ("$1$2", "$3", $current_file);
+                }
+
+                if ($vals =~ m/column/img)
+                {
+                    $edit_model_column = 1;
+                    $edit_model_min_row = -1;
+                    $edit_model_min_col = -1;
+
+                    if ($vals =~ m/column,(\d+),(\d+),/i)
+                    {
+                        $edit_model_column_to_edit = $1;
+                        $edit_model_min_row = $2;
+                    }
+                    elsif ($vals =~ m/column,(\d+),/i)
+                    {
+                        $edit_model_column_to_edit = $1;
+                    }
+                    $edit_model_row = 0;
+                    $edit_model_row_to_edit = 0;
+                    $edit_model_cell = 0;
+                }
+                elsif ($vals =~ m/row/img)
+                {
+                    $edit_model_column = 0;
+                    $edit_model_column_to_edit = 0;
+                    $edit_model_row = 1;
+                    $edit_model_min_row = -1;
+                    $edit_model_min_col = -1;
+                    
+                    if ($vals =~ m/row,(\d+),(\d+),/i)
+                    {
+                        $edit_model_row_to_edit = $1;
+                        $edit_model_min_col = $2;
+                    }
+                    elsif ($vals =~ m/row,(\d+),/i)
+                    {
+                        $edit_model_row_to_edit = $1;
+                    }
+
+                    $edit_model_cell = 0;
+                }
+                elsif ($vals =~ m/cell/img)
+                {
+                    $edit_model_column = 0;
+                    $edit_model_row = 0;
+                    $edit_model_cell = 1;
+                    $edit_model_min_row = -1;
+                    $edit_model_min_col = -1;
+
+                    if ($vals =~ m/cell,(\d+),(\d+)/i)
+                    {
+                        $edit_model_column_to_edit = $1;
+                        $edit_model_row_to_edit = $2;
+                    }
+                }
+
+                if ($vals =~ m/select/img)
+                {
+                    $edit_model_select_box = 1;
+                    $edit_model_edit_box = 0;
+                    my %new_edit_model_values_for_select;
+                    %edit_model_values_for_select = %new_edit_model_values_for_select;
+                    while ($vals =~ s/select;(.*?);/select;/i)
+                    {
+                        $edit_model_values_for_select {$1} = 1;
+                    }
+                }
+                else
+                {
+                    $edit_model_select_box = 0;
+                    $edit_model_edit_box = 1;
+                }
+                print "Yay! >> $edit_model_column $edit_model_row $edit_model_cell, " . join (":", sort keys (%edit_model_values_for_select));
+            }
+            else
+            {
+                print "Nup, should have been $check_sum (not $hash) for >$vals<!\n";   
+                sleep (10);
+                $edit_model_column = 0;
+                $edit_model_row = 0;
+                $edit_model_cell = 0;
+                my %new_edit_model_values_for_select;
+                %edit_model_values_for_select = %new_edit_model_values_for_select;
+                $edit_model_select_box = 0;
+                $edit_model_edit_box = 0;
+            }
         }
 
         my $search = ".*";
@@ -4551,6 +5006,90 @@ $//img;
                 }
 
                 $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
+
+                # Edittable model!
+                my $edit_cell_html = "";
+                my $form_edit_cell_html = "";
+                if ($use_edit_model == 1)
+                {
+                    my $col_number = get_field_num_from_field_letter ($col_letter);
+                    
+                    # Setup the select or edit html control..
+                    if  ($edit_model_select_box == 1)
+                    {
+                        my $s = "<select id=select_$col_letter$row_num>";
+                        my $k;
+                        foreach $k (sort keys (%edit_model_values_for_select))
+                        {
+                            $s .= "<option value=\"$k\">$k</option>";
+                        }
+                        $s .= "</select>";
+                        $edit_cell_html = $s;
+                    }
+                    elsif  ($edit_model_edit_box == 1)
+                    {
+                        $edit_cell_html = "<input type=\"text\" value=\"XXXX\" style=\"width: 40px;\">";
+                    }
+                    $form_edit_cell_html = "<form id=\"form_$col_letter$row_num\">$edit_cell_html</form>
+<script>
+  document.getElementById('select_$col_letter$row_num').addEventListener('change', function () {
+    const value = this.value;
+    fetch(`update_cell?newval=$col_letter$row_num&value=\${encodeURIComponent(value)}`, {
+      method: 'GET'
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.text();
+    })
+    .then(data => {
+      console.log('Server response:', data);
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+    });
+  });
+</script>";
+
+                    my $use_edit_cell_html = 0;
+                    if ($edit_model_column == 1 && $row_num > $edit_model_min_row)
+                    {
+                        if ($col_number == $edit_model_column_to_edit)
+                        {
+                            $use_edit_cell_html = 1;
+                        }
+                    }
+                    elsif ($edit_model_row == 1 && $col_number > $edit_model_min_col)
+                    {
+                        if ($row_num == $edit_model_row_to_edit)
+                        {
+                            $use_edit_cell_html = 1;
+                        }
+                    }
+                    elsif ($edit_model_cell == 1)
+                    {
+                        if ($row_num == $edit_model_row_to_edit)
+                        {
+                            my $col_number = get_field_num_from_field_letter ($col_letter);
+                            if ($col_number == $edit_model_column_to_edit)
+                            {
+                                $use_edit_cell_html = 1;
+                            }
+                        }
+                    }
+                    if ($use_edit_cell_html == 0)
+                    {
+                        $edit_cell_html = "";    
+                    }
+                }
+                
+                my $use_edit_instead = 0;
+                if ($edit_cell_html ne "")
+                {
+                    $use_edit_instead = 1;
+                    $edit_cell_html = $form_edit_cell_html;
+                }
+
+                $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
                 if ($row_num > $old_row_num)
                 {
                     # Add row to table if matched
@@ -4732,7 +5271,23 @@ $//img;
                 }
                 else
                 {
-                    $row .= "<td id='$col_letter$row_num'>$field</td>\n";
+                    if ($use_edit_instead == 0)
+                    {
+                        #$row .= "<td id='$col_letter$row_num'>$field</td>UH" . get_field_num_from_field_letter ($col_letter) . ">> $use_edit_model $edit_model_column $edit_model_column_to_edit UHNOEDIT $edit_cell_html HERE\n";
+                        $row .= "<td id='$col_letter$row_num'>$field</td>\n";
+                    }
+                    else
+                    {
+                        if ($edit_cell_html =~ m/XXXX/)
+                        {
+                            $edit_cell_html =~ s/XXXX/$field/;
+                        }
+                        if ($edit_cell_html =~ m/>$field</)
+                        {
+                            $edit_cell_html =~ s/>$field</selected="1">$field</;
+                        }
+                        $row .= "<td id='$col_letter$row_num'>$edit_cell_html</td>";
+                    }
                 }
                 $x++;
                 $old_col_letter = $col_letter;
