@@ -45,6 +45,27 @@ my $edit_model_edit_box = 0;
 my %edit_model_values_for_select;
 my $edit_model_min_row = -1;
 my $edit_model_min_col = -1;
+my $use_edit_model_master_mode = 0;
+my $edit_model_master_mode_append = "";
+my $edit_model_current_file = "";
+my $edit_model_master_mode_url = "";
+my $edit_mastermode = "MASTER_EDIT_MODE";
+my $EDIT_MASTERMODE_SALT = "MASTER_EDIT_MODE_SALT";
+my $EDIT_SALT = "_SPJONES_WAS_HERE";
+
+sub get_md5
+{
+    my $str = $_ [0];
+    my $filename = $_ [1];
+    my $salt = $_ [2];
+    my $called_from = $_ [3];
+
+    
+    my $bigstr = $str . $filename . $salt;
+    my $chksum = md5_hex($bigstr);
+    print ("\n\n\nMD5 >> $bigstr called from $called_from gives $chksum\n");
+    return md5_hex($bigstr);
+}
 
 sub write_to_socket
 {
@@ -1139,6 +1160,7 @@ sub do_equals_expansion
     }
     return $field_val;
 }
+
 sub do_recurring_expansion
 {
     my $field_val = $_ [0];
@@ -1176,6 +1198,23 @@ sub do_weekday_expansion
         {
             $field_val =~ s/$func\((.*)\)/perl_weekday($num)/;
             print ("zzzzzzzzzzzzzzz $field_val\n");
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_nextday_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((NEXTDAY)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/perl_nextday($1,$2)/;
             return $field_val;
         }
     }
@@ -1225,6 +1264,59 @@ sub perl_tax
         return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * (190000-135000)+0.45 * ($salary-190000);
     }
     return 0;
+}
+
+sub get_ordinal_suffix
+{
+    my $n = shift;
+    return 'th' if ($n =~ /11$|12$|13$/);
+    return 'st' if ($n % 10 == 1);
+    return 'nd' if ($n % 10 == 2);
+    return 'rd' if ($n % 10 == 3);
+    return 'th';
+}
+
+sub perl_nicedate
+{
+    my $date = $_[0];
+
+    if ($date =~ m/^(\d{4})(\d{2})(\d{2})$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+        my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+
+        $mday =~ s/^\s+//;  # Remove leading spaces
+        my $suffix = get_ordinal_suffix($mday);
+
+        if ($wday == 0) { $wday = "Sun"; }
+        if ($wday == 1) { $wday = "Mon"; }
+        if ($wday == 2) { $wday = "Tue"; }
+        if ($wday == 3) { $wday = "Wed"; }
+        if ($wday == 4) { $wday = "Thu"; }
+        if ($wday == 5) { $wday = "Fri"; }
+        if ($wday == 6) { $wday = "Sat"; }
+
+        if ($mon == 0) { $mon = "Jan"; }
+        if ($mon == 1) { $mon = "Feb"; }
+        if ($mon == 2) { $mon = "Mar"; }
+        if ($mon == 3) { $mon = "Apr"; }
+        if ($mon == 4) { $mon = "May"; }
+        if ($mon == 5) { $mon = "Jun"; }
+        if ($mon == 6) { $mon = "Jul"; }
+        if ($mon == 7) { $mon = "Aug"; }
+        if ($mon == 8) { $mon = "Sep"; }
+        if ($mon == 9) { $mon = "Oct"; }
+        if ($mon == 10) { $mon = "Nov"; }
+        if ($mon == 11) { $mon = "Dec"; }
+
+        $year = $year+1900;
+        return "$wday, $mon $mday$suffix, $year";
+    }
+
+    return undef;
 }
 
 sub perl_audio
@@ -1370,6 +1462,48 @@ sub perl_weekday
     else
     {
         return perl_weekday ($adder+1);
+    }
+}
+
+sub perl_nextday
+{
+    # Requires a day of the week (MON,TUES,WED,THURS,FRI,SAT,SUN etc)
+    my $date = $_ [0];
+    my $day_of_week = $_ [1];
+    my $dow;
+    if ($day_of_week =~ m/^SUN/i) { $dow = 0; }
+    if ($day_of_week =~ m/^MON/i) { $dow = 1; }
+    if ($day_of_week =~ m/^TUES/i) { $dow = 2; }
+    if ($day_of_week =~ m/^WED/i) { $dow = 3; }
+    if ($day_of_week =~ m/^THUR/i) { $dow = 4; }
+    if ($day_of_week =~ m/^FRI/i) { $dow = 5; }
+    if ($day_of_week =~ m/^SAT/i) { $dow = 6; }
+    
+    $date =~ s/\s//;
+    if ($date =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+        my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+        my $yyyymmdd;
+        
+        if ($wday == $dow)
+        {
+            $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+            return $yyyymmdd;
+        }
+        else
+        {
+            while ($wday != $dow)
+            {
+                $time += 24 * 3600;
+                ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+            }
+            $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+            return $yyyymmdd;
+        }
     }
 }
 
@@ -1568,6 +1702,22 @@ sub do_absdays_between_expansion
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\((.+)\|(.+)\)/absdays($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_nicedate
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/(NICEDATE\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $date = $2;
+        if (simple_parentheses_only_one_argument ($to_check, "NICEDATE"))
+        {
+            $field_val =~ s/NICEDATE\((.+)\)/perl_nicedate("$1")/;
             return $field_val;
         }
     }
@@ -1984,6 +2134,8 @@ sub do_if_expansion
             my $true_bit = $2;
             my $false_bit = $3;
             $condition =~ s/([^=]+)=([^=]+)/$1==$2/g;
+            $condition =~ s/ OR / || /img;
+            $condition =~ s/ AND / && /img;
             $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/($condition ? $true_bit : $false_bit)/;
         }
     }
@@ -2164,8 +2316,40 @@ sub fix_date
 sub do_sum_expansion
 {
     my $field_val = $_ [0];
+    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+)\|(.+)\))/)
+    {
+        my $first_bit = $1;
+        my $overall = $2;
+        my $first_col = $3;
+        my $first_num = $4;
+        my $second_col = $5;
+        my $second_num = $6;
+        my $comparator = lc($7);
 
-    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
+        my $fc_num = get_field_num_from_field_letter ($first_col);
+        my $sc_num = get_field_num_from_field_letter ($second_col);
+        my $i = $fc_num;
+        my $j = $first_num;
+        my $total = 0;
+        my $things_seen = "";
+        while ($i <= $sc_num)
+        {
+            while ($j <= $second_num)
+            {
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas);
+                if (lc($cv) eq $comparator)
+                {
+                    $total++;
+                }
+                $j++;
+            }
+            $j = $first_num;
+            $i++;
+        }
+        #return "$total + 0";
+        return $total;
+    }
+    elsif ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
     {
         my $first_bit = $1;
         my $overall = $2;
@@ -2201,6 +2385,7 @@ sub do_sum_expansion
         $sum_str =~ s/\+\+/+/img;
         return $sum_str;
     }
+    
     return $field_val;
 }
 
@@ -2322,6 +2507,10 @@ sub perl_expansions
     {
         $str = do_absdays_between_expansion ($str);
     }
+    if ($str =~ m/NICEDATE\(/)
+    {
+        $str = do_nicedate ($str);
+    }
     if ($str =~ m/DAYS\(/)
     {
         $str = do_days_between_expansion ($str);
@@ -2361,6 +2550,10 @@ sub perl_expansions
     if ($str =~ m/WEEKDAY\(/)
     {
         $str = do_weekday_expansion ($str);
+    }
+    if ($str =~ m/NEXTDAY\(/)
+    {
+        $str = do_nextday_expansion ($str);
     }
     if ($str =~ m/RECURRING\(/)
     {
@@ -2925,6 +3118,7 @@ my $examples_four;
 my $examples_five;
 my $examples_six;
 my $examples_seven;
+my $examples_eight;
 sub set_examples
 {
     $examples_one = "X_val	Y_yal	Row	DivRow	ModRow	??	Z_val_cylinder
@@ -4441,12 +4635,9 @@ $//img;
         $use_edit_model = 0;
         if ($txt =~ m/edit\?([a-z0-9]+):(.+?)&editdone/im)
         {
-            # <select> <option value="1" selected>1</option> <option value="2">2</option> </select>
             my $hash = $1;
             my $vals = $2;
-            
-            my $check_sum = $vals . "$current_file._I_WAS_'ERE";
-            $check_sum = md5_hex($check_sum);
+            my $check_sum = get_md5 ($current_file, $vals, $EDIT_SALT, 4558);
 
             if ($check_sum eq $hash)
             {
@@ -4458,7 +4649,8 @@ $//img;
                 # Accept: */*
                 # Accept-Language: en-US,en;q=0.5
                 # Accept-Encoding: gzip, deflate, br, zstd
-                # Referer: https://myserver.coke.uk/csv_analyse/old_csv?safe_bellringing.txt&edit?86c9f93d190697ef156cc8da377b66bd:column,2,2,select;0;1;&editdone
+                # Referer: https://myserver.co.uk/csv_analyse/old_csv?safe_bellringing.txt&edit?86c9f93d190697ef156cc8da377b66bd:column,2,2,select;0;1;&editdone
+
                 if ($txt =~ m/update_cell.newval=([A-Z])(\d+)&value=(.*)/im)
                 {
                     update_csv_data_on_disk ("$1$2", "$3", $current_file);
@@ -4538,8 +4730,48 @@ $//img;
             }
             else
             {
-                print "Nup, should have been $check_sum (not $hash) for >$vals<!\n";   
-                sleep (10);
+                my $vals = $2;
+                print "\nNup, 222 should have been $check_sum (not $hash) for >$vals<!\n";   
+                $edit_model_column = 0;
+                $edit_model_row = 0;
+                $edit_model_cell = 0;
+                my %new_edit_model_values_for_select;
+                %edit_model_values_for_select = %new_edit_model_values_for_select;
+                $edit_model_select_box = 0;
+                $edit_model_edit_box = 0;
+            }
+        }
+
+        if ($authorized)
+        {
+            $edit_model_master_mode_url = $txt;
+            $edit_model_master_mode_url =~ s/GET //;
+            $edit_model_master_mode_url =~ s/&master.*//;
+            $edit_model_master_mode_url =~ s/\n/zzzzzzzzz/img;
+            $edit_model_master_mode_url =~ s/zzzzzzzzz.*//img;
+            $edit_model_master_mode_url =~ s/^/\/csv_analyse/img;
+            $edit_model_master_mode_url =~ s/&edit.*//img;
+            $edit_model_master_mode_url =~ s/&master.*//img;
+            $edit_model_current_file = "$current_file";
+            print ($edit_model_master_mode_url, "<<<<<<<<<<<< -- edit_model_master_mode_url\n");
+        }
+
+        $use_edit_model_master_mode = 0;
+        if ($txt =~ m/GET .*master\?([a-z0-9]+):$edit_mastermode&masterdone/i)
+        {
+            print ("\n\n\n\nMaster:\nxxxSAW TEXT OF $txt\n");
+            my $hash = $1;
+            my $vals = $edit_mastermode;
+            
+            my $check_sum = get_md5 ($edit_model_current_file, $edit_mastermode, $EDIT_MASTERMODE_SALT, 4692);
+
+            if ($check_sum eq $hash)
+            {
+                $use_edit_model_master_mode = 1;
+            }
+            else
+            {
+                print "\nNup, 333 should have been $check_sum (not $hash) for >$vals<!\n";   
                 $edit_model_column = 0;
                 $edit_model_row = 0;
                 $edit_model_cell = 0;
@@ -4742,8 +4974,13 @@ $//img;
                 <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
                 <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
                 <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">Mesh 3D</a>
-                <a href=\"/csv_analyse/3dgraph?col1=A&col2=B&col3=C\">3D</a>
-                </form></td>";
+                <a href=\"/csv_analyse/3dgraph?col1=A&col2=B&col3=C\">3D</a>";
+        if ($authorized)
+        {
+            my $check_sum = get_md5 ($edit_model_current_file, $edit_mastermode, $EDIT_MASTERMODE_SALT, 4906);
+            $html_text .= "&nbsp;<a href='$edit_model_master_mode_url&master?$check_sum:$edit_mastermode&masterdone'>Checksums</a>";
+        }
+        $html_text .= "</form></td>";
 
         if ($show_formulas == 0)
         {
@@ -4912,6 +5149,15 @@ $//img;
         my $old_col_letter = "A";
         my $field_id = 0;
         my $row = "<tr><td><font size=-1>Row:$row_num</font></td>";
+        
+        if ($use_edit_model_master_mode) 
+        {
+            my $edit_instructions = "row,$row_num,1,select;Present;Away;";
+            my $this_row_edit_chksum = $edit_instructions . $edit_model_master_mode_append;
+            my $check_sum = get_md5 ($edit_model_current_file, $edit_instructions, $EDIT_SALT, 5085);
+            $row = "<tr><td><font size=-1><a href='$edit_model_master_mode_url&edit?$check_sum:$edit_instructions&editdone'>Edit</a> Row:$row_num</font></td>";
+        }
+
         my $fake_row;
         my $x = 0;
         my $y = 0;
@@ -5267,6 +5513,12 @@ $//img;
                     }
 
                     $row = "<tr><td><font size=-1>Row:$old_row_num</font></td><td id='$col_letter$row_num'>$field</td>\n";
+                    if ($use_edit_model_master_mode) 
+                    {
+                        my $edit_instructions = "row,$row_num,1,select;Present;Away;";
+                        my $check_sum = get_md5 ($edit_model_current_file, $edit_instructions, $EDIT_SALT, 5447);
+                        $row = "<tr><td><font size=-1><a href='$edit_model_master_mode_url&edit?$check_sum:$edit_instructions&editdone'>Edit</a> Row:$old_row_num</font></td><td id='$col_letter$row_num'>$field</td>\n";
+                    }
                     $old_row_num = $row_num;
                 }
                 else
@@ -5397,6 +5649,32 @@ $//img;
                 $overall_count++;
                 $html_text .= "$row ";
             }
+        }
+
+        # Get the 'column edit' links
+        if ($use_edit_model_master_mode) 
+        {
+            my $x = 0;
+            $col_letter = "A";
+            my $row = "<tr>";
+            while ($x <= $max_field_num)
+            {
+                my $col_num = $x - 1;
+                my $edit_instructions = "column,$col_num,2,select;Present;Away;";
+                my $check_sum = get_md5 ($edit_model_current_file, $edit_instructions, $EDIT_SALT, 5592);
+                if ($col_num >= 0)
+                {
+                    my $cell_val = get_field_value (2, $col_num, 0, 0);
+                    $row .= "<td><font size=-1><a href='$edit_model_master_mode_url&edit?$check_sum:$edit_instructions&editdone'>Edit - $cell_val</a> Col:$x</font></td>";
+                }
+                else
+                {
+                    $row .= "<td><font size=-1>Col:$x</font></td>";
+                }
+                $x++;
+            }
+            $row .= "</tr>";
+            $html_text .= $row;
         }
 
         $html_text .= "</font></tbody>\n";
