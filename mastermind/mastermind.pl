@@ -44,7 +44,35 @@ my $hard_bot_answers = "";
 my $GAME_TYPE_HARD = "hard";
 my $GAME_TYPE_BOT = "bot";
 my $GAME_TYPE_HUMAN = "human";
-my $games_block = "<a href=\"\/reset_game\">Reset<\/a> or start a new game: <a href=\"\/new_game\">new game<\/a>, <a href=\"\/new_hard_game\">new hard game<\/a> or <a href=\"\/new_bot_game\">play against bot<\/a> <a href=\"https://xmage.au/mastermind/nextHardChoice?White&White&Blue&Blue\">quick hard</a>";
+my $games_block = "<a href=\"#\" onclick=\"confirmReset(event)\">Reset</a> 
+or start a new game: <a href=\"/mastermind/new_game\">new game<\/a>, 
+<a href=\"/mastermind/new_hard_game\">new hard game<\/a>, 
+or <a href=\"/mastermind/new_bot_game\">play against bot<\/a>";
+my $center_games_block = "<center><a href=\"#\" onclick=\"confirmReset(event)\">Reset<\/a> 
+or start a new game: <a href=\"#\" onclick=\"confirmNewGameEasy(event)\">new game<\/a>, 
+<a href=\"#\" onclick=\"confirmNewGameHard(event)\">new hard game<\/a>, 
+or <a href=\"#\" onclick=\"confirmNewGameBot(event)\">play against bot<\/a></center>
+    <div id=\"confirm_reset_box\">
+        <p>Are you sure you want to reset?</p>
+        <button class=\"confirm_reset_btn\" onclick=\"resetGame(true)\">Yes</button>
+        <button class=\"confirm_reset_btn\" onclick=\"resetGame(false)\">No</button>
+    </div>
+    <div id=\"confirm_newgame_box\">
+        <p>Are you sure you want to create a new easy game?</p>
+        <button class=\"confirm_reset_btn\" onclick=\"newEasyGame(true)\">Yes</button>
+        <button class=\"confirm_reset_btn\" onclick=\"newEasyGame(false)\">No</button>
+    </div>
+    <div id=\"confirm_newhardgame_box\">
+        <p>Are you sure you want to create a new hard game?</p>
+        <button class=\"confirm_reset_btn\" onclick=\"newHardGame(true)\">Yes</button>
+        <button class=\"confirm_reset_btn\" onclick=\"newHardGame(false)\">No</button>
+    </div>
+    <div id=\"confirm_newbotgame_box\">
+        <p>Are you sure you want to create a new bot game?</p>
+        <button class=\"confirm_reset_btn\" onclick=\"newBotGame(true)\">Yes</button>
+        <button class=\"confirm_reset_btn\" onclick=\"newBotGame(false)\">No</button>
+    </div>
+";
 
 #-================================
 sub has_someone_won
@@ -56,7 +84,7 @@ sub game_won
 {
     my $win_con = $_ [0];
 
-    if ($GAME_WON == 0)
+    if ($GAME_WON == 0 || $GAME_WON == 1 && $win_con > 1)
     {
         force_needs_refresh();
         $GAME_WON = $_ [0];
@@ -2264,8 +2292,147 @@ sub get_game_state
 }
 
 #####  BEAD HTML ####
-my $header = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"> <link rel=\"stylesheet\" href=\"\/maastermind\/bootstrap.min.css\"> <script src=\"\/maastermind\/jquery-3.5.1.min.js\"><\/script> <script src=\"\/maastermind\/popper.min.js\"><\/script> <script src=\"\/maastermind\/bootstrap.min.js\"><\/script> <\/head> <body> <center> <h1 style=\"color: royalblue\"> Master Mind <\/h1><table>";
-my $footer = " <tr> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 1</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead1\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead1')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead1')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead1')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead1')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead1')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead1')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead2\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 2</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead2\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead2')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead2')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead2')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead2')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead2')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead2')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 3</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead3\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead3')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead3')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead3')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead3')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead3')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead3')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead4\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 4</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead4\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead4')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead4')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead4')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead4')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead4')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead4')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td>
+my $header = "<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"> <link rel=\"stylesheet\" href=\"\/maastermind\/bootstrap.min.css\"> <script src=\"\/maastermind\/jquery-3.5.1.min.js\"><\/script> <script src=\"\/maastermind\/popper.min.js\"><\/script> <script src=\"\/maastermind\/bootstrap.min.js\"><\/script> <\/head> <body> <center> <h1 style=\"color: royalblue\"> Master Mind <\/h1>
+  <script>
+    function confirmReset (event) 
+    {
+        event.preventDefault();
+        let confirmBox = document.getElementById(\"confirm_reset_box\");
+        confirmBox.style.display = \"block\";
+    }
+    
+    function confirmNewGameEasy (event) 
+    {
+        event.preventDefault();
+        let confirmBox = document.getElementById(\"confirm_newgame_box\");
+        confirmBox.style.display = \"block\";
+    }
+    
+    function confirmNewGameHard (event) 
+    {
+        event.preventDefault();
+        let confirmBox = document.getElementById(\"confirm_newhardgame_box\");
+        confirmBox.style.display = \"block\";
+    }
+    
+    function confirmNewGameBot (event) 
+    {
+        event.preventDefault();
+        let confirmBox = document.getElementById(\"confirm_newbotgame_box\");
+        confirmBox.style.display = \"block\";
+    }
+    
+    function resetGame(confirm) 
+    {
+        if (confirm)
+        {
+            window.location.href = \"/mastermind/reset_game\";
+        }
+        else 
+        {
+            document.getElementById(\"confirm_reset_box\").style.display = \"none\";
+        }
+    }
+    
+    function newEasyGame(confirm) 
+    {
+        if (confirm)
+        {
+            window.location.href = \"/mastermind/new_game\";
+            \/\/\/\/\/window.location.href = \"mastermind\/youtube\/\";
+        }
+        else 
+        {
+            document.getElementById(\"confirm_newgame_box\").style.display = \"none\";
+        }
+    }
+    
+    function newHardGame(confirm) 
+    {
+        if (confirm)
+        {
+            window.location.href = \"/mastermind/new_hard_game\";
+        }
+        else 
+        {
+            document.getElementById(\"confirm_newhardgame_box\").style.display = \"none\";
+        }
+    }
+    
+    function newBotGame(confirm) 
+    {
+        if (confirm)
+        {
+            window.location.href = \"/mastermind/new_bot_game\";
+        }
+        else 
+        {
+            document.getElementById(\"confirm_newbotgame_box\").style.display = \"none\";
+        }
+    }
+  </script>
+  <style>
+    #confirm_reset_box 
+    {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border: 1px solid black;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+    }
+    #confirm_newgame_box 
+    {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border: 1px solid black;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+    }
+    #confirm_newhardgame_box 
+    {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border: 1px solid black;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+    }
+    #confirm_newbotgame_box 
+    {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border: 1px solid black;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+    }
+    .confirm_reset_btn 
+    {
+        margin: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+  </style>
+<table>";
+my $footer = " <tr> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead1\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead1')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead1')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead1')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead1')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead1')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead1')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead2\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead2\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead2')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead2')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead2')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead2')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead2')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead2')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead3\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead3')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead3')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead3')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead3')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead3')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead3')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead4\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead4\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead4')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead4')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead4')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead4')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead4')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead4')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td>
             <td>
                 <button id=\"submitButton\" onclick=\"location.href='http://www.example.com'\" disabled>Submit</button>
             </td></tr> </table> </center>
@@ -2281,7 +2448,7 @@ function changeText(bead, beadUrl, nameofId)
     if (nameofId == 'bead2') { b2 = bead; numBeadsSet = numBeadsSet | 2; }
     if (nameofId == 'bead3') { b3 = bead; numBeadsSet = numBeadsSet | 4; }
     if (nameofId == 'bead4') { b4 = bead; numBeadsSet = numBeadsSet | 8; }
-    document.getElementById(nameofId).innerHTML = `<img src=\"\${beadUrl}\" width=\"20\" height=\"15\"> \${bead}`;
+    document.getElementById(nameofId).innerHTML = `<img src=\"\${beadUrl}\" width=\"20\" height=\"15\">`;
     if (numBeadsSet == 15)
     {
         document.getElementById(\"submitButton\").disabled = false;
@@ -2292,8 +2459,8 @@ function changeText(bead, beadUrl, nameofId)
     }
     else { document.getElementById(\"submitButton\").disabled = true; }
 }
-<\/script> <br>$games_block";
-my $hard_footer = " <tr> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 1</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead1\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead1')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead1')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead1')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead1')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead1')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead1')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead2\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 2</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead2\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead2')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead2')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead2')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead2')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead2')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead2')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 3</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead3\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead3')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead3')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead3')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead3')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead3')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead3')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead4\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> Bead 4</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead4\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead4')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead4')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead4')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead4')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead4')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead4')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td>
+<\/script> <br>$center_games_block";
+my $hard_footer = " <tr> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead1\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead1')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead1')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead1')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead1')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead1')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead1')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead2\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead2\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead2')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead2')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead2')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead2')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead2')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead2')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead3\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead3')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead3')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead3')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead3')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead3')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead3')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td> <td> <div class=\"dropdown\"> <button class=\"btn btn-success dropdown-toggle\" type=\"button\" id=\"bead4\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> ?</button> <ul class=\"dropdown-menu\" aria-labelledby=\"bead4\"> <li class=\"dropdown-item\" onclick=\"changeText('White', '/white.png', 'bead4')\"> <img src=\"/white.png\" width=\"20\" height=\"15\"> White</li> <li class=\"dropdown-item\" onclick=\"changeText('Blue', '/blue.png', 'bead4')\"> <img src=\"/blue.png\" width=\"20\" height=\"15\"> Blue</li> <li class=\"dropdown-item\" onclick=\"changeText('Black', '/black.png', 'bead4')\"> <img src=\"/black.png\" width=\"20\" height=\"15\"> Black</li> <li class=\"dropdown-item\" onclick=\"changeText('Red', '/red.png', 'bead4')\"> <img src=\"/red.png\" width=\"20\" height=\"15\"> Red</li> <li class=\"dropdown-item\" onclick=\"changeText('Green', '/green.png', 'bead4')\"> <img src=\"/green.png\" width=\"20\" height=\"15\"> Green</li> <li class=\"dropdown-item\" onclick=\"changeText('Yellow', '/yellow.png', 'bead4')\"> <img src=\"/yellow.png\" width=\"20\" height=\"15\"> Yellow</li> </ul> </div> </td>
             <td>
                 <button id=\"submitButton\" onclick=\"location.href='http://www.example.com'\" disabled>Submit</button>
             </td></tr> </table> </center>
@@ -2309,7 +2476,7 @@ function changeText(bead, beadUrl, nameofId)
     if (nameofId == 'bead2') { b2 = bead; numBeadsSet = numBeadsSet | 2; }
     if (nameofId == 'bead3') { b3 = bead; numBeadsSet = numBeadsSet | 4; }
     if (nameofId == 'bead4') { b4 = bead; numBeadsSet = numBeadsSet | 8; }
-    document.getElementById(nameofId).innerHTML = `<img src=\"\${beadUrl}\" width=\"20\" height=\"15\"> \${bead}`;
+    document.getElementById(nameofId).innerHTML = `<img src=\"\${beadUrl}\" width=\"20\" height=\"15\">`;
     if (numBeadsSet == 15)
     {
         document.getElementById(\"submitButton\").disabled = false;
@@ -2320,7 +2487,7 @@ function changeText(bead, beadUrl, nameofId)
     }
     else { document.getElementById(\"submitButton\").disabled = true; }
 }
-<\/script> <br>$games_block";
+<\/script> <br>$center_games_block";
 
 sub print_beads
 {
@@ -2362,21 +2529,31 @@ sub print_beads
 
         if ($num_right == 4)
         {
-            game_won (1, "You got the code");
+            game_won (2, "You win! You got the code!");
         }
 
         if ($to_check =~ m/.*$bb1.*/) { $num_semiright++; $to_check =~ s/$bb1/x/; }
         if ($to_check =~ m/.*$bb2.*/) { $num_semiright++; $to_check =~ s/$bb2/x/; }
         if ($to_check =~ m/.*$bb3.*/) { $num_semiright++; $to_check =~ s/$bb3/x/; }
         if ($to_check =~ m/.*$bb4.*/) { $num_semiright++; }
-        $middle .= "<td> Right=$num_right; Partially Right=$num_semiright</td></tr>"; # $extra $to_check ($cg1,$cg2,$cg3,$cg4  vs $bb1,$bb2,$bb3,$bb4</td><tr>";
+        #$middle .= "<td> Right=$num_right; Partially Right=$num_semiright</td></tr>"; # $extra $to_check ($cg1,$cg2,$cg3,$cg4  vs $bb1,$bb2,$bb3,$bb4</td><tr>";
+        # New images!
+        my $wrong = 4 - $num_right - $num_semiright;
+        my $image = $num_right . "r" . $num_semiright . "m" . $wrong . "w.png";
+        $middle .= "<td><img src=\"$image\" width=50 height=50></img></td></tr>";
+        #$middle .= "<td>$image</td></tr>";
         #$middle .= "<td> Right=$num_right; Partially Right=$num_semiright ($extra $to_check $cg1,$cg2,$cg3,$cg4  vs $bb1,$bb2,$bb3,$bb4)</td><tr>";
     }
     $middle .= "</tr>";
 
     if ($num_right == 4)
     {
-        return ("$header$middle</tr> </td></table> <br> You won!<br>$games_block<\/body> <\/html>");
+        return ("$header$middle</tr> </td></table> <br> You won!<br>$center_games_block<\/body> <\/html>");
+    }
+
+    if (get_game_won () ne "")
+    {
+        $middle .= "<br>$reason_for_game_end<br>";
     }
     return ("$header$middle$footer");
 }
@@ -2389,8 +2566,6 @@ sub print_hard_beads
     my $middle = "<tr>";
     $human_choices = "";
     my $orig_answers = "";
-
-
 
     my $gg = 0;
     my $term = "";
@@ -2486,11 +2661,14 @@ sub print_hard_beads
         $npr++;
     }
 
+    if ($nr == 4)
+    {
+        game_won (2, "You win! You guessed the code!");
+    }
+
     $CURRENT_GUESSES {($CURRENT_GUESSES_NUM-1) . "_response"} = "$nr,$npr";
 
     my $guess = 0;
-    my $num_right = 0;
-    my $num_semi_right = 0;
     while (exists ($CURRENT_GUESSES {$guess}))
     {
         my $new_guess = uc ($CURRENT_GUESSES {$guess});
@@ -2513,11 +2691,21 @@ sub print_hard_beads
             $middle .= "<td> <img src=\"$color.png\" width=\"20\" height=\"15\"></img> </td>";
         }
         my $gg = $guess - 1;
-        $middle .= "<td> $new_response</td></tr>";
+        # New images!
+        $new_response =~ m/(\d),(\d)/;
+        my $num_right = $1;
+        my $num_semiright = $2;
+        my $wrong = 4 - $num_right - $num_semiright;
+        my $image = $num_right . "r" . $num_semiright . "m" . $wrong . "w.png";
+        $middle .= "<td><img src=\"$image\" width=50 height=50></img></td></tr>";
     }
 
     #$middle .= "</tr><br> ($helper,$term) ==> ($max_number_of_codes_left,$max_answer)";
     $middle .= "</tr>";
+    if (get_game_won () ne "")
+    {
+        $middle .= "<br>$reason_for_game_end<br>";
+    }
     return ("$header$middle$hard_footer");
 }
 
@@ -2641,7 +2829,7 @@ sub print_bot_beads
         $next_guess = lc (get_valid_choices ($term, $helper));
         if ($next_guess =~ m/INVALID/i)
         {
-            game_won (1, "You lose! No valid choices left.");
+            game_won (2, "You lose! No valid choices left.");
         }
         else
         {
@@ -2676,7 +2864,22 @@ sub print_bot_beads
             $user_guess = "<td>" . $CURRENT_GUESSES {$guess . "_response"} . "</td>";
         }
 
-        $middle .= "<tr>$user_guess</tr>";
+        #$middle .= "$user_guess</tr>";
+
+        # New images!
+        if ($user_guess =~ m/(\d),(\d)/)
+        {
+            my $num_right = $1;
+            my $num_semiright = $2;
+            my $wrong = 4 - $num_right - $num_semiright;
+            my $image = $num_right . "r" . $num_semiright . "m" . $wrong . "w.png";
+            $middle .= "<td><img src=\"$image\" width=50 height=50></img></td></tr>";
+        }
+        else
+        {
+            $middle .= "<td></td></tr>";
+        }
+
         $guess++;
     }
 
@@ -2691,6 +2894,7 @@ sub print_bot_beads
 }
 #####  // BEAD HTML ####
 
+my $testing = 1;
 # Main
 {
     my $paddr;
@@ -2760,6 +2964,22 @@ sub print_bot_beads
         if ($CURRENT_LOGIN_NAME eq "")
         {
             write_to_socket (\*CLIENT, get_game_state($client_addr), "", "noredirect");
+            next;
+        }
+
+        # HTTP
+        if ($txt =~ m/GET.{0,20}youtube.{0,20}HTTP/i)
+        {
+            new_hard_game ();
+            print ("Saw ---> $txt!\n");
+            if ($txt =~ m/(GET.{0,20}youtube.{0,20}HTTP)/i)
+            {
+                print ("$1 matched..!\n");
+            }
+            my $msg_body = "";
+            my $http_header = "HTTP/1.1 302 Moved\nLocation: https:\/\/www.youtube.com\/watch?v=dQw4w9WgXcQ\nLast-Modified: 20250301010101\nConnection: close\nContent-Type: text/html; charset=UTF-8\nContent-Length: 0\n\n";
+            $msg_body = $http_header . $msg_body;
+            syswrite (\*CLIENT, $msg_body);
             next;
         }
 
@@ -2880,8 +3100,27 @@ sub print_bot_beads
             $b3 =~ s/^Blue/u/i;
             $b4 =~ s/^Blue/u/i;
 
-            $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = "$b1$b2$b3$b4";
-            $CURRENT_GUESSES_NUM++;
+            my $pot_guess = "$b1$b2$b3$b4";
+            my $k;
+            my $ok = 1;
+            foreach $k (keys (%CURRENT_GUESSES))
+            {
+                if ($CURRENT_GUESSES {$k} eq $pot_guess)
+                {
+                    $ok = 0;
+                }
+            }
+
+            if ($ok)
+            {
+                $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = $pot_guess;
+                $CURRENT_GUESSES_NUM++;
+            }
+
+            if ($CURRENT_GUESSES_NUM >= 8)
+            {
+                game_won (1, "You lose! You made too many guesses!");
+            }
 
             write_to_socket (\*CLIENT, "Choice made", "", "redirect");
             next;
@@ -2907,8 +3146,27 @@ sub print_bot_beads
             $b3 =~ s/^Blue/u/i;
             $b4 =~ s/^Blue/u/i;
 
-            $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = "$b1$b2$b3$b4";
-            $CURRENT_GUESSES_NUM++;
+            my $pot_guess = "$b1$b2$b3$b4";
+            my $k;
+            my $ok = 1;
+            foreach $k (keys (%CURRENT_GUESSES))
+            {
+                if ($CURRENT_GUESSES {$k} eq $pot_guess)
+                {
+                    $ok = 0;
+                }
+            }
+
+            if ($ok)
+            {
+                $CURRENT_GUESSES {$CURRENT_GUESSES_NUM} = $pot_guess;
+                $CURRENT_GUESSES_NUM++;
+            }
+
+            if ($CURRENT_GUESSES_NUM >= 8)
+            {
+                game_won (1, "You lose! You made too many guesses!");
+            }
 
             write_to_socket (\*CLIENT, "Choice made", "", "redirect");
             next;
@@ -2923,10 +3181,16 @@ sub print_bot_beads
 
             if ($exact == 4)
             {
-                game_won (1, "Bot chose the code!");
+                game_won (1, "You lose! Bot chose the code!");
             }
+
+            if ($CURRENT_GUESSES_NUM >= 9)
+            {
+                game_won (1, "You win! Bot made too many guesses!");
+            }
+
             my $info = print_bot_beads ();
-            $info .= "$reason_for_game_end $games_block";
+            $info .= "$reason_for_game_end $center_games_block";
             write_to_socket (\*CLIENT, $info, "", "noredirect");
             next;
         }
@@ -2948,7 +3212,7 @@ sub print_bot_beads
         if ($won =~ m/^./)
         {
             game_won (1, $won);
-            my $info = "Game Over! $won..<br>$games_block";
+            my $info = "Game Over! $won..<br>$center_games_block";
             write_to_socket (\*CLIENT, $info, "", "noredirect");
             next;
         }
