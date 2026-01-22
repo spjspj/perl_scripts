@@ -52,6 +52,9 @@ my $edit_model_master_mode_url = "";
 my $edit_mastermode = "MASTER_EDIT_MODE";
 my $EDIT_MASTERMODE_SALT = "MASTER_EDIT_MODE_SALT";
 my $EDIT_SALT = "_SPJONES_WAS_HERE";
+my $EDIT_DONE = "editdone";
+my $EDIT = "edit";
+my $EDIT_SELECT = "select";
 
 sub get_md5
 {
@@ -60,10 +63,9 @@ sub get_md5
     my $salt = $_ [2];
     my $called_from = $_ [3];
 
-    
     my $bigstr = $str . $filename . $salt;
     my $chksum = md5_hex($bigstr);
-    print ("\n\n\nMD5 >> $bigstr called from $called_from gives $chksum\n");
+    #print ("\n\n\nMD5 >> $bigstr called from $called_from gives $chksum\n");
     return md5_hex($bigstr);
 }
 
@@ -347,7 +349,7 @@ sub process_csv_data
                 }
                 elsif ($line_mod eq "!")
                 {
-                    my $fv = get_field_value ($row_num-1, $col_letter, 1, 1);
+                    my $fv = get_field_value ($row_num-1, $col_letter, 1, 1, 353);
                     while ($field =~ m/([A-Z])!/)
                     {
                         my $cf = $1;
@@ -394,7 +396,9 @@ sub update_csv_data_on_disk
     my $cell_to_update = $_ [0];
     my $new_value = $_ [1];
     my $current_file = $_ [2];
+    my $hash_val = $_ [3];
     print ("UPDATING SHITE for >$current_file<\n");
+    print ("UPDATING SHITE for >$cell_to_update.RRR.$new_value.RRR.$hash_val<\n");
     $current_file =~ s/\.\.//g;
 
     my $row_num = 1;
@@ -404,6 +408,7 @@ sub update_csv_data_on_disk
     my $updated_block = "";
     my $orig_line = "";
     my $actually_updated = 0;
+    my $old_field_val = "";
 
     while ($block =~ s/^(.*?)\n//im)
     {
@@ -415,19 +420,31 @@ sub update_csv_data_on_disk
         {
             next;
         }
+
         $col_letter = "A";
         my $this_line_changed = 0;
         my $build_this_line = "";
-        while ($line =~ m/./ && $line =~ s/^([^;\t]*)([;\t]|$)//)
+        my $same_row = 0;
+
+        if ($cell_to_update =~ m/^[A-Z]+$row_num$/)
+        {
+            $same_row = 1;
+        }
+
+        while ($line =~ m/./ && $line =~ s/^([^;\t]*)([;\t]|$)// || $same_row)
         {
             my $field = $1;
             set_field_value ($row_num, $col_letter, $field, "");
-            
+
+            print (" LOOKING AT: >> $col_letter$row_num for $field :::$line.RRR.:::<<\n");
             if ("$col_letter$row_num" eq $cell_to_update)
             {
+                print (" FOUND THE ONE TO CHANGE!!\n");
+                $old_field_val = get_field_value ($row_num, $col_letter, 0, 0, 444);
                 set_field_value ($row_num, $col_letter, $new_value, "");
                 $this_line_changed = 1;
                 $build_this_line .= "$new_value;";
+                $same_row = 0;
             }
             else
             {
@@ -450,7 +467,7 @@ sub update_csv_data_on_disk
         {
             $updated_block .= "$build_this_line\n";
             $actually_updated = 1;
-            print (">>>>\n\n$build_this_line\n\n\n<<<<<\n");
+            print (">>>>\n\nNEW LINE CONSTRUCTED:\n$build_this_line\n\n\n<<<<<\n");
         }
     }
 
@@ -475,6 +492,12 @@ sub update_csv_data_on_disk
         open CSV_FILE, ("> $current_file");
         print CSV_FILE $updated_block;
         close CSV_FILE;
+
+        # Audit log..
+        my $audit_yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
+        open AUDIT_FILE, (">> $current_file.audit.txt");
+        print AUDIT_FILE ("$audit_yyyymmddhhmmss;$cell_to_update;old=>>$old_field_val<<;new=>>$new_value<<;$current_file;$hash_val;UPDATED CELL VALUE!\n");
+        close AUDIT_FILE;
     }
 }
 
@@ -681,6 +704,7 @@ sub get_field_value
     my $col_letter = $_ [1];
     my $for_display = $_ [2];
     my $show_formulas = $_ [3];
+    my $where_from = $_ [4];
     if ($col_letter =~ m/^\d+$/)
     {
         $col_letter =  get_field_letter_from_field_num ($col_letter);
@@ -693,6 +717,7 @@ sub get_field_value
         my $calc_val = "";
         if (!defined ($calculated_data {$field_id}))
         {
+            #print ("  ### get_field_val ($where_from) $field_id is defined - $field_val\n");
             if ($csv_data {$field_id} =~ m/^=/)
             {
                 my %new_each_element;
@@ -700,7 +725,9 @@ sub get_field_value
                 $count = 0;
                 $each_element_count = 0;
                 breakdown_excel ($csv_data {$field_id}, 0);
+                #print ("\nRP: >>>>>>>>>>>>>>>>>>> $field_id recreate_perl\n");
                 my $some_val = recreate_perl ($field_id);
+                #print ("\nRP: DONE >>>>>>>>>>>>>>>>>>> ($field_id)::$some_val recreate_perl\n");
                 if ($some_val ne $calc_val)
                 {
                     if ($calc_val eq "")
@@ -714,11 +741,14 @@ sub get_field_value
                 $calc_val = $field_val;
             }
             $calculated_data {$field_id} = $calc_val;
+            #print ("  222### gt_field_val $field_id is defined - $field_val - $calc_val\n");
         }
         $calc_val = $calculated_data {$field_id};
+        #print ("  333### gt_field_val $field_id is calculated - $field_val - $calc_val\n");
         if ($for_display == 1 && $show_formulas == 0 && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
         {
             my $c = sprintf("%.2f", $calc_val);
+            print $c, ">> $calc_val, >>", $row_num, "====", $col_letter, " ($where_from)\n";
             return ($c);
         }
         elsif ($for_display == 1 && $show_formulas == 2)
@@ -729,11 +759,15 @@ sub get_field_value
             }
             return ($csv_data {$field_id . "_perl"});
         }
-        elsif ($for_display == 1 && $show_formulas == 1)
+        elsif ($for_display == 1 && $show_formulas == 1 || $for_display == 1 && $show_formulas == 3)
         {
-            if (!defined ($csv_data {$field_id . "_calc"}))
+            if (!defined ($csv_data {$field_id . "_calc"}) && $show_formulas == 1)
             {
                 return "<font color=\"rebeccapurple\">$csv_data{$field_id}</font>";
+            }
+            if (!defined ($csv_data {$field_id . "_calc"}) && $show_formulas == 3)
+            {
+                return "$csv_data{$field_id}";
             }
             return ($csv_data {$field_id . "_calc"} . "&nbsp;<font size=-1 color=\"darkgray\">$csv_data{$field_id}<\/font>");
         }
@@ -945,6 +979,7 @@ sub do_concat_expansion
                 $field_val =~ s/""/"/g;
                 $field_val =~ s/""/"/g;
             }
+                #print ("IN CONCAT : $field_val\n");
         }
         else
         {
@@ -955,10 +990,14 @@ sub do_concat_expansion
                 $str .= $1;
                 #print ("CONCAT STR IS: $str\n");
             }
+            #print ("333IN CONCAT : $field_val\n");
             $field_val = fix_quotes($str);
+            #print ("444IN CONCAT : $field_val\n");
         }
+        #print ("555IN CONCAT : $field_val\n");
         return $field_val;
     }
+    #print ("666IN CONCAT : $field_val\n");
     return $field_val;
 }
 
@@ -1478,7 +1517,7 @@ sub perl_nextday
     if ($day_of_week =~ m/^THUR/i) { $dow = 4; }
     if ($day_of_week =~ m/^FRI/i) { $dow = 5; }
     if ($day_of_week =~ m/^SAT/i) { $dow = 6; }
-    
+
     $date =~ s/\s//;
     if ($date =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
     {
@@ -1488,7 +1527,7 @@ sub perl_nextday
         my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
         my $yyyymmdd;
-        
+
         if ($wday == $dow)
         {
             $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
@@ -1647,6 +1686,7 @@ sub do_bold_expansion
 sub fix_quotes
 {
     my $str = $_ [0];
+    #print ("FQ: $str\n");
     while ($str =~ m/fix_quotes *\(([^)]*)\)/)
     {
         my $concat_str = $1;
@@ -1657,6 +1697,7 @@ sub fix_quotes
     $str =~ s/\)$//;
     $str =~ s/"/\\"/g;
     $str =~ s/'//g;
+    #print ("DONE FQ: $str\n");
     return "\"$str\"";
 }
 
@@ -2138,6 +2179,7 @@ sub do_if_expansion
             $condition =~ s/ AND / && /img;
             $field_val =~ s/IF\(([^|]+)\|([^|]*?)\|([^|]*?)\)/($condition ? $true_bit : $false_bit)/;
         }
+        #print ("\n---------------------\nDO_IF_EXP: $field_val\n");
     }
     return $field_val;
 }
@@ -2332,11 +2374,14 @@ sub do_sum_expansion
         my $j = $first_num;
         my $total = 0;
         my $things_seen = "";
+        #print ("INSIDE SUM EXP (for $field_val)\n");
         while ($i <= $sc_num)
         {
             while ($j <= $second_num)
             {
-                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas);
+                #print (" >> 22 INSIDE SUM EXP (for $field_val, $i and $j)\n");
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas, 2380);
+                #print (" >> 22ZZ INSIDE SUM EXP (for $field_val, $i and $j) >> $cv\n");
                 if (lc($cv) eq $comparator)
                 {
                     $total++;
@@ -2346,6 +2391,7 @@ sub do_sum_expansion
             $j = $first_num;
             $i++;
         }
+        #print ("DONE SUM EXP (found >>$total<<)\n");
         #return "$total + 0";
         return $total;
     }
@@ -2367,7 +2413,7 @@ sub do_sum_expansion
         {
             while ($j <= $second_num)
             {
-                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas);
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas, 2413);
                 if (is_number ($cv))
                 {
                     $sum_str .= "$cv+";
@@ -2385,7 +2431,7 @@ sub do_sum_expansion
         $sum_str =~ s/\+\+/+/img;
         return $sum_str;
     }
-    
+
     return $field_val;
 }
 
@@ -2402,7 +2448,7 @@ sub fix_up_field_vals
         if ($next_field_id eq $field_id) { return "ERROR (self-ref)"; }
         my $rn = get_row_num ($next_field_id);
         my $cl = get_col_letter ($next_field_id);
-        my $that_field_val = get_field_value ($rn, $cl, 0, $show_formulas);
+        my $that_field_val = get_field_value ($rn, $cl, 0, $show_formulas, 2448);
         $field_val =~ s/$next_field_id/$that_field_val/;
         $next_field_id = has_field_id ($field_val, $field_id, 1);
     }
@@ -2414,6 +2460,8 @@ sub fix_up_field_vals
 sub perl_expansions
 {
     my $str = $_ [0];
+    #print ("\n Looking at: $str\n");
+    #print ("11) Seeing perl_expansions >>$str<<\n");
 
     if ($str =~ m/SUM\(/)
     {
@@ -2560,7 +2608,9 @@ sub perl_expansions
         $str = do_recurring_expansion ($str);
     }
     # General cleanup..
+    #print ("22) Seeing perl_expansions >>$str<<\n");
     $str =~ s/"xXSTRING(\d+)"/xXSTRING$1/img;
+    #print ("33) Seeing perl_expansions >>$str<<\n");
     return $str;
 }
 
@@ -2573,7 +2623,9 @@ sub recreate_perl
     {
         my $str = $each_element {$k};
         $SELF_ELEMENT = $k;
+        #print ("PERLEXP >>>>>>>>>>>>>>>> $str for $k\n");
         $str = perl_expansions ($str);
+        #print ("DONE PERLEXP >>>>>>>>>>>>>>>> $str for $k\n");
         $each_element {$k} = $str;
     }
 
@@ -2588,7 +2640,9 @@ sub recreate_perl
             $str2 =~ s/<< .*//;
             $str =~ s/$k2/$str2/;
         }
+        #print ("22PERLEXP >>>>>>>>>>>>>>>> $str for $k\n");
         $str = perl_expansions ($str);
+        #print ("DONE 22PERLEXP >>>>>>>>>>>>>>>> $str for $k\n");
         $str = fix_up_field_vals ($str, $field_id, 0);
         $each_element {$k} = $str;
         my $xx;
@@ -2598,7 +2652,7 @@ sub recreate_perl
             $str = fix_quotes ($str);
         }
 
-        print ("$str\n");
+        #print ("$str\n");
         # Print a value into a variable as read from STDOUT that eval prints out
         my $output;
         open (my $outputFH, '>', \$output) or die;
@@ -2870,7 +2924,7 @@ sub get_graph_html
     {
         for ($i = 2; $i < $max_rows; $i++)
         {
-            my $x = get_field_value ($i, $col, 1, $show_formulas);
+            my $x = get_field_value ($i, $col, 1, $show_formulas, 2924);
             $x =~ s/^$/0/;
             $x =~ s/,//g;
             $x =~ s/\$//g;
@@ -3014,9 +3068,9 @@ sub get_3dgraph_html
     $graph3d_html .= "      border: 1px solid white;\n";
     $graph3d_html .= "    }\n";
     $graph3d_html .= "    </style>\n";
-    $graph3d_html .= "    <script src=\"cango/Cango3D-13v00.js\"></script>\n";
-    $graph3d_html .= "    <script src=\"cango/CanvasStack-2v01.js\"></script>\n";
-    $graph3d_html .= "    <script src=\"cango/Graph3D-3v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Cango3D-13v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://xmage.au/cango/CanvasStack-2v01.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Graph3D-3v00.js\"></script>\n";
     $graph3d_html .= "    <script>\n";
     $graph3d_html .= "        function generateTopography (xmin, xmax, ymin, ymax, rows, columns)\n";
     $graph3d_html .= "        {\n";
@@ -3121,39 +3175,39 @@ my $examples_seven;
 my $examples_eight;
 sub set_examples
 {
-    $examples_one = "X_val	Y_yal	Row	DivRow	ModRow	??	Z_val_cylinder
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=-280	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=(D>+12)*0.2	=J1	
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^+0.2	=J2
-=cos(E>/3.14159265358979)	=sin(E>/3.14159265358979)	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J1
-=A^	=B^	=C^+0.5	=INT(C>|24)	=MOD(C>|24)-12	0	=G^^	=J2";
+    $examples_one = "X_val Y_yal Row DivRow ModRow ?? Z_val_cylinder
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =-280 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =(D>+12)*0.2 =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^+0.2 =J2
+=cos(E>/3.14159265358979) =sin(E>/3.14159265358979) =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J1
+=A^ =B^ =C^+0.5 =INT(C>|24) =MOD(C>|24)-12 0 =G^^ =J2";
     $examples_two= "X;Y;SPHERE_Z;D?\n-1;0;0\n-0.92;-0.33;0.22\n-0.92;-0.25;0.31\n-0.92;-0.17;0.36\n-0.92;-0.08;0.39\n-0.92;0;0.40\n-0.92;0.08;0.39\n-0.92;0.17;0.36\n-0.92;0.25;0.31\n-0.92;0.33;0.22\n-0.83;-0.50;0.24\n-0.83;-0.42;0.36\n-0.83;-0.33;0.44\n-0.83;-0.25;0.49\n-0.83;-0.17;0.53\n-0.83;-0.08;0.55\n
 -0.83;0;0.55\n-0.83;0.08;0.55\n-0.83;0.17;0.53\n-0.83;0.25;0.49\n-0.83;0.33;0.44\n-0.83;0.42;0.36\n-0.83;0.50;0.24\n-0.75;-0.58;0.31\n-0.75;-0.50;0.43\n-0.75;-0.42;0.51\n-0.75;-0.33;0.57\n-0.75;-0.25;0.61\n-0.75;-0.17;0.64\n-0.75;-0.08;0.66\n-0.75;0;0.66\n-0.75;0.08;0.66\n-0.75;0.17;0.64\n
 -0.75;0.25;0.61\n-0.75;0.33;0.57\n-0.75;0.42;0.51\n-0.75;0.50;0.43\n-0.75;0.58;0.31\n-0.67;-0.67;0.33\n-0.67;-0.58;0.46\n-0.67;-0.50;0.55\n-0.67;-0.42;0.62\n-0.67;-0.33;0.67\n-0.67;-0.25;0.70\n-0.67;-0.17;0.73\n-0.67;-0.08;0.74\n-0.67;0;0.75\n-0.67;0.08;0.74\n-0.67;0.17;0.73\n
@@ -4245,6 +4299,34 @@ Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday;Totals
 -0.256604812;0.957662197;0.130526192
 -0.130526192;0.991444861;0
 -0.258819045;0.965925826;0";
+
+    $examples_eight= "Date;Employer;Percentage;Salary;Fulltime?;NumberOfDays;DaysBetween;ABM;Cumulative ABM;
+20240508;Employer1;10;171781.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2023&d2=08&m2=05&y2=2024\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20230508;Employer1;10;165174.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2022&d2=08&m2=05&y2=2023\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20220508;Employer1;10;136404.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2021&d2=08&m2=05&y2=2022\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20210508;Employer1;10;133729.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2020&d2=08&m2=05&y2=2021\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20200508;Employer1;10;131107.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2019&d2=08&m2=05&y2=2020\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20190508;Employer1;10;126506.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=01&m1=07&y1=2018&d2=08&m2=05&y2=2019\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20180701;Employer1;10;122797.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2018&d2=01&m2=07&y2=2018\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20180508;Employer1;10;122797.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=02&m1=11&y1=2017&d2=08&m2=05&y2=2018\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20171102;Employer1;10;108382.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2017&d2=02&m2=11&y2=2017\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20170508;Employer1;10;108382.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2016&d2=08&m2=05&y2=2017\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20160508;Employer1;10;108382.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2015&d2=08&m2=05&y2=2016\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20150508;Employer1;10;108382.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2014&d2=08&m2=05&y2=2015\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20140508;Employer1;10;108382.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=01&m1=12&y1=2013&d2=08&m2=05&y2=2014\">days_between</a>;=(0.11+2*C>/100)*F>/365.25;=I_+H>
+20131201;Employer1;10;105739.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2013&d2=01&m2=12&y2=2013\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20130508;Employer1;10;105739.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2012&d2=08&m2=05&y2=2013\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20120508;Employer1;10;105739.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2011&d2=08&m2=05&y2=2012\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20110508;Employer1;10;99285.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2010&d2=08&m2=05&y2=2011\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20100508;Employer1;10;96130.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2009&d2=08&m2=05&y2=2010\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20090508;Employer1;10;89221.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2008&d2=08&m2=05&y2=2009\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20080508;Employer1;10;83370.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2007&d2=08&m2=05&y2=2008\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20070508;Employer1;10;77979.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2006&d2=08&m2=05&y2=2007\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20060508;Employer1;10;57876.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=14&m1=12&y1=2005&d2=08&m2=05&y2=2006\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20051214;Employer1;10;50778.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2005&d2=14&m2=12&y2=2005\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20050508;Employer1;5;50778.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2004&d2=08&m2=05&y2=2005\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20040508;Employer1;5;43775.00;FULLTIME;=DAYS(A>|A_);<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=08&m1=05&y1=2004&d2=01&m2=12&y2=2003\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=I_+H>
+20031201;Employer1;5;42917.00;FULLTIME;=DAYS(A>|A_)\">days_between)0;<a href=\"https://www.timeanddate.com/date/durationresult.html?d1=01&m12=05&y1=2003&d2=01&m2=12&y2=2003\">days_between</a>;=IF(C>>5|C>/100+0.16|C>/100*2 + 0.11)*F>/365.25;=H>";
 }
 
 sub is_authorized
@@ -4314,7 +4396,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
 
     set_examples ();
 
-    process_csv_data ($examples_six);
+    #process_csv_data ($examples_six);
 
     while ($paddr = accept (CLIENT, SERVER))
     {
@@ -4393,6 +4475,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
 <textarea id=\"examples5\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples5\">$examples_five</textarea>
 <textarea id=\"examples6\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples6\">$examples_six</textarea>
 <textarea id=\"examples7\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples7\">$examples_seven</textarea>
+<textarea id=\"examples8\" class=\"text\" cols=\"86\" rows =\"20\" form=\"examples\" name=\"examples8\">$examples_eight</textarea>
 <input type=\"submit\" value=\"Done\" class=\"submitButton\">
 </form>
 </body> </html>";
@@ -4463,6 +4546,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
             my $html_text = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONTENT=\"NO-CACHE\"> <br> <META HTTP-EQUIV=\"EXPIRES\" CONTENT=\"Mon, 22 Jul 2094 11:12:01 GMT\"> </head> <body> <h1>Previous CSVs</h1> <br>";
             my $listing = `dir /a /o:d /b /s d:\\perl_programs\\csv_ingest\\*$safe*.txt`;
             $listing =~ s/d:\\.*\\//img;
+            $listing =~ s/.*sj.*//img;
             $listing =~ s/(.*?)\n/<a href="\/csv_analyse\/old_csv?$1">$1<\/a><br>\n/img;
             $html_text .= "$listing<br>(Note, automatically authorized as IPs are as follows: (yours:$client_addr), (server:$server_ip))</body> </html>";
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
@@ -4633,7 +4717,7 @@ $//img;
 
         # Allow editting via a select box only for certain column..
         $use_edit_model = 0;
-        if ($txt =~ m/edit\?([a-z0-9]+):(.+?)&editdone/im)
+        if ($txt =~ m/$EDIT\?([a-z0-9]+):(.+?)&$EDIT_DONE/im)
         {
             my $hash = $1;
             my $vals = $2;
@@ -4649,11 +4733,11 @@ $//img;
                 # Accept: */*
                 # Accept-Language: en-US,en;q=0.5
                 # Accept-Encoding: gzip, deflate, br, zstd
-                # Referer: https://myserver.co.uk/csv_analyse/old_csv?safe_bellringing.txt&edit?86c9f93d190697ef156cc8da377b66bd:column,2,2,select;0;1;&editdone
+                # Referer: https://myserver.co.uk/csv_analyse/old_csv?safe_bellringing.txt&$EDIT?86c9f93d190697ef156cc8da377b66bd:column,2,2,$EDIT_SELECT;0;1;&$EDIT_DONE
 
                 if ($txt =~ m/update_cell.newval=([A-Z])(\d+)&value=(.*)/im)
                 {
-                    update_csv_data_on_disk ("$1$2", "$3", $current_file);
+                    update_csv_data_on_disk ("$1$2", "$3", $current_file, "::::$hash :: $vals\n");
                 }
 
                 if ($vals =~ m/column/img)
@@ -4682,7 +4766,7 @@ $//img;
                     $edit_model_row = 1;
                     $edit_model_min_row = -1;
                     $edit_model_min_col = -1;
-                    
+
                     if ($vals =~ m/row,(\d+),(\d+),/i)
                     {
                         $edit_model_row_to_edit = $1;
@@ -4716,7 +4800,7 @@ $//img;
                     $edit_model_edit_box = 0;
                     my %new_edit_model_values_for_select;
                     %edit_model_values_for_select = %new_edit_model_values_for_select;
-                    while ($vals =~ s/select;(.*?);/select;/i)
+                    while ($vals =~ s/$EDIT_SELECT;(.*?);/$EDIT_SELECT;/i)
                     {
                         $edit_model_values_for_select {$1} = 1;
                     }
@@ -4731,7 +4815,7 @@ $//img;
             else
             {
                 my $vals = $2;
-                print "\nNup, 222 should have been $check_sum (not $hash) for >$vals<!\n";   
+                print "\nNup, 222 should have been $check_sum (not $hash) for >$vals<!\n";
                 $edit_model_column = 0;
                 $edit_model_row = 0;
                 $edit_model_cell = 0;
@@ -4750,7 +4834,7 @@ $//img;
             $edit_model_master_mode_url =~ s/\n/zzzzzzzzz/img;
             $edit_model_master_mode_url =~ s/zzzzzzzzz.*//img;
             $edit_model_master_mode_url =~ s/^/\/csv_analyse/img;
-            $edit_model_master_mode_url =~ s/&edit.*//img;
+            $edit_model_master_mode_url =~ s/&$EDIT.*//img;
             $edit_model_master_mode_url =~ s/&master.*//img;
             $edit_model_current_file = "$current_file";
             print ($edit_model_master_mode_url, "<<<<<<<<<<<< -- edit_model_master_mode_url\n");
@@ -4762,7 +4846,7 @@ $//img;
             print ("\n\n\n\nMaster:\nxxxSAW TEXT OF $txt\n");
             my $hash = $1;
             my $vals = $edit_mastermode;
-            
+
             my $check_sum = get_md5 ($edit_model_current_file, $edit_mastermode, $EDIT_MASTERMODE_SALT, 4692);
 
             if ($check_sum eq $hash)
@@ -4771,7 +4855,7 @@ $//img;
             }
             else
             {
-                print "\nNup, 333 should have been $check_sum (not $hash) for >$vals<!\n";   
+                print "\nNup, 333 should have been $check_sum (not $hash) for >$vals<!\n";
                 $edit_model_column = 0;
                 $edit_model_row = 0;
                 $edit_model_cell = 0;
@@ -4827,6 +4911,8 @@ $//img;
         $html_text .= "table.sortable th {\n";
         $html_text .= "  padding: 0.125em 0.25em;\n";
         $html_text .= "}\n";
+        #$html_text .= ".highlight_main { background-color: #fdd835 !important; } .highlight_light { background-color: #ffecb3 !important; }\n";
+        $html_text .= ".highlight_main { background-color: #D3F3C3 !important; } .highlight_light { background-color: #EBFBDC !important; }\n";
         $html_text .= "table.sortable th {\n";
         $html_text .= "  font-weight: bold;\n";
         $html_text .= "  border-bottom: thin solid #888;\n";
@@ -4915,86 +5001,98 @@ $//img;
         $html_text .= "</head>\n";
         $html_text .= "<body>\n";
         $html_text .= "<div id=\"fieldID\" class=\"field_div\"><div class=\"field_border\"></div></div>";
-        $html_text .= "<table width=100%><tr>\n";
 
-        $html_text .= "<td><form action=\"/csv_analyse/search\">
-                <label for=\"searchstr\">Search:</label><br>
-                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\" style=\"width:210px;\">
-                <input type=\"submit\" value=\"Search\">
-                </form></td><td>";
-
-        #my $example = get_field_value (2, "C", 1);
-        my $example = "20[23]\\d";
-        $example = "\"/csv_analyse/groupby?groupstr=($example)" . get_col_name_of_number_type_col () . "\"";
-        $html_text .= "<form action=\"/csv_analyse/groupby\">
-                <label for=\"groupstr\">Group by <font size=-2><a href=$example>Example</a></font></label><br>
-                <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\" style=\"width:210px;\">
-                <input type=\"submit\" value=\"Group By\">
-                </form></td><td>";
-
-        # Group by column name
-        $html_text .= "<form action=\"/csv_analyse/group_column\">
-                <label for=\"group_column\">Group by column</label><br>
-                <select name=\"columns\">";
-
-        my $group_block;
-
-        my $xy;
-        for ($xy = 0; $xy < $max_field_num; $xy++)
+        # Only show when not in editdone mode
+        if (!($current_file =~ m/safe_bellringing/))
         {
-            my $col = get_col_header ($xy);
-            my $col_label = get_col_header ($xy) . " - Column " . get_field_letter_from_field_num ($xy);
-            $html_text .= "<option value=\"$col\">$col_label</option>";
-        }
-        $html_text .= "</select name=\"columns\"><input type=\"submit\" value=\"Group By Column\"></form></td><td>";
+            $html_text .= "<table width=99%><tr>\n";
+            $html_text .= "<td><form action=\"/csv_analyse/search\">
+                    <label for=\"searchstr\">Search:</label><br>
+                    <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\" style=\"width:210px;\">
+                    <input type=\"submit\" value=\"Search\">
+                    </form></td><td>";
 
-        my $f1 =~ "20230401";
-        $f1 =~ s/\W/./img;
-        $f1 =~ s/^(...)..*$/$1../img;
-        my $f2 =~ "AABBCCDD";
-        $f2 =~ s/\W/./img;
-        $f2 =~ s/^(...)..*$/$1../img;
-        my $dual_example = "(20[123]\\d).*($f2)";
-        my $dual_example2 = "%23" . get_col_header (0) . get_col_name_of_number_type_col ();
+            my $example = "20[23]\\d";
+            $example = "\"/csv_analyse/groupby?groupstr=($example)" . get_col_name_of_number_type_col () . "\"";
+            $html_text .= "<form action=\"/csv_analyse/groupby\">
+                    <label for=\"groupstr\">Group by <font size=-2><a href=$example>Example</a></font></label><br>
+                    <input type=\"text\" id=\"groupstr\" name=\"groupstr\" value=\"$group\" style=\"width:210px;\">
+                    <input type=\"submit\" value=\"Group By\">
+                    </form></td><td>";
 
-        $dual_example = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example" . get_col_name_of_number_type_col () . "\"";
-        $dual_example2 = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example2\"";
-        $html_text .= "<form action=\"/csv_analyse/dualgroupby\">
-                <label for=\"dualgroup\">Dual groups <font size=-2><a href=$dual_example>Dual Example</a>&nbsp;<a href=$dual_example2>Dual Example2</a></font></label><br>
-                <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\" style=\"width:210px;\">
-                <input type=\"submit\" value=\"Dual Group By\" >
-                </form></td>";
+            # Group by column name
+            $html_text .= "<form action=\"/csv_analyse/group_column\">
+                    <label for=\"group_column\">Group by column</label><br>
+                    <select name=\"columns\">";
 
-        $html_text .= "<td><form action=\"/csv_analyse/update_csv\">
-                <label>Update CSV:</label><br>
-                <input type=\"submit\" value=\"Update CSV\">
-                <a href=\"/csv_analyse/show_examples\">Egs</a>
-                <a href=\"/csv_analyse/show_help\">Help</a>
-                <a href=\"/csv_analyse/show_history\">History</a>
-                <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
-                <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
-                <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">Mesh 3D</a>
-                <a href=\"/csv_analyse/3dgraph?col1=A&col2=B&col3=C\">3D</a>";
-        if ($authorized)
-        {
-            my $check_sum = get_md5 ($edit_model_current_file, $edit_mastermode, $EDIT_MASTERMODE_SALT, 4906);
-            $html_text .= "&nbsp;<a href='$edit_model_master_mode_url&master?$check_sum:$edit_mastermode&masterdone'>Checksums</a>";
-        }
-        $html_text .= "</form></td>";
+            my $group_block;
 
-        if ($show_formulas == 0)
-        {
-            $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_off\">
-                <label>Toggle Formulas:</label><br>
-                <input type=\"submit\" value=\"Show Formulas\"></form><a href=\"/csv_analyse/toggle_perl_on\">Display Perl</a>
-                </tr></table>";
+            my $xy;
+            for ($xy = 0; $xy < $max_field_num; $xy++)
+            {
+                my $col = get_col_header ($xy);
+                my $col_label = get_col_header ($xy) . " - Column " . get_field_letter_from_field_num ($xy);
+                $html_text .= "<option value=\"$col\">$col_label</option>";
+            }
+            $html_text .= "</select name=\"columns\"><input type=\"submit\" value=\"Group By Column\"></form></td><td>";
+
+            my $f1 =~ "20230401";
+            $f1 =~ s/\W/./img;
+            $f1 =~ s/^(...)..*$/$1../img;
+            my $f2 =~ "AABBCCDD";
+            $f2 =~ s/\W/./img;
+            $f2 =~ s/^(...)..*$/$1../img;
+            my $dual_example = "(20[123]\\d).*($f2)";
+            my $dual_example2 = "%23" . get_col_header (0) . get_col_name_of_number_type_col ();
+
+            $dual_example = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example" . get_col_name_of_number_type_col () . "\"";
+            $dual_example2 = "\"/csv_analyse/dualgroupby?dualgroup=$dual_example2\"";
+            $html_text .= "<form action=\"/csv_analyse/dualgroupby\">
+                    <label for=\"dualgroup\">Dual groups <font size=-2><a href=$dual_example>Dual Example</a>&nbsp;<a href=$dual_example2>Dual Example2</a></font></label><br>
+                    <input type=\"text\" id=\"dualgroup\" name=\"dualgroup\" value=\"$dual_group\" style=\"width:210px;\">
+                    <input type=\"submit\" value=\"Dual Group By\" >
+                    </form></td>";
+
+            $html_text .= "<td><form action=\"/csv_analyse/update_csv\">
+                    <label>Update CSV:</label><br>
+                    <input type=\"submit\" value=\"Update CSV\">
+                    <a href=\"/csv_analyse/show_examples\">Egs</a>
+                    <a href=\"/csv_analyse/show_help\">Help</a>
+                    <a href=\"/csv_analyse/show_history\">History</a>
+                    <a href=\"/csv_analyse/show_mesh?col1=A&col2=B&col3=C\">Mesh</a>
+                    <a href=\"/csv_analyse/groupby?groupstr=(.*).group_info\">2D</a>
+                    <a href=\"/csv_analyse/graph_mesh?col1=A&col2=B&col3=C\">Mesh 3D</a>
+                    <a href=\"/csv_analyse/3dgraph?col1=A&col2=B&col3=C\">3D</a>";
+            if ($authorized)
+            {
+                my $check_sum = get_md5 ($edit_model_current_file, $edit_mastermode, $EDIT_MASTERMODE_SALT, 4906);
+                $html_text .= "&nbsp;<a href='$edit_model_master_mode_url&master?$check_sum:$edit_mastermode&masterdone'>Checksums</a>";
+            }
+            $html_text .= "</form></td>";
+
+            if ($show_formulas == 0)
+            {
+                $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_off\">
+                    <label>Toggle Formulas:</label><br>
+                    <input type=\"submit\" value=\"Show Formulas\"></form><a href=\"/csv_analyse/toggle_perl_on\">Display Perl</a>
+                    <div class=\"toggle-wrap\"> <label class=\"toggle\"> <input type=\"checkbox\" id=\"relatedCellsToggle\"> <span class=\"slider\"></span> </label> <span class=\"toggle-label\">Related Cells</span> </div>
+                    </tr></table>";
+            }
+            else
+            {
+                $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_on\">
+                    <label>Toggle Formulas:</label><br>
+                    <input type=\"submit\" value=\"Calculate Cells\"></form><a href=\"/csv_analyse/toggle_perl_on\">Display Perl</a>&nbsp;
+                    <div class=\"toggle-wrap\"> <label class=\"toggle\"> <input type=\"checkbox\" id=\"relatedCellsToggle\"> <span class=\"slider\"></span> </label> <span class=\"toggle-label\">Related Cells</span></div>
+                    </tr></table>";
+            }
         }
         else
         {
-            $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_on\">
-                <label>Toggle Formulas:</label><br>
-                <input type=\"submit\" value=\"Calculate Cells\"></form><a href=\"/csv_analyse/toggle_perl_on\">Display Perl</a>
-                </tr></table>";
+            $html_text .= "<table width=99%><tr>\n";
+            $html_text .= "<h1>Bell Ringing Calendar</h1>\n";
+            $html_text .= "</tr></table>";
+            $html_text =~ s/<title>Analyse CSV<\/title>/<title>Bell Ringing Calendar<\/title>/ig;
         }
 
         my %groups;
@@ -5149,13 +5247,13 @@ $//img;
         my $old_col_letter = "A";
         my $field_id = 0;
         my $row = "<tr><td><font size=-1>Row:$row_num</font></td>";
-        
-        if ($use_edit_model_master_mode) 
+
+        if ($use_edit_model_master_mode)
         {
-            my $edit_instructions = "row,$row_num,1,select;Present;Away;";
+            my $edit_instructions = "row,$row_num,1,$EDIT_SELECT;Present;Away;";
             my $this_row_edit_chksum = $edit_instructions . $edit_model_master_mode_append;
             my $check_sum = get_md5 ($edit_model_current_file, $edit_instructions, $EDIT_SALT, 5085);
-            $row = "<tr><td><font size=-1><a href='$edit_model_master_mode_url&edit?$check_sum:$edit_instructions&editdone'>Edit</a> Row:$row_num</font></td>";
+            $row = "<tr><td><font size=-1><a href='$edit_model_master_mode_url&$EDIT?$check_sum:$edit_instructions&$EDIT_DONE'>Edit</a> Row:$row_num</font></td>";
         }
 
         my $fake_row;
@@ -5165,6 +5263,7 @@ $//img;
         my %col_calculations;
         my $pot_group_price = "";
 
+        #print ("DOING FULL CALCULATIONS!! xxxxxxxxxxxxxxxxx\n");
         while ($row_num < $max_rows)
         {
             my $x = 0;
@@ -5173,7 +5272,8 @@ $//img;
             {
                 if ($row_num eq "1") { $old_row_num = 2; $x++; $col_letter = get_next_field_letter ($col_letter); next; }
                 $field_id = "$col_letter" . $row_num;
-                my $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
+                #print (" >>> DOING FULL CALCULATIONS!! $field_id \n");
+                my $field = get_field_value ($row_num, $col_letter, 1, $show_formulas, 5268);
 
                 if (!defined ($col_types {$col_letter}))
                 {
@@ -5251,7 +5351,7 @@ $//img;
                     }
                 }
 
-                $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
+                $field = get_field_value ($row_num, $col_letter, 1, $show_formulas, 5346);
 
                 # Edittable model!
                 my $edit_cell_html = "";
@@ -5259,11 +5359,11 @@ $//img;
                 if ($use_edit_model == 1)
                 {
                     my $col_number = get_field_num_from_field_letter ($col_letter);
-                    
+
                     # Setup the select or edit html control..
                     if  ($edit_model_select_box == 1)
                     {
-                        my $s = "<select id=select_$col_letter$row_num>";
+                        my $s = "<select id=modify_$col_letter$row_num>";
                         my $k;
                         foreach $k (sort keys (%edit_model_values_for_select))
                         {
@@ -5274,11 +5374,11 @@ $//img;
                     }
                     elsif  ($edit_model_edit_box == 1)
                     {
-                        $edit_cell_html = "<input type=\"text\" value=\"XXXX\" style=\"width: 40px;\">";
+                        $edit_cell_html = "<input id=modify_$col_letter$row_num type=\"text\" value=\"XXXX\" style=\"width: 80px;\">";
                     }
                     $form_edit_cell_html = "<form id=\"form_$col_letter$row_num\">$edit_cell_html</form>
 <script>
-  document.getElementById('select_$col_letter$row_num').addEventListener('change', function () {
+  document.getElementById('modify_$col_letter$row_num').addEventListener('change', function () {
     const value = this.value;
     fetch(`update_cell?newval=$col_letter$row_num&value=\${encodeURIComponent(value)}`, {
       method: 'GET'
@@ -5324,10 +5424,10 @@ $//img;
                     }
                     if ($use_edit_cell_html == 0)
                     {
-                        $edit_cell_html = "";    
+                        $edit_cell_html = "";
                     }
                 }
-                
+
                 my $use_edit_instead = 0;
                 if ($edit_cell_html ne "")
                 {
@@ -5335,7 +5435,11 @@ $//img;
                     $edit_cell_html = $form_edit_cell_html;
                 }
 
-                $field = get_field_value ($row_num, $col_letter, 1, $show_formulas);
+                $field = get_field_value ($row_num, $col_letter, 1, $show_formulas, 5430);
+                my $field_perl = get_field_value ($row_num, $col_letter, 1, 2, 5431);
+                my $field_calc = get_field_value ($row_num, $col_letter, 1, 3, 5432);
+                my $field_test = "$field_calc";
+
                 if ($row_num > $old_row_num)
                 {
                     # Add row to table if matched
@@ -5353,11 +5457,11 @@ $//img;
 
                     if ($group_by_column)
                     {
-                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas, 5448);
 
                         $group_counts {$this_group}++;
                         $current_col_letter = get_next_field_letter ($current_col_letter);
-                        $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+                        $row .= " <td xxx='1' id='$current_col_letter$row_num'>$this_group</td>\n";
 
                         if (!defined ($group_colours {$this_group}))
                         {
@@ -5373,15 +5477,15 @@ $//img;
 
                     if ($dual_group_by_columns)
                     {
-                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
-                        my $this_group_val = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num2), 0, $show_formulas);
+                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas, 5468);
+                        my $this_group_val = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num2), 0, $show_formulas, 5469);
 
                         $group_prices {$this_group} = add_price ($group_prices {$this_group}, $this_group_val);
                         $group_prices {$this_group . "_calc"} .= "+$this_group_val (CC $old_row_num,$chosen_col)";
 
                         $group_counts {$this_group}++;
                         $current_col_letter = get_next_field_letter ($current_col_letter);
-                        $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+                        $row .= " <td xxx='2' id='$current_col_letter$row_num'>$this_group</td>\n";
 
                         if (!defined ($group_colours {$this_group}))
                         {
@@ -5397,7 +5501,7 @@ $//img;
 
                     if ($dual_group_by_columns)
                     {
-                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                        my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas, 5492);
                         $row .= " <td>GPRICE_$this_group</td> </tr>\n";
                     }
                     elsif ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "" || $dual_group_by_columns)
@@ -5407,10 +5511,10 @@ $//img;
                         {
                             my $this_group = $1;
                             $current_col_letter = get_next_field_letter ($current_col_letter);
-                            $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+                            $row .= " <td xxx='3' id='$current_col_letter$row_num'>$this_group</td>\n";
                             my $g_price = "GPRICE_$this_group";
                             $current_col_letter = get_next_field_letter ($current_col_letter);
-                            $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
+                            $row .= " <td xxx='4' id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
 
                             if (!defined ($group_colours {$this_group}))
                             {
@@ -5425,7 +5529,7 @@ $//img;
                             $row =~ s/<\/font><\/td>/<\/td>/im;
                             $group_counts {$this_group}++;
 
-                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
+                            $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas, 5520);
                             $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                             $group_prices {$this_group . "_calc"} .= "+$pot_group_price (AA $old_row_num,$chosen_col)";
                         }
@@ -5435,14 +5539,14 @@ $//img;
                             if ($fake_row =~ m/($group2)/mg)
                             {
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas, 5530);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price (BB $old_row_num,$chosen_col)";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
-                                $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+                                $row .= " <td xxx='5' id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
-                                $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
+                                $row .= " <td xxx='6' id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
 
                                 if (!defined ($group_colours {$this_group}))
                                 {
@@ -5458,9 +5562,9 @@ $//img;
                             elsif ($use_regex)
                             {
                                 $old_col_letter = get_next_field_letter ($old_col_letter);
-                                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                                $row .= "<td xxx='7' id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                                 $old_col_letter = get_next_field_letter ($old_col_letter);
-                                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No aaa group Total</font></td></tr>\n";
+                                $row .= "<td xxx='8' id='$old_col_letter$old_row_num'><font size=-3>No aaa group Total</font></td></tr>\n";
                             }
                         }
                         elsif ($dual_groups && $fake_row =~ m/($overall_match)/im)
@@ -5471,14 +5575,14 @@ $//img;
                             {
                                 $this_group .= " " . $1;
                                 $group_counts {$this_group}++;
-                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas);
+                                $pot_group_price = get_field_value ($old_row_num, get_num_of_col_header ($chosen_col), 0, $show_formulas, 5566);
                                 $group_prices {$this_group} = add_price ($group_prices {$this_group}, $pot_group_price);
                                 $group_prices {$this_group . "_calc"} .= "+$pot_group_price (CC $old_row_num,$chosen_col)";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
-                                $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+                                $row .= " <td xxx='9' id='$current_col_letter$row_num'>$this_group</td>\n";
                                 my $g_price = "GPRICE_$this_group";
                                 $current_col_letter = get_next_field_letter ($current_col_letter);
-                                $row .= " <td id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
+                                $row .= " <td xxx='A' id='$current_col_letter$row_num'>$g_price</td> </tr>\n";
                                 if (!defined ($group_colours {$this_group}))
                                 {
                                     $group_colours {$this_group} = $group_colours {$group_count};
@@ -5496,9 +5600,9 @@ $//img;
                     elsif ($use_regex)
                     {
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                        $row .= "<td xxx='B' id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No bbb group Total</font></td></tr>\n";
+                        $row .= "<td xxx='C' id='$old_col_letter$old_row_num'><font size=-3>No bbb group Total</font></td></tr>\n";
                     }
                     #if ($use_regex && $fake_row =~ m/$overall_match/im && $overall_match ne ".*" && $overall_match ne "")
                     {
@@ -5512,12 +5616,27 @@ $//img;
                         $html_text .= "$row ";
                     }
 
-                    $row = "<tr><td><font size=-1>Row:$old_row_num</font></td><td id='$col_letter$row_num'>$field</td>\n";
-                    if ($use_edit_model_master_mode) 
+                    my $hl_row = "";
+
+                    if ($current_file =~ m/safe_bellringing/)
                     {
-                        my $edit_instructions = "row,$row_num,1,select;Present;Away;";
+                        my $fv = get_field_value ($old_row_num+1, get_field_letter_from_field_num ("S"), 0, 0, 5609);
+                        if ($fv =~ m/^[0]$/)
+                        {
+                            $hl_row = "class=\"highlight_main\"";
+                        }
+                        if ($fv =~ m/^[1234]$/)
+                        {
+                            $hl_row = "class=\"highlight_light\"";
+                        }
+                    }
+                    $row = "<tr $hl_row><td><font size=-1>Row:$old_row_num</font></td><td related_cells='$field_test' id='$col_letter$row_num'>$field</td>\n";
+
+                    if ($use_edit_model_master_mode)
+                    {
+                        my $edit_instructions = "row,$row_num,1,$EDIT_SELECT;Present;Away;";
                         my $check_sum = get_md5 ($edit_model_current_file, $edit_instructions, $EDIT_SALT, 5447);
-                        $row = "<tr><td><font size=-1><a href='$edit_model_master_mode_url&edit?$check_sum:$edit_instructions&editdone'>Edit</a> Row:$old_row_num</font></td><td id='$col_letter$row_num'>$field</td>\n";
+                        $row = "<tr $hl_row><td><font size=-1><a href='$edit_model_master_mode_url&$EDIT?$check_sum:$edit_instructions&$EDIT_DONE'>Edit</a> Row:$old_row_num</font></td><td xxx='E' id='$col_letter$row_num'>$field</td>\n";
                     }
                     $old_row_num = $row_num;
                 }
@@ -5525,8 +5644,8 @@ $//img;
                 {
                     if ($use_edit_instead == 0)
                     {
-                        #$row .= "<td id='$col_letter$row_num'>$field</td>UH" . get_field_num_from_field_letter ($col_letter) . ">> $use_edit_model $edit_model_column $edit_model_column_to_edit UHNOEDIT $edit_cell_html HERE\n";
-                        $row .= "<td id='$col_letter$row_num'>$field</td>\n";
+                        #$row .= "<td xxx='F' id='$col_letter$row_num'>$field</td>UH" . get_field_num_from_field_letter ($col_letter) . ">> $use_edit_model $edit_model_column $edit_model_column_to_edit UHNOEDIT $edit_cell_html HERE\n";
+                        $row .= "<td related_cells='$field_test' id='$col_letter$row_num'>$field</td>\n";
                     }
                     else
                     {
@@ -5538,7 +5657,8 @@ $//img;
                         {
                             $edit_cell_html =~ s/>$field</selected="1">$field</;
                         }
-                        $row .= "<td id='$col_letter$row_num'>$edit_cell_html</td>";
+                        #$row .= "<td xxx='G' id='$col_letter$row_num'>$edit_cell_html</td>";
+                        $row .= "<td related_cells='$field_test' id='$col_letter$row_num'>$edit_cell_html</td>";
                     }
                 }
                 $x++;
@@ -5561,12 +5681,12 @@ $//img;
 
             if ($group_by_column)
             {
-                my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas, 5667);
 
                 $group_counts {$this_group}++;
                 my $current_col_letter = $col_letter;
                 $current_col_letter = get_next_field_letter ($current_col_letter);
-                $row .= " <td id='$current_col_letter$row_num'>$this_group</td>\n";
+                $row .= " <td xxx='H' id='$current_col_letter$row_num'>$this_group</td>\n";
 
                 if (!defined ($group_colours {$this_group}))
                 {
@@ -5586,7 +5706,7 @@ $//img;
 
                 if ($dual_group_by_columns)
                 {
-                    my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas);
+                    my $this_group = get_field_value ($row_num - 1, get_field_letter_from_field_num ($group_column_num), 0, $show_formulas, 5692);
                     $row .= " <td>$this_group</td>\n";
                     $row .= " <td>GPRICE_$this_group</td> </tr>\n";
                 }
@@ -5611,9 +5731,9 @@ $//img;
                     else
                     {
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                        $row .= "<td xxx='I' id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No ccc group Total</font></td></tr>\n";
+                        $row .= "<td xxx='J' id='$old_col_letter$old_row_num'><font size=-3>No ccc group Total</font></td></tr>\n";
                     }
                 }
                 elsif ($dual_groups && $fake_row =~ m/($group)/im)
@@ -5630,18 +5750,18 @@ $//img;
                     else
                     {
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                        $row .= "<td xxx='K' id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                         $old_col_letter = get_next_field_letter ($old_col_letter);
-                        $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No ddd group Total</font></td></tr>\n";
+                        $row .= "<td xxx='L' id='$old_col_letter$old_row_num'><font size=-3>No ddd group Total</font></td></tr>\n";
                     }
                 }
             }
             elsif ($use_regex)
             {
                 $old_col_letter = get_next_field_letter ($old_col_letter);
-                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
+                $row .= "<td xxx='M' id='$old_col_letter$old_row_num'><font size=-3>No group</font></td>\n";
                 $old_col_letter = get_next_field_letter ($old_col_letter);
-                $row .= "<td id='$old_col_letter$old_row_num'><font size=-3>No eee group Total</font></td></tr>\n";
+                $row .= "<td xxx='N' id='$old_col_letter$old_row_num'><font size=-3>No eee group Total</font></td></tr>\n";
             }
 
             if (($row =~ m/$search/im || $search eq "") && $force_row >= 0)
@@ -5652,7 +5772,7 @@ $//img;
         }
 
         # Get the 'column edit' links
-        if ($use_edit_model_master_mode) 
+        if ($use_edit_model_master_mode)
         {
             my $x = 0;
             $col_letter = "A";
@@ -5660,12 +5780,16 @@ $//img;
             while ($x <= $max_field_num)
             {
                 my $col_num = $x - 1;
-                my $edit_instructions = "column,$col_num,2,select;Present;Away;";
+                my $edit_instructions = "column,$col_num,2,editbox;ChangeMe;";
                 my $check_sum = get_md5 ($edit_model_current_file, $edit_instructions, $EDIT_SALT, 5592);
+                my $edit_instructions2 = "column,$col_num,2,select;;=BOLD(Cancelled|RED);";
+                my $check_sum2 = get_md5 ($edit_model_current_file, $edit_instructions2, $EDIT_SALT, 5592);
                 if ($col_num >= 0)
                 {
-                    my $cell_val = get_field_value (2, $col_num, 0, 0);
-                    $row .= "<td><font size=-1><a href='$edit_model_master_mode_url&edit?$check_sum:$edit_instructions&editdone'>Edit - $cell_val</a> Col:$x</font></td>";
+                    my $cell_val = get_field_value (2, $col_num, 0, 0, 5772);
+                    $row .= "<td><font size=-1><a href='$edit_model_master_mode_url&$EDIT?$check_sum:$edit_instructions&$EDIT_DONE'>Edit - $cell_val</a>
+                    <a href='$edit_model_master_mode_url&$EDIT?$check_sum2:$edit_instructions2&$EDIT_DONE'>Edit - $cell_val</a>
+                    Col:$x</font></td>";
                 }
                 else
                 {
@@ -5793,15 +5917,19 @@ $//img;
         $group_block = "<div style=\"-webkit-mask-image:linear-gradient(to bottom, black 0%, transparent 100%);mask-image:linear-gradient(to bottom, black 0%, transparent 100%);background-color: skyblue\">" .
                        $group_block .
                        "</div>";
-        $html_text =~ s/QQQ/$group_block/im;
+        if (!($current_file =~ m/safe_bellringing/))
+        {
+            $html_text =~ s/QQQ/$group_block/im;
+        }
         $html_text =~ s/QQQ//im;
 
         my $c = get_col_name_of_number_type_col ();
         $html_text =~ s/%23NUM_COL/$c/im;
         $html_text =~ s/%23NUM_COL/$c/im;
 
-        $html_text .= "<br>$deck";
-
+        $html_text .= "    <style>\n";
+        $html_text .= "       .toggle-wrap { display: inline-flex; align-items: center; gap: 8px; font-family: Arial, sans-serif; font-size: 13px; } .toggle { position: relative; width: 48px; height: 24px; } .toggle input { opacity: 0; width: 0; height: 0; } .slider { position: absolute; inset: 0; background-color: #ccc; border-radius: 24px; cursor: pointer; transition: 0.3s; } .slider::before { content: \"\"; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; } .toggle input:checked + .slider { background-color: #4caf50; } .toggle input:checked + .slider::before { transform: translateX(24px); } .toggle-label { cursor: pointer; user-select: none; }\n";
+        $html_text .= "    </style>\n";
         $html_text .= "<script>\n";
         $html_text .= "let currentElem = null;\n";
         $html_text .= "table.onmouseover = function(event) {\n";
@@ -5822,7 +5950,7 @@ $//img;
         $html_text .= "  onLeave(currentElem);\n";
         $html_text .= "  currentElem = null;\n";
         $html_text .= "};\n";
-        $html_text .= "function fade(element, duration)\n";
+        $html_text .= "function fade_cell_id(element, duration)\n";
         $html_text .= "{\n";
         $html_text .= "    var start = new Date;\n";
         $html_text .= "    (function next() \n";
@@ -5844,7 +5972,10 @@ $//img;
         $html_text .= "    elem.style.background = 'skyblue';\n";
         $html_text .= "    var re = /([A-Z]+\\d+)/g;\n";
         $html_text .= "    var re_range = /([A-Z]+)(\\d+):([A-Z]+)(\\d+)/g\n";
-        $html_text .= "    var s = currentElem.innerText;\n";
+        $html_text .= "    var toggle = document.getElementById('relatedCellsToggle');\n";
+        $html_text .= "    let rc = '';\n";
+        $html_text .= "    if (toggle.checked) { rc = currentElem.getAttribute('related_cells'); }\n";
+        $html_text .= "    var s = currentElem.innerText + rc;\n";
         $html_text .= "    var col = 'AliceBlue';\n";
         $html_text .= "    m = re_range.exec(s);\n";
         $html_text .= "    if (m)\n";
@@ -5881,7 +6012,7 @@ $//img;
         $html_text .= "            else if (col == 'mediumaquamarine') { col = 'dodgerblue'; } \n";
         $html_text .= "        }\n";
         $html_text .= "    } while (m);\n";
-        $html_text .= "        \n";
+        #$html_text .= "    fieldID.innerHTML = '<div class=\"field_border\"><span style=\"font-family: Arial; font-size: 11\">' + `\${currentElem.id}` + ' --- ' + rc + '</span></div>';\n";
         $html_text .= "    fieldID.innerHTML = '<div class=\"field_border\"><span style=\"font-family: Arial; font-size: 11\">' + `\${currentElem.id}` + '</span></div>';\n";
         $html_text .= "    var rect = elem.getBoundingClientRect();\n";
         $html_text .= "    var rect2 = fieldID.getBoundingClientRect();\n";
@@ -5890,7 +6021,7 @@ $//img;
         $html_text .= "    fieldID.style.top = rect.bottom - (rect2.height) + (scrollTop);\n";
         $html_text .= "    fieldID.style.left = rect.right - (rect2.width) + (scrollLeft);\n";
         $html_text .= "    fieldID.style.position = \"absolute\";\n";
-        $html_text .= "    fade (fieldID, 1500);\n";
+        $html_text .= "    fade_cell_id (fieldID, 1500);\n";
         $html_text .= "}\n";
         $html_text .= "function onLeave(elem) \n";
         $html_text .= "{\n";
@@ -5898,7 +6029,10 @@ $//img;
         $html_text .= "    var re = /([A-Z]+\\d+)/g;\n";
         $html_text .= "    var re_range = /([A-Z]+)(\\d+):([A-Z]+)(\\d+)/g\n";
         $html_text .= "    var col = 'AliceBlue';\n";
-        $html_text .= "    var s = currentElem.innerText;\n";
+        $html_text .= "    var toggle = document.getElementById('relatedCellsToggle');\n";
+        $html_text .= "    let rc = '';\n";
+        $html_text .= "    if (toggle.checked) { rc = currentElem.getAttribute('related_cells'); }\n";
+        $html_text .= "    var s = currentElem.innerText + rc;\n";
         $html_text .= "    m = re_range.exec(s);\n";
         $html_text .= "    if (m)\n";
         $html_text .= "    {\n";
@@ -5973,9 +6107,9 @@ $//img;
 
             while ($rn < $max_rows)
             {
-                my $field1 = get_field_value ($rn, $col1, 0, $show_formulas);
-                my $field2 = get_field_value ($rn, $col2, 0, $show_formulas);
-                my $field3 = get_field_value ($rn, $col3, 0, $show_formulas);
+                my $field1 = get_field_value ($rn, $col1, 0, $show_formulas, 6086);
+                my $field2 = get_field_value ($rn, $col2, 0, $show_formulas, 6087);
+                my $field3 = get_field_value ($rn, $col3, 0, $show_formulas, 6088);
 
                 $straight_row_lookup {$straight_rn} = "$field1,$field2:$field3;$straight_rn";
 
