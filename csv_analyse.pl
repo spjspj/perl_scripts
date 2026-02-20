@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!C:\StrawberryPerl\perl\bin\perl.exe
 ##
 #   File : csv_analyse.pl
 #   Date : 12/Apr/2023
@@ -602,6 +602,17 @@ sub has_field_id
     return "";
 }
 
+sub has_any_field_id
+{
+    my $field_val = $_ [0];
+
+    if ($field_val =~ m/^=.*([A-Z]+\d+)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
 sub get_row_num
 {
     my $field_id = $_ [0];
@@ -698,6 +709,7 @@ sub set_field_value
     }
 }
 
+my %loop_detections;
 sub get_field_value
 {
     my $row_num = $_ [0];
@@ -714,6 +726,22 @@ sub get_field_value
     if (defined ($csv_data {$field_id}))
     {
         my $field_val = $csv_data {$field_id};
+        my $iterate_factor = "iii $col_letter$row_num -- $field_id -- $field_val -- " . $calculated_data {$field_id} . " iii";
+        
+        my $field_in_cell_val = has_any_field_id ($field_val);
+        
+        my $has_calculated_val = 0;
+        if ($calculated_data {$field_id} =~ m/./)
+        {
+            $has_calculated_val = 1;
+        }
+        my $calculated_val_has_field_id = has_any_field_id ($calculated_data {$field_id});
+
+        $loop_detections {$iterate_factor} ++;
+        if ($loop_detections {$iterate_factor} > 50 && ($has_calculated_val && $calculated_val_has_field_id || !$has_calculated_val && $field_in_cell_val)) 
+        {
+            return "Infinite Iteration ERROR";
+        }
         my $calc_val = "";
         if (!defined ($calculated_data {$field_id}))
         {
@@ -748,7 +776,7 @@ sub get_field_value
         if ($for_display == 1 && $show_formulas == 0 && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
         {
             my $c = sprintf("%.2f", $calc_val);
-            print $c, ">> $calc_val, >>", $row_num, "====", $col_letter, " ($where_from)\n";
+            #print $c, ">> $calc_val, >>", $row_num, "====", $col_letter, " ($where_from)\n";
             return ($c);
         }
         elsif ($for_display == 1 && $show_formulas == 2)
@@ -1090,6 +1118,27 @@ sub do_strcmp_expansion
     return $field_val;
 }
 
+sub do_strequal_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((STREQUAL)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            if ($field_val =~ m/STREQUAL\(([^\|]+?)\|([^\|]+?)\)/)
+            {
+                $field_val =~ s/$func\((.+)\|(.+)\)/perl_strequal("$1","$2")/;
+                return $field_val;
+            }
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
 sub do_money_expansion
 {
     my $field_val = $_ [0];
@@ -1140,7 +1189,61 @@ sub do_adddays_expansion
         my $num = $3;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
+            my $new_date = perl_adddays($1,$2);
+
             $field_val =~ s/$func\((.+)\|(.+)\)/perl_adddays($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_dayofweek_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((DAYOFWEEK)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_one_argument($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\)/perl_dayofweek($1)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_isdayofmonth_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ISDAYOFMONTH)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\((.+)\|(.+)\)/perl_isdayofmonth($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_monthlyinterest_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((MONTHLYINTEREST)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        # =MONTHLYINTEREST(DATE|SUMTONOW|DAILYINTEREST)
+        if (simple_parentheses_only_three_arguments ($to_check, "$func"))
+        {
+            $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/perl_monthlyinterest($1,$2,$3)/;
             return $field_val;
         }
     }
@@ -1288,19 +1391,19 @@ sub perl_tax
     }
     if ($salary<=45000)
     {
-        return 0.16 * ($salary-18200);
+        return 0.16 * ($salary-18200) + (0.02*$salary);
     }
     if ($salary<=135000)
     {
-        return 0.16 * (45000-18200)+0.30 * ($salary-45000);
+        return 0.16 * (45000-18200)+0.30 * ($salary-45000) + (0.02*$salary);
     }
     if ($salary<=190000)
     {
-        return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * ($salary-135000);
+        return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * ($salary-135000) + (0.02*$salary);
     }
     if ($salary>190000)
     {
-        return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * (190000-135000)+0.45 * ($salary-190000);
+        return 0.16 * (45000-18200)+0.30 * (135000-45000)+0.37 * (190000-135000)+0.45 * ($salary-190000) + (0.02*$salary);
     }
     return 0;
 }
@@ -1324,7 +1427,7 @@ sub perl_nicedate
         my $y = $1;
         my $m = $2;
         my $d = $3;
-        my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        my $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
 
         $mday =~ s/^\s+//;  # Remove leading spaces
@@ -1461,6 +1564,16 @@ sub perl_strcmp
     return "-1";
 }
 
+sub perl_strequal
+{
+    my $str1 = $_ [0];
+    my $str2 = $_ [1];
+
+    if (lc ($str1) eq lc($str2)) { return "1"; }
+    if ($str1 eq $str2) { return "1"; }
+    return "0";
+}
+
 sub perl_url
 {
     my $input = $_ [0];
@@ -1524,7 +1637,7 @@ sub perl_nextday
         my $y = $1;
         my $m = $2;
         my $d = $3;
-        my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        my $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
         my $yyyymmdd;
 
@@ -1562,12 +1675,41 @@ sub perl_adddays
         my $y = $1;
         my $m = $2;
         my $d = $3;
-        my $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+        # Solve for DST
+        my $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time + $days_to_add * 24*3600);
         my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+
+        #open OUTPUT, ">> d:\\perl_programs\\csv_analyse.log";
+        #print OUTPUT "Turning $adder, $days_to_add into :: $yyyymmdd --- ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) , d=$d,m=$m,y=$y, time=$time,days_to_add=$days_to_add-- $year, $mon, $mday \n";
+        #close OUTPUT;
         return $yyyymmdd;
     }
     return perl_today ();
+}
+
+sub perl_dayofweek
+{
+    my $date = $_ [0];
+    if ($date =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+
+        # Solve for DST
+        my $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+
+        if ($wday == 0) { return "Sunday"; }
+        if ($wday == 1) { return "Monday"; }
+        if ($wday == 2) { return "Tuesday"; }
+        if ($wday == 3) { return "Wednesday"; }
+        if ($wday == 4) { return "Thursday"; }
+        if ($wday == 5) { return "Friday"; }
+        if ($wday == 6) { return "Saturday"; }
+    }
+    return "NODAY";
 }
 
 sub perl_addmonths
@@ -1593,7 +1735,7 @@ sub perl_addmonths
         my $time;
         eval
         {
-            $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+            $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
         };
         while ($@)
         {
@@ -1601,7 +1743,7 @@ sub perl_addmonths
 
             eval
             {
-                $time = timelocal(0, 0, 0, $d, $m - 1, $y - 1900);
+                $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
             };
         }
 
@@ -1611,6 +1753,68 @@ sub perl_addmonths
         return $yyyymmdd;
     }
     return perl_today ();
+}
+
+sub perl_isdayofmonth
+{
+    # Is day a particular given day of the month
+    my $date = $_ [0];
+    my $day_of_month = $_ [1];
+    if ($day_of_month =~ m/^$/)
+    {
+        return 0;
+    }
+
+    $date =~ s/\s//;
+    if ($date =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+
+        if ($d == $day_of_month)
+        {
+            return 1;
+        }
+
+        # Check if 'last'
+        if ($day_of_month =~ m/last/im)
+        {
+            my $time = timelocal(0, 0, 12, $d, $m-1, $y - 1900);
+            $time += 24 * 3600;
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+            if ($mon != $m - 1)
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+sub perl_monthlyinterest
+{
+    # Is day a particular given day of the month
+    my $date = $_ [0];
+    my $sum_this_month = $_ [1];
+    my $sum_today = $_ [2];
+
+    $date =~ s/\s//;
+    if ($date =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+
+        my $time = timelocal(0, 0, 12, $d, $m-1, $y - 1900);
+        $time += 24 * 3600;
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+        if ($mon != $m - 1)
+        {
+            return $sum_this_month + $sum_today;
+        }
+    }
+    return 0;
 }
 
 sub perl_recurring
@@ -2551,9 +2755,21 @@ sub perl_expansions
     {
         $str = do_adddays_expansion ($str);
     }
+    if ($str =~ m/DAYOFWEEK\(/)
+    {
+        $str = do_dayofweek_expansion ($str);
+    }
     if ($str =~ m/ABSDAYS\(/)
     {
         $str = do_absdays_between_expansion ($str);
+    }
+    if ($str =~ m/ISDAYOFMONTH\(/)
+    {
+        $str = do_isdayofmonth_expansion ($str);
+    }
+    if ($str =~ m/MONTHLYINTEREST\(/)
+    {
+        $str = do_monthlyinterest_expansion ($str);
     }
     if ($str =~ m/NICEDATE\(/)
     {
@@ -2583,6 +2799,11 @@ sub perl_expansions
     {
         $str = do_strcmp_expansion ($str);
     }
+    if ($str =~ m/STREQUAL\(/)
+    {
+        $str = do_strequal_expansion ($str);
+    }
+
     if ($str =~ m/URL\(/)
     {
         $str = do_url_expansion ($str);
@@ -5837,44 +6058,44 @@ $//img;
             my $total_g_count;
             my $total_g_price;
 
-            foreach $g (sort keys (%group_counts))
-            {
-                my $g_price = $group_prices {$g};
-                my $g_count = $group_counts {$g};
-                my $g_calc = $group_prices {$g. "_calc"};
-                if ($g_price =~ m/\./)
-                {
-                    $g_price = $g_price / 100;
-                }
-                else
-                {
-                    $g_price =~ s/(\d\d)$/.$1/;
-                }
-
-                my $replace_g_price = "GPRICE_$g";
-                $html_text =~ s/$replace_g_price/$g_price/img;
-
-                if ($g_count != 1)
-                {
-                    $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (total was $g_price)</font><br>";
-                }
-                else
-                {
-                    $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count row (total was $g_price)</font><br>";
-                }
-
-                if ($get_group_info)
-                {
-                    my $g_calc = $group_prices {$g. "_calc"};
-                    $group_block .= "<font color=$group_colours{$g}>Group $g had calculation of $g_calc</font><br>";
-                }
-
-                $total_g_count += $g_count;
-                $total_g_price += $g_price;
-
-                $meta_data {$g . "_total"} = $g_price;
-                $meta_data {$g . "_count"} = $g_count;
-            }
+#            foreach $g (sort keys (%group_counts))
+#            {
+#                my $g_price = $group_prices {$g};
+#                my $g_count = $group_counts {$g};
+#                my $g_calc = $group_prices {$g. "_calc"};
+#                if ($g_price =~ m/\./)
+#                {
+#                    $g_price = $g_price / 100;
+#                }
+#                else
+#                {
+#                    $g_price =~ s/(\d\d)$/.$1/;
+#                }
+#
+#                my $replace_g_price = "GPRICE_$g";
+#                $html_text =~ s/$replace_g_price/$g_price/img;
+#
+#                if ($g_count != 1)
+#                {
+#                    $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count rows (total was $g_price)</font><br>";
+#                }
+#                else
+#                {
+#                    $group_block .= "<font color=$group_colours{$g}>Group $g had $g_count row (total was $g_price)</font><br>";
+#                }
+#
+#                if ($get_group_info)
+#                {
+#                    my $g_calc = $group_prices {$g. "_calc"};
+#                    $group_block .= "<font color=$group_colours{$g}>Group $g had calculation of $g_calc</font><br>";
+#                }
+#
+#                $total_g_count += $g_count;
+#                $total_g_price += $g_price;
+#
+#                $meta_data {$g . "_total"} = $g_price;
+#                $meta_data {$g . "_count"} = $g_count;
+#            }
             $group_block .= "Total group row count: $total_g_count";
         }
 
