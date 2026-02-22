@@ -51,7 +51,7 @@ my $edit_model_current_file = "";
 my $edit_model_master_mode_url = "";
 my $edit_mastermode = "MASTER_EDIT_MODE";
 my $EDIT_MASTERMODE_SALT = "MASTER_EDIT_MODE_SALT";
-my $EDIT_SALT = "_SPJONES_WAS_HERE";
+my $EDIT_SALT = "_SPJ_WAS_HERE";
 my $EDIT_DONE = "editdone";
 my $EDIT = "edit";
 my $EDIT_SELECT = "select";
@@ -404,7 +404,6 @@ sub update_csv_data_on_disk
     my $row_num = 1;
     my $col_letter = "A";
     my $block = `type $current_file`;
-    print ("$block\n==================\n");
     my $updated_block = "";
     my $orig_line = "";
     my $actually_updated = 0;
@@ -436,10 +435,9 @@ sub update_csv_data_on_disk
             my $field = $1;
             set_field_value ($row_num, $col_letter, $field, "");
 
-            print (" LOOKING AT: >> $col_letter$row_num for $field :::$line.RRR.:::<<\n");
             if ("$col_letter$row_num" eq $cell_to_update)
             {
-                print (" FOUND THE ONE TO CHANGE!!\n");
+                print (" FOUND $cell_to_update (CHANGE)!\n");
                 $old_field_val = get_field_value ($row_num, $col_letter, 0, 0, 444);
                 set_field_value ($row_num, $col_letter, $new_value, "");
                 $this_line_changed = 1;
@@ -483,7 +481,6 @@ sub update_csv_data_on_disk
         }
     }
     $max_rows++;
-    print $updated_block;
 
     if ($actually_updated)
     {
@@ -738,8 +735,10 @@ sub get_field_value
         my $calculated_val_has_field_id = has_any_field_id ($calculated_data {$field_id});
 
         $loop_detections {$iterate_factor} ++;
-        if ($loop_detections {$iterate_factor} > 50 && ($has_calculated_val && $calculated_val_has_field_id || !$has_calculated_val && $field_in_cell_val)) 
+        if ($loop_detections {$iterate_factor} > 500 && ($has_calculated_val && $calculated_val_has_field_id || !$has_calculated_val && $field_in_cell_val)) 
         {
+            # Reset it back to 0 again..
+            $loop_detections {$iterate_factor} = 0;
             return "Infinite Iteration ERROR";
         }
         my $calc_val = "";
@@ -3012,7 +3011,7 @@ sub get_graph_html
     $graph_html .= "        this.minValue = Math.min (...Object.values (this.options.data));\n";
     $graph_html .= "        this.maxValue = Math.max (...Object.values (this.options.data));\n";
     $graph_html .= "        this.maxValue += 1;\n";
-    $graph_html .= "        this.total_span = (this.maxValue + this.minValue);\n";
+    $graph_html .= "        this.total_span = Math.abs(this.maxValue - this.minValue);;\n";
     $graph_html .= "        if (this.maxValue - this.minValue > this.total_span)\n";
     $graph_html .= "        {\n";
     $graph_html .= "            this.total_span = (this.maxValue - this.minValue);\n";
@@ -3139,18 +3138,27 @@ sub get_graph_html
     $graph_html .= "        gridStep: 10,\n";
     $graph_html .= "        gridColor: \"lightgrey\",\n";
 
+    my $min_data_val = +55555555;
+    my $max_data_val = -55555555;
     $graph_html .= "        data: {";
     my $i;
+    my $good_vals = 0;
     if ($graph_counts == 0 && $graph_totals == 0)
     {
         for ($i = 2; $i < $max_rows; $i++)
         {
             my $x = get_field_value ($i, $col, 1, $show_formulas, 2924);
-            $x =~ s/^$/0/;
+            if ($x =~ m/^$/)
+            {
+                next;
+            }
             $x =~ s/,//g;
             $x =~ s/\$//g;
             $x =~ s/^ *$/0/g;
+            if ($x < $min_data_val) { $min_data_val = $x; }
+            if ($x > $max_data_val) { $max_data_val = $x; }
             $graph_html .= "\"Row $i,Col $col ($x)\":$x,";
+            $good_vals ++;
         }
     }
     elsif ($graph_counts == 1 || $graph_totals == 1)
@@ -3161,30 +3169,44 @@ sub get_graph_html
             if ($k =~ m/_count/ && $graph_counts)
             {
                 my $x = $meta_data {$k};
+                if ($x =~ m/^$/)
+                {
+                    next;
+                }
                 $x =~ s/^$/0/;
                 $x =~ s/,//g;
                 $x =~ s/\$//g;
                 $x =~ s/[^0-9\.]//g;
                 $x =~ s/^ *$/0/g;
+                if ($x < $min_data_val) { $min_data_val = $x; }
+                if ($x > $max_data_val) { $max_data_val = $x; }
                 $graph_html .= "\"Group $k ($x)\":$x,";
+                $good_vals ++;
             }
             elsif ($k =~ m/_total/ && $graph_totals)
             {
                 my $x = $meta_data {$k};
+                if ($x =~ m/^$/)
+                {
+                    next;
+                }
                 $x =~ s/^$/0/;
                 $x =~ s/,//g;
                 $x =~ s/\$//g;
                 $x =~ s/[^0-9\.\-]//g;
                 $x =~ s/^ *$/0/g;
+                if ($x < $min_data_val) { $min_data_val = $x; }
+                if ($x > $max_data_val) { $max_data_val = $x; }
                 $graph_html .= "\"Group $k ($x)\":$x,";
+                $good_vals ++;
             }
         }
     }
-    $graph_html .= "\"DONE\": 0 },\n";
+    $graph_html .= "\"DONE\": $min_data_val },\n";
 
     # Print colors line
     $graph_html .= "        colors: [";
-    for ($i = 1; $i < $max_rows; $i++)
+    for ($i = 1; $i < $good_vals; $i++)
     {
         $graph_html .= "\"\#fbfbab\",";
     }
@@ -3289,9 +3311,9 @@ sub get_3dgraph_html
     $graph3d_html .= "      border: 1px solid white;\n";
     $graph3d_html .= "    }\n";
     $graph3d_html .= "    </style>\n";
-    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Cango3D-13v00.js\"></script>\n";
-    $graph3d_html .= "    <script src=\"https://xmage.au/cango/CanvasStack-2v01.js\"></script>\n";
-    $graph3d_html .= "    <script src=\"https://xmage.au/cango/Graph3D-3v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://mysite.com/cango/Cango3D-13v00.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://mysite.com/cango/CanvasStack-2v01.js\"></script>\n";
+    $graph3d_html .= "    <script src=\"https://mysite.com/cango/Graph3D-3v00.js\"></script>\n";
     $graph3d_html .= "    <script>\n";
     $graph3d_html .= "        function generateTopography (xmin, xmax, ymin, ymax, rows, columns)\n";
     $graph3d_html .= "        {\n";
@@ -4929,11 +4951,67 @@ $//img;
             $current_file = "d:\\perl_programs\\csv_ingest\\$file";
             $current_file =~ s/\.\./xxxx/img;
             process_csv_data ($new_csv, "DONT_SAVE");
+            print ("$txt\n");
         }
         elsif (!$authorized && $txt =~ m/GET.*old_csv/i)
         {
             write_to_socket (\*CLIENT, $NOT_AUTHORIZED_HTML . "old_csv", "", "noredirect");
             next;
+        }
+
+        # Allow editting from a specific button
+        # https://mysite.com/csv_analyse/old_csv?safe_form.txt&direct_update?cell=C16&val=Present&sectoken=b3760251cb143381f5b8bf5f97f3d7c6&finaldate=20260401
+        if ($txt =~ m/direct_update.cell=([A-Z]\d+).val=(.*).sectoken=([a-z0-9]+)&finaldate=(\d\d\d\d\d\d\d\d)/im)
+        {
+            my $cell = $1;
+            my $new_val = $2;
+            my $md5 = $3;
+            my $final_date = $4;
+            my $check_sum = get_md5 ("", $cell . $new_val, $EDIT_SALT, 4965);
+            print ("Got here!$check_sum vs $md5 was checked\n");
+            print ("Value checked was - >>$cell$new_val$EDIT_SALT<<\n");
+
+            if ($md5 eq $check_sum)
+            {
+                # Looking for where 'finaldate' value is (safe_bellringing, column A is where this information is..)
+                my $row_num = 1;
+                my $col_letter = "A";
+                my $old_row_num = 2;
+                my $field_id = 0;
+                my %col_calculations;
+                print ("aaa ok in here- >>$cell$new_val$EDIT_SALT<<\n");
+
+                while ($row_num < $max_rows)
+                {
+                    print ("bbb  ok in here- >>$cell$new_val$EDIT_SALT<<\n");
+                    my $x = 0;
+                    $col_letter = "A";
+                    $field_id = "$col_letter$row_num";
+                    my $field = get_field_value ($row_num, $col_letter, 1, $show_formulas, 5268);
+                    if ($field eq $final_date)
+                    {
+                        $cell =~ s/\d+//;
+                        $cell .= $row_num;
+                        print ("Matched $final_date to $field in $field_id -> A$row_num >> $field -- New cell = $cell\n");
+                        $row_num = $max_rows;
+                    }
+                    $row_num ++;
+                }
+
+                # Valid match, allow edit to go ahead..
+                update_csv_data_on_disk ("$cell", "$new_val", $current_file, "::::$md5 :(email): $cell --> $new_val\n");
+                if (($authorized && $txt =~ m/GET.*old_csv.(.*?)(\&|\n|$)/im) || (!$authorized && $txt =~ m/GET.*old_csv.(.*safe.*?)(\&|\n|$)/im))
+                {
+                    my $file = $1;
+                    $file =~ s/ HTTP.*//;
+                    $file =~ s/\n//img;
+                    $file =~ s/^.*old_csv.CSV/CSV/;
+                    my $new_csv = `type  d:\\perl_programs\\csv_ingest\\$file`;
+                    $current_file = "d:\\perl_programs\\csv_ingest\\$file";
+                    $current_file =~ s/\.\./xxxx/img;
+                    process_csv_data ($new_csv, "DONT_SAVE");
+                }
+            }
         }
 
         # Allow editting via a select box only for certain column..
@@ -4959,6 +5037,17 @@ $//img;
                 if ($txt =~ m/update_cell.newval=([A-Z])(\d+)&value=(.*)/im)
                 {
                     update_csv_data_on_disk ("$1$2", "$3", $current_file, "::::$hash :: $vals\n");
+                    if (($authorized && $txt =~ m/GET.*old_csv.(.*?)(\&|\n|$)/im) || (!$authorized && $txt =~ m/GET.*old_csv.(.*safe.*?)(\&|\n|$)/im))
+                    {
+                        my $file = $1;
+                        $file =~ s/ HTTP.*//;
+                        $file =~ s/\n//img;
+                        $file =~ s/^.*old_csv.CSV/CSV/;
+                        my $new_csv = `type  d:\\perl_programs\\csv_ingest\\$file`;
+                        $current_file = "d:\\perl_programs\\csv_ingest\\$file";
+                        $current_file =~ s/\.\./xxxx/img;
+                        process_csv_data ($new_csv, "DONT_SAVE");
+                    }
                 }
 
                 if ($vals =~ m/column/img)
