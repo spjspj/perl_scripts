@@ -107,6 +107,8 @@ my %all_cards_price;
 my %all_cards_currency;
 my %all_cards_div_name;
 my %all_cards_price_div_name;
+my $USD_TO_LOCALCURRENCY = 3.13; # Multiplier from USD to LOCALCURRENCY
+my $LOCALCURRENCY_TO_USA = 1.0 / 3.13; # Multiplier from LOCALCURRENCY to USD
 
 sub add_new_card
 {
@@ -130,9 +132,9 @@ sub add_new_card
         $all_cards_card_type {$card} = uc($card_type);
         $all_cards_date {$card} = $date_of_purchase;
         $all_cards_place {$card} = $place_of_purchase;
-        $all_cards_currency {$card} = "AUD";
-        my $currency_ratio = 1.0 / 1.53; # Make everything in USD..
+        $all_cards_currency {$card} = "LOCALCURRENCY";
 
+        my $currency_ratio = $LOCALCURRENCY_TO_USA;
         if (lc($place_of_purchase) =~ m/(cardkingdom|channelfireball|endgames|pucatrade|starcitygames|tcgplayer)/i)
         {
             $all_cards_currency {$card} = "USD";
@@ -212,15 +214,6 @@ sub read_all_purchased_cards2
     open ALL, $CURRENT_FILE;
     print ("Reading from $CURRENT_FILE\n");
 
-    #"Shorikai, Genesis Engine",already,c,20230218,ronin
-    #"Stranglehold",already,e,20230313,ronin
-    #"The World Tree ",already,l,nodate,ronin
-    #"Throne of Empires",already,a,20220501,ronin
-    #"Vito, Thorn of the Dusk Rose",already,c,nodate,ronin
-    #"Yorion, Sky Nomad",already,c,nodate,ronin
-    #"Arcane Lighthouse",want,l,,,,
-    #"Buried Ruin",want,l,,,,
-
     while (<ALL>)
     {
         chomp $_;
@@ -253,7 +246,7 @@ my %card_colour_identity;
 
 sub read_all_cards
 {
-    my $CURRENT_FILE = "c:/xmage_clean/mage/Utils/mtg-cards-data.txt";
+    my $CURRENT_FILE = "c:/xmage_clean_2024/mage/Utils/mtg-cards-data.txt";
     open ALL, $CURRENT_FILE;
     print ("Reading from $CURRENT_FILE\n");
 
@@ -500,7 +493,7 @@ sub get_card_colour_identity
     {
         return $col_ids {$card_colour_identity{$id}};
     }
-    
+
     if ($card_colour_identity{$id} =~ m/...../)
     {
         return ("fivecolour-text");
@@ -517,7 +510,7 @@ sub get_card_colour_identity
 sub is_authorized
 {
     my $pw = $_ [0];
-    if ($pw eq "supersecret1234passwordgoeshere..")
+    if ($pw eq "spjwashere2")
     {
         # Check that the other programs are running..
         return 1;
@@ -650,7 +643,7 @@ sub fix_url_code
             write_to_socket (\*CLIENT, $html_text, "", "noredirect");
             next;
         }
-        # Have got all information?? https://xmage.au/purchasedcards/card_info?card_name=Arcane+Adaptation&purchased=ronin&color=blue&type=enchantment&price=0.00 HTTP/1.1
+
         if ($authorized && $txt =~ m/card_info\?card_name=(.*?)&purchased=(.*?)&color=(.*?)&type=(.*?)&price=((\d+)\.(\d+)|\d+) HTTP/im)
         {
             my $card = $1;
@@ -658,7 +651,8 @@ sub fix_url_code
             my $color = $3;
             my $card_type = $4;
             my $price = $5;
-            $card = s/\+/ /img;
+            print ("$txt\n==================\n");
+            $card =~ s/\+/ /img;
 
             $color =~ m/^(.)/;
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -1018,9 +1012,10 @@ sub fix_url_code
         }
 
         $html_text .= "<thead>\n";
-        $html_text .= "<br>Overall price was: \$XXX (from YYY cards)";
+        $html_text .= "<br>Overall price was: \$XXX (from YYY cards) (\$LOCALCURRENCYDDD in LOCALCURRENCY)";
         $html_text .= "&nbsp;&nbsp;&nbsp;<a href=\"card_wanted?card_name=Library of Congress\">New card wanted</a> </font>\n </td>\n";
         $html_text .= "&nbsp;&nbsp;&nbsp;<a href=\"reload\">Reload</a> </font>\n </td>\n";
+        $html_text .= "&nbsp;&nbsp;&nbsp;<div id=\"pageProfitLoss\">Overall Profit: \$0.00</div> </font>\n </td>\n";
         $html_text .= "<br>QQQ<br>";
 
         $html_text .= "<tr>\n";
@@ -1171,7 +1166,7 @@ sub fix_url_code
                 {
                     if ($authorized)
                     {
-                        $row .= " <td> <font color=\"$fontcolor\"> <a href=\"purchasedcards/card?$card&place?CardKingdom\">Bought it</a> </font>\n </td>\n";
+                        $row .= " <td> <font color=\"$fontcolor\"> <a href=\"purchasedcards/card?$card&place?mylgs\">Bought it</a> </font>\n </td>\n";
                     }
                     else
                     {
@@ -1183,7 +1178,7 @@ sub fix_url_code
                     $row .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
                 }
 
-                my $url = "https://roningames.com.au/search?type=product&options[prefix]=last&q=$card $card_type";
+                my $url = "https://mylgs.com/search?type=product&options[prefix]=last&q=$card $card_type";
                 $fake_row .= "cardtype=$card_type ; ";
                 $row .= " <td> <font size=-2 color=\"$fontcolor\"><a href=\"$url\">$card</a> </font></td>\n";
 
@@ -1200,7 +1195,7 @@ sub fix_url_code
                 my $div_name = $all_cards_div_name {$card};
                 my $c = $card;
                 $c =~ s/\W/ /img;
-                
+
                 my $response_func = "getUSDResponse";
                 if ($div_name =~ m/^want/)
                 {
@@ -1317,11 +1312,24 @@ sub fix_url_code
         $html_text .= "    theObj.appendChild(image);\n";
         $html_text .= "    var profit_lost = priceObj.innerHTML;\n";
         $html_text .= "    const re = /^.*\\\$/img;\n";
-        $html_text .= "    const re2 = /(\\.\\d\\d).*\$/img;\n";
+        $html_text .= "    const re2 = /(\\.\\d+).*\$/img;\n";
+        $html_text .= "    const re3 = /[ <].*\$/img;\n";
         $html_text .= "    profit_lost = profit_lost.replace (re,\"\");\n";
         $html_text .= "    profit_lost = profit_lost.replace (re2,'\\\$1');\n";
+        $html_text .= "    profit_lost = profit_lost.replace (re3,\"\");\n";
         $html_text .= "    profit_lost = eval (profit_lost + \"-1 * \" + response_json.prices.usd);\n";
         $html_text .= "    profit_lost = parseFloat (profit_lost).toFixed (2);\n";
+        $html_text .= "    \n";
+        $html_text .= "    const re4 = /^.*: *\\\$/;";
+        $html_text .= "    var page_profit_loss = document.getElementById(\"pageProfitLoss\");\n";
+        $html_text .= "    var page_profit = page_profit_loss.innerHTML;\n";
+        $html_text .= "    page_profit = page_profit.replace (re4,\"\");\n";
+        $html_text .= "    var actual_page_profit = parseFloat (page_profit);\n";
+        $html_text .= "    var actual_profit_lost = parseFloat (profit_lost);\n";
+        $html_text .= "    var total_page_profit = actual_page_profit - actual_profit_lost ;\n";
+        $html_text .= "    total_page_profit = parseFloat (total_page_profit).toFixed (2);\n";
+        $html_text .= "    page_profit_loss.innerHTML = \"Overall Profit: \$\" + total_page_profit;\n";
+        $html_text .= "    \n";
         $html_text .= "    if (profit_lost < 0) { ";
         $html_text .= "        profit_lost = -1 * profit_lost; ";
         $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=darkgreen>Profit=\" + profit_lost + \"</font>\";\n";
@@ -1329,7 +1337,7 @@ sub fix_url_code
         $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=red>Loss=\" + profit_lost + \"</font>\";\n";
         $html_text .= "    }";
         $html_text .= "}\n";
-        $html_text .= "async function getAUDResponse(url, theObj, priceObj, bigOrSmall) {\n";
+        $html_text .= "async function getLOCALCURRENCYResponse(url, theObj, priceObj, bigOrSmall) {\n";
         $html_text .= "    let response = await fetch(url);\n";
         $html_text .= "    let response_json = await response.json();\n";
         $html_text .= "    var image = new Image();\n";
@@ -1346,11 +1354,24 @@ sub fix_url_code
         $html_text .= "    theObj.appendChild(image);\n";
         $html_text .= "    var profit_lost = priceObj.innerHTML;\n";
         $html_text .= "    const re = /^.*\\\$/img;\n";
-        $html_text .= "    const re2 = /(\\.\\d\\d).*\$/img;\n";
+        $html_text .= "    const re2 = /(\\.\\d+).*\$/img;\n";
+        $html_text .= "    const re3 = /[ <].*\$/img;\n";
         $html_text .= "    profit_lost = profit_lost.replace (re,\"\");\n";
         $html_text .= "    profit_lost = profit_lost.replace (re2,'\\\$1');\n";
+        $html_text .= "    profit_lost = profit_lost.replace (re3,\"\");\n";
         $html_text .= "    profit_lost = eval (profit_lost + \"-1 * \" + response_json.prices.usd);\n";
         $html_text .= "    profit_lost = parseFloat (profit_lost).toFixed (2);\n";
+        $html_text .= "    \n";
+        $html_text .= "    const re4 = /^.*: *\\\$/;";
+        $html_text .= "    var page_profit_loss = document.getElementById(\"pageProfitLoss\");\n";
+        $html_text .= "    var page_profit = page_profit_loss.innerHTML;\n";
+        $html_text .= "    page_profit = page_profit.replace (re4,\"\");\n";
+        $html_text .= "    var actual_page_profit = parseFloat (page_profit);\n";
+        $html_text .= "    var actual_profit_lost = parseFloat (profit_lost);\n";
+        $html_text .= "    var total_page_profit = actual_page_profit - actual_profit_lost ;\n";
+        $html_text .= "    total_page_profit = parseFloat (total_page_profit).toFixed (2);\n";
+        $html_text .= "    page_profit_loss.innerHTML = \"Overall Profit: \$\" + total_page_profit;\n";
+        $html_text .= "    \n";
         $html_text .= "    if (profit_lost < 0) { ";
         $html_text .= "        profit_lost = -1 * profit_lost; ";
         $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=darkgreen>Profit=\" + profit_lost + \"</font>\";\n";
@@ -1364,6 +1385,11 @@ sub fix_url_code
         $overall_price =~ s/(\d\d)$/.$1/;
         #$html_text =~ s/XXX/$overall_price <font size=-2>$overall_price_str<\/font>/mg;
         $html_text =~ s/XXX/$overall_price/mg;
+        my $aussie = $overall_price * $USD_TO_LOCALCURRENCY;
+        print ("BEFORE ===> $aussie\n");
+        $aussie =~ s/\.(\d\d).*/.$1/;
+        print ("AFTER ===> $aussie\n");
+        $html_text =~ s/LOCALCURRENCYDDD/$aussie/mg;
         $html_text =~ s/YYY/$overall_count/mg;
 
         if ($group =~ m/.../)
@@ -1386,11 +1412,6 @@ sub fix_url_code
         }
         $html_text =~ s/QQQ//im;
 
-        $html_text .= "<a href=\"https://imgur.com/a/9uj84ka\">Boxes2</a><br>";
-        $html_text .= "<a href=\"https://imgur.com/a/Bdt159R\">EDH Decklists</a><br>";
-        $html_text .= "<a href=\"https://www.mtggoldfish.com/deck/3985938#paper\">My Wanted list..</a><br>";
-        $html_text .= "<h2><a href=\"https://www.mtggoldfish.com/deck_searches/create?utf8=%E2%9C%93&deck_search%5Bname%5D=&deck_search%5Bformat%5D=free_form&deck_search%5Btypes%5D%5B%5D=&deck_search%5Btypes%5D%5B%5D=tournament&deck_search%5Btypes%5D%5B%5D=budget&deck_search%5Btypes%5D%5B%5D=user&deck_search%5Bplayer%5D=spjspj&deck_search%5Bdate_range%5D=12%2F01%2F2017+-+11%2F08%2F2055&deck_search%5Bdeck_search_card_filters_attributes%5D%5B0%5D%5Bcard%5D=&deck_search%5Bdeck_search_card_filters_attributes%5D%5B0%5D%5Bquantity%5D=1&deck_search%5Bdeck_search_card_filters_attributes%5D%5B0%5D%5Btype%5D=maindeck&deck_search%5Bdeck_search_card_filters_attributes%5D%5B1%5D%5Bcard%5D=&deck_search%5Bdeck_search_card_filters_attributes%5D%5B1%5D%5Bquantity%5D=1&deck_search%5Bdeck_search_card_filters_attributes%5D%5B1%5D%5Btype%5D=maindeck&counter=2&commit=Search\">Search my EDH decks</a><br></h2>";
-
         foreach $card (sort keys (%purchased_cards))
         {
             $html_text .= "<br>$card";
@@ -1401,7 +1422,7 @@ sub fix_url_code
 
         if (!$authorized)
         {
-            $html_text =~ s/ronin/obscura/img;
+            $html_text =~ s/mylgs/obscura/img;
             $html_text =~ s/.com.au/.com/img;
         }
         write_to_socket (\*CLIENT, $html_text, "", "noredirect");
