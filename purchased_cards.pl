@@ -510,7 +510,7 @@ sub get_card_colour_identity
 sub is_authorized
 {
     my $pw = $_ [0];
-    if ($pw eq "spjwashere2")
+    if ($pw eq "supersecret1234passwordgoeshere..")
     {
         # Check that the other programs are running..
         return 1;
@@ -1385,11 +1385,11 @@ sub fix_url_code
         $overall_price =~ s/(\d\d)$/.$1/;
         #$html_text =~ s/XXX/$overall_price <font size=-2>$overall_price_str<\/font>/mg;
         $html_text =~ s/XXX/$overall_price/mg;
-        my $aussie = $overall_price * $USD_TO_LOCALCURRENCY;
-        print ("BEFORE ===> $aussie\n");
-        $aussie =~ s/\.(\d\d).*/.$1/;
-        print ("AFTER ===> $aussie\n");
-        $html_text =~ s/LOCALCURRENCYDDD/$aussie/mg;
+        my $localcurrency = $overall_price * $USD_TO_LOCALCURRENCY;
+        print ("BEFORE ===> $localcurrency\n");
+        $localcurrency =~ s/\.(\d\d).*/.$1/;
+        print ("AFTER ===> $localcurrency\n");
+        $html_text =~ s/LOCALCURRENCYDDD/$localcurrency/mg;
         $html_text =~ s/YYY/$overall_count/mg;
 
         if ($group =~ m/.../)
@@ -1423,7 +1423,7 @@ sub fix_url_code
         if (!$authorized)
         {
             $html_text =~ s/mylgs/obscura/img;
-            $html_text =~ s/.com.au/.com/img;
+            $html_text =~ s/.com/.com/img;
         }
         write_to_socket (\*CLIENT, $html_text, "", "noredirect");
         $have_to_write_to_socket = 0;
