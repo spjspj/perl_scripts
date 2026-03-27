@@ -107,8 +107,8 @@ my %all_cards_price;
 my %all_cards_currency;
 my %all_cards_div_name;
 my %all_cards_price_div_name;
-my $USD_TO_LOCALCURRENCY = 3.13; # Multiplier from USD to LOCALCURRENCY
-my $LOCALCURRENCY_TO_USA = 1.0 / 3.13; # Multiplier from LOCALCURRENCY to USD
+my $USD_TO_LOCALCURRENCY = 6.16; # Multiplier from USD to LOCALCURRENCY
+my $LOCALCURRENCY_TO_USA = 1.0 / 6.16; # Multiplier from LOCALCURRENCY to USD
 
 sub add_new_card
 {
@@ -992,12 +992,263 @@ sub fix_url_code
 
         my %groups;
 
-        $html_text .= "<script>\n";
-        $html_text .= "'use strict';\n";
-        $html_text .= "class SortableTable { constructor(tableNode) { this.tableNode = tableNode; this.columnHeaders = tableNode.querySelectorAll('thead th'); this.sortColumns = []; for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (buttonNode) { this.sortColumns.push(i); buttonNode.setAttribute('data-column-index', i); buttonNode.addEventListener('click', this.handleClick.bind(this)); } } this.optionCheckbox = document.querySelector( 'input[type=\"checkbox\"][value=\"show-unsorted-icon\"]'); if (this.optionCheckbox) { this.optionCheckbox.addEventListener( 'change', this.handleOptionChange.bind(this)); if (this.optionCheckbox.checked) { this.tableNode.classList.add('show-unsorted-icon'); } } } setColumnHeaderSort(columnIndex) { if (typeof columnIndex === 'string') { columnIndex = parseInt(columnIndex); } for (var i = 0; i < this.columnHeaders.length; i++) { var ch = this.columnHeaders[i]; var buttonNode = ch.querySelector('button'); if (i === columnIndex) { var value = ch.getAttribute('aria-sort'); if (value === 'descending') { ch.setAttribute('aria-sort', 'ascending'); this.sortColumn( columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } else { ch.setAttribute('aria-sort', 'descending'); this.sortColumn( columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price')); } } else { if (ch.hasAttribute('aria-sort') && buttonNode) { ch.removeAttribute('aria-sort'); } } } } sortColumn(columnIndex, sortValue, isNumber, isPrice) { function compareValues(a, b) { if (sortValue === 'ascending') { if (a.value === b.value) { return 0; } else { if (isNumber) { return a.value - b.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? -1 : 1; } else { return a.value < b.value ? -1 : 1; } } } else { if (a.value === b.value) { return 0; } else { if (isNumber) { return b.value - a.value; } else if (isPrice) { var aval = a.value; aval = aval.replace (/\\W/g, ''); var bval = b.value; bval = bval.replace (/\\W/g, '');  return aval - bval < 0 ? 1 : -1; } else { return a.value > b.value ? -1 : 1; } } } } if (typeof isNumber !== 'boolean') { isNumber = false; } var tbodyNode = this.tableNode.querySelector('tbody'); var rowNodes = []; var dataCells = []; var rowNode = tbodyNode.firstElementChild; var index = 0; while (rowNode) { rowNodes.push(rowNode); var rowCells = rowNode.querySelectorAll('th, td'); var dataCell = rowCells[columnIndex]; var data = {}; data.index = index; data.value = dataCell.textContent.toLowerCase().trim(); if (isNumber) { data.value = parseFloat(data.value); } dataCells.push(data); rowNode = rowNode.nextElementSibling; index += 1; } dataCells.sort(compareValues); while (tbodyNode.firstChild) { tbodyNode.removeChild(tbodyNode.lastChild); } for (var i = 0; i < dataCells.length; i += 1) { tbodyNode.appendChild(rowNodes[dataCells[i].index]); } }  handleClick(event) { var tgt = event.currentTarget; this.setColumnHeaderSort(tgt.getAttribute('data-column-index')); } handleOptionChange(event) { var tgt = event.currentTarget; if (tgt.checked) { this.tableNode.classList.add('show-unsorted-icon'); } else { this.tableNode.classList.remove('show-unsorted-icon'); } } }\n";
-        $html_text .= "window.addEventListener('load', function () { var sortableTables = document.querySelectorAll('table.sortable'); for (var i = 0; i < sortableTables.length; i++) { new SortableTable(sortableTables[i]); } });\n";
-        $html_text .= "</script>\n";
-        $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
+        $html_text .= "\n<script>";
+        $html_text .= "\n'use strict';";
+        $html_text .= "\nclass SortableTable";
+        $html_text .= "\n{";
+        $html_text .= "\n    constructor(tableNode)";
+        $html_text .= "\n    {";
+        $html_text .= "\n        this.tableNode = tableNode;";
+        $html_text .= "\n        this.columnHeaders = tableNode.querySelectorAll('thead th');";
+        $html_text .= "\n        this.sortColumns = [];";
+        $html_text .= "\n        for (var i = 0; i < this.columnHeaders.length; i++)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            var ch = this.columnHeaders[i];";
+        $html_text .= "\n            var buttonNode = ch.querySelector('button');";
+        $html_text .= "\n            if (buttonNode)";
+        $html_text .= "\n            {";
+        $html_text .= "\n                this.sortColumns.push(i);";
+        $html_text .= "\n                buttonNode.setAttribute('data-column-index', i);";
+        $html_text .= "\n                buttonNode.addEventListener('click', this.handleClick.bind(this));";
+        $html_text .= "\n            }";
+        $html_text .= "\n        }";
+        $html_text .= "\n        this.optionCheckbox = document.querySelector('input[type=\"checkbox\"][value=\"show-unsorted-icon\"]');";
+        $html_text .= "\n        if (this.optionCheckbox)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            this.optionCheckbox.addEventListener('change', this.handleOptionChange.bind(this));";
+        $html_text .= "\n            if (this.optionCheckbox.checked)";
+        $html_text .= "\n            {";
+        $html_text .= "\n                this.tableNode.classList.add('show-unsorted-icon');";
+        $html_text .= "\n            }";
+        $html_text .= "\n        }";
+        $html_text .= "\n    }";
+        $html_text .= "\n    setColumnHeaderSort(columnIndex)";
+        $html_text .= "\n    {";
+        $html_text .= "\n        if (typeof columnIndex === 'string')";
+        $html_text .= "\n        {";
+        $html_text .= "\n            columnIndex = parseInt(columnIndex);";
+        $html_text .= "\n        }";
+        $html_text .= "\n        for (var i = 0; i < this.columnHeaders.length; i++)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            var ch = this.columnHeaders[i];";
+        $html_text .= "\n            var buttonNode = ch.querySelector('button');";
+        $html_text .= "\n            if (i === columnIndex)";
+        $html_text .= "\n            {";
+        $html_text .= "\n                var value = ch.getAttribute('aria-sort');";
+        $html_text .= "\n                if (value === 'descending')";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    ch.setAttribute('aria-sort', 'ascending');";
+        $html_text .= "\n                    this.sortColumn(columnIndex, 'ascending', ch.classList.contains('td.num'), ch.classList.contains('td.price'));";
+        $html_text .= "\n                }";
+        $html_text .= "\n                else";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    ch.setAttribute('aria-sort', 'descending');";
+        $html_text .= "\n                    this.sortColumn(columnIndex, 'descending', ch.classList.contains('td.num'), ch.classList.contains('td.price'));";
+        $html_text .= "\n                }";
+        $html_text .= "\n            }";
+        $html_text .= "\n            else";
+        $html_text .= "\n            {";
+        $html_text .= "\n                if (ch.hasAttribute('aria-sort') && buttonNode)";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    ch.removeAttribute('aria-sort');";
+        $html_text .= "\n                }";
+        $html_text .= "\n            }";
+        $html_text .= "\n        }";
+        $html_text .= "\n    }";
+        $html_text .= "\n    sortColumn(columnIndex, sortValue, isNumber, isPrice)";
+        $html_text .= "\n    {";
+        $html_text .= "\n        function compareValues(a, b)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            if (sortValue === 'ascending')";
+        $html_text .= "\n            {";
+        $html_text .= "\n                if (a.value === b.value)";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    return 0;";
+        $html_text .= "\n                }";
+        $html_text .= "\n                else";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    if (isNumber)";
+        $html_text .= "\n                    {";
+        $html_text .= "\n                        return a.value - b.value;";
+        $html_text .= "\n                    }";
+        $html_text .= "\n                    else if (isPrice)";
+        $html_text .= "\n                    {";
+        $html_text .= "\n                        const profit_re = \/(profit) *= *(\\d\+\\.\\d\+)\/;";
+        $html_text .= "\n                        const loss_re = \/(loss) *= *(\\d\+\\.\\d\+)\/;";
+        $html_text .= "\n                        var aval = a.value;";
+        $html_text .= "\n                        var bval = b.value;";
+        $html_text .= "\n                        var matcha = aval.match (profit_re);";
+        $html_text .= "\n                        var matcha2 = aval.match (loss_re);";
+        $html_text .= "\n                        var fixed_a = 0;";
+        $html_text .= "\n                        var fixed_b = 0;";
+        $html_text .= "\n                        if (matcha)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            aval = matcha [2];";
+        $html_text .= "\n                            fixed_a = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (matcha2)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            aval = '-' + matcha2 [2];";
+        $html_text .= "\n                            fixed_a = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        var matchb = bval.match (profit_re);";
+        $html_text .= "\n                        var matchb2 = bval.match (loss_re);";
+        $html_text .= "\n                        if (matchb)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            bval = matchb [2];";
+        $html_text .= "\n                            fixed_b = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (matchb2)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            bval = '-' + matchb2 [2];";
+        $html_text .= "\n                            fixed_b = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (fixed_a == 0)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            aval = aval.replace (\/\\W\/g, '');";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (fixed_b == 0)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            bval = bval.replace (\/\\W\/g, '');";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        var b = aval - bval < 0 ? 1 : -1;";
+        $html_text .= "\n                        console.log (\"ascending aval:\" + aval + \" vs bval \" + bval + \" returning \" + b);";
+        $html_text .= "\n                        return aval - bval < 0 ? 1 : -1;";
+        $html_text .= "\n                    }";
+        $html_text .= "\n                    else";
+        $html_text .= "\n                    {";
+        $html_text .= "\n                        return a.value < b.value ? -1 : 1;";
+        $html_text .= "\n                    }";
+        $html_text .= "\n                }";
+        $html_text .= "\n            }";
+        $html_text .= "\n            else";
+        $html_text .= "\n            {";
+        $html_text .= "\n                if (a.value === b.value)";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    return 0;";
+        $html_text .= "\n                }";
+        $html_text .= "\n                else";
+        $html_text .= "\n                {";
+        $html_text .= "\n                    if (isNumber)";
+        $html_text .= "\n                    {";
+        $html_text .= "\n                        return b.value - a.value;";
+        $html_text .= "\n                    }";
+        $html_text .= "\n                    else if (isPrice)";
+        $html_text .= "\n                    {";
+        $html_text .= "\n                        const profit_re = \/(profit) *= *(\\d\+\\.\\d\+)\/;";
+        $html_text .= "\n                        const loss_re = \/(loss) *= *(\\d\+\\.\\d\+)\/;";
+        $html_text .= "\n                        var aval = a.value;";
+        $html_text .= "\n                        var bval = b.value;";
+        $html_text .= "\n                        var matcha = aval.match (profit_re);";
+        $html_text .= "\n                        var matcha2 = aval.match (loss_re);";
+        $html_text .= "\n                        var fixed_a = 0;";
+        $html_text .= "\n                        var fixed_b = 0;";
+        $html_text .= "\n                        if (matcha)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            aval = matcha [2];";
+        $html_text .= "\n                            fixed_a = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (matcha2)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            aval = '-' + matcha2 [2];";
+        $html_text .= "\n                            fixed_a = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        var matchb = bval.match (profit_re);";
+        $html_text .= "\n                        var matchb2 = bval.match (loss_re);";
+        $html_text .= "\n                        if (matchb)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            bval = matchb [2];";
+        $html_text .= "\n                            fixed_b = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (matchb2)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            bval = '-' + matchb2 [2];";
+        $html_text .= "\n                            fixed_b = 1;";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (fixed_a == 0)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            aval = aval.replace (\/\\W\/g, '');";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        if (fixed_b == 0)";
+        $html_text .= "\n                        {";
+        $html_text .= "\n                            bval = bval.replace (\/\\W\/g, '');";
+        $html_text .= "\n                        }";
+        $html_text .= "\n                        var b = aval - bval < 0 ? -1 : 1;";
+        $html_text .= "\n                        console.log (\"descending aval:\" + aval + \" vs bval \" + bval + \" returning \" + b);";
+        $html_text .= "\n                        return aval - bval < 0 ? -1 : 1;";
+        $html_text .= "\n                    }";
+        $html_text .= "\n                    else";
+        $html_text .= "\n                    {";
+        $html_text .= "\n                        return a.value > b.value ? -1 : 1;";
+        $html_text .= "\n                    }";
+        $html_text .= "\n                }";
+        $html_text .= "\n            }";
+        $html_text .= "\n        }";
+        $html_text .= "\n        if (typeof isNumber !== 'boolean')";
+        $html_text .= "\n        {";
+        $html_text .= "\n            isNumber = false;";
+        $html_text .= "\n        }";
+        $html_text .= "\n        var tbodyNode = this.tableNode.querySelector('tbody');";
+        $html_text .= "\n        var rowNodes = [];";
+        $html_text .= "\n        var dataCells = [];";
+        $html_text .= "\n        var rowNode = tbodyNode.firstElementChild;";
+        $html_text .= "\n        var index = 0;";
+        $html_text .= "\n        while (rowNode)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            rowNodes.push(rowNode);";
+        $html_text .= "\n            var rowCells = rowNode.querySelectorAll('th, td');";
+        $html_text .= "\n            var dataCell = rowCells[columnIndex];";
+        $html_text .= "\n            var data =";
+        $html_text .= "\n            {";
+        $html_text .= "\n            };";
+        $html_text .= "\n            data.index = index;";
+        $html_text .= "\n            data.value = dataCell.textContent.toLowerCase().trim();";
+        $html_text .= "\n            if (isNumber)";
+        $html_text .= "\n            {";
+        $html_text .= "\n                data.value = parseFloat(data.value);";
+        $html_text .= "\n            }";
+        $html_text .= "\n            dataCells.push(data);";
+        $html_text .= "\n            rowNode = rowNode.nextElementSibling;";
+        $html_text .= "\n            index += 1;";
+        $html_text .= "\n        }";
+        $html_text .= "\n        dataCells.sort(compareValues);";
+        $html_text .= "\n        while (tbodyNode.firstChild)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            tbodyNode.removeChild(tbodyNode.lastChild);";
+        $html_text .= "\n        }";
+        $html_text .= "\n        for (var i = 0; i < dataCells.length; i += 1)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            tbodyNode.appendChild(rowNodes[dataCells[i].index]);";
+        $html_text .= "\n        }";
+        $html_text .= "\n    }";
+        $html_text .= "\n    handleClick(event)";
+        $html_text .= "\n    {";
+        $html_text .= "\n        var tgt = event.currentTarget;";
+        $html_text .= "\n        this.setColumnHeaderSort(tgt.getAttribute('data-column-index'));";
+        $html_text .= "\n    }";
+        $html_text .= "\n    handleOptionChange(event)";
+        $html_text .= "\n    {";
+        $html_text .= "\n        var tgt = event.currentTarget;";
+        $html_text .= "\n        if (tgt.checked)";
+        $html_text .= "\n        {";
+        $html_text .= "\n            this.tableNode.classList.add('show-unsorted-icon');";
+        $html_text .= "\n        }";
+        $html_text .= "\n        else";
+        $html_text .= "\n        {";
+        $html_text .= "\n            this.tableNode.classList.remove('show-unsorted-icon');";
+        $html_text .= "\n        }";
+        $html_text .= "\n    }";
+        $html_text .= "\n}";
+        $html_text .= "\nwindow.addEventListener('load', function ()";
+        $html_text .= "\n{";
+        $html_text .= "\n    var sortableTables = document.querySelectorAll('table.sortable');";
+        $html_text .= "\n    for (var i = 0; i < sortableTables.length; i++)";
+        $html_text .= "\n    {";
+        $html_text .= "\n        new SortableTable(sortableTables[i]);";
+        $html_text .= "\n    }";
+        $html_text .= "\n}";
+        $html_text .= "\n);";
+        $html_text .= "\n</script>";
 
         if ($authorized != 1)
         {
@@ -1011,12 +1262,14 @@ sub fix_url_code
                 </form>";
         }
 
-        $html_text .= "<thead>\n";
         $html_text .= "<br>Overall price was: \$XXX (from YYY cards) (\$LOCALCURRENCYDDD in LOCALCURRENCY)";
-        $html_text .= "&nbsp;&nbsp;&nbsp;<a href=\"card_wanted?card_name=Library of Congress\">New card wanted</a> </font>\n </td>\n";
-        $html_text .= "&nbsp;&nbsp;&nbsp;<a href=\"reload\">Reload</a> </font>\n </td>\n";
-        $html_text .= "&nbsp;&nbsp;&nbsp;<div id=\"pageProfitLoss\">Overall Profit: \$0.00</div> </font>\n </td>\n";
+        $html_text .= "&nbsp;<a href=\"card_wanted?card_name=Library of Congress\">New card wanted</a>\n";
+        $html_text .= "&nbsp;<a href=\"reload\">Reload</a>";
+        $html_text .= "&nbsp;<a href=\"#\" onclick=\"run_all_cards(); return false;\">Find profits for all cards</a>\n";
+        $html_text .= "&nbsp;<div id=\"pageProfitLoss\" style=\"display: inline-block;\">Overall Profit: \$0.00</div>&nbsp;<div id=\"pageProfitLossLOCALCURRENCY\" style=\"display: inline-block;\">Overall Profit (LOCALCURRENCY): \$0.00</div>\n\n";
         $html_text .= "<br>QQQ<br>";
+        $html_text .= "<div class=\"table-wrap\"><table class=\"sortable\">\n";
+        $html_text .= "<thead>\n";
 
         $html_text .= "<tr>\n";
         $html_text .= "<th> <button><font size=-1>Name<span aria-hidden=\"true\"></span> </font></button> </th> \n";
@@ -1074,6 +1327,7 @@ sub fix_url_code
             $overall_match = $multi_group;
         }
 
+        my $all_cards_profit_loss_js;
         foreach $card (sort keys (%all_cards))
         {
             my $color = $all_cards_color{$card};
@@ -1137,21 +1391,21 @@ sub fix_url_code
 
                 my $div_start = "<div class=\"$cid_style\">";
                 my $div_end = "</div>";
-                $row .= " <td> <font color=\"$fontcolor\">$div_start$card_type$div_end</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$card_type$div_end </font>\n </td>\n";
                 $fake_row .= "type=$all_cards_card_type{$card} ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$div_start$color$div_end</a> </font>\n</td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$color$div_end </font>\n</td>\n";
                 $fake_row .= "color=$color ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$div_start$all_cards_have{$card}$div_end</a></font></td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$all_cards_have{$card}$div_end</font></td>\n";
                 $fake_row .= "have=$all_cards_have{$card} ; ";
 
                 my $price_div_name = $all_cards_price_div_name {$card};
                 my $d = $all_cards_date{$card};
-                $row .= " <td> <font color=\"$fontcolor\">$div_start$d$div_end</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$d$div_end </font>\n </td>\n";
                 $fake_row .= "date=$d ; ";
-                $row .= " <td> <font color=\"$fontcolor\">$div_start$all_cards_place{$card}$div_end</a> </font>\n </td>\n";
+                $row .= " <td> <font color=\"$fontcolor\">$div_start$all_cards_place{$card}$div_end </font>\n </td>\n";
                 $fake_row .= "place=$all_cards_place{$card} ; ";
-                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$div_start$all_cards_price{$card}$div_end</a></font></div>\n </td>\n";
-                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$div_start$all_cards_currency{$card}$div_end</a></font></div>\n </td>\n";
+                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$div_start$all_cards_price{$card}$div_end</font></div>\n </td>\n";
+                $row .= " <td> <div id='$price_div_name'><font color=\"$fontcolor\">$div_start$all_cards_currency{$card}$div_end</font></div>\n </td>\n";
                 $fake_row .= "price=$all_cards_price{$card} ; ";
                 my $current_price = $all_cards_price{$card};
                 $row .= " <td> <font color=\"$fontcolor\"><a href=\"https://www.mtggoldfish.com/q?query_string=$card\">Goldfish</a> </font>\n </td>\n";
@@ -1178,7 +1432,7 @@ sub fix_url_code
                     $row .= "<td><font size=-2>Already have..</font> <br>\n </td>\n";
                 }
 
-                my $url = "https://mylgs.com/search?type=product&options[prefix]=last&q=$card $card_type";
+                my $url = "https://mylgsgames.com/search?type=product&options[prefix]=last&q=$card $card_type";
                 $fake_row .= "cardtype=$card_type ; ";
                 $row .= " <td> <font size=-2 color=\"$fontcolor\"><a href=\"$url\">$card</a> </font></td>\n";
 
@@ -1197,13 +1451,22 @@ sub fix_url_code
                 $c =~ s/\W/ /img;
 
                 my $response_func = "getUSDResponse";
+                
+                #if (done_$div_name == 0) { done_$div_name = 1; $response_func(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }
+                #if (done_$div_name == 0) { done_$div_name = 1; $response_func(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }
+                #my $func = "if (done_$div_name == 0) { done_$div_name = 1; $response_func(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); await sleep (90); }\n";
+                #my $actual_func = "if (done_$div_name == 0) { done_$div_name = 1; $response_func(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }\n";
+                # https://scryfall.com/search?q=%21%22sift+through+sands%22
+                my $func = "if (done_$div_name == 0) { done_$div_name = 1; $response_func(\'https://api.scryfall.com/cards/search?q=%21%22$c%22+-is:digital&order=usd\', document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); await sleep (90); }\n";
+                my $actual_func = "if (done_$div_name == 0) { done_$div_name = 1; $response_func(&quot;https://api.scryfall.com/cards/search?q=%21%22$c%22+-is:digital&order=usd&quot;, document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }\n";
+
                 if ($div_name =~ m/^want/)
                 {
-                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; $response_func(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }'><font size=-3>Image&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></div></td>\n";
+                    $row .= "<td><div id='$div_name' onmouseover='$actual_func'><font size=-3>Image&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></div></td>\n";
                 }
                 else
                 {
-                    $row .= "<td><div id='$div_name' onmouseover='if (done_$div_name == 0) { done_$div_name = 1; $response_func(\"https://api.scryfall.com/cards/named?fuzzy=$c\", document.getElementById(\"$div_name\"), document.getElementById(\"$price_div_name\"), 0); }'><font size=-3>Image&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></div></td>\n";
+                    $row .= "<td><div id='$div_name' onmouseover='$actual_func'><font size=-3>Image&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></div></td>\n";
                 }
                 $row =~ s/\n//img;
 
@@ -1273,6 +1536,7 @@ sub fix_url_code
                 {
                     $overall_count++;
                     $html_text .= "$row";
+                    $all_cards_profit_loss_js .= $func . ";";
                     if ($current_price =~ m/\$(\d+)\.(\d\d)/)
                     {
                         $overall_price += $1*100 + $2;
@@ -1287,6 +1551,7 @@ sub fix_url_code
 
         $html_text .= "</font></tbody>\n";
         $html_text .= "</table></div>\n";
+        $html_text .= "\n<script>\nconst sleep = ms => new Promise(res => setTimeout(res, ms)); async function run_all_cards () { $all_cards_profit_loss_js }</script>\n";
         $html_text .= "<script>\n";
 
         foreach $card (sort keys (%all_cards))
@@ -1295,21 +1560,35 @@ sub fix_url_code
             $html_text .= "var done_$div_name = 0\n";
         }
 
+
         $html_text .= "async function getUSDResponse(url, theObj, priceObj, bigOrSmall) {\n";
         $html_text .= "    let response = await fetch(url);\n";
         $html_text .= "    let response_json = await response.json();\n";
         $html_text .= "    var image = new Image();\n";
-        $html_text .= "    if (response_json.image_uris !== undefined) \n";
-        $html_text .= "    {\n";
-        $html_text .= "        if (bigOrSmall) {image.src = response_json.image_uris.normal; }\n";
-        $html_text .= "        else { image.src = response_json.image_uris.small; } \n";
-        $html_text .= "    }\n";
-        $html_text .= "    else if (response_json.card_faces[0].image_uris !== undefined) \n";
-        $html_text .= "    {\n";
-        $html_text .= "        image.src = response_json.card_faces[0].image_uris.small;\n";
-        $html_text .= "    }\n";
         $html_text .= "    theObj.innerHTML = '';\n";
-        $html_text .= "    theObj.appendChild(image);\n";
+        $html_text .= "    if (response_json.data[0].image_uris !== undefined) \n";
+        $html_text .= "    {\n";
+        $html_text .= "        if (bigOrSmall) {image.src = response_json.data[0].image_uris.small; }\n";
+        $html_text .= "        else { image.src = response_json.data[0].image_uris.small; } \n";
+        $html_text .= "        theObj.appendChild(image);\n";
+        $html_text .= "    }\n";
+        $html_text .= "    else if (response_json.data[0] != null) \n";
+        $html_text .= "    {\n";
+        $html_text .= "        if (response_json.data[0].card_faces != null) \n";
+        $html_text .= "        {\n";
+        $html_text .= "            if (response_json.data[0].card_faces[0].image_uris != null) \n";
+        $html_text .= "            {\n";
+        $html_text .= "                image.src = response_json.data[0].card_faces[0].image_uris.small;\n";
+        $html_text .= "                theObj.appendChild(image);\n";
+        $html_text .= "            }\n";
+        $html_text .= "        }\n";
+        $html_text .= "    }\n";
+        $html_text .= "    else if (response_json.card_faces !== undefined && response_json.card_faces[0].image_uris !== undefined) \n";
+        $html_text .= "    {\n";
+        #$html_text .= "        image.src = response_json.card_faces[0].image_uris.small;\n";
+        $html_text .= "        image.src = response_json.data[0].image_uris.small;\n";
+        $html_text .= "        theObj.appendChild(image);\n";
+        $html_text .= "    }\n";
         $html_text .= "    var profit_lost = priceObj.innerHTML;\n";
         $html_text .= "    const re = /^.*\\\$/img;\n";
         $html_text .= "    const re2 = /(\\.\\d+).*\$/img;\n";
@@ -1317,7 +1596,9 @@ sub fix_url_code
         $html_text .= "    profit_lost = profit_lost.replace (re,\"\");\n";
         $html_text .= "    profit_lost = profit_lost.replace (re2,'\\\$1');\n";
         $html_text .= "    profit_lost = profit_lost.replace (re3,\"\");\n";
-        $html_text .= "    profit_lost = eval (profit_lost + \"-1 * \" + response_json.prices.usd);\n";
+        $html_text .= "    let bought_card = 1;\n";
+        $html_text .= "    if (profit_lost === \"\") { bought_card = 0; profit_lost = response_json.data[0].prices.usd; }\n";
+        $html_text .= "    profit_lost = eval (profit_lost + \"-1 * \" + response_json.data[0].prices.usd);\n";
         $html_text .= "    profit_lost = parseFloat (profit_lost).toFixed (2);\n";
         $html_text .= "    \n";
         $html_text .= "    const re4 = /^.*: *\\\$/;";
@@ -1330,11 +1611,21 @@ sub fix_url_code
         $html_text .= "    total_page_profit = parseFloat (total_page_profit).toFixed (2);\n";
         $html_text .= "    page_profit_loss.innerHTML = \"Overall Profit: \$\" + total_page_profit;\n";
         $html_text .= "    \n";
+        $html_text .= "    var page_profit_loss_localcurrency = document.getElementById(\"pageProfitLossLOCALCURRENCY\");\n";
+        $html_text .= "    var page_profit_localcurrency = page_profit_loss_localcurrency.innerHTML;\n";
+        $html_text .= "    page_profit_localcurrency = page_profit_localcurrency.replace (re4,\"\");\n";
+        $html_text .= "    var actual_page_profit_localcurrency = parseFloat (page_profit_localcurrency);\n";
+        $html_text .= "    var actual_profit_lost_localcurrency = parseFloat (profit_lost) * $USD_TO_LOCALCURRENCY;\n";
+        $html_text .= "    var total_page_profit_localcurrency = actual_page_profit_localcurrency - actual_profit_lost_localcurrency ;\n";
+        $html_text .= "    total_page_profit_localcurrency = parseFloat (total_page_profit_localcurrency);\n";
+        $html_text .= "    total_page_profit_localcurrency = parseFloat (total_page_profit_localcurrency).toFixed (2);\n";
+        $html_text .= "    page_profit_loss_localcurrency.innerHTML = \"Overall Profit LOCALCURRENCY: \$\" + total_page_profit_localcurrency;\n";
+        $html_text .= "    \n";
         $html_text .= "    if (profit_lost < 0) { ";
         $html_text .= "        profit_lost = -1 * profit_lost; ";
-        $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=darkgreen>Profit=\" + profit_lost + \"</font>\";\n";
+        $html_text .= "        priceObj.innerHTML = \"<font color=darkgreen>Profit=\" + profit_lost + \"</font>\" + priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.data[0].prices.usd + \")</font>\";\n";
         $html_text .= "    } else  { ";
-        $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=red>Loss=\" + profit_lost + \"</font>\";\n";
+        $html_text .= "        priceObj.innerHTML = \"<font color=darkred>Loss=\" + profit_lost + \"</font>\" + priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.data[0].prices.usd + \")</font>\";\n";
         $html_text .= "    }";
         $html_text .= "}\n";
         $html_text .= "async function getLOCALCURRENCYResponse(url, theObj, priceObj, bigOrSmall) {\n";
@@ -1372,24 +1663,38 @@ sub fix_url_code
         $html_text .= "    total_page_profit = parseFloat (total_page_profit).toFixed (2);\n";
         $html_text .= "    page_profit_loss.innerHTML = \"Overall Profit: \$\" + total_page_profit;\n";
         $html_text .= "    \n";
+        $html_text .= "    var page_profit_loss_localcurrency = document.getElementById(\"pageProfitLossLOCALCURRENCY\");\n";
+        $html_text .= "    var page_profit_localcurrency = page_profit_loss_localcurrency.innerHTML;\n";
+        $html_text .= "    page_profit_localcurrency = page_profit_localcurrency.replace (re4,\"\");\n";
+        $html_text .= "    var actual_page_profit_localcurrency = parseFloat (page_profit_localcurrency);\n";
+        $html_text .= "    var actual_profit_lost_localcurrency = parseFloat (profit_lost) * $USD_TO_LOCALCURRENCY;\n";
+        $html_text .= "    var total_page_profit_localcurrency = actual_page_profit_localcurrency - actual_profit_lost_localcurrency ;\n";
+        $html_text .= "    total_page_profit_localcurrency = parseFloat (total_page_profit_localcurrency);\n";
+        $html_text .= "    total_page_profit_localcurrency = parseFloat (total_page_profit_localcurrency).toFixed (2);\n";
+        $html_text .= "    page_profit_loss_localcurrency.innerHTML = \"Overall Profit LOCALCURRENCY: \$\" + total_page_profit_localcurrency;\n";
+        $html_text .= "    console.log (\"actual_page_profit_localcurrency:\" + actual_page_profit_localcurrency);\n";
+        $html_text .= "    console.log (\"actual_profit_lost_localcurrency:\" + actual_profit_lost_localcurrency);\n";
+        $html_text .= "    console.log (\"page_profit_localcurrency:\" + page_profit_localcurrency);\n";
+        $html_text .= "    console.log (\"page_profit_loss_localcurrency:\" + page_profit_loss_localcurrency);\n";
+        $html_text .= "    console.log (\"total_page_profit_localcurrency:\" + total_page_profit_localcurrency);\n";
+        $html_text .= "    \n";
         $html_text .= "    if (profit_lost < 0) { ";
         $html_text .= "        profit_lost = -1 * profit_lost; ";
-        $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=darkgreen>Profit=\" + profit_lost + \"</font>\";\n";
+        $html_text .= "        priceObj.innerHTML = \"<font color=darkgreen>Profit=\" + profit_lost + \"</font>\" + priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.data[0].prices.usd + \")</font>\";\n";
         $html_text .= "    } else  { ";
-        $html_text .= "        priceObj.innerHTML = priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.prices.usd + \") -- <font color=red>Loss=\" + profit_lost + \"</font>\";\n";
+        $html_text .= "        priceObj.innerHTML = \"<font color=darkred>Loss=\" + profit_lost + \"</font>\" + priceObj.innerHTML + \"&nbsp;(Current=\" + response_json.data[0].prices.usd + \")</font>\";\n";
         $html_text .= "    }";
         $html_text .= "}\n";
         $html_text .= "</script>\n";
 
-
         $overall_price =~ s/(\d\d)$/.$1/;
         #$html_text =~ s/XXX/$overall_price <font size=-2>$overall_price_str<\/font>/mg;
         $html_text =~ s/XXX/$overall_price/mg;
-        my $localcurrency = $overall_price * $USD_TO_LOCALCURRENCY;
-        print ("BEFORE ===> $localcurrency\n");
-        $localcurrency =~ s/\.(\d\d).*/.$1/;
-        print ("AFTER ===> $localcurrency\n");
-        $html_text =~ s/LOCALCURRENCYDDD/$localcurrency/mg;
+        my $local_currency = $overall_price * $USD_TO_LOCALCURRENCY;
+        print ("BEFORE ===> $local_currency\n");
+        $local_currency =~ s/\.(\d\d).*/.$1/;
+        print ("AFTER ===> $local_currency\n");
+        $html_text =~ s/LOCALCURRENCYDDD/$local_currency/mg;
         $html_text =~ s/YYY/$overall_count/mg;
 
         if ($group =~ m/.../)
