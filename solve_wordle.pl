@@ -3,7 +3,7 @@
 #   File : solve_wordle.pl
 #   Date : 18/Feb/2024
 #   Author : spjspj
-#   Purpose : Solve wordle words
+#   Purpose : Solve wordle 
 ##
 
 use strict;
@@ -21,7 +21,7 @@ my %card_type;
 my %card_converted_cost;
 my %all_cards_abilities;
 my %expansion;
-my $MAX_WORD_COUNT = 150;
+my $MAX_WORD_COUNT = 40;
 
 my %aws;
 print ("1) Start creating words..\n");
@@ -180,11 +180,43 @@ $aws {"WOOFY"} = 1; $aws {"WOOLD"} = 1; $aws {"WOOLS"} = 1; $aws {"WOOLY"} = 1; 
 $aws {"YAKKA"} = 1; $aws {"YAKOW"} = 1; $aws {"YALES"} = 1; $aws {"YAMEN"} = 1; $aws {"YAMPY"} = 1; $aws {"YAMUN"} = 1; $aws {"YANGS"} = 1; $aws {"YANKS"} = 1; $aws {"YAPOK"} = 1; $aws {"YAPON"} = 1; $aws {"YAPPS"} = 1; $aws {"YAPPY"} = 1; $aws {"YARAK"} = 1; $aws {"YARCO"} = 1; $aws {"YARDS"} = 1; $aws {"YARER"} = 1; $aws {"YARFA"} = 1; $aws {"YARKS"} = 1; $aws {"YARNS"} = 1; $aws {"YARRS"} = 1; $aws {"YARTA"} = 1; $aws {"YARTO"} = 1; $aws {"YATES"} = 1; $aws {"YAUDS"} = 1; $aws {"YAULD"} = 1; $aws {"YAUPS"} = 1; $aws {"YAWED"} = 1; $aws {"YAWEY"} = 1; $aws {"YAWLS"} = 1; $aws {"YAWNS"} = 1; $aws {"YAWNY"} = 1; $aws {"YAWPS"} = 1; $aws {"YBORE"} = 1; $aws {"YCLAD"} = 1; $aws {"YCLED"} = 1; $aws {"YCOND"} = 1; $aws {"YDRAD"} = 1; $aws {"YDRED"} = 1; $aws {"YEADS"} = 1; $aws {"YEAHS"} = 1; $aws {"YEALM"} = 1; $aws {"YEANS"} = 1; $aws {"YEARD"} = 1; $aws {"YEARN"} = 1; $aws {"YEARS"} = 1; $aws {"YEAST"} = 1; $aws {"YECCH"} = 1; $aws {"YECHS"} = 1; $aws {"YECHY"} = 1; $aws {"YEDES"} = 1; $aws {"YEEDS"} = 1; $aws {"YEESH"} = 1; $aws {"YEGGS"} = 1; $aws {"YELKS"} = 1; $aws {"YELLS"} = 1; $aws {"YELMS"} = 1; $aws {"YELPS"} = 1; $aws {"YELTS"} = 1; $aws {"YENTA"} = 1; $aws {"YENTE"} = 1; $aws {"YERBA"} = 1; $aws {"YERDS"} = 1; $aws {"YERKS"} = 1; $aws {"YESES"} = 1; $aws {"YESKS"} = 1; $aws {"YESTS"} = 1; $aws {"YESTY"} = 1; $aws {"YETIS"} = 1; $aws {"YETTS"} = 1; $aws {"YEUKS"} = 1; $aws {"YEUKY"} = 1; $aws {"YEVEN"} = 1; $aws {"YEVES"} = 1; $aws {"YEWEN"} = 1; $aws {"YEXED"} = 1; $aws {"YEXES"} = 1; $aws {"YFERE"} = 1; $aws {"YIELD"} = 1; $aws {"YIKED"} = 1; $aws {"YIKES"} = 1; $aws {"YILLS"} = 1; $aws {"YINCE"} = 1; $aws {"YIPES"} = 1; $aws {"YIPPY"} = 1; $aws {"YIRDS"} = 1; $aws {"YIRKS"} = 1; $aws {"YIRRS"} = 1; $aws {"YIRTH"} = 1; $aws {"YITES"} = 1; $aws {"YITIE"} = 1; $aws {"YLEMS"} = 1; $aws {"YLIKE"} = 1; $aws {"YLKES"} = 1; $aws {"YMOLT"} = 1; $aws {"YMPES"} = 1; $aws {"YOBBO"} = 1; $aws {"YOBBY"} = 1; $aws {"YOCKS"} = 1; $aws {"YODEL"} = 1; $aws {"YODHS"} = 1;
 $aws {"YODLE"} = 1; $aws {"YOGAS"} = 1; $aws {"YOGEE"} = 1; $aws {"YOGHS"} = 1; $aws {"YOGIC"} = 1; $aws {"YOGIN"} = 1; $aws {"YOGIS"} = 1; $aws {"YOICK"} = 1; $aws {"YOJAN"} = 1; $aws {"YOKED"} = 1; $aws {"YOKEL"} = 1; $aws {"YOKER"} = 1; $aws {"YOKES"} = 1; $aws {"YOKUL"} = 1; $aws {"YOLKS"} = 1; $aws {"YOLKY"} = 1; $aws {"YOMIM"} = 1; $aws {"YOMPS"} = 1; $aws {"YONIC"} = 1; $aws {"YONIS"} = 1; $aws {"YONKS"} = 1; $aws {"YOOFS"} = 1; $aws {"YOOPS"} = 1; $aws {"YORES"} = 1; $aws {"YORKS"} = 1; $aws {"YORPS"} = 1; $aws {"YOUKS"} = 1; $aws {"YOUNG"} = 1; $aws {"YOURN"} = 1; $aws {"YOURS"} = 1; $aws {"YOURT"} = 1; $aws {"YOUSE"} = 1; $aws {"YOUTH"} = 1; $aws {"YOWED"} = 1; $aws {"YOWES"} = 1; $aws {"YOWIE"} = 1; $aws {"YOWLS"} = 1; $aws {"YOWZA"} = 1; $aws {"YRAPT"} = 1; $aws {"YRENT"} = 1; $aws {"YRIVD"} = 1; $aws {"YRNEH"} = 1; $aws {"YSAME"} = 1; $aws {"YTOST"} = 1; $aws {"YUANS"} = 1; $aws {"YUCAS"} = 1; $aws {"YUCCA"} = 1; $aws {"YUCCH"} = 1; $aws {"YUCKO"} = 1; $aws {"YUCKS"} = 1; $aws {"YUCKY"} = 1; $aws {"YUFTS"} = 1; $aws {"YUGAS"} = 1; $aws {"YUKED"} = 1; $aws {"YUKES"} = 1; $aws {"YUKKY"} = 1; $aws {"YUKOS"} = 1; $aws {"YULAN"} = 1; $aws {"YULES"} = 1; $aws {"YUMMO"} = 1; $aws {"YUMMY"} = 1; $aws {"YUMPS"} = 1; $aws {"YUPON"} = 1; $aws {"YUPPY"} = 1; $aws {"YURTA"} = 1; $aws {"YURTS"} = 1; $aws {"YUZUS"} = 1; $aws {"ZABRA"} = 1; $aws {"ZACKS"} = 1; $aws {"ZAIDA"} = 1; $aws {"ZAIDY"} = 1; $aws {"ZAIRE"} = 1; $aws {"ZAKAT"} = 1; $aws {"ZAMAN"} = 1; $aws {"ZAMBO"} = 1; $aws {"ZAMIA"} = 1; $aws {"ZANJA"} = 1; $aws {"ZANTE"} = 1; $aws {"ZANZA"} = 1; $aws {"ZANZE"} = 1; $aws {"ZAPPY"} = 1; $aws {"ZARFS"} = 1; $aws {"ZARIS"} = 1; $aws {"ZATIS"} = 1; $aws {"ZAXES"} = 1; $aws {"ZAYIN"} = 1; $aws {"ZAZEN"} = 1; $aws {"ZEALS"} = 1; $aws {"ZEBEC"} = 1; $aws {"ZEBRA"} = 1; $aws {"ZEBUB"} = 1; $aws {"ZEBUS"} = 1; $aws {"ZEDAS"} = 1; $aws {"ZEINS"} = 1; $aws {"ZENDO"} = 1; $aws {"ZERDA"} = 1; $aws {"ZERKS"} = 1; $aws {"ZEROS"} = 1; $aws {"ZESTS"} = 1; $aws {"ZESTY"} = 1;
 $aws {"ZETAS"} = 1; $aws {"ZEXES"} = 1; $aws {"ZEZES"} = 1; $aws {"ZHOMO"} = 1; $aws {"ZIBET"} = 1; $aws {"ZIFFS"} = 1; $aws {"ZIGAN"} = 1; $aws {"ZILAS"} = 1; $aws {"ZILCH"} = 1; $aws {"ZILLA"} = 1; $aws {"ZILLS"} = 1; $aws {"ZIMBI"} = 1; $aws {"ZIMBS"} = 1; $aws {"ZINCO"} = 1; $aws {"ZINCS"} = 1; $aws {"ZINCY"} = 1; $aws {"ZINEB"} = 1; $aws {"ZINES"} = 1; $aws {"ZINGS"} = 1; $aws {"ZINGY"} = 1; $aws {"ZINKE"} = 1; $aws {"ZINKY"} = 1; $aws {"ZIPPO"} = 1; $aws {"ZIPPY"} = 1; $aws {"ZIRAM"} = 1; $aws {"ZITIS"} = 1; $aws {"ZIZEL"} = 1; $aws {"ZIZIT"} = 1; $aws {"ZLOTE"} = 1; $aws {"ZLOTY"} = 1; $aws {"ZOAEA"} = 1; $aws {"ZOBOS"} = 1; $aws {"ZOBUS"} = 1; $aws {"ZOCCO"} = 1; $aws {"ZOEAE"} = 1; $aws {"ZOEAL"} = 1; $aws {"ZOEAS"} = 1; $aws {"ZOISM"} = 1; $aws {"ZOIST"} = 1; $aws {"ZOMBI"} = 1; $aws {"ZONAE"} = 1; $aws {"ZONAL"} = 1; $aws {"ZONDA"} = 1; $aws {"ZONED"} = 1; $aws {"ZONER"} = 1; $aws {"ZONES"} = 1; $aws {"ZONKS"} = 1; $aws {"ZOOEA"} = 1; $aws {"ZOOEY"} = 1; $aws {"ZOOID"} = 1; $aws {"ZOOKS"} = 1; $aws {"ZOOMS"} = 1; $aws {"ZOONS"} = 1; $aws {"ZOOTY"} = 1; $aws {"ZOPPA"} = 1; $aws {"ZOPPO"} = 1; $aws {"ZORIL"} = 1; $aws {"ZORIS"} = 1; $aws {"ZORRO"} = 1; $aws {"ZOUKS"} = 1; $aws {"ZOWEE"} = 1; $aws {"ZOWIE"} = 1; $aws {"ZULUS"} = 1; $aws {"ZUPAN"} = 1; $aws {"ZUPAS"} = 1; $aws {"ZUPPA"} = 1; $aws {"ZURFS"} = 1; $aws {"ZUZIM"} = 1; $aws {"ZYGAL"} = 1; $aws {"ZYGON"} = 1; $aws {"ZYMES"} = 1; $aws {"ZYMIC"} = 1;
-
-my %lw;
-$lw {"AHOLE"} = 1; $lw {"ASSES"} = 1; $lw {"BALLS"} = 1; $lw {"BARSE"} = 1; $lw {"BEMHO"} = 1; $lw {"BENWA"} = 1; $lw {"BEWBS"} = 1; $lw {"BEZOS"} = 1; $lw {"BOINK"} = 1; $lw {"BONCH"} = 1; $lw {"BONED"} = 1; $lw {"BONER"} = 1; $lw {"BOOBA"} = 1; $lw {"BOOBS"} = 1; $lw {"BOOTY"} = 1; $lw {"BRAIN"} = 1; $lw {"BREED"} = 1; $lw {"BULGE"} = 1; $lw {"BUNDA"} = 1; $lw {"BUSSY"} = 1; $lw {"BUTTS"} = 1; $lw {"CHODE"} = 1; $lw {"CLITS"} = 1; $lw {"COCKS"} = 1; $lw {"COOCH"} = 1; $lw {"COOZE"} = 1; $lw {"CRABS"} = 1; $lw {"CRANK"} = 1; $lw {"CUMET"} = 1; $lw {"CUMPT"} = 1; $lw {"CUNTS"} = 1; $lw {"CUSSY"} = 1; $lw {"DADDY"} = 1; $lw {"DICKS"} = 1; $lw {"DILDO"} = 1; $lw {"DOCKS"} = 1; $lw {"DOGGY"} = 1; $lw {"DOMME"} = 1; $lw {"ECCHI"} = 1; $lw {"ENEMA"} = 1; $lw {"EPEEN"} = 1; $lw {"ERECT"} = 1; $lw {"FANNY"} = 1; $lw {"FAPPY"} = 1; $lw {"FARTS"} = 1; $lw {"FELCH"} = 1; $lw {"FLAPS"} = 1; $lw {"FRICK"} = 1; $lw {"FROTS"} = 1; $lw {"FUCKS"} = 1; $lw {"GAPED"} = 1; $lw {"GILFS"} = 1; $lw {"GIRTH"} = 1; $lw {"GLANS"} = 1; $lw {"GLORP"} = 1; $lw {"GLUCK"} = 1; $lw {"GONAD"} = 1; $lw {"GONZO"} = 1; $lw {"GOOCH"} = 1; $lw {"GOOSE"} = 1; $lw {"GROOL"} = 1; $lw {"GUMMY"} = 1; $lw {"HANDY"} = 1; $lw {"HIMBO"} = 1; $lw {"HINEY"} = 1; $lw {"HOOHA"} = 1; $lw {"HORNY"} = 1; $lw {"HUSSY"} = 1; $lw {"JELQS"} = 1; $lw {"JOBBY"} = 1; $lw {"KINKY"} = 1; $lw {"LEWDS"} = 1; $lw {"LIGMA"} = 1; $lw {"LOADS"} = 1; $lw {"LUBED"} = 1; $lw {"MILFS"} = 1;
-$lw {"MINGE"} = 1; $lw {"MOIST"} = 1; $lw {"MOMMY"} = 1; $lw {"MOPED"} = 1; $lw {"NARDS"} = 1; $lw {"NASTY"} = 1; $lw {"NORKS"} = 1; $lw {"NYASH"} = 1; $lw {"OPPAI"} = 1; $lw {"PERVY"} = 1; $lw {"PLUMS"} = 1; $lw {"PONUT"} = 1; $lw {"PORNO"} = 1; $lw {"PRICK"} = 1; $lw {"PROBE"} = 1; $lw {"PUBES"} = 1; $lw {"PUSSY"} = 1; $lw {"QUEEF"} = 1; $lw {"QUIMS"} = 1; $lw {"RANDY"} = 1; $lw {"SCREW"} = 1; $lw {"SCROG"} = 1; $lw {"SEMEN"} = 1; $lw {"SEXTS"} = 1; $lw {"SHAFT"} = 1; $lw {"SHAGS"} = 1; $lw {"SHART"} = 1; $lw {"SHTUP"} = 1; $lw {"SIMBA"} = 1; $lw {"SKEET"} = 1; $lw {"SMANG"} = 1; $lw {"SOUND"} = 1; $lw {"SPAFF"} = 1; $lw {"SPANK"} = 1; $lw {"SPUNK"} = 1; $lw {"SPURT"} = 1; $lw {"SUGMA"} = 1; $lw {"TAINT"} = 1; $lw {"THICC"} = 1; $lw {"THROB"} = 1; $lw {"TITTY"} = 1; $lw {"TRIBS"} = 1; $lw {"TRUMP"} = 1; $lw {"TWATS"} = 1; $lw {"TWERK"} = 1; $lw {"TWINK"} = 1; $lw {"VULVA"} = 1; $lw {"WANKS"} = 1; $lw {"WILLY"} = 1; $lw {"YIFFY"} = 1; $lw {"YONIC"} = 1; $lw {"ZADDY"} = 1;
-
+my %raws;
+$raws {"ABACK"} = 1; $raws {"ABAFT"} = 1; $raws {"ABASE"} = 1; $raws {"ABATE"} = 1; $raws {"ABBEY"} = 1; $raws {"ABBOT"} = 1; $raws {"ABHOR"} = 1; $raws {"ABIDE"} = 1; $raws {"ABLER"} = 1; $raws {"ABODE"} = 1; $raws {"ABOUT"} = 1; $raws {"ABOVE"} = 1; $raws {"ABUSE"} = 1; $raws {"ABYSS"} = 1; $raws {"ACHED"} = 1; $raws {"ACHES"} = 1; $raws {"ACIDS"} = 1; $raws {"ACORN"} = 1; $raws {"ACRES"} = 1; $raws {"ACRID"} = 1; $raws {"ACTED"} = 1; $raws {"ACTOR"} = 1; $raws {"ACUTE"} = 1; $raws {"ADAGE"} = 1; $raws {"ADAPT"} = 1; $raws {"ADDED"} = 1; $raws {"ADDER"} = 1; $raws {"ADEPT"} = 1; $raws {"ADIEU"} = 1; $raws {"ADMIN"} = 1; $raws {"ADMIT"} = 1; $raws {"ADOBE"} = 1; $raws {"ADOPT"} = 1; $raws {"ADORE"} = 1; $raws {"ADORN"} = 1; $raws {"ADULT"} = 1; $raws {"AEGIS"} = 1; $raws {"AEONS"} = 1; $raws {"AFFIX"} = 1; $raws {"AFIRE"} = 1; $raws {"AFOOT"} = 1; $raws {"AFTER"} = 1; $raws {"AGAIN"} = 1; $raws {"AGAPE"} = 1; $raws {"AGATE"} = 1; $raws {"AGENT"} = 1; $raws {"AGILE"} = 1; $raws {"AGING"} = 1; $raws {"AGLOW"} = 1; $raws {"AGONY"} = 1; $raws {"AGREE"} = 1; $raws {"AHEAD"} = 1; $raws {"AIDED"} = 1; $raws {"AIDES"} = 1; $raws {"AILED"} = 1; $raws {"AIMED"} = 1; $raws {"AIRED"} = 1; $raws {"AISLE"} = 1; $raws {"ALARM"} = 1; $raws {"ALBUM"} = 1; $raws {"ALDER"} = 1; $raws {"ALERT"} = 1; $raws {"ALIAS"} = 1; $raws {"ALIBI"} = 1; $raws {"ALIEN"} = 1; $raws {"ALIKE"} = 1; $raws {"ALIVE"} = 1; $raws {"ALLAY"} = 1; $raws {"ALLEY"} = 1; $raws {"ALLOT"} = 1; $raws {"ALLOW"} = 1; $raws {"ALLOY"} = 1; $raws {"ALOES"} = 1; $raws {"ALOFT"} = 1; $raws {"ALONE"} = 1; $raws {"ALONG"} = 1; $raws {"ALOOF"} = 1; $raws {"ALOUD"} = 1; $raws {"ALPHA"} = 1; $raws {"ALTAR"} = 1; $raws {"ALTER"} = 1; $raws {"ALTOS"} = 1; $raws {"AMASS"} = 1; $raws {"AMAZE"} = 1; $raws {"AMBER"} = 1; $raws {"AMBLE"} = 1; $raws {"AMEND"} = 1; $raws {"AMIGO"} = 1; $raws {"AMISS"} = 1; $raws {"AMITY"} = 1; $raws {"AMONG"} = 1; $raws {"AMOUR"} = 1; $raws {"AMPLE"} = 1; $raws {"AMPLY"} = 1; $raws {"AMUSE"} = 1; 
+$raws {"ANGEL"} = 1; $raws {"ANGER"} = 1; $raws {"ANGLE"} = 1; $raws {"ANGRY"} = 1; $raws {"ANGST"} = 1; $raws {"ANIME"} = 1; $raws {"ANKLE"} = 1; $raws {"ANNEX"} = 1; $raws {"ANNOY"} = 1; $raws {"ANNUL"} = 1; $raws {"ANODE"} = 1; $raws {"ANTES"} = 1; $raws {"ANTIC"} = 1; $raws {"ANVIL"} = 1; $raws {"AORTA"} = 1; $raws {"APACE"} = 1; $raws {"APART"} = 1; $raws {"APHID"} = 1; $raws {"APING"} = 1; $raws {"APPAL"} = 1; $raws {"APPLE"} = 1; $raws {"APPLY"} = 1; $raws {"APRON"} = 1; $raws {"APTLY"} = 1; $raws {"ARBOR"} = 1; $raws {"ARDOR"} = 1; $raws {"AREAS"} = 1; $raws {"ARENA"} = 1; $raws {"ARGUE"} = 1; $raws {"ARISE"} = 1; $raws {"ARMED"} = 1; $raws {"AROMA"} = 1; $raws {"AROSE"} = 1; $raws {"ARRAY"} = 1; $raws {"ARROW"} = 1; $raws {"ARSON"} = 1; $raws {"ARTSY"} = 1; $raws {"ASCOT"} = 1; $raws {"ASHEN"} = 1; $raws {"ASHES"} = 1; $raws {"ASIDE"} = 1; $raws {"ASKED"} = 1; $raws {"ASKEW"} = 1; $raws {"ASPEN"} = 1; $raws {"ASSAY"} = 1; $raws {"ASSES"} = 1; $raws {"ASSET"} = 1; $raws {"ASTER"} = 1; $raws {"ASTIR"} = 1; $raws {"ATLAS"} = 1; $raws {"ATOLL"} = 1; $raws {"ATOMS"} = 1; $raws {"ATONE"} = 1; $raws {"ATRIA"} = 1; $raws {"ATTAR"} = 1; $raws {"ATTIC"} = 1; $raws {"AUDIO"} = 1; $raws {"AUDIT"} = 1; $raws {"AUGER"} = 1; $raws {"AUGHT"} = 1; $raws {"AUGUR"} = 1; $raws {"AUNTS"} = 1; $raws {"AURAS"} = 1; $raws {"AUTOS"} = 1; $raws {"AVAIL"} = 1; $raws {"AVERS"} = 1; $raws {"AVERT"} = 1; $raws {"AVOID"} = 1; $raws {"AVOWS"} = 1; $raws {"AWAIT"} = 1; $raws {"AWAKE"} = 1; $raws {"AWARD"} = 1; $raws {"AWARE"} = 1; $raws {"AWASH"} = 1; $raws {"AWFUL"} = 1; $raws {"AWOKE"} = 1; $raws {"AXIOM"} = 1; $raws {"AXLES"} = 1; $raws {"AZURE"} = 1; $raws {"BABEL"} = 1; $raws {"BABES"} = 1; $raws {"BACKS"} = 1; $raws {"BACON"} = 1; $raws {"BADGE"} = 1; $raws {"BADLY"} = 1; $raws {"BAGEL"} = 1; $raws {"BAGGY"} = 1; $raws {"BAITS"} = 1; $raws {"BAIZE"} = 1; $raws {"BAKED"} = 1; $raws {"BAKER"} = 1; $raws {"BALER"} = 1; $raws {"BALES"} = 1; $raws {"BALLS"} = 1; $raws {"BALMY"} = 1;
+$raws {"BALSA"} = 1; $raws {"BANAL"} = 1; $raws {"BANDS"} = 1; $raws {"BANDY"} = 1; $raws {"BANGS"} = 1; $raws {"BANJO"} = 1; $raws {"BANKS"} = 1; $raws {"BANNS"} = 1; $raws {"BARBS"} = 1; $raws {"BARDS"} = 1; $raws {"BARED"} = 1; $raws {"BARGE"} = 1; $raws {"BARKS"} = 1; $raws {"BARNS"} = 1; $raws {"BARON"} = 1; $raws {"BASAL"} = 1; $raws {"BASED"} = 1; $raws {"BASER"} = 1; $raws {"BASES"} = 1; $raws {"BASIC"} = 1; $raws {"BASIL"} = 1; $raws {"BASIN"} = 1; $raws {"BASIS"} = 1; $raws {"BASSO"} = 1; $raws {"BASTE"} = 1; $raws {"BATCH"} = 1; $raws {"BATED"} = 1; $raws {"BATHE"} = 1; $raws {"BATHS"} = 1; $raws {"BATON"} = 1; $raws {"BATTY"} = 1; $raws {"BAWDY"} = 1; $raws {"BAYOU"} = 1; $raws {"BEACH"} = 1; $raws {"BEADS"} = 1; $raws {"BEADY"} = 1; $raws {"BEAKS"} = 1; $raws {"BEAMS"} = 1; $raws {"BEANS"} = 1; $raws {"BEARD"} = 1; $raws {"BEARS"} = 1; $raws {"BEAST"} = 1; $raws {"BEAUT"} = 1; $raws {"BEAUX"} = 1; $raws {"BEECH"} = 1; $raws {"BEEFY"} = 1; $raws {"BEETS"} = 1; $raws {"BEFIT"} = 1; $raws {"BEGAN"} = 1; $raws {"BEGAT"} = 1; $raws {"BEGET"} = 1; $raws {"BEGIN"} = 1; $raws {"BEGOT"} = 1; $raws {"BEGUN"} = 1; $raws {"BEING"} = 1; $raws {"BELCH"} = 1; $raws {"BELIE"} = 1; $raws {"BELLE"} = 1; $raws {"BELLS"} = 1; $raws {"BELLY"} = 1; $raws {"BELOW"} = 1; $raws {"BELTS"} = 1; $raws {"BENCH"} = 1; $raws {"BENDS"} = 1; $raws {"BERET"} = 1; $raws {"BERGS"} = 1; $raws {"BERRY"} = 1; $raws {"BERTH"} = 1; $raws {"BERYL"} = 1; $raws {"BESET"} = 1; $raws {"BESOM"} = 1; $raws {"BEVEL"} = 1; $raws {"BIBLE"} = 1; $raws {"BICEP"} = 1; $raws {"BIDED"} = 1; $raws {"BIDES"} = 1; $raws {"BIGHT"} = 1; $raws {"BIGOT"} = 1; $raws {"BILGE"} = 1; $raws {"BILLS"} = 1; $raws {"BILLY"} = 1; $raws {"BINDS"} = 1; $raws {"BINGE"} = 1; $raws {"BIOME"} = 1; $raws {"BIPED"} = 1; $raws {"BIRCH"} = 1; $raws {"BIRDS"} = 1; $raws {"BIRTH"} = 1; $raws {"BISON"} = 1; $raws {"BITCH"} = 1; $raws {"BITES"} = 1; $raws {"BLACK"} = 1; $raws {"BLADE"} = 1; $raws {"BLAME"} = 1; $raws {"BLAND"} = 1;
+$raws {"BLANK"} = 1; $raws {"BLARE"} = 1; $raws {"BLAST"} = 1; $raws {"BLAZE"} = 1; $raws {"BLEAK"} = 1; $raws {"BLEAT"} = 1; $raws {"BLEED"} = 1; $raws {"BLEEP"} = 1; $raws {"BLEND"} = 1; $raws {"BLENT"} = 1; $raws {"BLESS"} = 1; $raws {"BLEST"} = 1; $raws {"BLIMP"} = 1; $raws {"BLIND"} = 1; $raws {"BLINK"} = 1; $raws {"BLISS"} = 1; $raws {"BLOCK"} = 1; $raws {"BLOCS"} = 1; $raws {"BLOKE"} = 1; $raws {"BLOND"} = 1; $raws {"BLOOD"} = 1; $raws {"BLOOM"} = 1; $raws {"BLOTS"} = 1; $raws {"BLOWN"} = 1; $raws {"BLOWS"} = 1; $raws {"BLUER"} = 1; $raws {"BLUES"} = 1; $raws {"BLUFF"} = 1; $raws {"BLUNT"} = 1; $raws {"BLURB"} = 1; $raws {"BLURT"} = 1; $raws {"BLUSH"} = 1; $raws {"BOARD"} = 1; $raws {"BOARS"} = 1; $raws {"BOAST"} = 1; $raws {"BOATS"} = 1; $raws {"BODED"} = 1; $raws {"BODES"} = 1; $raws {"BOGGY"} = 1; $raws {"BOGUS"} = 1; $raws {"BOILS"} = 1; $raws {"BOLES"} = 1; $raws {"BOLTS"} = 1; $raws {"BOMBS"} = 1; $raws {"BONDS"} = 1; $raws {"BONED"} = 1; $raws {"BONES"} = 1; $raws {"BONGO"} = 1; $raws {"BONNY"} = 1; $raws {"BONUS"} = 1; $raws {"BOOBY"} = 1; $raws {"BOOKS"} = 1; $raws {"BOOMS"} = 1; $raws {"BOONS"} = 1; $raws {"BOORS"} = 1; $raws {"BOOST"} = 1; $raws {"BOOTH"} = 1; $raws {"BOOTS"} = 1; $raws {"BOOTY"} = 1; $raws {"BOOZE"} = 1; $raws {"BOOZY"} = 1; $raws {"BORAX"} = 1; $raws {"BORED"} = 1; $raws {"BORES"} = 1; $raws {"BORNE"} = 1; $raws {"BOSOM"} = 1; $raws {"BOSSY"} = 1; $raws {"BOUGH"} = 1; $raws {"BOUND"} = 1; $raws {"BOUTS"} = 1; $raws {"BOWED"} = 1; $raws {"BOWEL"} = 1; $raws {"BOWER"} = 1; $raws {"BOWLS"} = 1; $raws {"BOXED"} = 1; $raws {"BOXER"} = 1; $raws {"BOXES"} = 1; $raws {"BRACE"} = 1; $raws {"BRAGS"} = 1; $raws {"BRAID"} = 1; $raws {"BRAIN"} = 1; $raws {"BRAKE"} = 1; $raws {"BRAND"} = 1; $raws {"BRASH"} = 1; $raws {"BRASS"} = 1; $raws {"BRATS"} = 1; $raws {"BRAVE"} = 1; $raws {"BRAVO"} = 1; $raws {"BRAWL"} = 1; $raws {"BRAWN"} = 1; $raws {"BREAD"} = 1; $raws {"BREAK"} = 1; $raws {"BREED"} = 1; $raws {"BRIAR"} = 1; $raws {"BRIBE"} = 1;
+$raws {"BRICK"} = 1; $raws {"BRIDE"} = 1; $raws {"BRIEF"} = 1; $raws {"BRIER"} = 1; $raws {"BRIGS"} = 1; $raws {"BRIMS"} = 1; $raws {"BRINE"} = 1; $raws {"BRING"} = 1; $raws {"BRINK"} = 1; $raws {"BRINY"} = 1; $raws {"BRISK"} = 1; $raws {"BROAD"} = 1; $raws {"BROIL"} = 1; $raws {"BROKE"} = 1; $raws {"BROOD"} = 1; $raws {"BROOK"} = 1; $raws {"BROOM"} = 1; $raws {"BROTH"} = 1; $raws {"BROWN"} = 1; $raws {"BROWS"} = 1; $raws {"BRUIN"} = 1; $raws {"BRUNT"} = 1; $raws {"BRUSH"} = 1; $raws {"BRUTE"} = 1; $raws {"BUCKS"} = 1; $raws {"BUDDY"} = 1; $raws {"BUDGE"} = 1; $raws {"BUGGY"} = 1; $raws {"BUGLE"} = 1; $raws {"BUILD"} = 1; $raws {"BUILT"} = 1; $raws {"BULBS"} = 1; $raws {"BULGE"} = 1; $raws {"BULKS"} = 1; $raws {"BULKY"} = 1; $raws {"BULLS"} = 1; $raws {"BULLY"} = 1; $raws {"BUMPS"} = 1; $raws {"BUNCH"} = 1; $raws {"BUNKS"} = 1; $raws {"BUNNY"} = 1; $raws {"BUOYS"} = 1; $raws {"BURLY"} = 1; $raws {"BURNS"} = 1; $raws {"BURNT"} = 1; $raws {"BURRO"} = 1; $raws {"BURRS"} = 1; $raws {"BURST"} = 1; $raws {"BUSHY"} = 1; $raws {"BUSTS"} = 1; $raws {"BUTTE"} = 1; $raws {"BUTTS"} = 1; $raws {"BUXOM"} = 1; $raws {"BUYER"} = 1; $raws {"BYLAW"} = 1; $raws {"CABAL"} = 1; $raws {"CABBY"} = 1; $raws {"CABIN"} = 1; $raws {"CABLE"} = 1; $raws {"CACAO"} = 1; $raws {"CACHE"} = 1; $raws {"CACTI"} = 1; $raws {"CADET"} = 1; $raws {"CADRE"} = 1; $raws {"CAGED"} = 1; $raws {"CAGES"} = 1; $raws {"CAIRN"} = 1; $raws {"CAKED"} = 1; $raws {"CAKES"} = 1; $raws {"CALIF"} = 1; $raws {"CALLS"} = 1; $raws {"CALMS"} = 1; $raws {"CALYX"} = 1; $raws {"CAMEL"} = 1; $raws {"CAMEO"} = 1; $raws {"CAMPS"} = 1; $raws {"CANAL"} = 1; $raws {"CANDY"} = 1; $raws {"CANES"} = 1; $raws {"CANNY"} = 1; $raws {"CANOE"} = 1; $raws {"CANON"} = 1; $raws {"CANTO"} = 1; $raws {"CAPER"} = 1; $raws {"CAPES"} = 1; $raws {"CAPON"} = 1; $raws {"CARAT"} = 1; $raws {"CARDS"} = 1; $raws {"CARED"} = 1; $raws {"CARES"} = 1; $raws {"CARGO"} = 1; $raws {"CAROL"} = 1; $raws {"CAROM"} = 1; $raws {"CARRY"} = 1; $raws {"CARTS"} = 1;
+$raws {"CARVE"} = 1; $raws {"CASED"} = 1; $raws {"CASES"} = 1; $raws {"CASKS"} = 1; $raws {"CASTE"} = 1; $raws {"CASTS"} = 1; $raws {"CATCH"} = 1; $raws {"CATER"} = 1; $raws {"CATTY"} = 1; $raws {"CAULK"} = 1; $raws {"CAUSE"} = 1; $raws {"CAVED"} = 1; $raws {"CAVES"} = 1; $raws {"CAVIL"} = 1; $raws {"CEASE"} = 1; $raws {"CEDAR"} = 1; $raws {"CEDED"} = 1; $raws {"CELLO"} = 1; $raws {"CELLS"} = 1; $raws {"CENTS"} = 1; $raws {"CHAFE"} = 1; $raws {"CHAFF"} = 1; $raws {"CHAIN"} = 1; $raws {"CHAIR"} = 1; $raws {"CHALK"} = 1; $raws {"CHAMP"} = 1; $raws {"CHANT"} = 1; $raws {"CHAOS"} = 1; $raws {"CHAPS"} = 1; $raws {"CHARD"} = 1; $raws {"CHARM"} = 1; $raws {"CHART"} = 1; $raws {"CHARY"} = 1; $raws {"CHASE"} = 1; $raws {"CHASM"} = 1; $raws {"CHATS"} = 1; $raws {"CHEAP"} = 1; $raws {"CHEAT"} = 1; $raws {"CHECK"} = 1; $raws {"CHEEK"} = 1; $raws {"CHEER"} = 1; $raws {"CHEFS"} = 1; $raws {"CHESS"} = 1; $raws {"CHEST"} = 1; $raws {"CHICK"} = 1; $raws {"CHIDE"} = 1; $raws {"CHIEF"} = 1; $raws {"CHILD"} = 1; $raws {"CHILI"} = 1; $raws {"CHILL"} = 1; $raws {"CHIME"} = 1; $raws {"CHINA"} = 1; $raws {"CHINK"} = 1; $raws {"CHINS"} = 1; $raws {"CHIPS"} = 1; $raws {"CHIRP"} = 1; $raws {"CHOCK"} = 1; $raws {"CHOIR"} = 1; $raws {"CHOKE"} = 1; $raws {"CHOPS"} = 1; $raws {"CHORD"} = 1; $raws {"CHORE"} = 1; $raws {"CHOSE"} = 1; $raws {"CHUCK"} = 1; $raws {"CHUMP"} = 1; $raws {"CHUMS"} = 1; $raws {"CHUNK"} = 1; $raws {"CHURL"} = 1; $raws {"CHURN"} = 1; $raws {"CHUTE"} = 1; $raws {"CIDER"} = 1; $raws {"CIGAR"} = 1; $raws {"CINCH"} = 1; $raws {"CIRCA"} = 1; $raws {"CITED"} = 1; $raws {"CITES"} = 1; $raws {"CIVET"} = 1; $raws {"CIVIC"} = 1; $raws {"CIVIL"} = 1; $raws {"CLACK"} = 1; $raws {"CLAIM"} = 1; $raws {"CLAMP"} = 1; $raws {"CLAMS"} = 1; $raws {"CLANG"} = 1; $raws {"CLANK"} = 1; $raws {"CLANS"} = 1; $raws {"CLAPS"} = 1; $raws {"CLASH"} = 1; $raws {"CLASP"} = 1; $raws {"CLASS"} = 1; $raws {"CLAWS"} = 1; $raws {"CLEAN"} = 1; $raws {"CLEAR"} = 1; $raws {"CLEFS"} = 1; $raws {"CLEFT"} = 1;
+$raws {"CLERK"} = 1; $raws {"CLEWS"} = 1; $raws {"CLICK"} = 1; $raws {"CLIFF"} = 1; $raws {"CLIMB"} = 1; $raws {"CLIME"} = 1; $raws {"CLING"} = 1; $raws {"CLINK"} = 1; $raws {"CLIPS"} = 1; $raws {"CLOAK"} = 1; $raws {"CLOCK"} = 1; $raws {"CLODS"} = 1; $raws {"CLOGS"} = 1; $raws {"CLONE"} = 1; $raws {"CLOSE"} = 1; $raws {"CLOTH"} = 1; $raws {"CLOUD"} = 1; $raws {"CLOUT"} = 1; $raws {"CLOVE"} = 1; $raws {"CLOWN"} = 1; $raws {"CLUBS"} = 1; $raws {"CLUCK"} = 1; $raws {"CLUES"} = 1; $raws {"CLUMP"} = 1; $raws {"CLUNG"} = 1; $raws {"COACH"} = 1; $raws {"COALS"} = 1; $raws {"COAST"} = 1; $raws {"COATS"} = 1; $raws {"COBRA"} = 1; $raws {"COCKS"} = 1; $raws {"COCOA"} = 1; $raws {"CODES"} = 1; $raws {"COILS"} = 1; $raws {"COINS"} = 1; $raws {"COLDS"} = 1; $raws {"COLIC"} = 1; $raws {"COLON"} = 1; $raws {"COLTS"} = 1; $raws {"COMBS"} = 1; $raws {"COMER"} = 1; $raws {"COMES"} = 1; $raws {"COMET"} = 1; $raws {"COMFY"} = 1; $raws {"COMIC"} = 1; $raws {"COMMA"} = 1; $raws {"CONCH"} = 1; $raws {"CONDO"} = 1; $raws {"CONES"} = 1; $raws {"CONIC"} = 1; $raws {"COOED"} = 1; $raws {"COOKS"} = 1; $raws {"COOLS"} = 1; $raws {"COPRA"} = 1; $raws {"COPSE"} = 1; $raws {"CORAL"} = 1; $raws {"CORDS"} = 1; $raws {"CORER"} = 1; $raws {"CORES"} = 1; $raws {"CORKS"} = 1; $raws {"CORNS"} = 1; $raws {"CORNY"} = 1; $raws {"CORPS"} = 1; $raws {"COSTS"} = 1; $raws {"COTES"} = 1; $raws {"COUCH"} = 1; $raws {"COUGH"} = 1; $raws {"COULD"} = 1; $raws {"COUNT"} = 1; $raws {"COUPE"} = 1; $raws {"COUPS"} = 1; $raws {"COURT"} = 1; $raws {"COVEN"} = 1; $raws {"COVER"} = 1; $raws {"COVES"} = 1; $raws {"COVET"} = 1; $raws {"COVEY"} = 1; $raws {"COWED"} = 1; $raws {"COWER"} = 1; $raws {"COYLY"} = 1; $raws {"COZEN"} = 1; $raws {"CRABS"} = 1; $raws {"CRACK"} = 1; $raws {"CRAFT"} = 1; $raws {"CRAGS"} = 1; $raws {"CRAMP"} = 1; $raws {"CRANE"} = 1; $raws {"CRANK"} = 1; $raws {"CRAPE"} = 1; $raws {"CRASH"} = 1; $raws {"CRASS"} = 1; $raws {"CRATE"} = 1; $raws {"CRAVE"} = 1; $raws {"CRAWL"} = 1; $raws {"CRAZE"} = 1;
+$raws {"CRAZY"} = 1; $raws {"CREAK"} = 1; $raws {"CREAM"} = 1; $raws {"CREDO"} = 1; $raws {"CREED"} = 1; $raws {"CREEK"} = 1; $raws {"CREEP"} = 1; $raws {"CREPE"} = 1; $raws {"CREPT"} = 1; $raws {"CRESS"} = 1; $raws {"CREST"} = 1; $raws {"CREWS"} = 1; $raws {"CRIBS"} = 1; $raws {"CRICK"} = 1; $raws {"CRIED"} = 1; $raws {"CRIER"} = 1; $raws {"CRIES"} = 1; $raws {"CRIME"} = 1; $raws {"CRIMP"} = 1; $raws {"CRISP"} = 1; $raws {"CROAK"} = 1; $raws {"CROCK"} = 1; $raws {"CRONE"} = 1; $raws {"CRONY"} = 1; $raws {"CROOK"} = 1; $raws {"CROPS"} = 1; $raws {"CROSS"} = 1; $raws {"CROUP"} = 1; $raws {"CROWD"} = 1; $raws {"CROWN"} = 1; $raws {"CROWS"} = 1; $raws {"CRUDE"} = 1; $raws {"CRUEL"} = 1; $raws {"CRUMB"} = 1; $raws {"CRUSH"} = 1; $raws {"CRUST"} = 1; $raws {"CRYPT"} = 1; $raws {"CUBES"} = 1; $raws {"CUBIC"} = 1; $raws {"CUBIT"} = 1; $raws {"CUFFS"} = 1; $raws {"CULTS"} = 1; $raws {"CUMIN"} = 1; $raws {"CURDS"} = 1; $raws {"CURED"} = 1; $raws {"CURES"} = 1; $raws {"CURIO"} = 1; $raws {"CURLS"} = 1; $raws {"CURLY"} = 1; $raws {"CURRY"} = 1; $raws {"CURSE"} = 1; $raws {"CURST"} = 1; $raws {"CURVE"} = 1; $raws {"CYBER"} = 1; $raws {"CYCLE"} = 1; $raws {"CYNIC"} = 1; $raws {"DADDY"} = 1; $raws {"DAILY"} = 1; $raws {"DAIRY"} = 1; $raws {"DAISY"} = 1; $raws {"DALES"} = 1; $raws {"DALLY"} = 1; $raws {"DAMES"} = 1; $raws {"DAMPS"} = 1; $raws {"DANCE"} = 1; $raws {"DANDY"} = 1; $raws {"DARED"} = 1; $raws {"DARES"} = 1; $raws {"DARTS"} = 1; $raws {"DATED"} = 1; $raws {"DATES"} = 1; $raws {"DATUM"} = 1; $raws {"DAUBS"} = 1; $raws {"DAUNT"} = 1; $raws {"DAWNS"} = 1; $raws {"DAZED"} = 1; $raws {"DEALS"} = 1; $raws {"DEALT"} = 1; $raws {"DEANS"} = 1; $raws {"DEARS"} = 1; $raws {"DEATH"} = 1; $raws {"DEBAR"} = 1; $raws {"DEBIT"} = 1; $raws {"DEBTS"} = 1; $raws {"DEBUG"} = 1; $raws {"DEBUT"} = 1; $raws {"DECAL"} = 1; $raws {"DECAY"} = 1; $raws {"DECKS"} = 1; $raws {"DECOR"} = 1; $raws {"DECOY"} = 1; $raws {"DECRY"} = 1; $raws {"DEEDS"} = 1; $raws {"DEEMS"} = 1; $raws {"DEEPS"} = 1;
+$raws {"DEFER"} = 1; $raws {"DEIGN"} = 1; $raws {"DEITY"} = 1; $raws {"DELAY"} = 1; $raws {"DELLS"} = 1; $raws {"DELTA"} = 1; $raws {"DELVE"} = 1; $raws {"DEMON"} = 1; $raws {"DEMUR"} = 1; $raws {"DENIM"} = 1; $raws {"DENSE"} = 1; $raws {"DENTS"} = 1; $raws {"DEPOT"} = 1; $raws {"DEPTH"} = 1; $raws {"DERBY"} = 1; $raws {"DESKS"} = 1; $raws {"DETER"} = 1; $raws {"DETOX"} = 1; $raws {"DEUCE"} = 1; $raws {"DEVIL"} = 1; $raws {"DIARY"} = 1; $raws {"DICED"} = 1; $raws {"DICES"} = 1; $raws {"DICEY"} = 1; $raws {"DICTA"} = 1; $raws {"DIETS"} = 1; $raws {"DIGIT"} = 1; $raws {"DIKES"} = 1; $raws {"DIMES"} = 1; $raws {"DIMLY"} = 1; $raws {"DINED"} = 1; $raws {"DINER"} = 1; $raws {"DINES"} = 1; $raws {"DINGO"} = 1; $raws {"DINGY"} = 1; $raws {"DIRGE"} = 1; $raws {"DIRTY"} = 1; $raws {"DISCO"} = 1; $raws {"DISCS"} = 1; $raws {"DISKS"} = 1; $raws {"DITCH"} = 1; $raws {"DITTO"} = 1; $raws {"DITTY"} = 1; $raws {"DIVAN"} = 1; $raws {"DIVED"} = 1; $raws {"DIVER"} = 1; $raws {"DIVES"} = 1; $raws {"DIVOT"} = 1; $raws {"DIZZY"} = 1; $raws {"DOCKS"} = 1; $raws {"DODGE"} = 1; $raws {"DODGY"} = 1; $raws {"DOERS"} = 1; $raws {"DOGMA"} = 1; $raws {"DOING"} = 1; $raws {"DOLED"} = 1; $raws {"DOLLS"} = 1; $raws {"DOLLY"} = 1; $raws {"DOMED"} = 1; $raws {"DOMES"} = 1; $raws {"DONOR"} = 1; $raws {"DONUT"} = 1; $raws {"DOOMS"} = 1; $raws {"DOORS"} = 1; $raws {"DOPEY"} = 1; $raws {"DOSED"} = 1; $raws {"DOSES"} = 1; $raws {"DOTED"} = 1; $raws {"DOTES"} = 1; $raws {"DOUBT"} = 1; $raws {"DOUGH"} = 1; $raws {"DOVES"} = 1; $raws {"DOWDY"} = 1; $raws {"DOWEL"} = 1; $raws {"DOWNS"} = 1; $raws {"DOWNY"} = 1; $raws {"DOWRY"} = 1; $raws {"DOZED"} = 1; $raws {"DOZEN"} = 1; $raws {"DRAFT"} = 1; $raws {"DRAGS"} = 1; $raws {"DRAIN"} = 1; $raws {"DRAKE"} = 1; $raws {"DRAMA"} = 1; $raws {"DRAMS"} = 1; $raws {"DRANK"} = 1; $raws {"DRAPE"} = 1; $raws {"DRAWL"} = 1; $raws {"DRAWN"} = 1; $raws {"DRAWS"} = 1; $raws {"DRAYS"} = 1; $raws {"DREAD"} = 1; $raws {"DREAM"} = 1; $raws {"DREGS"} = 1; $raws {"DRESS"} = 1;
+$raws {"DRIED"} = 1; $raws {"DRIER"} = 1; $raws {"DRIES"} = 1; $raws {"DRIFT"} = 1; $raws {"DRILL"} = 1; $raws {"DRILY"} = 1; $raws {"DRINK"} = 1; $raws {"DRIPS"} = 1; $raws {"DRIVE"} = 1; $raws {"DROLL"} = 1; $raws {"DRONE"} = 1; $raws {"DROOL"} = 1; $raws {"DROOP"} = 1; $raws {"DROPS"} = 1; $raws {"DROSS"} = 1; $raws {"DROVE"} = 1; $raws {"DROWN"} = 1; $raws {"DRUGS"} = 1; $raws {"DRUMS"} = 1; $raws {"DRUNK"} = 1; $raws {"DRYER"} = 1; $raws {"DRYLY"} = 1; $raws {"DUCAL"} = 1; $raws {"DUCAT"} = 1; $raws {"DUCHY"} = 1; $raws {"DUCKS"} = 1; $raws {"DUCTS"} = 1; $raws {"DUELS"} = 1; $raws {"DUETS"} = 1; $raws {"DUKES"} = 1; $raws {"DULLY"} = 1; $raws {"DUMMY"} = 1; $raws {"DUMPS"} = 1; $raws {"DUMPY"} = 1; $raws {"DUNCE"} = 1; $raws {"DUNES"} = 1; $raws {"DUNNO"} = 1; $raws {"DUPED"} = 1; $raws {"DUPES"} = 1; $raws {"DUSKY"} = 1; $raws {"DUSTY"} = 1; $raws {"DUTCH"} = 1; $raws {"DUVET"} = 1; $raws {"DWARF"} = 1; $raws {"DWELL"} = 1; $raws {"DWELT"} = 1; $raws {"DYING"} = 1; $raws {"DYKES"} = 1; $raws {"EAGER"} = 1; $raws {"EAGLE"} = 1; $raws {"EARLS"} = 1; $raws {"EARLY"} = 1; $raws {"EARNS"} = 1; $raws {"EARTH"} = 1; $raws {"EASED"} = 1; $raws {"EASEL"} = 1; $raws {"EASES"} = 1; $raws {"EATEN"} = 1; $raws {"EATER"} = 1; $raws {"EAVES"} = 1; $raws {"EBBED"} = 1; $raws {"EBONY"} = 1; $raws {"EDGED"} = 1; $raws {"EDGES"} = 1; $raws {"EDICT"} = 1; $raws {"EDIFY"} = 1; $raws {"EERIE"} = 1; $raws {"EGGED"} = 1; $raws {"EGRET"} = 1; $raws {"EIGHT"} = 1; $raws {"EJECT"} = 1; $raws {"ELATE"} = 1; $raws {"ELBOW"} = 1; $raws {"ELDER"} = 1; $raws {"ELECT"} = 1; $raws {"ELEGY"} = 1; $raws {"ELFIN"} = 1; $raws {"ELITE"} = 1; $raws {"ELOPE"} = 1; $raws {"ELUDE"} = 1; $raws {"ELVES"} = 1; $raws {"EMAIL"} = 1; $raws {"EMBED"} = 1; $raws {"EMBER"} = 1; $raws {"EMITS"} = 1; $raws {"EMPTY"} = 1; $raws {"ENACT"} = 1; $raws {"ENDED"} = 1; $raws {"ENDOW"} = 1; $raws {"ENEMA"} = 1; $raws {"ENEMY"} = 1; $raws {"ENJOY"} = 1; $raws {"ENNUI"} = 1; $raws {"ENROL"} = 1; $raws {"ENSUE"} = 1;
+$raws {"ENTER"} = 1; $raws {"ENTRY"} = 1; $raws {"ENVOY"} = 1; $raws {"EPICS"} = 1; $raws {"EPOCH"} = 1; $raws {"EPOXY"} = 1; $raws {"EQUAL"} = 1; $raws {"EQUIP"} = 1; $raws {"ERASE"} = 1; $raws {"ERECT"} = 1; $raws {"ERODE"} = 1; $raws {"ERRED"} = 1; $raws {"ERROR"} = 1; $raws {"ERUPT"} = 1; $raws {"ESSAY"} = 1; $raws {"ETHER"} = 1; $raws {"ETHIC"} = 1; $raws {"ETHOS"} = 1; $raws {"ETUDE"} = 1; $raws {"EVADE"} = 1; $raws {"EVENT"} = 1; $raws {"EVERY"} = 1; $raws {"EVILS"} = 1; $raws {"EVOKE"} = 1; $raws {"EXACT"} = 1; $raws {"EXALT"} = 1; $raws {"EXCEL"} = 1; $raws {"EXERT"} = 1; $raws {"EXILE"} = 1; $raws {"EXIST"} = 1; $raws {"EXITS"} = 1; $raws {"EXPEL"} = 1; $raws {"EXTOL"} = 1; $raws {"EXTRA"} = 1; $raws {"EXULT"} = 1; $raws {"EYING"} = 1; $raws {"EYRIE"} = 1; $raws {"FABLE"} = 1; $raws {"FACED"} = 1; $raws {"FACES"} = 1; $raws {"FACET"} = 1; $raws {"FACTS"} = 1; $raws {"FADED"} = 1; $raws {"FADES"} = 1; $raws {"FAILS"} = 1; $raws {"FAINT"} = 1; $raws {"FAIRS"} = 1; $raws {"FAIRY"} = 1; $raws {"FAITH"} = 1; $raws {"FAKIR"} = 1; $raws {"FALLS"} = 1; $raws {"FALSE"} = 1; $raws {"FAMED"} = 1; $raws {"FANCY"} = 1; $raws {"FANGS"} = 1; $raws {"FARCE"} = 1; $raws {"FARED"} = 1; $raws {"FARES"} = 1; $raws {"FARMS"} = 1; $raws {"FASTS"} = 1; $raws {"FATAL"} = 1; $raws {"FATED"} = 1; $raws {"FATES"} = 1; $raws {"FATTY"} = 1; $raws {"FAULT"} = 1; $raws {"FAUNA"} = 1; $raws {"FAUNS"} = 1; $raws {"FAVOR"} = 1; $raws {"FAWNS"} = 1; $raws {"FEARS"} = 1; $raws {"FEAST"} = 1; $raws {"FEATS"} = 1; $raws {"FEEDS"} = 1; $raws {"FEELS"} = 1; $raws {"FEIGN"} = 1; $raws {"FEINT"} = 1; $raws {"FELLS"} = 1; $raws {"FELON"} = 1; $raws {"FENCE"} = 1; $raws {"FERAL"} = 1; $raws {"FERNS"} = 1; $raws {"FERRY"} = 1; $raws {"FETCH"} = 1; $raws {"FETED"} = 1; $raws {"FETID"} = 1; $raws {"FETUS"} = 1; $raws {"FEUDS"} = 1; $raws {"FEVER"} = 1; $raws {"FEWER"} = 1; $raws {"FIBER"} = 1; $raws {"FIBRE"} = 1; $raws {"FICHE"} = 1; $raws {"FIEFS"} = 1; $raws {"FIELD"} = 1; $raws {"FIEND"} = 1;
+$raws {"FIERY"} = 1; $raws {"FIFES"} = 1; $raws {"FIFTH"} = 1; $raws {"FIFTY"} = 1; $raws {"FIGHT"} = 1; $raws {"FILCH"} = 1; $raws {"FILED"} = 1; $raws {"FILES"} = 1; $raws {"FILET"} = 1; $raws {"FILLS"} = 1; $raws {"FILLY"} = 1; $raws {"FILMS"} = 1; $raws {"FILMY"} = 1; $raws {"FILTH"} = 1; $raws {"FINAL"} = 1; $raws {"FINCH"} = 1; $raws {"FINDS"} = 1; $raws {"FINED"} = 1; $raws {"FINER"} = 1; $raws {"FINES"} = 1; $raws {"FINIS"} = 1; $raws {"FINNY"} = 1; $raws {"FIORD"} = 1; $raws {"FIRED"} = 1; $raws {"FIRES"} = 1; $raws {"FIRMS"} = 1; $raws {"FIRST"} = 1; $raws {"FISHY"} = 1; $raws {"FISTS"} = 1; $raws {"FITLY"} = 1; $raws {"FIVES"} = 1; $raws {"FIXED"} = 1; $raws {"FIXER"} = 1; $raws {"FIXES"} = 1; $raws {"FIZZY"} = 1; $raws {"FJORD"} = 1; $raws {"FLAGS"} = 1; $raws {"FLAIL"} = 1; $raws {"FLAIR"} = 1; $raws {"FLAKE"} = 1; $raws {"FLAKY"} = 1; $raws {"FLAME"} = 1; $raws {"FLANK"} = 1; $raws {"FLAPS"} = 1; $raws {"FLARE"} = 1; $raws {"FLASH"} = 1; $raws {"FLASK"} = 1; $raws {"FLATS"} = 1; $raws {"FLAWS"} = 1; $raws {"FLEAS"} = 1; $raws {"FLECK"} = 1; $raws {"FLEES"} = 1; $raws {"FLEET"} = 1; $raws {"FLESH"} = 1; $raws {"FLICK"} = 1; $raws {"FLIER"} = 1; $raws {"FLIES"} = 1; $raws {"FLING"} = 1; $raws {"FLINT"} = 1; $raws {"FLIRT"} = 1; $raws {"FLITS"} = 1; $raws {"FLOAT"} = 1; $raws {"FLOCK"} = 1; $raws {"FLOES"} = 1; $raws {"FLOOD"} = 1; $raws {"FLOOR"} = 1; $raws {"FLORA"} = 1; $raws {"FLOSS"} = 1; $raws {"FLOUR"} = 1; $raws {"FLOUT"} = 1; $raws {"FLOWN"} = 1; $raws {"FLOWS"} = 1; $raws {"FLUES"} = 1; $raws {"FLUFF"} = 1; $raws {"FLUID"} = 1; $raws {"FLUKE"} = 1; $raws {"FLUME"} = 1; $raws {"FLUNG"} = 1; $raws {"FLUNK"} = 1; $raws {"FLUSH"} = 1; $raws {"FLUTE"} = 1; $raws {"FLYER"} = 1; $raws {"FOAMS"} = 1; $raws {"FOAMY"} = 1; $raws {"FOCAL"} = 1; $raws {"FOCUS"} = 1; $raws {"FOGGY"} = 1; $raws {"FOILS"} = 1; $raws {"FOIST"} = 1; $raws {"FOLDS"} = 1; $raws {"FOLIO"} = 1; $raws {"FOLKS"} = 1; $raws {"FOLLY"} = 1; $raws {"FOODS"} = 1; $raws {"FOOLS"} = 1;
+$raws {"FORAY"} = 1; $raws {"FORCE"} = 1; $raws {"FORDS"} = 1; $raws {"FORGE"} = 1; $raws {"FORGO"} = 1; $raws {"FORKS"} = 1; $raws {"FORMS"} = 1; $raws {"FORTE"} = 1; $raws {"FORTH"} = 1; $raws {"FORTS"} = 1; $raws {"FORTY"} = 1; $raws {"FORUM"} = 1; $raws {"FOUND"} = 1; $raws {"FOUNT"} = 1; $raws {"FOURS"} = 1; $raws {"FOWLS"} = 1; $raws {"FOXES"} = 1; $raws {"FOYER"} = 1; $raws {"FRAIL"} = 1; $raws {"FRAME"} = 1; $raws {"FRANC"} = 1; $raws {"FRANK"} = 1; $raws {"FRAUD"} = 1; $raws {"FREAK"} = 1; $raws {"FREED"} = 1; $raws {"FREER"} = 1; $raws {"FREES"} = 1; $raws {"FRESH"} = 1; $raws {"FRETS"} = 1; $raws {"FRIAR"} = 1; $raws {"FRIED"} = 1; $raws {"FRILL"} = 1; $raws {"FRISK"} = 1; $raws {"FRITZ"} = 1; $raws {"FROCK"} = 1; $raws {"FROGS"} = 1; $raws {"FROND"} = 1; $raws {"FRONT"} = 1; $raws {"FROST"} = 1; $raws {"FROTH"} = 1; $raws {"FROWN"} = 1; $raws {"FROZE"} = 1; $raws {"FRUIT"} = 1; $raws {"FUDGE"} = 1; $raws {"FUELS"} = 1; $raws {"FUGUE"} = 1; $raws {"FULLY"} = 1; $raws {"FUMED"} = 1; $raws {"FUMES"} = 1; $raws {"FUNDS"} = 1; $raws {"FUNGI"} = 1; $raws {"FUNKY"} = 1; $raws {"FUNNY"} = 1; $raws {"FURRY"} = 1; $raws {"FURZE"} = 1; $raws {"FUSED"} = 1; $raws {"FUSES"} = 1; $raws {"FUSSY"} = 1; $raws {"FUZZY"} = 1; $raws {"GABLE"} = 1; $raws {"GAILY"} = 1; $raws {"GAINS"} = 1; $raws {"GALES"} = 1; $raws {"GALLS"} = 1; $raws {"GAMER"} = 1; $raws {"GAMES"} = 1; $raws {"GAMIN"} = 1; $raws {"GAMMA"} = 1; $raws {"GAMUT"} = 1; $raws {"GANGS"} = 1; $raws {"GAPED"} = 1; $raws {"GAPES"} = 1; $raws {"GASES"} = 1; $raws {"GASPS"} = 1; $raws {"GATES"} = 1; $raws {"GAUDY"} = 1; $raws {"GAUGE"} = 1; $raws {"GAUNT"} = 1; $raws {"GAUZE"} = 1; $raws {"GAUZY"} = 1; $raws {"GAVEL"} = 1; $raws {"GAWKY"} = 1; $raws {"GAYER"} = 1; $raws {"GAYLY"} = 1; $raws {"GAZED"} = 1; $raws {"GAZER"} = 1; $raws {"GAZES"} = 1; $raws {"GEARS"} = 1; $raws {"GECKO"} = 1; $raws {"GEESE"} = 1; $raws {"GENIE"} = 1; $raws {"GENII"} = 1; $raws {"GENRE"} = 1; $raws {"GENTS"} = 1; $raws {"GENUS"} = 1;
+$raws {"GERMS"} = 1; $raws {"GHOST"} = 1; $raws {"GHOUL"} = 1; $raws {"GIANT"} = 1; $raws {"GIBES"} = 1; $raws {"GIDDY"} = 1; $raws {"GIFTS"} = 1; $raws {"GILDS"} = 1; $raws {"GILLS"} = 1; $raws {"GIMME"} = 1; $raws {"GIPSY"} = 1; $raws {"GIRDS"} = 1; $raws {"GIRLS"} = 1; $raws {"GIRTH"} = 1; $raws {"GIVEN"} = 1; $raws {"GIVES"} = 1; $raws {"GIZMO"} = 1; $raws {"GLADE"} = 1; $raws {"GLAND"} = 1; $raws {"GLARE"} = 1; $raws {"GLASS"} = 1; $raws {"GLAZE"} = 1; $raws {"GLEAM"} = 1; $raws {"GLEAN"} = 1; $raws {"GLENS"} = 1; $raws {"GLIDE"} = 1; $raws {"GLINT"} = 1; $raws {"GLOAT"} = 1; $raws {"GLOBE"} = 1; $raws {"GLOOM"} = 1; $raws {"GLORY"} = 1; $raws {"GLOSS"} = 1; $raws {"GLOVE"} = 1; $raws {"GLOWS"} = 1; $raws {"GLUED"} = 1; $raws {"GLYPH"} = 1; $raws {"GNASH"} = 1; $raws {"GNATS"} = 1; $raws {"GNAWS"} = 1; $raws {"GNOME"} = 1; $raws {"GOADS"} = 1; $raws {"GOALS"} = 1; $raws {"GOATS"} = 1; $raws {"GODLY"} = 1; $raws {"GOFER"} = 1; $raws {"GOING"} = 1; $raws {"GOLEM"} = 1; $raws {"GOLLY"} = 1; $raws {"GONER"} = 1; $raws {"GONGS"} = 1; $raws {"GONNA"} = 1; $raws {"GOODS"} = 1; $raws {"GOODY"} = 1; $raws {"GOOEY"} = 1; $raws {"GOOFY"} = 1; $raws {"GOOSE"} = 1; $raws {"GORED"} = 1; $raws {"GORGE"} = 1; $raws {"GORSE"} = 1; $raws {"GOTTA"} = 1; $raws {"GOUGE"} = 1; $raws {"GOURD"} = 1; $raws {"GOUTY"} = 1; $raws {"GOWNS"} = 1; $raws {"GRABS"} = 1; $raws {"GRACE"} = 1; $raws {"GRADE"} = 1; $raws {"GRAFT"} = 1; $raws {"GRAIL"} = 1; $raws {"GRAIN"} = 1; $raws {"GRAMS"} = 1; $raws {"GRAND"} = 1; $raws {"GRANT"} = 1; $raws {"GRAPE"} = 1; $raws {"GRAPH"} = 1; $raws {"GRASP"} = 1; $raws {"GRASS"} = 1; $raws {"GRATE"} = 1; $raws {"GRAVE"} = 1; $raws {"GRAVY"} = 1; $raws {"GRAZE"} = 1; $raws {"GREAT"} = 1; $raws {"GREED"} = 1; $raws {"GREEN"} = 1; $raws {"GREET"} = 1; $raws {"GREYS"} = 1; $raws {"GRIEF"} = 1; $raws {"GRIFT"} = 1; $raws {"GRILL"} = 1; $raws {"GRIME"} = 1; $raws {"GRIMY"} = 1; $raws {"GRIND"} = 1; $raws {"GRINS"} = 1; $raws {"GRIPE"} = 1; $raws {"GRIPS"} = 1;
+$raws {"GRIST"} = 1; $raws {"GROAN"} = 1; $raws {"GROIN"} = 1; $raws {"GROOM"} = 1; $raws {"GROPE"} = 1; $raws {"GROSS"} = 1; $raws {"GROUP"} = 1; $raws {"GROUT"} = 1; $raws {"GROVE"} = 1; $raws {"GROWL"} = 1; $raws {"GROWN"} = 1; $raws {"GROWS"} = 1; $raws {"GRUBS"} = 1; $raws {"GRUEL"} = 1; $raws {"GRUFF"} = 1; $raws {"GRUNT"} = 1; $raws {"GUANO"} = 1; $raws {"GUARD"} = 1; $raws {"GUAVA"} = 1; $raws {"GUESS"} = 1; $raws {"GUEST"} = 1; $raws {"GUIDE"} = 1; $raws {"GUILD"} = 1; $raws {"GUILE"} = 1; $raws {"GUILT"} = 1; $raws {"GUISE"} = 1; $raws {"GULCH"} = 1; $raws {"GULFS"} = 1; $raws {"GULLS"} = 1; $raws {"GULLY"} = 1; $raws {"GUMBO"} = 1; $raws {"GUMMY"} = 1; $raws {"GUNKY"} = 1; $raws {"GUPPY"} = 1; $raws {"GUSTO"} = 1; $raws {"GUSTS"} = 1; $raws {"GUSTY"} = 1; $raws {"GYPSY"} = 1; $raws {"HABIT"} = 1; $raws {"HACKS"} = 1; $raws {"HAILS"} = 1; $raws {"HAIRS"} = 1; $raws {"HAIRY"} = 1; $raws {"HALED"} = 1; $raws {"HALLS"} = 1; $raws {"HALTS"} = 1; $raws {"HALVE"} = 1; $raws {"HANDS"} = 1; $raws {"HANDY"} = 1; $raws {"HANGS"} = 1; $raws {"HAPPY"} = 1; $raws {"HARDY"} = 1; $raws {"HAREM"} = 1; $raws {"HARES"} = 1; $raws {"HARMS"} = 1; $raws {"HARPS"} = 1; $raws {"HARPY"} = 1; $raws {"HARRY"} = 1; $raws {"HARSH"} = 1; $raws {"HARTS"} = 1; $raws {"HASTE"} = 1; $raws {"HASTY"} = 1; $raws {"HATCH"} = 1; $raws {"HATED"} = 1; $raws {"HATER"} = 1; $raws {"HAULS"} = 1; $raws {"HAUNT"} = 1; $raws {"HAVEN"} = 1; $raws {"HAVOC"} = 1; $raws {"HAWKS"} = 1; $raws {"HAZEL"} = 1; $raws {"HEADS"} = 1; $raws {"HEADY"} = 1; $raws {"HEALS"} = 1; $raws {"HEAPS"} = 1; $raws {"HEARD"} = 1; $raws {"HEARS"} = 1; $raws {"HEART"} = 1; $raws {"HEATH"} = 1; $raws {"HEATS"} = 1; $raws {"HEAVE"} = 1; $raws {"HEAVY"} = 1; $raws {"HEDGE"} = 1; $raws {"HEEDS"} = 1; $raws {"HEELS"} = 1; $raws {"HEFTY"} = 1; $raws {"HEIRS"} = 1; $raws {"HEIST"} = 1; $raws {"HELIX"} = 1; $raws {"HELLO"} = 1; $raws {"HELMS"} = 1; $raws {"HELPS"} = 1; $raws {"HENCE"} = 1; $raws {"HERBS"} = 1; $raws {"HERDS"} = 1;
+$raws {"HERON"} = 1; $raws {"HEROS"} = 1; $raws {"HEWED"} = 1; $raws {"HIDES"} = 1; $raws {"HILLS"} = 1; $raws {"HILLY"} = 1; $raws {"HILTS"} = 1; $raws {"HINDS"} = 1; $raws {"HINGE"} = 1; $raws {"HINTS"} = 1; $raws {"HIPPO"} = 1; $raws {"HIRED"} = 1; $raws {"HIRES"} = 1; $raws {"HITCH"} = 1; $raws {"HIVES"} = 1; $raws {"HOARD"} = 1; $raws {"HOARY"} = 1; $raws {"HOBBY"} = 1; $raws {"HOIST"} = 1; $raws {"HOLDS"} = 1; $raws {"HOLES"} = 1; $raws {"HOLLY"} = 1; $raws {"HOMER"} = 1; $raws {"HOMES"} = 1; $raws {"HONEY"} = 1; $raws {"HOODS"} = 1; $raws {"HOOFS"} = 1; $raws {"HOOKS"} = 1; $raws {"HOOPS"} = 1; $raws {"HOOTS"} = 1; $raws {"HOPED"} = 1; $raws {"HOPES"} = 1; $raws {"HORDE"} = 1; $raws {"HORNS"} = 1; $raws {"HORNY"} = 1; $raws {"HORSE"} = 1; $raws {"HOSTS"} = 1; $raws {"HOTEL"} = 1; $raws {"HOTLY"} = 1; $raws {"HOUND"} = 1; $raws {"HOURS"} = 1; $raws {"HOUSE"} = 1; $raws {"HOVEL"} = 1; $raws {"HOVER"} = 1; $raws {"HOWDY"} = 1; $raws {"HOWLS"} = 1; $raws {"HULKS"} = 1; $raws {"HULLS"} = 1; $raws {"HUMAN"} = 1; $raws {"HUMID"} = 1; $raws {"HUMOR"} = 1; $raws {"HUMPH"} = 1; $raws {"HUMPS"} = 1; $raws {"HUMUS"} = 1; $raws {"HUNCH"} = 1; $raws {"HUNKY"} = 1; $raws {"HUNTS"} = 1; $raws {"HURLS"} = 1; $raws {"HURRY"} = 1; $raws {"HURTS"} = 1; $raws {"HUSKS"} = 1; $raws {"HUSKY"} = 1; $raws {"HUSSY"} = 1; $raws {"HUTCH"} = 1; $raws {"HYDRA"} = 1; $raws {"HYENA"} = 1; $raws {"HYMNS"} = 1; $raws {"HYPER"} = 1; $raws {"ICILY"} = 1; $raws {"ICING"} = 1; $raws {"IDEAL"} = 1; $raws {"IDEAS"} = 1; $raws {"IDIOM"} = 1; $raws {"IDIOT"} = 1; $raws {"IDLED"} = 1; $raws {"IDLER"} = 1; $raws {"IDOLS"} = 1; $raws {"IDYLL"} = 1; $raws {"IGLOO"} = 1; $raws {"IMAGE"} = 1; $raws {"IMBUE"} = 1; $raws {"IMPEL"} = 1; $raws {"IMPLY"} = 1; $raws {"INANE"} = 1; $raws {"INBOX"} = 1; $raws {"INCUR"} = 1; $raws {"INDEX"} = 1; $raws {"INDIE"} = 1; $raws {"INEPT"} = 1; $raws {"INERT"} = 1; $raws {"INFER"} = 1; $raws {"INGOT"} = 1; $raws {"INLAY"} = 1; $raws {"INLET"} = 1; $raws {"INNER"} = 1;
+$raws {"INPUT"} = 1; $raws {"INTER"} = 1; $raws {"INTRO"} = 1; $raws {"INURE"} = 1; $raws {"IONIC"} = 1; $raws {"IRATE"} = 1; $raws {"IRKED"} = 1; $raws {"IRONS"} = 1; $raws {"IRONY"} = 1; $raws {"ISLES"} = 1; $raws {"ISLET"} = 1; $raws {"ISSUE"} = 1; $raws {"ITCHY"} = 1; $raws {"ITEMS"} = 1; $raws {"IVORY"} = 1; $raws {"JACKS"} = 1; $raws {"JADED"} = 1; $raws {"JAILS"} = 1; $raws {"JAUNT"} = 1; $raws {"JAZZY"} = 1; $raws {"JEANS"} = 1; $raws {"JEERS"} = 1; $raws {"JELLY"} = 1; $raws {"JERKS"} = 1; $raws {"JERKY"} = 1; $raws {"JESTS"} = 1; $raws {"JETTY"} = 1; $raws {"JEWEL"} = 1; $raws {"JIFFY"} = 1; $raws {"JOINS"} = 1; $raws {"JOINT"} = 1; $raws {"JOKED"} = 1; $raws {"JOKER"} = 1; $raws {"JOKES"} = 1; $raws {"JOLLY"} = 1; $raws {"JOUST"} = 1; $raws {"JOYED"} = 1; $raws {"JUDGE"} = 1; $raws {"JUICE"} = 1; $raws {"JUICY"} = 1; $raws {"JUMBO"} = 1; $raws {"JUMPS"} = 1; $raws {"JUMPY"} = 1; $raws {"JUNKS"} = 1; $raws {"JUNTA"} = 1; $raws {"JUROR"} = 1; $raws {"KARMA"} = 1; $raws {"KAYAK"} = 1; $raws {"KAZOO"} = 1; $raws {"KEBAB"} = 1; $raws {"KEELS"} = 1; $raws {"KEEPS"} = 1; $raws {"KEFIR"} = 1; $raws {"KETCH"} = 1; $raws {"KEYED"} = 1; $raws {"KHAKI"} = 1; $raws {"KICKS"} = 1; $raws {"KILLS"} = 1; $raws {"KINDA"} = 1; $raws {"KINDS"} = 1; $raws {"KINGS"} = 1; $raws {"KIOSK"} = 1; $raws {"KITES"} = 1; $raws {"KNACK"} = 1; $raws {"KNAVE"} = 1; $raws {"KNEAD"} = 1; $raws {"KNEEL"} = 1; $raws {"KNEES"} = 1; $raws {"KNELL"} = 1; $raws {"KNELT"} = 1; $raws {"KNIFE"} = 1; $raws {"KNITS"} = 1; $raws {"KNOBS"} = 1; $raws {"KNOCK"} = 1; $raws {"KNOLL"} = 1; $raws {"KNOTS"} = 1; $raws {"KNOWN"} = 1; $raws {"KNOWS"} = 1; $raws {"KOALA"} = 1; $raws {"KRILL"} = 1; $raws {"LABEL"} = 1; $raws {"LABOR"} = 1; $raws {"LACED"} = 1; $raws {"LACES"} = 1; $raws {"LACKS"} = 1; $raws {"LADEN"} = 1; $raws {"LADLE"} = 1; $raws {"LAGER"} = 1; $raws {"LAIRS"} = 1; $raws {"LAITY"} = 1; $raws {"LAKES"} = 1; $raws {"LAMBS"} = 1; $raws {"LAMED"} = 1; $raws {"LAMES"} = 1; $raws {"LAMPS"} = 1;
+$raws {"LANCE"} = 1; $raws {"LANDS"} = 1; $raws {"LANES"} = 1; $raws {"LANKY"} = 1; $raws {"LAPEL"} = 1; $raws {"LAPSE"} = 1; $raws {"LARCH"} = 1; $raws {"LARGE"} = 1; $raws {"LARGO"} = 1; $raws {"LARKS"} = 1; $raws {"LARVA"} = 1; $raws {"LASER"} = 1; $raws {"LASSO"} = 1; $raws {"LASTS"} = 1; $raws {"LATCH"} = 1; $raws {"LATER"} = 1; $raws {"LATHE"} = 1; $raws {"LATHS"} = 1; $raws {"LATTE"} = 1; $raws {"LAUGH"} = 1; $raws {"LAWNS"} = 1; $raws {"LAYER"} = 1; $raws {"LEACH"} = 1; $raws {"LEADS"} = 1; $raws {"LEAFY"} = 1; $raws {"LEAKS"} = 1; $raws {"LEAKY"} = 1; $raws {"LEANS"} = 1; $raws {"LEAPS"} = 1; $raws {"LEAPT"} = 1; $raws {"LEARN"} = 1; $raws {"LEASE"} = 1; $raws {"LEASH"} = 1; $raws {"LEAST"} = 1; $raws {"LEAVE"} = 1; $raws {"LEDGE"} = 1; $raws {"LEECH"} = 1; $raws {"LEEKS"} = 1; $raws {"LEERY"} = 1; $raws {"LEFTY"} = 1; $raws {"LEGAL"} = 1; $raws {"LEGGY"} = 1; $raws {"LEMME"} = 1; $raws {"LEMON"} = 1; $raws {"LEMUR"} = 1; $raws {"LENDS"} = 1; $raws {"LEPER"} = 1; $raws {"LEVEE"} = 1; $raws {"LEVEL"} = 1; $raws {"LEVER"} = 1; $raws {"LIARS"} = 1; $raws {"LIBEL"} = 1; $raws {"LICKS"} = 1; $raws {"LIEGE"} = 1; $raws {"LIENS"} = 1; $raws {"LIFTS"} = 1; $raws {"LIGHT"} = 1; $raws {"LIKED"} = 1; $raws {"LIKEN"} = 1; $raws {"LIKER"} = 1; $raws {"LIKES"} = 1; $raws {"LILAC"} = 1; $raws {"LIMBO"} = 1; $raws {"LIMBS"} = 1; $raws {"LIMES"} = 1; $raws {"LIMIT"} = 1; $raws {"LINED"} = 1; $raws {"LINEN"} = 1; $raws {"LINER"} = 1; $raws {"LINES"} = 1; $raws {"LINGO"} = 1; $raws {"LINKS"} = 1; $raws {"LIONS"} = 1; $raws {"LISTS"} = 1; $raws {"LITHE"} = 1; $raws {"LIVED"} = 1; $raws {"LIVER"} = 1; $raws {"LIVES"} = 1; $raws {"LIVID"} = 1; $raws {"LLAMA"} = 1; $raws {"LOADS"} = 1; $raws {"LOAMY"} = 1; $raws {"LOANS"} = 1; $raws {"LOATH"} = 1; $raws {"LOBBY"} = 1; $raws {"LOBES"} = 1; $raws {"LOCAL"} = 1; $raws {"LOCKS"} = 1; $raws {"LOCUS"} = 1; $raws {"LODGE"} = 1; $raws {"LOFTY"} = 1; $raws {"LOGES"} = 1; $raws {"LOGIC"} = 1; $raws {"LOGIN"} = 1; $raws {"LOINS"} = 1;
+$raws {"LONGS"} = 1; $raws {"LOOKS"} = 1; $raws {"LOOMS"} = 1; $raws {"LOONS"} = 1; $raws {"LOOPS"} = 1; $raws {"LOOPY"} = 1; $raws {"LOOSE"} = 1; $raws {"LORDS"} = 1; $raws {"LORIS"} = 1; $raws {"LOSER"} = 1; $raws {"LOSES"} = 1; $raws {"LOTUS"} = 1; $raws {"LOUSE"} = 1; $raws {"LOUSY"} = 1; $raws {"LOVED"} = 1; $raws {"LOVER"} = 1; $raws {"LOVES"} = 1; $raws {"LOWED"} = 1; $raws {"LOWER"} = 1; $raws {"LOWLY"} = 1; $raws {"LOYAL"} = 1; $raws {"LUCID"} = 1; $raws {"LUCKY"} = 1; $raws {"LULLS"} = 1; $raws {"LUMPS"} = 1; $raws {"LUMPY"} = 1; $raws {"LUNAR"} = 1; $raws {"LUNCH"} = 1; $raws {"LUNGE"} = 1; $raws {"LUNGS"} = 1; $raws {"LURCH"} = 1; $raws {"LURED"} = 1; $raws {"LURES"} = 1; $raws {"LURID"} = 1; $raws {"LURKS"} = 1; $raws {"LUSTS"} = 1; $raws {"LUSTY"} = 1; $raws {"LUTES"} = 1; $raws {"LYING"} = 1; $raws {"LYMPH"} = 1; $raws {"LYNCH"} = 1; $raws {"LYRIC"} = 1; $raws {"MACAW"} = 1; $raws {"MACES"} = 1; $raws {"MACHO"} = 1; $raws {"MADAM"} = 1; $raws {"MADLY"} = 1; $raws {"MAFIA"} = 1; $raws {"MAGIC"} = 1; $raws {"MAGMA"} = 1; $raws {"MAIDS"} = 1; $raws {"MAILS"} = 1; $raws {"MAINS"} = 1; $raws {"MAIZE"} = 1; $raws {"MAJOR"} = 1; $raws {"MAKER"} = 1; $raws {"MAKES"} = 1; $raws {"MALES"} = 1; $raws {"MAMBO"} = 1; $raws {"MAMMA"} = 1; $raws {"MANES"} = 1; $raws {"MANGA"} = 1; $raws {"MANGE"} = 1; $raws {"MANGO"} = 1; $raws {"MANGY"} = 1; $raws {"MANIA"} = 1; $raws {"MANIC"} = 1; $raws {"MANLY"} = 1; $raws {"MANNA"} = 1; $raws {"MANOR"} = 1; $raws {"MANSE"} = 1; $raws {"MAPLE"} = 1; $raws {"MARCH"} = 1; $raws {"MARES"} = 1; $raws {"MARKS"} = 1; $raws {"MARRY"} = 1; $raws {"MARSH"} = 1; $raws {"MARTS"} = 1; $raws {"MASKS"} = 1; $raws {"MASON"} = 1; $raws {"MASSE"} = 1; $raws {"MASTS"} = 1; $raws {"MATCH"} = 1; $raws {"MATED"} = 1; $raws {"MATES"} = 1; $raws {"MATEY"} = 1; $raws {"MATTE"} = 1; $raws {"MAUVE"} = 1; $raws {"MAXIM"} = 1; $raws {"MAYBE"} = 1; $raws {"MAYOR"} = 1; $raws {"MAZES"} = 1; $raws {"MEALS"} = 1; $raws {"MEALY"} = 1; $raws {"MEANS"} = 1;
+$raws {"MEANT"} = 1; $raws {"MEATS"} = 1; $raws {"MEDAL"} = 1; $raws {"MEDIA"} = 1; $raws {"MEDIC"} = 1; $raws {"MEETS"} = 1; $raws {"MELON"} = 1; $raws {"MELTS"} = 1; $raws {"MEMES"} = 1; $raws {"MENDS"} = 1; $raws {"MENUS"} = 1; $raws {"MERCY"} = 1; $raws {"MERES"} = 1; $raws {"MERGE"} = 1; $raws {"MERIT"} = 1; $raws {"MERRY"} = 1; $raws {"MESAS"} = 1; $raws {"METAL"} = 1; $raws {"METED"} = 1; $raws {"METER"} = 1; $raws {"METRO"} = 1; $raws {"MEWED"} = 1; $raws {"MICRO"} = 1; $raws {"MIDGE"} = 1; $raws {"MIDST"} = 1; $raws {"MIENS"} = 1; $raws {"MIGHT"} = 1; $raws {"MILCH"} = 1; $raws {"MILES"} = 1; $raws {"MILKY"} = 1; $raws {"MILLS"} = 1; $raws {"MIMES"} = 1; $raws {"MIMIC"} = 1; $raws {"MINCE"} = 1; $raws {"MINDS"} = 1; $raws {"MINED"} = 1; $raws {"MINER"} = 1; $raws {"MINES"} = 1; $raws {"MINOR"} = 1; $raws {"MINTS"} = 1; $raws {"MINTY"} = 1; $raws {"MINUS"} = 1; $raws {"MIRTH"} = 1; $raws {"MISER"} = 1; $raws {"MISTS"} = 1; $raws {"MITES"} = 1; $raws {"MIXED"} = 1; $raws {"MIXES"} = 1; $raws {"MOANS"} = 1; $raws {"MOATS"} = 1; $raws {"MOCKS"} = 1; $raws {"MODAL"} = 1; $raws {"MODEL"} = 1; $raws {"MODEM"} = 1; $raws {"MODES"} = 1; $raws {"MOGUL"} = 1; $raws {"MOIST"} = 1; $raws {"MOLAR"} = 1; $raws {"MOLDY"} = 1; $raws {"MOLES"} = 1; $raws {"MOMMA"} = 1; $raws {"MOMMY"} = 1; $raws {"MONEY"} = 1; $raws {"MONKS"} = 1; $raws {"MONTH"} = 1; $raws {"MOOCH"} = 1; $raws {"MOODS"} = 1; $raws {"MOODY"} = 1; $raws {"MOONS"} = 1; $raws {"MOORS"} = 1; $raws {"MOOSE"} = 1; $raws {"MOPED"} = 1; $raws {"MORAL"} = 1; $raws {"MORES"} = 1; $raws {"MORPH"} = 1; $raws {"MOSSY"} = 1; $raws {"MOTEL"} = 1; $raws {"MOTES"} = 1; $raws {"MOTHS"} = 1; $raws {"MOTIF"} = 1; $raws {"MOTOR"} = 1; $raws {"MOTTO"} = 1; $raws {"MOULT"} = 1; $raws {"MOUND"} = 1; $raws {"MOUNT"} = 1; $raws {"MOURN"} = 1; $raws {"MOUSE"} = 1; $raws {"MOUTH"} = 1; $raws {"MOVED"} = 1; $raws {"MOVER"} = 1; $raws {"MOVES"} = 1; $raws {"MOVIE"} = 1; $raws {"MOWED"} = 1; $raws {"MOWER"} = 1; $raws {"MUCKY"} = 1;
+$raws {"MUCUS"} = 1; $raws {"MUDDY"} = 1; $raws {"MUGGY"} = 1; $raws {"MULCH"} = 1; $raws {"MULES"} = 1; $raws {"MULTI"} = 1; $raws {"MUMMY"} = 1; $raws {"MUMPS"} = 1; $raws {"MUNCH"} = 1; $raws {"MURAL"} = 1; $raws {"MURKY"} = 1; $raws {"MUSED"} = 1; $raws {"MUSES"} = 1; $raws {"MUSHY"} = 1; $raws {"MUSIC"} = 1; $raws {"MUSKY"} = 1; $raws {"MUSTY"} = 1; $raws {"MUTED"} = 1; $raws {"MUTES"} = 1; $raws {"MYRRH"} = 1; $raws {"MYTHS"} = 1; $raws {"NABOB"} = 1; $raws {"NADIR"} = 1; $raws {"NAILS"} = 1; $raws {"NAIVE"} = 1; $raws {"NAKED"} = 1; $raws {"NAMED"} = 1; $raws {"NAMES"} = 1; $raws {"NANNY"} = 1; $raws {"NASAL"} = 1; $raws {"NASTY"} = 1; $raws {"NATAL"} = 1; $raws {"NATTY"} = 1; $raws {"NAVAL"} = 1; $raws {"NAVEL"} = 1; $raws {"NAVES"} = 1; $raws {"NEARS"} = 1; $raws {"NECKS"} = 1; $raws {"NEEDS"} = 1; $raws {"NEEDY"} = 1; $raws {"NEIGH"} = 1; $raws {"NERDY"} = 1; $raws {"NERVE"} = 1; $raws {"NERVY"} = 1; $raws {"NESTS"} = 1; $raws {"NEVER"} = 1; $raws {"NEWER"} = 1; $raws {"NEWLY"} = 1; $raws {"NICER"} = 1; $raws {"NICHE"} = 1; $raws {"NIECE"} = 1; $raws {"NIGHT"} = 1; $raws {"NINJA"} = 1; $raws {"NINNY"} = 1; $raws {"NINTH"} = 1; $raws {"NOBLE"} = 1; $raws {"NOBLY"} = 1; $raws {"NOISE"} = 1; $raws {"NOISY"} = 1; $raws {"NOMAD"} = 1; $raws {"NONCE"} = 1; $raws {"NOOKS"} = 1; $raws {"NOOSE"} = 1; $raws {"NORTH"} = 1; $raws {"NOSED"} = 1; $raws {"NOSES"} = 1; $raws {"NOTCH"} = 1; $raws {"NOTED"} = 1; $raws {"NOTES"} = 1; $raws {"NOUNS"} = 1; $raws {"NOVEL"} = 1; $raws {"NUDGE"} = 1; $raws {"NURSE"} = 1; $raws {"NYLON"} = 1; $raws {"NYMPH"} = 1; $raws {"OAKEN"} = 1; $raws {"OAKUM"} = 1; $raws {"OASES"} = 1; $raws {"OASIS"} = 1; $raws {"OATEN"} = 1; $raws {"OATHS"} = 1; $raws {"OBESE"} = 1; $raws {"OBEYS"} = 1; $raws {"OCCUR"} = 1; $raws {"OCEAN"} = 1; $raws {"OCHRE"} = 1; $raws {"OCTET"} = 1; $raws {"ODDER"} = 1; $raws {"ODDLY"} = 1; $raws {"ODIUM"} = 1; $raws {"OFFAL"} = 1; $raws {"OFFER"} = 1; $raws {"OFTEN"} = 1; $raws {"OILED"} = 1; $raws {"OLDEN"} = 1;
+$raws {"OLDER"} = 1; $raws {"OLIVE"} = 1; $raws {"OMEGA"} = 1; $raws {"OMENS"} = 1; $raws {"OMITS"} = 1; $raws {"ONION"} = 1; $raws {"ONSET"} = 1; $raws {"OOMPH"} = 1; $raws {"OOZED"} = 1; $raws {"OOZES"} = 1; $raws {"OPALS"} = 1; $raws {"OPENS"} = 1; $raws {"OPERA"} = 1; $raws {"OPINE"} = 1; $raws {"OPIUM"} = 1; $raws {"OPTIC"} = 1; $raws {"ORBIT"} = 1; $raws {"ORDER"} = 1; $raws {"ORGAN"} = 1; $raws {"OSIER"} = 1; $raws {"OTHER"} = 1; $raws {"OTTER"} = 1; $raws {"OUGHT"} = 1; $raws {"OUNCE"} = 1; $raws {"OUTDO"} = 1; $raws {"OUTER"} = 1; $raws {"OVALS"} = 1; $raws {"OVARY"} = 1; $raws {"OVENS"} = 1; $raws {"OVERT"} = 1; $raws {"OWING"} = 1; $raws {"OWNED"} = 1; $raws {"OWNER"} = 1; $raws {"OXIDE"} = 1; $raws {"OZONE"} = 1; $raws {"PACES"} = 1; $raws {"PACKS"} = 1; $raws {"PADDY"} = 1; $raws {"PADRE"} = 1; $raws {"PAEAN"} = 1; $raws {"PAGAN"} = 1; $raws {"PAGES"} = 1; $raws {"PAILS"} = 1; $raws {"PAINS"} = 1; $raws {"PAINT"} = 1; $raws {"PAIRS"} = 1; $raws {"PALED"} = 1; $raws {"PALER"} = 1; $raws {"PALES"} = 1; $raws {"PALMS"} = 1; $raws {"PALMY"} = 1; $raws {"PALSY"} = 1; $raws {"PANEL"} = 1; $raws {"PANES"} = 1; $raws {"PANGS"} = 1; $raws {"PANIC"} = 1; $raws {"PANSY"} = 1; $raws {"PANTS"} = 1; $raws {"PAPAL"} = 1; $raws {"PAPAS"} = 1; $raws {"PAPER"} = 1; $raws {"PARED"} = 1; $raws {"PARER"} = 1; $raws {"PARKA"} = 1; $raws {"PARKS"} = 1; $raws {"PARRY"} = 1; $raws {"PARSE"} = 1; $raws {"PARTS"} = 1; $raws {"PARTY"} = 1; $raws {"PASHA"} = 1; $raws {"PASTA"} = 1; $raws {"PASTE"} = 1; $raws {"PASTY"} = 1; $raws {"PATCH"} = 1; $raws {"PATES"} = 1; $raws {"PATHS"} = 1; $raws {"PATIO"} = 1; $raws {"PATSY"} = 1; $raws {"PATTY"} = 1; $raws {"PAUSE"} = 1; $raws {"PAVED"} = 1; $raws {"PAWED"} = 1; $raws {"PAWNS"} = 1; $raws {"PAYED"} = 1; $raws {"PAYER"} = 1; $raws {"PEACE"} = 1; $raws {"PEACH"} = 1; $raws {"PEAKS"} = 1; $raws {"PEALS"} = 1; $raws {"PEARL"} = 1; $raws {"PEARS"} = 1; $raws {"PEASE"} = 1; $raws {"PECAN"} = 1; $raws {"PECKS"} = 1; $raws {"PEDAL"} = 1;
+$raws {"PEEPS"} = 1; $raws {"PEERS"} = 1; $raws {"PELTS"} = 1; $raws {"PENAL"} = 1; $raws {"PENCE"} = 1; $raws {"PENIS"} = 1; $raws {"PENNE"} = 1; $raws {"PENNY"} = 1; $raws {"PEONS"} = 1; $raws {"PERCH"} = 1; $raws {"PERIL"} = 1; $raws {"PERKY"} = 1; $raws {"PESKY"} = 1; $raws {"PESOS"} = 1; $raws {"PESTS"} = 1; $raws {"PETAL"} = 1; $raws {"PETTY"} = 1; $raws {"PHASE"} = 1; $raws {"PHIAL"} = 1; $raws {"PHONE"} = 1; $raws {"PHONY"} = 1; $raws {"PHOTO"} = 1; $raws {"PIANO"} = 1; $raws {"PICKS"} = 1; $raws {"PICKY"} = 1; $raws {"PIECE"} = 1; $raws {"PIERS"} = 1; $raws {"PIETY"} = 1; $raws {"PIGMY"} = 1; $raws {"PIKES"} = 1; $raws {"PILED"} = 1; $raws {"PILES"} = 1; $raws {"PILLS"} = 1; $raws {"PILOT"} = 1; $raws {"PINCH"} = 1; $raws {"PINED"} = 1; $raws {"PINES"} = 1; $raws {"PINEY"} = 1; $raws {"PINKS"} = 1; $raws {"PINKY"} = 1; $raws {"PINTO"} = 1; $raws {"PINTS"} = 1; $raws {"PIOUS"} = 1; $raws {"PIPED"} = 1; $raws {"PIPER"} = 1; $raws {"PIPES"} = 1; $raws {"PIQUE"} = 1; $raws {"PITCH"} = 1; $raws {"PITHY"} = 1; $raws {"PIVOT"} = 1; $raws {"PIXEL"} = 1; $raws {"PIXIE"} = 1; $raws {"PLACE"} = 1; $raws {"PLAID"} = 1; $raws {"PLAIN"} = 1; $raws {"PLAIT"} = 1; $raws {"PLANE"} = 1; $raws {"PLANK"} = 1; $raws {"PLANS"} = 1; $raws {"PLANT"} = 1; $raws {"PLATE"} = 1; $raws {"PLAYS"} = 1; $raws {"PLAZA"} = 1; $raws {"PLEAD"} = 1; $raws {"PLEAS"} = 1; $raws {"PLEAT"} = 1; $raws {"PLIED"} = 1; $raws {"PLIES"} = 1; $raws {"PLOTS"} = 1; $raws {"PLUCK"} = 1; $raws {"PLUGS"} = 1; $raws {"PLUMB"} = 1; $raws {"PLUME"} = 1; $raws {"PLUMP"} = 1; $raws {"PLUMS"} = 1; $raws {"PLUNK"} = 1; $raws {"PLUSH"} = 1; $raws {"PODIA"} = 1; $raws {"POEMS"} = 1; $raws {"POESY"} = 1; $raws {"POETS"} = 1; $raws {"POINT"} = 1; $raws {"POISE"} = 1; $raws {"POKED"} = 1; $raws {"POKER"} = 1; $raws {"POKES"} = 1; $raws {"POLAR"} = 1; $raws {"POLES"} = 1; $raws {"POLKA"} = 1; $raws {"POLLS"} = 1; $raws {"POLYP"} = 1; $raws {"PONDS"} = 1; $raws {"POOLS"} = 1; $raws {"POPES"} = 1; $raws {"POPPA"} = 1;
+$raws {"POPPY"} = 1; $raws {"PORCH"} = 1; $raws {"PORED"} = 1; $raws {"PORES"} = 1; $raws {"PORTS"} = 1; $raws {"POSED"} = 1; $raws {"POSER"} = 1; $raws {"POSES"} = 1; $raws {"POSSE"} = 1; $raws {"POSTS"} = 1; $raws {"POUCH"} = 1; $raws {"POUND"} = 1; $raws {"POURS"} = 1; $raws {"POUTY"} = 1; $raws {"POWER"} = 1; $raws {"PRANK"} = 1; $raws {"PRATE"} = 1; $raws {"PRAYS"} = 1; $raws {"PREEN"} = 1; $raws {"PRESS"} = 1; $raws {"PREYS"} = 1; $raws {"PRICE"} = 1; $raws {"PRICK"} = 1; $raws {"PRIDE"} = 1; $raws {"PRIED"} = 1; $raws {"PRIES"} = 1; $raws {"PRIME"} = 1; $raws {"PRIMO"} = 1; $raws {"PRIMP"} = 1; $raws {"PRINT"} = 1; $raws {"PRIOR"} = 1; $raws {"PRISM"} = 1; $raws {"PRIVY"} = 1; $raws {"PRIZE"} = 1; $raws {"PROBE"} = 1; $raws {"PRONE"} = 1; $raws {"PRONG"} = 1; $raws {"PROOF"} = 1; $raws {"PROPS"} = 1; $raws {"PROSE"} = 1; $raws {"PROSY"} = 1; $raws {"PROUD"} = 1; $raws {"PROVE"} = 1; $raws {"PROWL"} = 1; $raws {"PROWS"} = 1; $raws {"PROXY"} = 1; $raws {"PRUDE"} = 1; $raws {"PRUNE"} = 1; $raws {"PSALM"} = 1; $raws {"PSHAW"} = 1; $raws {"PUDGY"} = 1; $raws {"PUFFS"} = 1; $raws {"PUFFY"} = 1; $raws {"PULLS"} = 1; $raws {"PULPY"} = 1; $raws {"PULSE"} = 1; $raws {"PUMPS"} = 1; $raws {"PUNCH"} = 1; $raws {"PUPIL"} = 1; $raws {"PUPPY"} = 1; $raws {"PUREE"} = 1; $raws {"PURER"} = 1; $raws {"PURGE"} = 1; $raws {"PURSE"} = 1; $raws {"PUSSY"} = 1; $raws {"PUTTY"} = 1; $raws {"QUACK"} = 1; $raws {"QUAFF"} = 1; $raws {"QUAIL"} = 1; $raws {"QUAKE"} = 1; $raws {"QUALM"} = 1; $raws {"QUARK"} = 1; $raws {"QUART"} = 1; $raws {"QUASH"} = 1; $raws {"QUASI"} = 1; $raws {"QUAYS"} = 1; $raws {"QUEEN"} = 1; $raws {"QUEER"} = 1; $raws {"QUELL"} = 1; $raws {"QUERY"} = 1; $raws {"QUEST"} = 1; $raws {"QUEUE"} = 1; $raws {"QUICK"} = 1; $raws {"QUIET"} = 1; $raws {"QUILL"} = 1; $raws {"QUILT"} = 1; $raws {"QUIPS"} = 1; $raws {"QUIRE"} = 1; $raws {"QUIRK"} = 1; $raws {"QUITE"} = 1; $raws {"QUITS"} = 1; $raws {"QUOTA"} = 1; $raws {"QUOTE"} = 1; $raws {"QUOTH"} = 1; $raws {"RABBI"} = 1;
+$raws {"RABID"} = 1; $raws {"RACED"} = 1; $raws {"RACER"} = 1; $raws {"RACES"} = 1; $raws {"RACKS"} = 1; $raws {"RADII"} = 1; $raws {"RADIO"} = 1; $raws {"RAFTS"} = 1; $raws {"RAGED"} = 1; $raws {"RAGES"} = 1; $raws {"RAIDS"} = 1; $raws {"RAILS"} = 1; $raws {"RAINS"} = 1; $raws {"RAINY"} = 1; $raws {"RAISE"} = 1; $raws {"RAJAH"} = 1; $raws {"RAKED"} = 1; $raws {"RAKES"} = 1; $raws {"RALLY"} = 1; $raws {"RAMEN"} = 1; $raws {"RANCH"} = 1; $raws {"RANGE"} = 1; $raws {"RANKS"} = 1; $raws {"RAPID"} = 1; $raws {"RARER"} = 1; $raws {"RARES"} = 1; $raws {"RATED"} = 1; $raws {"RATES"} = 1; $raws {"RATIO"} = 1; $raws {"RATTY"} = 1; $raws {"RAVED"} = 1; $raws {"RAVEN"} = 1; $raws {"RAVES"} = 1; $raws {"RAYON"} = 1; $raws {"RAZED"} = 1; $raws {"RAZOR"} = 1; $raws {"REACH"} = 1; $raws {"REACT"} = 1; $raws {"READS"} = 1; $raws {"READY"} = 1; $raws {"REALM"} = 1; $raws {"REALS"} = 1; $raws {"REAMS"} = 1; $raws {"REAPS"} = 1; $raws {"REARS"} = 1; $raws {"REBEL"} = 1; $raws {"REBUS"} = 1; $raws {"REBUT"} = 1; $raws {"RECAP"} = 1; $raws {"RECUR"} = 1; $raws {"REEDS"} = 1; $raws {"REEDY"} = 1; $raws {"REEFS"} = 1; $raws {"REEKS"} = 1; $raws {"REELS"} = 1; $raws {"REEVE"} = 1; $raws {"REFER"} = 1; $raws {"REFIT"} = 1; $raws {"REGAL"} = 1; $raws {"REHAB"} = 1; $raws {"REIGN"} = 1; $raws {"REINS"} = 1; $raws {"RELAX"} = 1; $raws {"RELAY"} = 1; $raws {"RELIC"} = 1; $raws {"REMIT"} = 1; $raws {"RENDS"} = 1; $raws {"RENEW"} = 1; $raws {"RENTS"} = 1; $raws {"REPAY"} = 1; $raws {"REPEL"} = 1; $raws {"REPLY"} = 1; $raws {"RERUN"} = 1; $raws {"RESET"} = 1; $raws {"RESIN"} = 1; $raws {"RESTS"} = 1; $raws {"RETCH"} = 1; $raws {"RETRO"} = 1; $raws {"RETRY"} = 1; $raws {"REUSE"} = 1; $raws {"REVEL"} = 1; $raws {"REVUE"} = 1; $raws {"RHEUM"} = 1; $raws {"RHINO"} = 1; $raws {"RHYME"} = 1; $raws {"RICKS"} = 1; $raws {"RIDER"} = 1; $raws {"RIDES"} = 1; $raws {"RIDGE"} = 1; $raws {"RIFLE"} = 1; $raws {"RIFTS"} = 1; $raws {"RIGHT"} = 1; $raws {"RIGID"} = 1; $raws {"RILED"} = 1; $raws {"RILLS"} = 1;
+$raws {"RIMES"} = 1; $raws {"RINGS"} = 1; $raws {"RINSE"} = 1; $raws {"RIOTS"} = 1; $raws {"RIPEN"} = 1; $raws {"RIPER"} = 1; $raws {"RISEN"} = 1; $raws {"RISER"} = 1; $raws {"RISES"} = 1; $raws {"RISKS"} = 1; $raws {"RISKY"} = 1; $raws {"RITES"} = 1; $raws {"RIVAL"} = 1; $raws {"RIVEN"} = 1; $raws {"RIVER"} = 1; $raws {"RIVET"} = 1; $raws {"ROACH"} = 1; $raws {"ROADS"} = 1; $raws {"ROAMS"} = 1; $raws {"ROARS"} = 1; $raws {"ROAST"} = 1; $raws {"ROBED"} = 1; $raws {"ROBES"} = 1; $raws {"ROBIN"} = 1; $raws {"ROBOT"} = 1; $raws {"ROCKS"} = 1; $raws {"ROCKY"} = 1; $raws {"RODEO"} = 1; $raws {"ROGUE"} = 1; $raws {"ROLES"} = 1; $raws {"ROLLS"} = 1; $raws {"ROMAN"} = 1; $raws {"ROOFS"} = 1; $raws {"ROOKS"} = 1; $raws {"ROOMS"} = 1; $raws {"ROOMY"} = 1; $raws {"ROOST"} = 1; $raws {"ROOTS"} = 1; $raws {"ROPED"} = 1; $raws {"ROPES"} = 1; $raws {"ROSES"} = 1; $raws {"ROSIN"} = 1; $raws {"ROUGE"} = 1; $raws {"ROUGH"} = 1; $raws {"ROUND"} = 1; $raws {"ROUSE"} = 1; $raws {"ROUTE"} = 1; $raws {"ROUTS"} = 1; $raws {"ROVED"} = 1; $raws {"ROVER"} = 1; $raws {"ROWDY"} = 1; $raws {"ROWED"} = 1; $raws {"ROWER"} = 1; $raws {"ROYAL"} = 1; $raws {"RUDDY"} = 1; $raws {"RUDER"} = 1; $raws {"RUFFS"} = 1; $raws {"RUGBY"} = 1; $raws {"RUINS"} = 1; $raws {"RULED"} = 1; $raws {"RULER"} = 1; $raws {"RULES"} = 1; $raws {"RUMBA"} = 1; $raws {"RUNES"} = 1; $raws {"RUNGS"} = 1; $raws {"RUPEE"} = 1; $raws {"RURAL"} = 1; $raws {"RUSES"} = 1; $raws {"RUSTY"} = 1; $raws {"SABLE"} = 1; $raws {"SABRE"} = 1; $raws {"SACKS"} = 1; $raws {"SADLY"} = 1; $raws {"SAFER"} = 1; $raws {"SAGAS"} = 1; $raws {"SAGES"} = 1; $raws {"SAHIB"} = 1; $raws {"SAILS"} = 1; $raws {"SAINT"} = 1; $raws {"SAITH"} = 1; $raws {"SALAD"} = 1; $raws {"SALES"} = 1; $raws {"SALLY"} = 1; $raws {"SALON"} = 1; $raws {"SALSA"} = 1; $raws {"SALTS"} = 1; $raws {"SALTY"} = 1; $raws {"SALVE"} = 1; $raws {"SALVO"} = 1; $raws {"SANDS"} = 1; $raws {"SANDY"} = 1; $raws {"SANER"} = 1; $raws {"SASSY"} = 1; $raws {"SATED"} = 1; $raws {"SATIN"} = 1;
+$raws {"SATYR"} = 1; $raws {"SAUCE"} = 1; $raws {"SAUCY"} = 1; $raws {"SAUNA"} = 1; $raws {"SAUTE"} = 1; $raws {"SAVED"} = 1; $raws {"SAVES"} = 1; $raws {"SAVOR"} = 1; $raws {"SAVVY"} = 1; $raws {"SAWED"} = 1; $raws {"SCALD"} = 1; $raws {"SCALE"} = 1; $raws {"SCALP"} = 1; $raws {"SCALY"} = 1; $raws {"SCAMP"} = 1; $raws {"SCANS"} = 1; $raws {"SCANT"} = 1; $raws {"SCARE"} = 1; $raws {"SCARF"} = 1; $raws {"SCARS"} = 1; $raws {"SCENE"} = 1; $raws {"SCENT"} = 1; $raws {"SCION"} = 1; $raws {"SCOFF"} = 1; $raws {"SCOLD"} = 1; $raws {"SCONE"} = 1; $raws {"SCOOP"} = 1; $raws {"SCOPE"} = 1; $raws {"SCORE"} = 1; $raws {"SCORN"} = 1; $raws {"SCOUR"} = 1; $raws {"SCOUT"} = 1; $raws {"SCOWL"} = 1; $raws {"SCRAM"} = 1; $raws {"SCRAP"} = 1; $raws {"SCREW"} = 1; $raws {"SCRIP"} = 1; $raws {"SCRUB"} = 1; $raws {"SCRUM"} = 1; $raws {"SCULL"} = 1; $raws {"SEALS"} = 1; $raws {"SEAMS"} = 1; $raws {"SEAMY"} = 1; $raws {"SEATS"} = 1; $raws {"SECTS"} = 1; $raws {"SEDAN"} = 1; $raws {"SEDGE"} = 1; $raws {"SEEDS"} = 1; $raws {"SEEDY"} = 1; $raws {"SEEKS"} = 1; $raws {"SEEMS"} = 1; $raws {"SEERS"} = 1; $raws {"SEGUE"} = 1; $raws {"SEIZE"} = 1; $raws {"SELLS"} = 1; $raws {"SEMEN"} = 1; $raws {"SENDS"} = 1; $raws {"SENSE"} = 1; $raws {"SERFS"} = 1; $raws {"SERGE"} = 1; $raws {"SERIF"} = 1; $raws {"SERUM"} = 1; $raws {"SERVE"} = 1; $raws {"SEVEN"} = 1; $raws {"SEVER"} = 1; $raws {"SEWED"} = 1; $raws {"SEWER"} = 1; $raws {"SEXES"} = 1; $raws {"SHACK"} = 1; $raws {"SHADE"} = 1; $raws {"SHADY"} = 1; $raws {"SHAFT"} = 1; $raws {"SHAKE"} = 1; $raws {"SHAKY"} = 1; $raws {"SHALE"} = 1; $raws {"SHALL"} = 1; $raws {"SHALT"} = 1; $raws {"SHAME"} = 1; $raws {"SHAMS"} = 1; $raws {"SHANK"} = 1; $raws {"SHAPE"} = 1; $raws {"SHARD"} = 1; $raws {"SHARE"} = 1; $raws {"SHARK"} = 1; $raws {"SHARP"} = 1; $raws {"SHAVE"} = 1; $raws {"SHAWL"} = 1; $raws {"SHEAF"} = 1; $raws {"SHEAR"} = 1; $raws {"SHEDS"} = 1; $raws {"SHEEN"} = 1; $raws {"SHEEP"} = 1; $raws {"SHEER"} = 1; $raws {"SHEET"} = 1; $raws {"SHEIK"} = 1;
+$raws {"SHELF"} = 1; $raws {"SHELL"} = 1; $raws {"SHIED"} = 1; $raws {"SHIFT"} = 1; $raws {"SHINE"} = 1; $raws {"SHINS"} = 1; $raws {"SHINY"} = 1; $raws {"SHIPS"} = 1; $raws {"SHIRE"} = 1; $raws {"SHIRK"} = 1; $raws {"SHIRT"} = 1; $raws {"SHOAL"} = 1; $raws {"SHOCK"} = 1; $raws {"SHOES"} = 1; $raws {"SHONE"} = 1; $raws {"SHOOK"} = 1; $raws {"SHOON"} = 1; $raws {"SHOOT"} = 1; $raws {"SHOPS"} = 1; $raws {"SHORE"} = 1; $raws {"SHORN"} = 1; $raws {"SHORT"} = 1; $raws {"SHOTS"} = 1; $raws {"SHOUT"} = 1; $raws {"SHOVE"} = 1; $raws {"SHOWN"} = 1; $raws {"SHOWS"} = 1; $raws {"SHOWY"} = 1; $raws {"SHRED"} = 1; $raws {"SHREW"} = 1; $raws {"SHRUB"} = 1; $raws {"SHRUG"} = 1; $raws {"SHUCK"} = 1; $raws {"SHUNS"} = 1; $raws {"SHUNT"} = 1; $raws {"SHUSH"} = 1; $raws {"SHUTS"} = 1; $raws {"SHYLY"} = 1; $raws {"SIBYL"} = 1; $raws {"SIDED"} = 1; $raws {"SIDES"} = 1; $raws {"SIEGE"} = 1; $raws {"SIEVE"} = 1; $raws {"SIGHS"} = 1; $raws {"SIGHT"} = 1; $raws {"SIGMA"} = 1; $raws {"SIGNS"} = 1; $raws {"SILKS"} = 1; $raws {"SILKY"} = 1; $raws {"SILLS"} = 1; $raws {"SILLY"} = 1; $raws {"SINCE"} = 1; $raws {"SINEW"} = 1; $raws {"SINGE"} = 1; $raws {"SINGS"} = 1; $raws {"SINKS"} = 1; $raws {"SIREN"} = 1; $raws {"SIRES"} = 1; $raws {"SISSY"} = 1; $raws {"SITAR"} = 1; $raws {"SITES"} = 1; $raws {"SIXES"} = 1; $raws {"SIXTH"} = 1; $raws {"SIXTY"} = 1; $raws {"SIZED"} = 1; $raws {"SIZES"} = 1; $raws {"SKATE"} = 1; $raws {"SKEIN"} = 1; $raws {"SKIER"} = 1; $raws {"SKIES"} = 1; $raws {"SKIFF"} = 1; $raws {"SKILL"} = 1; $raws {"SKIMP"} = 1; $raws {"SKIMS"} = 1; $raws {"SKINS"} = 1; $raws {"SKIPS"} = 1; $raws {"SKIRT"} = 1; $raws {"SKULK"} = 1; $raws {"SKULL"} = 1; $raws {"SKUNK"} = 1; $raws {"SLABS"} = 1; $raws {"SLACK"} = 1; $raws {"SLAGS"} = 1; $raws {"SLAIN"} = 1; $raws {"SLAKE"} = 1; $raws {"SLANG"} = 1; $raws {"SLANT"} = 1; $raws {"SLAPS"} = 1; $raws {"SLASH"} = 1; $raws {"SLATE"} = 1; $raws {"SLATS"} = 1; $raws {"SLAVE"} = 1; $raws {"SLAYS"} = 1; $raws {"SLEDS"} = 1; $raws {"SLEEK"} = 1;
+$raws {"SLEEP"} = 1; $raws {"SLEET"} = 1; $raws {"SLEPT"} = 1; $raws {"SLICE"} = 1; $raws {"SLICK"} = 1; $raws {"SLIDE"} = 1; $raws {"SLILY"} = 1; $raws {"SLIME"} = 1; $raws {"SLIMY"} = 1; $raws {"SLING"} = 1; $raws {"SLINK"} = 1; $raws {"SLIPS"} = 1; $raws {"SLITS"} = 1; $raws {"SLOOP"} = 1; $raws {"SLOPE"} = 1; $raws {"SLOPS"} = 1; $raws {"SLOSH"} = 1; $raws {"SLOTH"} = 1; $raws {"SLUGS"} = 1; $raws {"SLUMP"} = 1; $raws {"SLUMS"} = 1; $raws {"SLUNG"} = 1; $raws {"SLUNK"} = 1; $raws {"SLUSH"} = 1; $raws {"SLYLY"} = 1; $raws {"SMACK"} = 1; $raws {"SMALL"} = 1; $raws {"SMART"} = 1; $raws {"SMASH"} = 1; $raws {"SMEAR"} = 1; $raws {"SMELL"} = 1; $raws {"SMELT"} = 1; $raws {"SMILE"} = 1; $raws {"SMIRK"} = 1; $raws {"SMITE"} = 1; $raws {"SMITH"} = 1; $raws {"SMOCK"} = 1; $raws {"SMOKE"} = 1; $raws {"SMOKY"} = 1; $raws {"SMOTE"} = 1; $raws {"SNACK"} = 1; $raws {"SNAFU"} = 1; $raws {"SNAGS"} = 1; $raws {"SNAIL"} = 1; $raws {"SNAKE"} = 1; $raws {"SNAKY"} = 1; $raws {"SNAPS"} = 1; $raws {"SNARE"} = 1; $raws {"SNARL"} = 1; $raws {"SNEAK"} = 1; $raws {"SNEER"} = 1; $raws {"SNIDE"} = 1; $raws {"SNIFF"} = 1; $raws {"SNIPE"} = 1; $raws {"SNOBS"} = 1; $raws {"SNOOP"} = 1; $raws {"SNORE"} = 1; $raws {"SNORT"} = 1; $raws {"SNOUT"} = 1; $raws {"SNOWS"} = 1; $raws {"SNOWY"} = 1; $raws {"SNUFF"} = 1; $raws {"SOAPY"} = 1; $raws {"SOARS"} = 1; $raws {"SOBER"} = 1; $raws {"SOCKS"} = 1; $raws {"SOFAS"} = 1; $raws {"SOGGY"} = 1; $raws {"SOILS"} = 1; $raws {"SOLAR"} = 1; $raws {"SOLES"} = 1; $raws {"SOLID"} = 1; $raws {"SOLOS"} = 1; $raws {"SOLVE"} = 1; $raws {"SONGS"} = 1; $raws {"SONIC"} = 1; $raws {"SONNY"} = 1; $raws {"SOOTH"} = 1; $raws {"SOOTY"} = 1; $raws {"SORES"} = 1; $raws {"SORRY"} = 1; $raws {"SORTS"} = 1; $raws {"SOUGH"} = 1; $raws {"SOULS"} = 1; $raws {"SOUND"} = 1; $raws {"SOUPS"} = 1; $raws {"SOUSE"} = 1; $raws {"SOUTH"} = 1; $raws {"SOWED"} = 1; $raws {"SOWER"} = 1; $raws {"SPACE"} = 1; $raws {"SPADE"} = 1; $raws {"SPAKE"} = 1; $raws {"SPANK"} = 1; $raws {"SPANS"} = 1;
+$raws {"SPARE"} = 1; $raws {"SPARK"} = 1; $raws {"SPARS"} = 1; $raws {"SPASM"} = 1; $raws {"SPATE"} = 1; $raws {"SPAWN"} = 1; $raws {"SPEAK"} = 1; $raws {"SPEAR"} = 1; $raws {"SPECK"} = 1; $raws {"SPEED"} = 1; $raws {"SPELL"} = 1; $raws {"SPELT"} = 1; $raws {"SPEND"} = 1; $raws {"SPENT"} = 1; $raws {"SPERM"} = 1; $raws {"SPICE"} = 1; $raws {"SPICY"} = 1; $raws {"SPIED"} = 1; $raws {"SPIEL"} = 1; $raws {"SPIES"} = 1; $raws {"SPIKE"} = 1; $raws {"SPILL"} = 1; $raws {"SPILT"} = 1; $raws {"SPINE"} = 1; $raws {"SPINS"} = 1; $raws {"SPINY"} = 1; $raws {"SPIRE"} = 1; $raws {"SPITE"} = 1; $raws {"SPITS"} = 1; $raws {"SPLAT"} = 1; $raws {"SPLIT"} = 1; $raws {"SPOIL"} = 1; $raws {"SPOKE"} = 1; $raws {"SPOOF"} = 1; $raws {"SPOOK"} = 1; $raws {"SPOOL"} = 1; $raws {"SPOON"} = 1; $raws {"SPOOR"} = 1; $raws {"SPORE"} = 1; $raws {"SPORT"} = 1; $raws {"SPOTS"} = 1; $raws {"SPOUT"} = 1; $raws {"SPRAY"} = 1; $raws {"SPREE"} = 1; $raws {"SPRIG"} = 1; $raws {"SPUNK"} = 1; $raws {"SPURN"} = 1; $raws {"SPURS"} = 1; $raws {"SPURT"} = 1; $raws {"SQUAD"} = 1; $raws {"SQUAT"} = 1; $raws {"SQUAW"} = 1; $raws {"SQUID"} = 1; $raws {"STABS"} = 1; $raws {"STACK"} = 1; $raws {"STAFF"} = 1; $raws {"STAGE"} = 1; $raws {"STAGS"} = 1; $raws {"STAID"} = 1; $raws {"STAIN"} = 1; $raws {"STAIR"} = 1; $raws {"STAKE"} = 1; $raws {"STALE"} = 1; $raws {"STALK"} = 1; $raws {"STALL"} = 1; $raws {"STAMP"} = 1; $raws {"STAND"} = 1; $raws {"STANK"} = 1; $raws {"STARE"} = 1; $raws {"STARK"} = 1; $raws {"STARS"} = 1; $raws {"START"} = 1; $raws {"STASH"} = 1; $raws {"STATE"} = 1; $raws {"STAVE"} = 1; $raws {"STAYS"} = 1; $raws {"STEAD"} = 1; $raws {"STEAK"} = 1; $raws {"STEAL"} = 1; $raws {"STEAM"} = 1; $raws {"STEED"} = 1; $raws {"STEEL"} = 1; $raws {"STEEP"} = 1; $raws {"STEER"} = 1; $raws {"STEIN"} = 1; $raws {"STEMS"} = 1; $raws {"STEPS"} = 1; $raws {"STERN"} = 1; $raws {"STEWS"} = 1; $raws {"STICK"} = 1; $raws {"STIFF"} = 1; $raws {"STILE"} = 1; $raws {"STILL"} = 1; $raws {"STILT"} = 1; $raws {"STING"} = 1;
+$raws {"STINK"} = 1; $raws {"STINT"} = 1; $raws {"STIRS"} = 1; $raws {"STOCK"} = 1; $raws {"STOIC"} = 1; $raws {"STOLE"} = 1; $raws {"STOMP"} = 1; $raws {"STONE"} = 1; $raws {"STONY"} = 1; $raws {"STOOD"} = 1; $raws {"STOOL"} = 1; $raws {"STOOP"} = 1; $raws {"STOPS"} = 1; $raws {"STORE"} = 1; $raws {"STORK"} = 1; $raws {"STORM"} = 1; $raws {"STORY"} = 1; $raws {"STOUT"} = 1; $raws {"STOVE"} = 1; $raws {"STRAP"} = 1; $raws {"STRAW"} = 1; $raws {"STRAY"} = 1; $raws {"STREW"} = 1; $raws {"STRIP"} = 1; $raws {"STRUT"} = 1; $raws {"STUCK"} = 1; $raws {"STUDS"} = 1; $raws {"STUDY"} = 1; $raws {"STUFF"} = 1; $raws {"STUMP"} = 1; $raws {"STUNG"} = 1; $raws {"STUNT"} = 1; $raws {"STYLE"} = 1; $raws {"SUAVE"} = 1; $raws {"SUCKS"} = 1; $raws {"SUEDE"} = 1; $raws {"SUGAR"} = 1; $raws {"SUING"} = 1; $raws {"SUITE"} = 1; $raws {"SUITS"} = 1; $raws {"SULKS"} = 1; $raws {"SULKY"} = 1; $raws {"SULLY"} = 1; $raws {"SUMAC"} = 1; $raws {"SUNNY"} = 1; $raws {"SUPER"} = 1; $raws {"SURER"} = 1; $raws {"SURGE"} = 1; $raws {"SURLY"} = 1; $raws {"SUSHI"} = 1; $raws {"SWAIN"} = 1; $raws {"SWAMP"} = 1; $raws {"SWANS"} = 1; $raws {"SWARD"} = 1; $raws {"SWARM"} = 1; $raws {"SWATH"} = 1; $raws {"SWAYS"} = 1; $raws {"SWEAR"} = 1; $raws {"SWEAT"} = 1; $raws {"SWEEP"} = 1; $raws {"SWEET"} = 1; $raws {"SWELL"} = 1; $raws {"SWEPT"} = 1; $raws {"SWIFT"} = 1; $raws {"SWILL"} = 1; $raws {"SWIMS"} = 1; $raws {"SWINE"} = 1; $raws {"SWING"} = 1; $raws {"SWIRL"} = 1; $raws {"SWISH"} = 1; $raws {"SWOON"} = 1; $raws {"SWOOP"} = 1; $raws {"SWORD"} = 1; $raws {"SWORE"} = 1; $raws {"SWORN"} = 1; $raws {"SWUNG"} = 1; $raws {"SYNOD"} = 1; $raws {"SYRUP"} = 1; $raws {"TABBY"} = 1; $raws {"TABLE"} = 1; $raws {"TABOO"} = 1; $raws {"TACIT"} = 1; $raws {"TACKS"} = 1; $raws {"TACKY"} = 1; $raws {"TAFFY"} = 1; $raws {"TAILS"} = 1; $raws {"TAINT"} = 1; $raws {"TAKEN"} = 1; $raws {"TAKES"} = 1; $raws {"TALES"} = 1; $raws {"TALKS"} = 1; $raws {"TALLY"} = 1; $raws {"TALON"} = 1; $raws {"TAMED"} = 1; $raws {"TAMER"} = 1;
+$raws {"TANGY"} = 1; $raws {"TANKS"} = 1; $raws {"TAPER"} = 1; $raws {"TAPES"} = 1; $raws {"TAPIR"} = 1; $raws {"TARDY"} = 1; $raws {"TARES"} = 1; $raws {"TARRY"} = 1; $raws {"TARTS"} = 1; $raws {"TASKS"} = 1; $raws {"TASTE"} = 1; $raws {"TASTY"} = 1; $raws {"TAUNT"} = 1; $raws {"TAUPE"} = 1; $raws {"TAWNY"} = 1; $raws {"TAXED"} = 1; $raws {"TAXES"} = 1; $raws {"TEACH"} = 1; $raws {"TEAMS"} = 1; $raws {"TEARS"} = 1; $raws {"TEARY"} = 1; $raws {"TEASE"} = 1; $raws {"TEDDY"} = 1; $raws {"TEEMS"} = 1; $raws {"TEENS"} = 1; $raws {"TEETH"} = 1; $raws {"TELLS"} = 1; $raws {"TEMPI"} = 1; $raws {"TEMPO"} = 1; $raws {"TEMPS"} = 1; $raws {"TENDS"} = 1; $raws {"TENET"} = 1; $raws {"TENOR"} = 1; $raws {"TENSE"} = 1; $raws {"TENTH"} = 1; $raws {"TENTS"} = 1; $raws {"TEPEE"} = 1; $raws {"TEPID"} = 1; $raws {"TERMS"} = 1; $raws {"TERSE"} = 1; $raws {"TESTS"} = 1; $raws {"TESTY"} = 1; $raws {"TEXAS"} = 1; $raws {"TEXTS"} = 1; $raws {"THANK"} = 1; $raws {"THEFT"} = 1; $raws {"THEIR"} = 1; $raws {"THEME"} = 1; $raws {"THERE"} = 1; $raws {"THESE"} = 1; $raws {"THICK"} = 1; $raws {"THIEF"} = 1; $raws {"THIGH"} = 1; $raws {"THINE"} = 1; $raws {"THING"} = 1; $raws {"THINK"} = 1; $raws {"THIRD"} = 1; $raws {"THONG"} = 1; $raws {"THORN"} = 1; $raws {"THOSE"} = 1; $raws {"THREE"} = 1; $raws {"THREW"} = 1; $raws {"THROB"} = 1; $raws {"THROE"} = 1; $raws {"THROW"} = 1; $raws {"THRUM"} = 1; $raws {"THUMB"} = 1; $raws {"THUMP"} = 1; $raws {"THYME"} = 1; $raws {"TIARA"} = 1; $raws {"TIBIA"} = 1; $raws {"TICKS"} = 1; $raws {"TIDAL"} = 1; $raws {"TIDES"} = 1; $raws {"TIERS"} = 1; $raws {"TIGER"} = 1; $raws {"TIGHT"} = 1; $raws {"TILDE"} = 1; $raws {"TILED"} = 1; $raws {"TILES"} = 1; $raws {"TILLS"} = 1; $raws {"TILTS"} = 1; $raws {"TIMED"} = 1; $raws {"TIMER"} = 1; $raws {"TIMES"} = 1; $raws {"TIMID"} = 1; $raws {"TINGE"} = 1; $raws {"TINTS"} = 1; $raws {"TIPSY"} = 1; $raws {"TIRED"} = 1; $raws {"TIRES"} = 1; $raws {"TITAN"} = 1; $raws {"TITHE"} = 1; $raws {"TITLE"} = 1; $raws {"TIZZY"} = 1;
+$raws {"TOADS"} = 1; $raws {"TOADY"} = 1; $raws {"TOAST"} = 1; $raws {"TODAY"} = 1; $raws {"TODDY"} = 1; $raws {"TOILS"} = 1; $raws {"TOKEN"} = 1; $raws {"TOLLS"} = 1; $raws {"TOMBS"} = 1; $raws {"TOMES"} = 1; $raws {"TONED"} = 1; $raws {"TONES"} = 1; $raws {"TONGS"} = 1; $raws {"TONIC"} = 1; $raws {"TOOLS"} = 1; $raws {"TOOTH"} = 1; $raws {"TOPAZ"} = 1; $raws {"TOPIC"} = 1; $raws {"TOQUE"} = 1; $raws {"TORCH"} = 1; $raws {"TORSO"} = 1; $raws {"TORTS"} = 1; $raws {"TOTAL"} = 1; $raws {"TOTEM"} = 1; $raws {"TOUCH"} = 1; $raws {"TOUGH"} = 1; $raws {"TOURS"} = 1; $raws {"TOWED"} = 1; $raws {"TOWEL"} = 1; $raws {"TOWER"} = 1; $raws {"TOWNS"} = 1; $raws {"TOXIC"} = 1; $raws {"TOXIN"} = 1; $raws {"TOYED"} = 1; $raws {"TRACE"} = 1; $raws {"TRACK"} = 1; $raws {"TRACT"} = 1; $raws {"TRADE"} = 1; $raws {"TRAIL"} = 1; $raws {"TRAIN"} = 1; $raws {"TRAIT"} = 1; $raws {"TRAMP"} = 1; $raws {"TRAMS"} = 1; $raws {"TRAPS"} = 1; $raws {"TRASH"} = 1; $raws {"TRAWL"} = 1; $raws {"TRAYS"} = 1; $raws {"TREAD"} = 1; $raws {"TREAT"} = 1; $raws {"TREED"} = 1; $raws {"TREES"} = 1; $raws {"TREND"} = 1; $raws {"TRESS"} = 1; $raws {"TRIAD"} = 1; $raws {"TRIAL"} = 1; $raws {"TRIBE"} = 1; $raws {"TRICE"} = 1; $raws {"TRICK"} = 1; $raws {"TRIED"} = 1; $raws {"TRIES"} = 1; $raws {"TRILL"} = 1; $raws {"TRIPE"} = 1; $raws {"TRIPS"} = 1; $raws {"TRITE"} = 1; $raws {"TROLL"} = 1; $raws {"TROOP"} = 1; $raws {"TROPE"} = 1; $raws {"TROTH"} = 1; $raws {"TROTS"} = 1; $raws {"TROUT"} = 1; $raws {"TROVE"} = 1; $raws {"TRUCE"} = 1; $raws {"TRUCK"} = 1; $raws {"TRUER"} = 1; $raws {"TRULY"} = 1; $raws {"TRUMP"} = 1; $raws {"TRUNK"} = 1; $raws {"TRUSS"} = 1; $raws {"TRUST"} = 1; $raws {"TRUTH"} = 1; $raws {"TRYST"} = 1; $raws {"TUBER"} = 1; $raws {"TUBES"} = 1; $raws {"TUFTS"} = 1; $raws {"TULIP"} = 1; $raws {"TULLE"} = 1; $raws {"TUNED"} = 1; $raws {"TUNES"} = 1; $raws {"TUNIC"} = 1; $raws {"TURBO"} = 1; $raws {"TURNS"} = 1; $raws {"TUSKS"} = 1; $raws {"TUTOR"} = 1; $raws {"TWAIN"} = 1; $raws {"TWANG"} = 1;
+$raws {"TWEAK"} = 1; $raws {"TWEED"} = 1; $raws {"TWEET"} = 1; $raws {"TWICE"} = 1; $raws {"TWIGS"} = 1; $raws {"TWINE"} = 1; $raws {"TWINS"} = 1; $raws {"TWIRL"} = 1; $raws {"TWIST"} = 1; $raws {"TYING"} = 1; $raws {"TYPED"} = 1; $raws {"TYPES"} = 1; $raws {"UDDER"} = 1; $raws {"ULCER"} = 1; $raws {"ULTRA"} = 1; $raws {"UMBRA"} = 1; $raws {"UNCLE"} = 1; $raws {"UNCUT"} = 1; $raws {"UNDER"} = 1; $raws {"UNDID"} = 1; $raws {"UNDUE"} = 1; $raws {"UNFED"} = 1; $raws {"UNFIT"} = 1; $raws {"UNIFY"} = 1; $raws {"UNION"} = 1; $raws {"UNITE"} = 1; $raws {"UNITS"} = 1; $raws {"UNITY"} = 1; $raws {"UNLIT"} = 1; $raws {"UNMET"} = 1; $raws {"UNSAY"} = 1; $raws {"UNTIE"} = 1; $raws {"UNTIL"} = 1; $raws {"UNZIP"} = 1; $raws {"UPPER"} = 1; $raws {"UPSET"} = 1; $raws {"URBAN"} = 1; $raws {"URGED"} = 1; $raws {"URGES"} = 1; $raws {"URINE"} = 1; $raws {"USAGE"} = 1; $raws {"USERS"} = 1; $raws {"USHER"} = 1; $raws {"USING"} = 1; $raws {"USUAL"} = 1; $raws {"USURP"} = 1; $raws {"USURY"} = 1; $raws {"UTTER"} = 1; $raws {"UVULA"} = 1; $raws {"VAGUE"} = 1; $raws {"VALES"} = 1; $raws {"VALET"} = 1; $raws {"VALID"} = 1; $raws {"VALUE"} = 1; $raws {"VALVE"} = 1; $raws {"VANES"} = 1; $raws {"VAPID"} = 1; $raws {"VASES"} = 1; $raws {"VAULT"} = 1; $raws {"VAUNT"} = 1; $raws {"VEGAN"} = 1; $raws {"VEILS"} = 1; $raws {"VEINS"} = 1; $raws {"VELDT"} = 1; $raws {"VENAL"} = 1; $raws {"VENOM"} = 1; $raws {"VENTS"} = 1; $raws {"VENUE"} = 1; $raws {"VERBS"} = 1; $raws {"VERGE"} = 1; $raws {"VERSE"} = 1; $raws {"VERVE"} = 1; $raws {"VESTS"} = 1; $raws {"VEXED"} = 1; $raws {"VEXES"} = 1; $raws {"VIALS"} = 1; $raws {"VICAR"} = 1; $raws {"VICES"} = 1; $raws {"VIDEO"} = 1; $raws {"VIEWS"} = 1; $raws {"VIGIL"} = 1; $raws {"VIGOR"} = 1; $raws {"VILER"} = 1; $raws {"VILLA"} = 1; $raws {"VINES"} = 1; $raws {"VINYL"} = 1; $raws {"VIOLA"} = 1; $raws {"VIPER"} = 1; $raws {"VIRAL"} = 1; $raws {"VIRUS"} = 1; $raws {"VISIT"} = 1; $raws {"VISOR"} = 1; $raws {"VISTA"} = 1; $raws {"VITAL"} = 1; $raws {"VIVID"} = 1;
+$raws {"VIXEN"} = 1; $raws {"VIZOR"} = 1; $raws {"VOCAL"} = 1; $raws {"VODKA"} = 1; $raws {"VOGUE"} = 1; $raws {"VOICE"} = 1; $raws {"VOILA"} = 1; $raws {"VOILE"} = 1; $raws {"VOLTS"} = 1; $raws {"VOMIT"} = 1; $raws {"VOTED"} = 1; $raws {"VOTER"} = 1; $raws {"VOTES"} = 1; $raws {"VOUCH"} = 1; $raws {"VOWED"} = 1; $raws {"VOWEL"} = 1; $raws {"VYING"} = 1; $raws {"WACKY"} = 1; $raws {"WADED"} = 1; $raws {"WAFER"} = 1; $raws {"WAFTS"} = 1; $raws {"WAGED"} = 1; $raws {"WAGER"} = 1; $raws {"WAGES"} = 1; $raws {"WAGON"} = 1; $raws {"WAIFS"} = 1; $raws {"WAILS"} = 1; $raws {"WAIST"} = 1; $raws {"WAITS"} = 1; $raws {"WAIVE"} = 1; $raws {"WAKED"} = 1; $raws {"WAKEN"} = 1; $raws {"WAKES"} = 1; $raws {"WALKS"} = 1; $raws {"WALLS"} = 1; $raws {"WALTZ"} = 1; $raws {"WANDS"} = 1; $raws {"WANED"} = 1; $raws {"WANES"} = 1; $raws {"WANTS"} = 1; $raws {"WARDS"} = 1; $raws {"WARES"} = 1; $raws {"WARMS"} = 1; $raws {"WARNS"} = 1; $raws {"WARTS"} = 1; $raws {"WASPS"} = 1; $raws {"WASTE"} = 1; $raws {"WATCH"} = 1; $raws {"WATER"} = 1; $raws {"WAVED"} = 1; $raws {"WAVER"} = 1; $raws {"WAVES"} = 1; $raws {"WAXED"} = 1; $raws {"WAXEN"} = 1; $raws {"WAXES"} = 1; $raws {"WEARS"} = 1; $raws {"WEARY"} = 1; $raws {"WEAVE"} = 1; $raws {"WEDGE"} = 1; $raws {"WEEDS"} = 1; $raws {"WEEDY"} = 1; $raws {"WEEKS"} = 1; $raws {"WEEPS"} = 1; $raws {"WEIGH"} = 1; $raws {"WEIRD"} = 1; $raws {"WELCH"} = 1; $raws {"WELLS"} = 1; $raws {"WENCH"} = 1; $raws {"WHACK"} = 1; $raws {"WHALE"} = 1; $raws {"WHARF"} = 1; $raws {"WHEAT"} = 1; $raws {"WHEEL"} = 1; $raws {"WHELP"} = 1; $raws {"WHERE"} = 1; $raws {"WHICH"} = 1; $raws {"WHIFF"} = 1; $raws {"WHILE"} = 1; $raws {"WHIMS"} = 1; $raws {"WHINE"} = 1; $raws {"WHINY"} = 1; $raws {"WHIPS"} = 1; $raws {"WHIRL"} = 1; $raws {"WHIRR"} = 1; $raws {"WHISK"} = 1; $raws {"WHIST"} = 1; $raws {"WHITE"} = 1; $raws {"WHOLE"} = 1; $raws {"WHOOP"} = 1; $raws {"WHORE"} = 1; $raws {"WHOSE"} = 1; $raws {"WICKS"} = 1; $raws {"WIDEN"} = 1; $raws {"WIDER"} = 1; $raws {"WIDOW"} = 1;
+$raws {"WIDTH"} = 1; $raws {"WIELD"} = 1; $raws {"WIGHT"} = 1; $raws {"WILDS"} = 1; $raws {"WILES"} = 1; $raws {"WILLS"} = 1; $raws {"WINCE"} = 1; $raws {"WINCH"} = 1; $raws {"WINDS"} = 1; $raws {"WINDY"} = 1; $raws {"WINES"} = 1; $raws {"WINGS"} = 1; $raws {"WINKS"} = 1; $raws {"WIPED"} = 1; $raws {"WIPES"} = 1; $raws {"WIRED"} = 1; $raws {"WIRES"} = 1; $raws {"WISER"} = 1; $raws {"WISPS"} = 1; $raws {"WITCH"} = 1; $raws {"WITTY"} = 1; $raws {"WIVES"} = 1; $raws {"WOKEN"} = 1; $raws {"WOMAN"} = 1; $raws {"WOMEN"} = 1; $raws {"WOODS"} = 1; $raws {"WOODY"} = 1; $raws {"WOOED"} = 1; $raws {"WOOER"} = 1; $raws {"WORDS"} = 1; $raws {"WORDY"} = 1; $raws {"WORKS"} = 1; $raws {"WORLD"} = 1; $raws {"WORMS"} = 1; $raws {"WORRY"} = 1; $raws {"WORSE"} = 1; $raws {"WORST"} = 1; $raws {"WORTH"} = 1; $raws {"WOULD"} = 1; $raws {"WOUND"} = 1; $raws {"WOVEN"} = 1; $raws {"WRACK"} = 1; $raws {"WRAPS"} = 1; $raws {"WRAPT"} = 1; $raws {"WRATH"} = 1; $raws {"WREAK"} = 1; $raws {"WRECK"} = 1; $raws {"WREST"} = 1; $raws {"WRING"} = 1; $raws {"WRIST"} = 1; $raws {"WRITE"} = 1; $raws {"WRITS"} = 1; $raws {"WRONG"} = 1; $raws {"WROTE"} = 1; $raws {"WROTH"} = 1; $raws {"WRUNG"} = 1; $raws {"YACHT"} = 1; $raws {"YARDS"} = 1; $raws {"YARNS"} = 1; $raws {"YAWNS"} = 1; $raws {"YEARN"} = 1; $raws {"YEARS"} = 1; $raws {"YEAST"} = 1; $raws {"YELLS"} = 1; $raws {"YELPS"} = 1; $raws {"YIELD"} = 1; $raws {"YOKED"} = 1; $raws {"YOKES"} = 1; $raws {"YOLKS"} = 1; $raws {"YOUNG"} = 1; $raws {"YOURS"} = 1; $raws {"YOUTH"} = 1; $raws {"ZEBRA"} = 1; $raws {"ZESTY"} = 1; $raws {"ZONES"} = 1;
 #####
 sub write_to_socket
 {
@@ -199,6 +231,13 @@ sub write_to_socket
     $msg_body = $msg_body;
 
     my $header;
+    
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\n\n/\n/mig;
+    $msg_body =~ s/\.png/\.npg/;
+    $msg_body =~ s/img/mgi/;
+
     if ($redirect =~ m/^redirect/i)
     {
         $header = "HTTP/1.1 301 Moved\nLocation: /solve_wordle/\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
@@ -208,14 +247,9 @@ sub write_to_socket
         $header = "HTTP/1.1 200 OK\nLast-Modified: $yyyymmddhhmmss\nConnection: close\nAccess-Control-Allow-Origin: *\nContent-Type: text/html; charset=UTF-8\nContent-Length: " . length ($msg_body) . "\n\n";
     }
 
-    $msg_body =~ s/\n\n/\n/mig;
-    $msg_body =~ s/\n\n/\n/mig;
-    $msg_body =~ s/\n\n/\n/mig;
     $msg_body = $header . $msg_body;
-    $msg_body =~ s/\.png/\.npg/;
-    $msg_body =~ s/img/mgi/;
-    $msg_body .= chr(13) . chr(10) . "0";
     print ("\n===========\nWrite to socket: ", length($msg_body), " characters!\n==========\n");
+    #print ($msg_body, "\n==========\n");
     syswrite ($sock_ref, $msg_body);
 }
 
@@ -318,7 +352,6 @@ sub fix_url_code
     my $count;
     my $not_seen_full = 1;
 
-
     while ($paddr = accept (CLIENT, SERVER))
     {
         print ("\n\nNEW============================================================\n");
@@ -339,7 +372,7 @@ sub fix_url_code
             copy "d:/perl_programs/aaa.jpg", \*CLIENT;
             next;
         }
-        
+
         print "$txt\n";
 
         print ("Read -> $txt\n");
@@ -375,8 +408,8 @@ sub fix_url_code
         my $v_must_contain_character_3 = "";
         my $v_must_contain_character_4 = "";
         my $v_must_contain_character_5 = "";
-        my $show_lewdle = 0;
         my %known_letters_hash;
+        $txt =~ s/Referer:.*?\n//img;
 
         #GET /solve_wordle/search?searchstr=%5BROE%5D.*%5BORE%5D.*%5BROE%5D&char1=&char2=&char3=&char4=&char5=&words_already=.*+HTTP%2F1.1 HTTP/1.1
         if ($txt =~ m/searchstr=(.*)&con_search/im)
@@ -394,14 +427,15 @@ sub fix_url_code
         if ($txt =~ m/letters_known=(.*?)&/im)
         {
             $letters_known = "$1";
-            my $lk = $letters_known; 
+            $letters_known =~ s/[^A-Z]//img;
+            my $lk = $letters_known;
             if ($lk =~ s/^(.)//) { $must_contain_character_1 = "$1"; $known_letters_hash {$1} = 1; }
             if ($lk =~ s/^(.)//) { $must_contain_character_2 = "$1"; $known_letters_hash {$1} = 1; }
             if ($lk =~ s/^(.)//) { $must_contain_character_3 = "$1"; $known_letters_hash {$1} = 1; }
             if ($lk =~ s/^(.)//) { $must_contain_character_4 = "$1"; $known_letters_hash {$1} = 1; }
             if ($lk =~ s/^(.)//) { $must_contain_character_5 = "$1"; $known_letters_hash {$1} = 1; }
         }
-        
+
         if ($txt =~ m/vhar1=(.)&/im) { $v_character_1 = $1; $known_letters_hash {$1} = 1; }
         if ($txt =~ m/vhar2=(.)&/im) { $v_character_2 = $1; $known_letters_hash {$1} = 1; }
         if ($txt =~ m/vhar3=(.)&/im) { $v_character_3 = $1; $known_letters_hash {$1} = 1; }
@@ -411,7 +445,7 @@ sub fix_url_code
         if ($txt =~ m/vetters_known=(.*?)&/im)
         {
             $v_letters_known = "$1";
-            my $lk = $v_letters_known; 
+            my $lk = $v_letters_known;
             if ($lk =~ s/^(.)//) { $v_must_contain_character_1 = "$1"; $known_letters_hash {$1} = 1; }
             if ($lk =~ s/^(.)//) { $v_must_contain_character_2 = "$1"; $known_letters_hash {$1} = 1; }
             if ($lk =~ s/^(.)//) { $v_must_contain_character_3 = "$1"; $known_letters_hash {$1} = 1; }
@@ -434,6 +468,7 @@ sub fix_url_code
             my $l;
             foreach $l (sort keys (%known_letters_hash))
             {
+                print ("Removing $l from $words_chosen\n");
                 $words_chosen =~ s/$l//im;
             }
 
@@ -441,17 +476,11 @@ sub fix_url_code
             while ($new_letters_known =~ s/^(.)//)
             {
                 my $ch = $1;
-                $words_chosen =~ s/$ch//im; 
+                $words_chosen =~ s/$ch//im;
             }
 
-            $words_chosen =~ s/\W//im; 
+            $words_chosen =~ s/\W//im;
             $bad_characters = "[$words_chosen]";
-        }
-        
-        $show_lewdle = "";
-        if ($txt =~ m/display_lewdle=(.+) HTTP/im)
-        {
-            $show_lewdle = "checked";
         }
 
         my $l;
@@ -482,44 +511,42 @@ sub fix_url_code
 
         # Sortable table with cards in it..
         my $html_text = "<!DOCTYPE html>\n";
-        
+
         $html_text .= "<table><tr><td><font face='Courier New'>\n";
         $html_text .= "<form id=\"wordle\" action=\"/solve_wordle/search\">
                 <br>
                 <label for=\"searchstr\">Search:</label>
-                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\">
+                <input type=\"text\" id=\"searchstr\" name=\"searchstr\" value=\"$search\" tabindex=\"11\">
                 <br>
                 <label for=\"con_searchstr\">Constructed Search:</label>
-                &nbsp;<input type=\"text\" id=\"con_searchstr\" name=\"con_searchstr\" value=\"$constructed_search\">
+                &nbsp;<input type=\"text\" id=\"con_searchstr\" name=\"con_searchstr\" value=\"$constructed_search\" tabindex=\"12\">
                 <br>
                 <label for=\"searchstr\">Known letters:</label>
-                <input type=\"text\" id=\"char1\" style=\"background-color: lightgreen\" name=\"char1\" maxlength=\"1\" size=\"1\" value=\"$character_1\">
-                <input type=\"text\" id=\"char2\" style=\"background-color: lightgreen\" name=\"char2\" maxlength=\"1\" size=\"1\" value=\"$character_2\">
-                <input type=\"text\" id=\"char3\" style=\"background-color: lightgreen\" name=\"char3\" maxlength=\"1\" size=\"1\" value=\"$character_3\">
-                <input type=\"text\" id=\"char4\" style=\"background-color: lightgreen\" name=\"char4\" maxlength=\"1\" size=\"1\" value=\"$character_4\">
-                <input type=\"text\" id=\"char5\" style=\"background-color: lightgreen\" name=\"char5\" maxlength=\"1\" size=\"1\" value=\"$character_5\">
+                <input type=\"text\" id=\"char1\" style=\"background-color: lightgreen\" name=\"char1\" maxlength=\"1\" size=\"1\" value=\"$character_1\" tabindex=\"1\">
+                <input type=\"text\" id=\"char2\" style=\"background-color: lightgreen\" name=\"char2\" maxlength=\"1\" size=\"1\" value=\"$character_2\" tabindex=\"2\">
+                <input type=\"text\" id=\"char3\" style=\"background-color: lightgreen\" name=\"char3\" maxlength=\"1\" size=\"1\" value=\"$character_3\" tabindex=\"3\">
+                <input type=\"text\" id=\"char4\" style=\"background-color: lightgreen\" name=\"char4\" maxlength=\"1\" size=\"1\" value=\"$character_4\" tabindex=\"4\">
+                <input type=\"text\" id=\"char5\" style=\"background-color: lightgreen\" name=\"char5\" maxlength=\"1\" size=\"1\" value=\"$character_5\" tabindex=\"5\">
                 <br>
                 <label for=\"searchstr\">Valid letters:</label>
-                <input type=\"text\" id=\"vhar1\" style=\"background-color: lightblue\" name=\"vhar1\" maxlength=\"1\" size=\"1\" value=\"$v_character_1\">
-                <input type=\"text\" id=\"vhar2\" style=\"background-color: lightblue\" name=\"vhar2\" maxlength=\"1\" size=\"1\" value=\"$v_character_2\">
-                <input type=\"text\" id=\"vhar3\" style=\"background-color: lightblue\" name=\"vhar3\" maxlength=\"1\" size=\"1\" value=\"$v_character_3\">
-                <input type=\"text\" id=\"vhar4\" style=\"background-color: lightblue\" name=\"vhar4\" maxlength=\"1\" size=\"1\" value=\"$v_character_4\">
-                <input type=\"text\" id=\"vhar5\" style=\"background-color: lightblue\" name=\"vhar5\" maxlength=\"1\" size=\"1\" value=\"$v_character_5\">
+                <input type=\"text\" id=\"vhar1\" style=\"background-color: lightblue\" name=\"vhar1\" maxlength=\"1\" size=\"1\" value=\"$v_character_1\" tabindex=\"6\">
+                <input type=\"text\" id=\"vhar2\" style=\"background-color: lightblue\" name=\"vhar2\" maxlength=\"1\" size=\"1\" value=\"$v_character_2\" tabindex=\"7\">
+                <input type=\"text\" id=\"vhar3\" style=\"background-color: lightblue\" name=\"vhar3\" maxlength=\"1\" size=\"1\" value=\"$v_character_3\" tabindex=\"8\">
+                <input type=\"text\" id=\"vhar4\" style=\"background-color: lightblue\" name=\"vhar4\" maxlength=\"1\" size=\"1\" value=\"$v_character_4\" tabindex=\"9\">
+                <input type=\"text\" id=\"vhar5\" style=\"background-color: lightblue\" name=\"vhar5\" maxlength=\"1\" size=\"1\" value=\"$v_character_5\" tabindex=\"10\">
                 <br>
-                <label for=\"letters_known\">Letters in solution:</label> 
-                <input type=\"text\" id=\"letters_known\" style=\"background-color: lightyellow\" name=\"letters_known\" value=\"$constructed_known_letters\">
+                <label for=\"letters_known\">Letters in solution:</label>
+                <input type=\"text\" id=\"letters_known\" style=\"background-color: lightyellow\" name=\"letters_known\" value=\"$constructed_known_letters\" tabindex=\"13\">
                 <br>
                 <label for=\"words_already\">Words already chosen (CSV):</label>
-                <input type=\"text\" id=\"words_already\" name=\"words_already\" value=\"$words_chosen\">
+                <input type=\"text\" id=\"words_already\" name=\"words_already\" value=\"$words_chosen\" tabindex=\"14\">
                 <br>
                 <label for=\"searchstr\">Search:</label>
                 <input type=\"submit\" value=\"Search\">
                 <br>
-                <label for=\"display_lewdle\">Display Lewdle Results (explicit):</label><br>
-                <input type=\"checkbox\" id=\"display_lewdle\" name=\"display_lewdle\" $show_lewdle>
                 </form></td></tr></table></font>
 <script>
-function reset_form () 
+function reset_form ()
 {
     var formToReset = document.getElementById(\"wordle\");
     alert (\"HELLO!!\");
@@ -538,8 +565,45 @@ function reset_inputElements()
         }
     }
 }
+
+function add_in_common_words ()
+{
+    var input = document.getElementById(\"words_already\");
+    input.setAttribute('value', input.getAttribute('value') +'slatepickymourn');
+}
+
+function add_in_common_words2 () 
+{
+    var input = document.getElementById(\"words_already\");
+    input.setAttribute('value', input.getAttribute('value') +'slatecurionymph');
+}
+
+function add_in_common_words3 () 
+{
+    var input = document.getElementById(\"words_already\");
+    input.setAttribute('value', input.getAttribute('value') +'aroseuntilpodgy');
+}
+
+var inputs = document.querySelectorAll(\"input,select\");
+for (var i = 0 ; i < inputs.length; i++) {
+   inputs[i].addEventListener(\"keypress\", function(e){
+      if ((e.which >= 65 && e.which <= 91) || (e.which >= 97 && e.which <= 123)) 
+      {
+         //e.preventDefault();
+         var nextInput = document.querySelectorAll('[tabIndex=\"' + (this.tabIndex + 1) + '\"]');
+         if (nextInput.length === 0) {
+            nextInput = document.querySelectorAll('[tabIndex=\"1\"]');
+         }
+         if (this.tabIndex <= 10)
+         {
+             nextInput[0].focus();
+         }
+      }
+   })
+}
 </script>
-                <input id=\"Clear Form\" type=\"button\" value=\"Clear Form\" onclick=\"reset_inputElements();\" />
+                <input id=\"Clear Form\" type=\"button\" title=\"Clear all inputs!\" value=\"Clear Form\" onclick=\"reset_inputElements();\" />
+                <input id=\"Most Common Words\" type=\"button\" title=\"My Openers\" value=\"Most Common Words\" onclick=\"add_in_common_words3 ();\" />
                 ";
 
         my %words_chosen_hash;
@@ -551,9 +615,12 @@ function reset_inputElements()
         my $word;
         my $num_words = 0;
         $html_text .= "<pre>";
-        my $the_words;
+        my $the_words = "";
+        my $all_the_words = "";
 
         print ("Checking regexes of\nSearch: $search\nBad characters: $bad_characters\nLetters known: $letters_known \n");
+        my %letters_from_words_that_solve;
+        my $use_letters_from_words_that_solve = 1;
         if ($constructed_search =~ m/^...*$/)
         {
             foreach $word (sort keys (%aws))
@@ -562,11 +629,11 @@ function reset_inputElements()
                 if ($word =~ m/$search/im && $word =~ m/$constructed_search/im)
                 {
                     my $use_word = 1;
-                    
+
                     # Referer: https://xmage.au/solve_wordle/search?searchstr=%5E.I.%5B%5ERE%5D.%24&char1=&char2=I&char3=&char4=&char5=&letters_known=I&words_already=
                     if ($bad_characters =~ m/.../im && $word =~ m/$bad_characters/im)
                     {
-                       
+
                         $use_word = 0;
                     }
 
@@ -585,7 +652,15 @@ function reset_inputElements()
                     {
                         $the_words .= "$word";
                         $num_words++;
-                        if ($num_words % 5 == 0)
+
+                        # Get a listing of all letters in the solution space..
+                        my $cp_word = $word;
+                        while ($cp_word =~ s/^(.)//)
+                        {
+                            $letters_from_words_that_solve {$1}++;
+                        }
+
+                        if ($num_words % 15 == 0)
                         {
                             $the_words .= "<br>";
                         }
@@ -596,81 +671,250 @@ function reset_inputElements()
                         if ($num_words >= $MAX_WORD_COUNT)
                         {
                             $the_words .= "<br>Etc..";
+                            $use_letters_from_words_that_solve = 0;
                         }
                     }
-                }
-            }
-
-            my $stats = $the_words;
-            my $c;
-            while ($stats =~ s/A//i) { $c++; } $the_words .= "<br><br>Stats: <font size=-2><br>A = $c; "; $c=0;
-            while ($stats =~ s/E//i) { $c++; } $the_words .= "E = $c; "; $c=0;
-            while ($stats =~ s/I//i) { $c++; } $the_words .= "I = $c; "; $c=0;
-            while ($stats =~ s/O//i) { $c++; } $the_words .= "O = $c; "; $c=0;
-            while ($stats =~ s/U//i) { $c++; } $the_words .= "U = $c; "; $c=0;
-            while ($stats =~ s/S//i) { $c++; } $the_words .= "<br>S = $c; "; $c=0;
-            while ($stats =~ s/T//i) { $c++; } $the_words .= "T = $c; "; $c=0;
-            while ($stats =~ s/R//i) { $c++; } $the_words .= "R = $c; "; $c=0;
-            while ($stats =~ s/P//i) { $c++; } $the_words .= "P = $c; "; $c=0;
-            while ($stats =~ s/H//i) { $c++; } $the_words .= "H = $c; "; $c=0;
-            while ($stats =~ s/M//i) { $c++; } $the_words .= "<br>M = $c; "; $c=0;
-            while ($stats =~ s/N//i) { $c++; } $the_words .= "N = $c; "; $c=0;
-            while ($stats =~ s/W//i) { $c++; } $the_words .= "W = $c; "; $c=0;
-            while ($stats =~ s/B//i) { $c++; } $the_words .= "B = $c; "; $c=0;
-            while ($stats =~ s/D//i) { $c++; } $the_words .= "D = $c; "; $c=0;
-            while ($stats =~ s/C//i) { $c++; } $the_words .= "<br>C = $c; "; $c=0;
-            while ($stats =~ s/G//i) { $c++; } $the_words .= "G = $c; "; $c=0;
-            while ($stats =~ s/F//i) { $c++; } $the_words .= "F = $c; "; $c=0;
-            while ($stats =~ s/L//i) { $c++; } $the_words .= "L = $c; "; $c=0;
-            while ($stats =~ s/K//i) { $c++; } $the_words .= "K = $c; "; $c=0;
-            while ($stats =~ s/J//i) { $c++; } $the_words .= "<br>J = $c;</font><br><br>"; $c=0;
-
-            $html_text .= "$the_words<br>";
-            
-            $num_words = 0;
-            if ($show_lewdle ne "")
-            {
-                $html_text .= "<br>Lewdle words:<br>";
-                foreach $word (sort keys (%lw))
-                {
-                    my $orig = $word;
-                    if ($word =~ m/$search/im)
+                    if ($use_word)
                     {
-                        my $use_word = 1;
-
-                        if ($bad_characters =~ m/.../im && $word =~ m/$bad_characters/im)
-                        {
-
-                            $use_word = 0;
-                        }
-
-                        if ($must_contain_character_1 =~ m/^.$/ && $word !~ m/$must_contain_character_1/im) { $use_word = 0; }
-                        if ($must_contain_character_2 =~ m/^.$/ && $word !~ m/$must_contain_character_2/im) { $use_word = 0; }
-                        if ($must_contain_character_3 =~ m/^.$/ && $word !~ m/$must_contain_character_3/im) { $use_word = 0; }
-                        if ($must_contain_character_4 =~ m/^.$/ && $word !~ m/$must_contain_character_4/im) { $use_word = 0; }
-                        if ($must_contain_character_5 =~ m/^.$/ && $word !~ m/$must_contain_character_5/im) { $use_word = 0; }
-
-                        if ($use_word && $num_words < $MAX_WORD_COUNT)
-                        {
-                            $html_text .= "$word";
-                            $num_words++;
-                            if ($num_words % 5 == 0)
-                            {
-                                $html_text .= "<br>";
-                            }
-                            else
-                            {
-                                $html_text .= ",";
-                            }
-                            if ($num_words >= $MAX_WORD_COUNT)
-                            {
-                                $html_text .= "<br>Etc..";
-                            }
-                        }
+                        $all_the_words .= "$word";
                     }
                 }
             }
+
+            # 20260516 - Search in the solution space of words that exist.  Say we have ".over".  Could be a 'c,d,h,l,m,r'. (cover,dover,hover,lover,mover,rover)
+            # Want to get the word that has the most of cdlm in it (not caring as much about "over", but also less about "abfgijkn..." etc..
+            if ($use_letters_from_words_that_solve)
+            {
+                my $letter_re = "[";
+                my $top_letter = -55;
+                my $top_letter2 = -55;
+                my $top_letter3 = -55;
+                my $top_letter4 = -55;
+                my $top_actual_letter = "";
+                my $top_actual_letter2 = "";
+                my $top_actual_letter3 = "";
+                my $top_actual_letter4 = "";
+                my $letter;
+
+                # Count the number of words for each letter..
+                my $count_letters_in_the_words = $the_words;
+                $the_words .= "<br>";
+                $count_letters_in_the_words =~ s/\n//img;
+                $count_letters_in_the_words =~ s/,/ /img;
+                my $orig_count_letters_in_the_words = " $count_letters_in_the_words ";
+                my %word_for_letter_counts;
+                foreach $letter (sort keys (%letters_from_words_that_solve))
+                {
+                    $letter_re .= "$letter";
+                    $count_letters_in_the_words = $orig_count_letters_in_the_words;
+                    my $word_for_letter_count = 0;
+                    
+                    while ($count_letters_in_the_words =~ s/( \w*)$letter(\w*)/ ./)
+                    {
+                        $word_for_letter_count ++;
+                        #print (" > $letter > $letters_from_words_that_solve{$letter} > $count_letters_in_the_words -- $word_for_letter_count\n");
+                    }
+                    
+                    $letters_from_words_that_solve{$letter} = $word_for_letter_count;
+                    
+                    print (" JUST BEFORE: INSIDE: $letter -- $letters_from_words_that_solve{$letter} vs $top_letter\n");
+                    if ($letters_from_words_that_solve {$letter} >= $top_letter)
+                    {
+                        $top_letter4 = $top_letter3;
+                        $top_letter3 = $top_letter2;
+                        $top_letter2 = $top_letter;
+                        $top_letter = $letters_from_words_that_solve {$letter};
+
+                        $top_actual_letter4 = $top_actual_letter3;
+                        $top_actual_letter3 = $top_actual_letter2;
+                        $top_actual_letter2 = $top_actual_letter;
+                        $top_actual_letter = $letter;
+                        print (" INSIDE: $top_actual_letter4 $top_actual_letter3 $top_actual_letter2 $top_actual_letter \n");
+                    }
+                    print (" JUST AFTER: INSIDE: $letter -- $letters_from_words_that_solve{$letter} vs $top_letter\n");
+
+                    print ("$letter ---> $word_for_letter_count ($orig_count_letters_in_the_words) --- $top_actual_letter4 $top_actual_letter3 $top_actual_letter2 $top_actual_letter \n");
+                        
+                    $word_for_letter_counts {$letter} = $word_for_letter_count;
+                }
+
+                $letter_re .= "]";
+                my $less_good_letter_re = "[$top_actual_letter$top_actual_letter2$top_actual_letter3$top_actual_letter4]";
+                $the_words .= "$letter_re $less_good_letter_re<br>";
+
+                # aws = Reasonable All words - actual possible solutions..
+                my $looked_at_words = 0;
+                my $best_score = 0;
+                my $num_ok_words = 0;
+                my $break_num_ok_words = 0;
+                foreach $word (sort keys (%aws))
+                {
+                    if ($word =~ m/(.).*\1/) { next; }
+                    my $score = 0;
+                    my $ll;
+
+                    foreach $ll (sort keys (%word_for_letter_counts))
+                    {
+                        if ($ll eq $top_actual_letter || $ll eq $top_actual_letter2 || $ll eq $top_actual_letter3 || $ll eq $top_actual_letter4) 
+                        {
+                            next;   
+                        }
+
+                        if ($word =~ m/$ll/i) 
+                        {
+                            $score += $word_for_letter_counts {$ll};
+                        }
+                    }
+
+                    $looked_at_words++;
+                    if ($looked_at_words % 1000 == 0)
+                    {
+                        print ("Seen $word -- $looked_at_words\n");
+                    }
+
+                    if ($best_score <= $score && $num_ok_words < 500)
+                    {
+                        if ($score > 1)
+                        {
+                            $the_words .= "$word,$score ; ";
+                            $break_num_ok_words ++;
+                            if ($break_num_ok_words > 10)
+                            {
+                                $break_num_ok_words = 0;
+                                $the_words .= "<br>";
+                            }
+                            $num_ok_words ++;
+                        }
+                        $best_score = $score;
+                    }
+                }
+            }
+
+            my $stats = $all_the_words;
+            my $c;
+            my %stat_letters;
+            $stat_letters {A} = 0; while ($stats =~ s/A//i) { $stat_letters {A}++; }
+            $stat_letters {B} = 0; while ($stats =~ s/B//i) { $stat_letters {B}++; }
+            $stat_letters {C} = 0; while ($stats =~ s/C//i) { $stat_letters {C}++; }
+            $stat_letters {D} = 0; while ($stats =~ s/D//i) { $stat_letters {D}++; }
+            $stat_letters {E} = 0; while ($stats =~ s/E//i) { $stat_letters {E}++; }
+            $stat_letters {F} = 0; while ($stats =~ s/F//i) { $stat_letters {F}++; }
+            $stat_letters {G} = 0; while ($stats =~ s/G//i) { $stat_letters {G}++; }
+            $stat_letters {H} = 0; while ($stats =~ s/H//i) { $stat_letters {H}++; }
+            $stat_letters {I} = 0; while ($stats =~ s/I//i) { $stat_letters {I}++; }
+            $stat_letters {J} = 0; while ($stats =~ s/J//i) { $stat_letters {J}++; }
+            $stat_letters {K} = 0; while ($stats =~ s/K//i) { $stat_letters {K}++; }
+            $stat_letters {L} = 0; while ($stats =~ s/L//i) { $stat_letters {L}++; }
+            $stat_letters {M} = 0; while ($stats =~ s/M//i) { $stat_letters {M}++; }
+            $stat_letters {N} = 0; while ($stats =~ s/N//i) { $stat_letters {N}++; }
+            $stat_letters {O} = 0; while ($stats =~ s/O//i) { $stat_letters {O}++; }
+            $stat_letters {P} = 0; while ($stats =~ s/P//i) { $stat_letters {P}++; }
+            $stat_letters {Q} = 0; while ($stats =~ s/Q//i) { $stat_letters {Q}++; }
+            $stat_letters {R} = 0; while ($stats =~ s/R//i) { $stat_letters {R}++; }
+            $stat_letters {S} = 0; while ($stats =~ s/S//i) { $stat_letters {S}++; }
+            $stat_letters {T} = 0; while ($stats =~ s/T//i) { $stat_letters {T}++; }
+            $stat_letters {U} = 0; while ($stats =~ s/U//i) { $stat_letters {U}++; }
+            $stat_letters {V} = 0; while ($stats =~ s/V//i) { $stat_letters {V}++; }
+            $stat_letters {W} = 0; while ($stats =~ s/W//i) { $stat_letters {W}++; }
+            $stat_letters {X} = 0; while ($stats =~ s/X//i) { $stat_letters {X}++; }
+            $stat_letters {Y} = 0; while ($stats =~ s/Y//i) { $stat_letters {Y}++; }
+            $stat_letters {Z} = 0; while ($stats =~ s/Z//i) { $stat_letters {Z}++; }
+
+            my $l;
+            #foreach $l (keys (%known_letters_hash))
+            #{
+            #    $stat_letters {uc($l)} = -1;
+            #}
+
+            $the_words .= "<br><br>Stats: <font size=-2><b$stat_letters{A}><br>A = $stat_letters{A};</b$stat_letters{A}> ";
+            $the_words .= "<b$stat_letters{B}> B = $stat_letters{B};</b$stat_letters{B}> ";
+            $the_words .= "<b$stat_letters{C}> C = $stat_letters{C};</b$stat_letters{C}> ";
+            $the_words .= "<b$stat_letters{D}> D = $stat_letters{D};</b$stat_letters{D}> ";
+            $the_words .= "<b$stat_letters{E}> E = $stat_letters{E};</b$stat_letters{E}> ";
+            $the_words .= "<b$stat_letters{F}> <br>F = $stat_letters{F};</b$stat_letters{F}> ";
+            $the_words .= "<b$stat_letters{G}> G = $stat_letters{G};</b$stat_letters{G}> ";
+            $the_words .= "<b$stat_letters{H}> H = $stat_letters{H};</b$stat_letters{H}> ";
+            $the_words .= "<b$stat_letters{I}> I = $stat_letters{I};</b$stat_letters{I}> ";
+            $the_words .= "<b$stat_letters{J}> J = $stat_letters{J};</b$stat_letters{J}> ";
+            $the_words .= "<b$stat_letters{K}> <br>K = $stat_letters{K};</b$stat_letters{K}> ";
+            $the_words .= "<b$stat_letters{L}> L = $stat_letters{L};</b$stat_letters{L}> ";
+            $the_words .= "<b$stat_letters{M}> M = $stat_letters{M};</b$stat_letters{M}> ";
+            $the_words .= "<b$stat_letters{N}> N = $stat_letters{N};</b$stat_letters{N}> ";
+            $the_words .= "<b$stat_letters{O}> O = $stat_letters{O};</b$stat_letters{O}> ";
+            $the_words .= "<b$stat_letters{P}> <br>P = $stat_letters{P};</b$stat_letters{P}> ";
+            $the_words .= "<b$stat_letters{Q}> Q = $stat_letters{Q};</b$stat_letters{Q}> ";
+            $the_words .= "<b$stat_letters{R}> R = $stat_letters{R};</b$stat_letters{R}> ";
+            $the_words .= "<b$stat_letters{S}> S = $stat_letters{S};</b$stat_letters{S}> ";
+            $the_words .= "<b$stat_letters{T}> T = $stat_letters{T};</b$stat_letters{T}> ";
+            $the_words .= "<b$stat_letters{U}> <br>U = $stat_letters{U};</b$stat_letters{U}> ";
+            $the_words .= "<b$stat_letters{V}> V = $stat_letters{V};</b$stat_letters{V}> ";
+            $the_words .= "<b$stat_letters{W}> W = $stat_letters{W};</b$stat_letters{W}> ";
+            $the_words .= "<b$stat_letters{X}> X = $stat_letters{X};</b$stat_letters{X}> ";
+            $the_words .= "<b$stat_letters{Y}> Y = $stat_letters{Y};</b$stat_letters{Y}> ";
+            $the_words .= "<b$stat_letters{Z}> <br>Z = $stat_letters{Z};</b$stat_letters{Z}></font><br><br>";
+
+            $the_words =~ s/<b-1>//img;
+            $the_words =~ s/<b0>//img;
+            $the_words =~ s/<b[1-5]>//img;
+            $the_words =~ s/<\/b-1>//img;
+            $the_words =~ s/<\/b0>//img;
+            $the_words =~ s/<\/b[1-5]>//img;
+            $the_words =~ s/<b\d*>/<b>/img;
+            $the_words =~ s/<\/b\d*>/<\/b>/img;
+
+            $num_words = 0;
+            my $use_the_suggested_word = 0;
+            my $the_suggested_word = 0;
+            my $the_suggested_word_score = -1;
+            my %suggested_words;
+            foreach $word (sort keys (%aws))
+            {
+                my $word_score = 0;
+                if ($num_words >= $MAX_WORD_COUNT / 10)
+                {
+                    next; 
+                }
+                
+                foreach $l (keys (%stat_letters))
+                {
+                    if ($stat_letters {$l} >= 2)
+                    {
+                        $use_the_suggested_word = 1;
+                        if ($word =~ m/$l/i)
+                        {
+                            $word_score += $stat_letters {$l};
+                        }
+                    }
+                }
+            
+                if ($word_score == $the_suggested_word_score)
+                {
+                    $the_suggested_word_score = $word_score;
+                    $the_suggested_word .= "," . $word;
+                }
+                elsif ($word_score > $the_suggested_word_score)
+                {
+                    $suggested_words {$the_suggested_word_score} = $the_suggested_word;
+                    $the_suggested_word_score = $word_score;
+                    $the_suggested_word = $word;
+                }
+            }
+            $html_text .= "$the_words<br>";
+            if ($use_the_suggested_word > 0)
+            {
+                $html_text .= "Suggested word/s:<br>";
+                $html_text .= "$the_suggested_word_score ==> $the_suggested_word<br>";
+
+                my $k;
+                foreach $k (sort { $b <=> $a } (keys (%suggested_words)))
+                {
+                    $html_text .= "$k => $suggested_words{$k}<br>";
+                }
+            }
+ 
+            $num_words = 0;
         }
+
         $html_text .= "</pre>";
 
         $html_text .= "</font></tbody>\n";
