@@ -27,7 +27,13 @@ my %col_roundings;
 my $max_field_num = 0;
 my $max_rows = 0;
 my %col_types;
-my $show_formulas = 0;
+
+my $SHOW_CALCULATIONS = 0;
+my $SHOW_FORMULAS = 1;
+my $SHOW_PERL = 2;
+my $SHOW_RELATED_CELLS = 3;
+my $SHOW_EXCEL = 4;
+my $show_formulas = $SHOW_CALCULATIONS;
 my $count = 0;
 my %each_element;
 my $each_element_count = 0;
@@ -51,7 +57,7 @@ my $edit_model_current_file = "";
 my $edit_model_master_mode_url = "";
 my $edit_mastermode = "MASTER_EDIT_MODE";
 my $EDIT_MASTERMODE_SALT = "MASTER_EDIT_MODE_SALT";
-my $EDIT_SALT = "_SPJ_WAS_HERE";
+my $EDIT_SALT = "_EDIT_SALT";
 my $EDIT_DONE = "editdone";
 my $EDIT = "edit";
 my $EDIT_SELECT = "select";
@@ -349,7 +355,7 @@ sub process_csv_data
                 }
                 elsif ($line_mod eq "!")
                 {
-                    my $fv = get_field_value ($row_num-1, $col_letter, 1, 1, 353);
+                    my $fv = get_field_value ($row_num-1, $col_letter, 1, $SHOW_FORMULAS, 353);
                     while ($field =~ m/([A-Z])!/)
                     {
                         my $cf = $1;
@@ -388,7 +394,7 @@ sub process_csv_data
         }
     }
     $max_rows++;
-    $show_formulas = 0;
+    $show_formulas = $SHOW_CALCULATIONS;
 }
 
 sub update_csv_data_on_disk
@@ -438,7 +444,7 @@ sub update_csv_data_on_disk
             if ("$col_letter$row_num" eq $cell_to_update)
             {
                 print (" FOUND $cell_to_update (CHANGE)!\n");
-                $old_field_val = get_field_value ($row_num, $col_letter, 0, 0, 444);
+                $old_field_val = get_field_value ($row_num, $col_letter, 0, $SHOW_CALCULATIONS, 444);
                 set_field_value ($row_num, $col_letter, $new_value, "");
                 $this_line_changed = 1;
                 $build_this_line .= "$new_value;";
@@ -493,7 +499,15 @@ sub update_csv_data_on_disk
         # Audit log..
         my $audit_yyyymmddhhmmss = sprintf "%.4d%.2d%.2d-%.2d%.2d%.2d", $year+1900, $mon+1, $mday, $hour,  $min, $sec;
         open AUDIT_FILE, (">> $current_file.audit.txt");
-        print AUDIT_FILE ("$audit_yyyymmddhhmmss;$cell_to_update;old=>>$old_field_val<<;new=>>$new_value<<;$current_file;$hash_val;UPDATED CELL VALUE!\n");
+        
+        $hash_val =~ s/\n//img;
+        $hash_val =~ s/
+//img;
+        my $str = "$audit_yyyymmddhhmmss;$cell_to_update;old=>>$old_field_val<<;new=>>$new_value<<;$current_file;$hash_val;UPDATED CELL VALUE!";
+        $str =~ s/
+//img;
+        $str =~ s/\n//img;
+        print AUDIT_FILE ("$str\n");
         close AUDIT_FILE;
     }
 }
@@ -706,6 +720,148 @@ sub set_field_value
     }
 }
 
+sub num_ops_excel_field
+{
+    my $field = $_ [0];
+    my $operators = 0;
+    
+    if ($field =~ m/ABSDAYS/) { $operators ++; }
+    if ($field =~ m/ADDDAYS/) { $operators ++; }
+    if ($field =~ m/ADDMONTHS/) { $operators ++; }
+    if ($field =~ m/BOLD/) { $operators ++; }
+    if ($field =~ m/INT/) { $operators ++; }
+    if ($field =~ m/TODAY/) { $operators ++; } 
+    if ($field =~ m/[^SD]DAYS/) { $operators ++; }
+    if ($field =~ m/HYPERLINK/) { $operators ++; }
+    return $operators; 
+}
+
+sub get_excel_field
+{
+    my $field = $_ [0]; 
+    my $counter = $_ [1]; 
+    my $new_field = $field;
+    if ($new_field !~ m/^=/)
+    {
+        return $new_field;
+    }
+    print ("Doing for excel - $new_field >>> ");
+    my $most_number_times = 5;
+    my $num_ops = num_ops_excel_field ($new_field);
+
+    if ($field =~ m/[^=]ABSDAYS/ || $field =~ m/^=ABSDAYS/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/ABSDAYS\([" ]*\d{8},\d{8}[" ]*\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/ABSDAYS\([" ]*(\d{4})(\d{2})(\d{2})[" ]*,[" ]*(\d{4})(\d{2})(\d{2})[" ]*\)/DxAYS("$1-$2-$3","$4-$5-$6")/;
+            $most_number_times--;
+        }
+    }
+    $most_number_times = 5;
+    if ($field =~ m/[^=]DAYS/ || $field =~ m/^=DAYS/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/DAYS\([" ]*\d{8}[" ]*\|[" ]*\d{8}[" ]*\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/DAYS\([" ]*(\d{4})(\d{2})(\d{2})[" ]*\|[" ]*(\d{4})(\d{2})(\d{2})[" ]*\)/DxAYS("$1-$2-$3"\|"$4-$5-$6")/;
+            $most_number_times--;
+        }
+    }
+    $most_number_times = 5;
+    if ($field =~ m/[^=]INT/ || $field =~ m/^=INT/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/INT\(\d+\|\d+\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/INT\((\d+)\|(\d+)\)/IxNT($1\/$2)/;
+            $most_number_times--;
+        }
+    }
+    $most_number_times = 5;
+    if ($field =~ m/[^=]BOLD/ || $field =~ m/^=BOLD/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/BOLD\(([^|]+)\|([^|]+)\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/BOLD\(([^|]+)\|([^|]+)\)/"$1"/;
+            $most_number_times--;
+        }
+    }
+    
+    $most_number_times = 5;
+    if ($field =~ m/[^=]ADDDAYS/ || $field =~ m/^=ADDDAYS/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/ADDDAYS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/ADDDAYS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/DATE($1|$2|$3)+$4/;
+            $most_number_times--;
+        }
+    }
+    
+    $most_number_times = 5;
+    if ($field =~ m/[^=]ADDMONTHS/ || $field =~ m/^=ADDMONTHS/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/ADDMONTHS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/ADDMONTHS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/TEXT(EDATE(DATEVALUE("$1-$2-$3")|$4)|"dd\/mm\/yyyy")/;
+            $most_number_times--;
+        }
+    }
+    
+    $most_number_times = 5;
+    if ($field =~ m/[^=]TODAY/ || $field =~ m/^=TODAY/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/TODAY\((.*?)\)/ && $most_number_times > 0)
+        {
+            my $yyyymmdd = perl_today ($1);
+            
+            if ($num_ops == 1)
+            {
+                $yyyymmdd =~ s/(\d{4})(\d{2})(\d{2})/$1-$2-$3/;
+                $new_field =~ s/TODAY\((.*?)\)/"$yyyymmdd"/;
+            }
+            else
+            {
+                $new_field =~ s/TODAY\((.*?)\)/$yyyymmdd/;
+            }
+            $most_number_times--;
+        }
+    }
+    
+    $most_number_times = 5;
+    if ($field =~ m/[^=]HYPERLINK/ || $field =~ m/^=HYPERLINK/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/HYPERLINK\((.*?)\)/ && $most_number_times > 0)
+        {
+            my $url_bits = $1; 
+            if ($url_bits =~ m/\|/ && $url_bits !~ m/&/ && $url_bits !~ m/\|"URL"$/)
+            {
+                $url_bits =~ s/\|/&/g;
+                $url_bits =~ s/$/|"URL"/g;
+                $new_field =~ s/HYPERLINK\((.*?)\)/HYPERLINK($url_bits)/;
+            }
+            $most_number_times--;
+        }
+    }
+
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    $new_field =~ s/""/"/g;
+    print (" <<< final ==> $new_field\n");
+    
+    $num_ops = num_ops_excel_field ($new_field);
+    $new_field =~ s/DxAYS/DAYS/g;
+    $new_field =~ s/IxNT/INT/g;
+    if ($num_ops == 0 || $counter > 05)
+    {
+        return $new_field;
+    }
+    return get_excel_field ($new_field, $counter+1);
+}
+
 my %loop_detections;
 sub get_field_value
 {
@@ -752,9 +908,7 @@ sub get_field_value
                 $count = 0;
                 $each_element_count = 0;
                 breakdown_excel ($csv_data {$field_id}, 0);
-                #print ("\nRP: >>>>>>>>>>>>>>>>>>> $field_id recreate_perl\n");
                 my $some_val = recreate_perl ($field_id);
-                #print ("\nRP: DONE >>>>>>>>>>>>>>>>>>> ($field_id)::$some_val recreate_perl\n");
                 if ($some_val ne $calc_val)
                 {
                     if ($calc_val eq "")
@@ -768,17 +922,14 @@ sub get_field_value
                 $calc_val = $field_val;
             }
             $calculated_data {$field_id} = $calc_val;
-            #print ("  222### gt_field_val $field_id is defined - $field_val - $calc_val\n");
         }
         $calc_val = $calculated_data {$field_id};
-        #print ("  333### gt_field_val $field_id is calculated - $field_val - $calc_val\n");
-        if ($for_display == 1 && $show_formulas == 0 && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
+        if ($for_display == 1 && $show_formulas == $SHOW_CALCULATIONS && $calc_val =~ m/^[-,\$\d\.]+$/ && $calc_val =~ m/^.+\..+$/)
         {
             my $c = sprintf("%.2f", $calc_val);
-            #print $c, ">> $calc_val, >>", $row_num, "====", $col_letter, " ($where_from)\n";
             return ($c);
         }
-        elsif ($for_display == 1 && $show_formulas == 2)
+        elsif ($for_display == 1 && $show_formulas == $SHOW_PERL)
         {
             if (!defined ($csv_data {$field_id . "_perl"}))
             {
@@ -786,18 +937,27 @@ sub get_field_value
             }
             return ($csv_data {$field_id . "_perl"});
         }
-        elsif ($for_display == 1 && $show_formulas == 1 || $for_display == 1 && $show_formulas == 3)
+        elsif ($for_display == 1 && $show_formulas == $SHOW_EXCEL)
         {
-            if (!defined ($csv_data {$field_id . "_calc"}) && $show_formulas == 1)
+            if (!defined ($csv_data {$field_id . "_excel"}))
+            {
+                return get_excel_field ($csv_data {$field_id}, 0);
+            }
+            return ($csv_data {$field_id . "_excel"});
+        }
+        elsif ($for_display == 1 && $show_formulas == $SHOW_FORMULAS || $for_display == 1 && $show_formulas == $SHOW_RELATED_CELLS)
+        {
+            if (!defined ($csv_data {$field_id . "_calc"}) && $show_formulas == $SHOW_FORMULAS)
             {
                 return "<font color=\"rebeccapurple\">$csv_data{$field_id}</font>";
             }
-            if (!defined ($csv_data {$field_id . "_calc"}) && $show_formulas == 3)
+            if (!defined ($csv_data {$field_id . "_calc"}) && $show_formulas == $SHOW_RELATED_CELLS)
             {
                 return "$csv_data{$field_id}";
             }
             return ($csv_data {$field_id . "_calc"} . "&nbsp;<font size=-1 color=\"darkgray\">$csv_data{$field_id}<\/font>");
         }
+        
         return ($calc_val);
     }
     return ("");
@@ -1266,10 +1426,11 @@ sub do_addmonths_expansion
     return $field_val;
 }
 
-sub do_equals_expansion
+sub do_exact_expansion
 {
+
     my $field_val = $_ [0];
-    if ($field_val =~ m/((EQUALS)\((.*)\))/)
+    if ($field_val =~ m/((EXACT)\((.*)\))/)
     {
         my $to_check = $1;
         my $func = $2;
@@ -1305,17 +1466,14 @@ sub do_equals_expansion
 sub do_recurring_expansion
 {
     my $field_val = $_ [0];
-            print (">>>111 $field_val<<<\n");
     if ($field_val =~ m/((RECURRING)\((.*)\))/)
     {
-            print (">>>222 $field_val<<<\n");
         my $to_check = $1;
         my $func = $2;
         my $num = $3;
         if (simple_parentheses_only_three_arguments ($to_check, "$func"))
         {
             $field_val =~ s/$func\(([^|]+)\|([^|]*?)\|([^|]*?)\)/perl_recurring($1,$2,"$3")/;
-            print (">>>333 $field_val<<<\n");
             return $field_val;
         }
     }
@@ -1362,10 +1520,10 @@ sub do_nextday_expansion
     return $field_val;
 }
 
-sub do_url_expansion
+sub do_hyperlink_expansion
 {
     my $field_val = $_ [0];
-    if ($field_val =~ m/((URL)\((.*)\))/)
+    if ($field_val =~ m/((HYPERLINK)\((.*)\))/)
     {
         my $to_check = $3;
         $to_check =~ s/\|/"."/g;
@@ -1374,10 +1532,10 @@ sub do_url_expansion
         $to_check =~ s/""/"/g;
         $to_check =~ s/""/"/g;
         $to_check =~ s/""/"/g;
-        $field_val = "perl_url($to_check)";
+        $field_val = "perl_hyperlink($to_check)";
         return $field_val;
     }
-    return "URLGOESHERE";
+    return "HYPERLINKGOESHERE";
 }
 
 sub perl_tax
@@ -1573,11 +1731,11 @@ sub perl_strequal
     return "0";
 }
 
-sub perl_url
+sub perl_hyperlink
 {
     my $input = $_ [0];
     $input =~ s/['"]//img;
-    my $url = "<a href=\"https://" . $input . "\">URL</a>";
+    my $url = "<a href=\"https://" . $input . "\">HYPERLINK</a>";
     $input =~ s/https:\/\/.*https:/https:/img;
     return $url;
 }
@@ -1929,7 +2087,7 @@ sub do_days_between_expansion
         my $func = $2;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/days($1,$2)/;
+            $field_val =~ s/$func\((.+) *\| *(.+)\)/days($1,$2)/;
             return $field_val;
         }
     }
@@ -1945,7 +2103,7 @@ sub do_absdays_between_expansion
         my $func = $2;
         if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\|(.+)\)/absdays($1,$2)/;
+            $field_val =~ s/$func\((.+) *\| *(.+)\)/absdays($1,$2)/;
             return $field_val;
         }
     }
@@ -2340,9 +2498,9 @@ sub do_rand_expansion
     {
         my $to_check = $1;
         my $func = $2;
-        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        if (simple_parentheses_zero_argument ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\)/rand($1)/;
+            $field_val =~ s/$func\(\)/rand(1)/;
             return $field_val;
         }
     }
@@ -2356,9 +2514,9 @@ sub do_round_expansion
     {
         my $to_check = $1;
         my $func = $2;
-        if (simple_parentheses_only_one_argument ($to_check, "$func"))
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
         {
-            $field_val =~ s/$func\((.+)\)/int($1+0.5)/;
+            $field_val =~ s/$func\((.+)\|(.+)\)/int(($1*(10 $2))+0.5)\/(10 $2)/;
             return $field_val;
         }
     }
@@ -2561,44 +2719,7 @@ sub fix_date
 sub do_sum_expansion
 {
     my $field_val = $_ [0];
-    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+)\|(.+)\))/)
-    {
-        my $first_bit = $1;
-        my $overall = $2;
-        my $first_col = $3;
-        my $first_num = $4;
-        my $second_col = $5;
-        my $second_num = $6;
-        my $comparator = lc($7);
-
-        my $fc_num = get_field_num_from_field_letter ($first_col);
-        my $sc_num = get_field_num_from_field_letter ($second_col);
-        my $i = $fc_num;
-        my $j = $first_num;
-        my $total = 0;
-        my $things_seen = "";
-        #print ("INSIDE SUM EXP (for $field_val)\n");
-        while ($i <= $sc_num)
-        {
-            while ($j <= $second_num)
-            {
-                #print (" >> 22 INSIDE SUM EXP (for $field_val, $i and $j)\n");
-                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas, 2380);
-                #print (" >> 22ZZ INSIDE SUM EXP (for $field_val, $i and $j) >> $cv\n");
-                if (lc($cv) eq $comparator)
-                {
-                    $total++;
-                }
-                $j++;
-            }
-            $j = $first_num;
-            $i++;
-        }
-        #print ("DONE SUM EXP (found >>$total<<)\n");
-        #return "$total + 0";
-        return $total;
-    }
-    elsif ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
+    if ($field_val =~ m/(.*)(SUM\(([A-Z])(\d+):([A-Z])(\d+))/)
     {
         my $first_bit = $1;
         my $overall = $2;
@@ -2638,6 +2759,45 @@ sub do_sum_expansion
     return $field_val;
 }
 
+sub do_countif_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/(.*)(COUNTIF\(([A-Z])(\d+):([A-Z])(\d+)\|(.+)\))/)
+    {
+        my $first_bit = $1;
+        my $overall = $2;
+        my $first_col = $3;
+        my $first_num = $4;
+        my $second_col = $5;
+        my $second_num = $6;
+        my $comparator = lc($7);
+
+        my $fc_num = get_field_num_from_field_letter ($first_col);
+        my $sc_num = get_field_num_from_field_letter ($second_col);
+        my $i = $fc_num;
+        my $j = $first_num;
+        my $total = 0;
+        my $things_seen = "";
+        while ($i <= $sc_num)
+        {
+            while ($j <= $second_num)
+            {
+                my $cv = get_field_value ($j, get_field_letter_from_field_num ($i), 0, $show_formulas, 2380);
+                if (lc($cv) eq $comparator)
+                {
+                    $total++;
+                }
+                $j++;
+            }
+            $j = $first_num;
+            $i++;
+        }
+        return $total;
+    }
+
+    return $field_val;
+}
+
 sub fix_up_field_vals
 {
     my $field_val = $_ [0];
@@ -2669,6 +2829,10 @@ sub perl_expansions
     if ($str =~ m/SUM\(/)
     {
         $str = do_sum_expansion ($str);
+    }
+    if ($str =~ m/COUNTIF\(/)
+    {
+        $str = do_countif_expansion ($str);
     }
     if ($str =~ m/CONCATENATE\(/)
     {
@@ -2746,9 +2910,9 @@ sub perl_expansions
     {
         $str = do_addmonths_expansion ($str);
     }
-    if ($str =~ m/EQUALS\(/)
+    if ($str =~ m/EXACT\(/)
     {
-        $str = do_equals_expansion ($str);
+        $str = do_exact_expansion ($str);
     }
     if ($str =~ m/ADDDAYS\(/)
     {
@@ -2803,9 +2967,9 @@ sub perl_expansions
         $str = do_strequal_expansion ($str);
     }
 
-    if ($str =~ m/URL\(/)
+    if ($str =~ m/HYPERLINK\(/)
     {
-        $str = do_url_expansion ($str);
+        $str = do_hyperlink_expansion ($str);
     }
     if ($str =~ m/MONEY\(/)
     {
@@ -3143,6 +3307,7 @@ sub get_graph_html
     $graph_html .= "        data: {";
     my $i;
     my $good_vals = 0;
+    my $last_value = "";
     if ($graph_counts == 0 && $graph_totals == 0)
     {
         for ($i = 2; $i < $max_rows; $i++)
@@ -3152,6 +3317,11 @@ sub get_graph_html
             {
                 next;
             }
+            if ($x eq $last_value)
+            {
+                next;
+            }
+            $last_value = $x;
             $x =~ s/,//g;
             $x =~ s/\$//g;
             $x =~ s/^ *$/0/g;
@@ -3173,6 +3343,11 @@ sub get_graph_html
                 {
                     next;
                 }
+                if ($x eq $last_value)
+                {
+                    next;
+                }
+                $last_value = $x;
                 $x =~ s/^$/0/;
                 $x =~ s/,//g;
                 $x =~ s/\$//g;
@@ -4741,7 +4916,7 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
             $html_text .= "<tr><td bgcolor=#e5f4ff>CONCATENATE</td><td bgcolor=#ffe5f4>Concatentation of two strings </td><td bgcolor=#f4e5ff>CONCATENATE(\"AAA\"|\"BBB\");=CONCATENATE(\"AAA\"|\"BBB\")CONCATENATE('AAA'|'BBB');=CONCATENATE('AAA'|'BBB')</td></tr>";
             $html_text .= "<tr><td bgcolor=#e5f4ff>DAYS</td><td bgcolor=#ffe5f4>Days between two dates (YYYYMMDD)</td><td bgcolor=#f4e5ff>DAYS(\"20240501\",\"20240601\");=DAYS('20240501'|'20240601')</td></tr>";
             $html_text .= "<tr><td bgcolor=#e5f4ff>IF</td><td bgcolor=#ffe5f4>If then else structure</td><td bgcolor=#f4e5ff>IF(4>5|\"Hello\"|\"Goodbye\");=IF(4>5|\"Hello\"|\"Goodbye\")</td></tr>";
-            $html_text .= "<tr><td bgcolor=#e5f4ff>INT</td><td bgcolor=#ffe5f4>Take the integer floor of the result of dividing the first argument by the second</td><td bgcolor=#f4e5ff>INT(6|10);=INT(6|10)</td></tr>";
+            $html_text .= "<tr><td bgcolor=#e5f4ff>INT</td><td bgcolor=#ffe5f4>Round the first argument to the second number of digits</td><td bgcolor=#f4e5ff>INT(6.3|0) will give 6;=INT(6|0)</td></tr>";
             $html_text .= "<tr><td bgcolor=#e5f4ff>LEFT</td><td bgcolor=#ffe5f4>Returns the first N characters of S</td><td bgcolor=#f4e5ff>LEFT(\"ABCDEXYZ\"|5);=LEFT(\"ABCDEXYZ\"|5)</td></tr>";
             $html_text .= "<tr><td bgcolor=#e5f4ff>MAX</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>MAX(3.14159|PI);=MAX(3|PI())</td></tr>";
             $html_text .= "<tr><td bgcolor=#e5f4ff>MIN</td><td bgcolor=#ffe5f4>Returns the maximum values of the both arguments</td><td bgcolor=#f4e5ff>MIN(3.14159|PI);=MIN(4|PI())</td></tr>";
@@ -4798,15 +4973,26 @@ my $NOT_AUTHORIZED_HTML = "<html> <head> <META HTTP-EQUIV=\"CACHE-CONTROL\" CONT
 
         if ($txt =~ m/GET.*toggle_calculate_off.*HTTP/m)
         {
-            $show_formulas = 1;
+            $show_formulas = $SHOW_FORMULAS;
         }
         if ($txt =~ m/GET.*toggle_calculate_on.*HTTP/m)
         {
-            $show_formulas = 0;
+            $show_formulas = $SHOW_CALCULATIONS;
         }
         if ($txt =~ m/GET.*toggle_perl_on.*HTTP/m)
         {
-            $show_formulas = 2;
+            $show_formulas = $SHOW_PERL;
+            my %new_csv_data;
+            my $fi;
+            foreach $fi (sort keys (%csv_data))
+            {
+                $new_csv_data {$fi} = $csv_data {$fi};
+            }
+            %csv_data = %new_csv_data;
+        }
+        if ($txt =~ m/GET.*toggle_excel_on.*HTTP/m)
+        {
+            $show_formulas = $SHOW_EXCEL;
             my %new_csv_data;
             my $fi;
             foreach $fi (sort keys (%csv_data))
@@ -4951,6 +5137,7 @@ $//img;
             $current_file = "d:\\perl_programs\\csv_ingest\\$file";
             $current_file =~ s/\.\./xxxx/img;
             process_csv_data ($new_csv, "DONT_SAVE");
+            print ("PROCESSED CSV_DATA\n");
             print ("$txt\n");
         }
         elsif (!$authorized && $txt =~ m/GET.*old_csv/i)
@@ -4960,18 +5147,18 @@ $//img;
         }
 
         # Allow editting from a specific button
-        # https://mysite.com/csv_analyse/old_csv?safe_form.txt&direct_update?cell=C16&val=Present&sectoken=b3760251cb143381f5b8bf5f97f3d7c6&finaldate=20260401
         if ($txt =~ m/direct_update.cell=([A-Z]\d+).val=(.*).sectoken=([a-z0-9]+)&finaldate=(\d\d\d\d\d\d\d\d)/im)
         {
             my $cell = $1;
             my $new_val = $2;
             my $md5 = $3;
             my $final_date = $4;
-            my $check_sum = get_md5 ("", $cell . $new_val, $EDIT_SALT, 4965);
+            my $check_sum = get_md5 ("", $cell . $new_val . $final_date, $EDIT_SALT, 4965);
+            my $check_sum2 = get_md5 ("", $cell . $new_val, $EDIT_SALT, 4965);
             print ("Got here!$check_sum vs $md5 was checked\n");
             print ("Value checked was - >>$cell$new_val$EDIT_SALT<<\n");
 
-            if ($md5 eq $check_sum)
+            if ($md5 eq $check_sum || $md5 eq $check_sum2)
             {
                 # Looking for where 'finaldate' value is (safe_bellringing, column A is where this information is..)
                 my $row_num = 1;
@@ -5380,11 +5567,12 @@ $//img;
             }
             $html_text .= "</form></td>";
 
-            if ($show_formulas == 0)
+            if ($show_formulas == $SHOW_CALCULATIONS)
             {
                 $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_off\">
                     <label>Toggle Formulas:</label><br>
-                    <input type=\"submit\" value=\"Show Formulas\"></form><a href=\"/csv_analyse/toggle_perl_on\">Display Perl</a>
+                    <input type=\"submit\" value=\"Show Formulas\"></form>
+                    Display: <a href=\"/csv_analyse/toggle_perl_on\">Perl</a>&nbsp;<a href=\"/csv_analyse/toggle_excel_on\">Excel</a>
                     <div class=\"toggle-wrap\"> <label class=\"toggle\"> <input type=\"checkbox\" id=\"relatedCellsToggle\"> <span class=\"slider\"></span> </label> <span class=\"toggle-label\">Related Cells</span> </div>
                     </tr></table>";
             }
@@ -5392,7 +5580,8 @@ $//img;
             {
                 $html_text .= "<td><form action=\"/csv_analyse/toggle_calculate_on\">
                     <label>Toggle Formulas:</label><br>
-                    <input type=\"submit\" value=\"Calculate Cells\"></form><a href=\"/csv_analyse/toggle_perl_on\">Display Perl</a>&nbsp;
+                    <input type=\"submit\" value=\"Calculate Cells\"></form>
+                    Display: <a href=\"/csv_analyse/toggle_perl_on\">Perl</a>&nbsp;<a href=\"/csv_analyse/toggle_excel_on\">Excel</a>
                     <div class=\"toggle-wrap\"> <label class=\"toggle\"> <input type=\"checkbox\" id=\"relatedCellsToggle\"> <span class=\"slider\"></span> </label> <span class=\"toggle-label\">Related Cells</span></div>
                     </tr></table>";
             }
@@ -5400,7 +5589,7 @@ $//img;
         else
         {
             $html_text .= "<table width=99%><tr>\n";
-            $html_text .= "<h1>Bell Ringing Calendar</h1>\n";
+            $html_text .= "<h1>Welcome to the <a href=\"https://mysite.com/csv_analyse/old_csv?safe_bellringing.txt\">Bell Ringing Calendar</a></h1>\n";
             $html_text .= "</tr></table>";
             $html_text =~ s/<title>Analyse CSV<\/title>/<title>Bell Ringing Calendar<\/title>/ig;
         }
@@ -5746,8 +5935,8 @@ $//img;
                 }
 
                 $field = get_field_value ($row_num, $col_letter, 1, $show_formulas, 5430);
-                my $field_perl = get_field_value ($row_num, $col_letter, 1, 2, 5431);
-                my $field_calc = get_field_value ($row_num, $col_letter, 1, 3, 5432);
+                my $field_perl = get_field_value ($row_num, $col_letter, 1, $SHOW_FORMULAS, 5431);
+                my $field_calc = get_field_value ($row_num, $col_letter, 1, $SHOW_RELATED_CELLS, 5432);
                 my $field_test = "$field_calc";
 
                 if ($row_num > $old_row_num)
@@ -5930,7 +6119,7 @@ $//img;
 
                     if ($current_file =~ m/safe_bellringing/)
                     {
-                        my $fv = get_field_value ($old_row_num+1, get_field_letter_from_field_num ("S"), 0, 0, 5609);
+                        my $fv = get_field_value ($old_row_num+1, get_field_letter_from_field_num ("S"), 0, $SHOW_CALCULATIONS, 5609);
                         if ($fv =~ m/^[0]$/)
                         {
                             $hl_row = "class=\"highlight_main\"";
@@ -6096,7 +6285,7 @@ $//img;
                 my $check_sum2 = get_md5 ($edit_model_current_file, $edit_instructions2, $EDIT_SALT, 5592);
                 if ($col_num >= 0)
                 {
-                    my $cell_val = get_field_value (2, $col_num, 0, 0, 5772);
+                    my $cell_val = get_field_value (2, $col_num, 0, $SHOW_CALCULATIONS, 5772);
                     $row .= "<td><font size=-1><a href='$edit_model_master_mode_url&$EDIT?$check_sum:$edit_instructions&$EDIT_DONE'>Edit - $cell_val</a>
                     <a href='$edit_model_master_mode_url&$EDIT?$check_sum2:$edit_instructions2&$EDIT_DONE'>Edit - $cell_val</a>
                     Col:$x</font></td>";
@@ -6120,17 +6309,21 @@ $//img;
 
         for ($x = 0; $x < $max_field_num; $x++)
         {
-            if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
-            {
-                $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
-                my $str = "class=td.price";
-                $html_text =~ s/XYZ$x/$str/;
-            }
-            else
-            {
-                $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . " (not a detected number column)</button>";
-                $html_text =~ s/XYZ$x//;
-            }
+            $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
+            my $str = "class=td.price";
+            $html_text =~ s/XYZ$x/$str/;
+
+            #if (get_col_type ($x) eq "PRICE" || get_col_type ($x) eq "NUMBER")
+            #{
+            #    $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . "</button>";
+            #    my $str = "class=td.price";
+            #    $html_text =~ s/XYZ$x/$str/;
+            #}
+            #else
+            #{
+            #    $group_block .= "<button onclick=\"location.href='dograph_$x'\">Graph " . get_col_header ($x) . " (not a detected number column)</button>";
+            #    $html_text =~ s/XYZ$x//;
+            #}
         }
 
         if (($only_one_group || $first_group_only || $dual_groups) && $use_regex || $dual_group_by_columns)
