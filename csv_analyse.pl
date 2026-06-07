@@ -720,45 +720,70 @@ sub set_field_value
     }
 }
 
+#### EXCEL EXPORT FUNCTIONALITY
 sub num_ops_excel_field
 {
     my $field = $_ [0];
     my $operators = 0;
     
-    if ($field =~ m/ABSDAYS/) { $operators ++; }
-    if ($field =~ m/ADDDAYS/) { $operators ++; }
-    if ($field =~ m/ADDMONTHS/) { $operators ++; }
-    if ($field =~ m/BOLD/) { $operators ++; }
-    if ($field =~ m/INT/) { $operators ++; }
-    if ($field =~ m/TODAY/) { $operators ++; } 
-    if ($field =~ m/[^SD]DAYS/) { $operators ++; }
-    if ($field =~ m/HYPERLINK/) { $operators ++; }
+    if ($field =~ m/ABSDAYS\([^x]/) { $operators ++; }
+    if ($field =~ m/ADDDAYS\([^x]/) { $operators ++; }
+    if ($field =~ m/ADDMONTHS\([^x]/) { $operators ++; }
+    if ($field =~ m/ADDYEARS\([^x]/) { $operators ++; }
+    if ($field =~ m/BOLD\([^x]/) { $operators ++; }
+    if ($field =~ m/INT\([^x]/) { $operators ++; }
+    if ($field =~ m/TODAY\([^x]/) { $operators ++; } 
+    if ($field =~ m/[^SD]DAYS\([^x]/) { $operators ++; }
+    if ($field =~ m/HYPERLINK\([^x]/) { $operators ++; }
+    if ($field =~ m/DAYOFWEEK\([^x]/) { $operators ++; }
+    if ($field =~ m/ISDAYOFMONTH\([^x]/) { $operators ++; }
+    if ($field =~ m/TAX\([^x]/) { $operators ++; }
+    if ($field =~ m/(ABSDAYS|ADDDAYS|ADDMONTHS|ADDYEARS|BOLD|DAYOFWEEK|HYPERLINK|INT|ISDAYOFMONTH|TAX|TODAY|[^SD]DAYS)\(.*(ABSDAYS|ADDDAYS|ADDMONTHS|ADDYEARS|BOLD|DAYOFWEEK|HYPERLINK|INT|ISDAYOFMONTH|TAX|TODAY|[^SD]DAYS)\(/) { $operators ++; }
+
     return $operators; 
 }
 
-sub get_excel_field
+sub is_simplest
+{
+    return num_ops_excel_field ($_ [0]) == 0;
+}
+
+sub is_only_one_expression
+{
+    return num_ops_excel_field ($_ [0]) == 1;
+}
+
+sub is_many_expression
+{
+    return num_ops_excel_field ($_ [0]) > 1;
+}
+
+sub get_single_excel_function
 {
     my $field = $_ [0]; 
     my $counter = $_ [1]; 
     my $new_field = $field;
-    if ($new_field !~ m/^=/)
-    {
-        return $new_field;
-    }
-    print ("Doing for excel - $new_field >>> ");
+    
     my $most_number_times = 5;
     my $num_ops = num_ops_excel_field ($new_field);
+    #print ("$num_ops --- $new_field\n");
 
-    if ($field =~ m/[^=]ABSDAYS/ || $field =~ m/^=ABSDAYS/ && $num_ops == 1)
+    if ($field =~ m/ABSDAYS/ && $num_ops == 1)
     {
         while ($new_field =~ m/ABSDAYS\([" ]*\d{8},\d{8}[" ]*\)/ && $most_number_times > 0)
         {
-            $new_field =~ s/ABSDAYS\([" ]*(\d{4})(\d{2})(\d{2})[" ]*,[" ]*(\d{4})(\d{2})(\d{2})[" ]*\)/DxAYS("$1-$2-$3","$4-$5-$6")/;
+            $new_field =~ s/ABSDAYS\([" ]*(\d{4})(\d{2})(\d{2})[" ]*,[" ]*(\d{4})(\d{2})(\d{2})[" ]*\)/ABS("$1-$2-$3"-"$4-$5-$6")/;
+            $most_number_times--;
+        }
+        
+        while ($new_field =~ m/ABSDAYS\((.*?)\|(.*?)\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/ABSDAYS\((.*?)\|(.*?)\)/ABS(N(\1)-N(\2))/;
             $most_number_times--;
         }
     }
-    $most_number_times = 5;
-    if ($field =~ m/[^=]DAYS/ || $field =~ m/^=DAYS/ && $num_ops == 1)
+
+    if ($field =~ m/DAYS/ && $num_ops == 1)
     {
         while ($new_field =~ m/DAYS\([" ]*\d{8}[" ]*\|[" ]*\d{8}[" ]*\)/ && $most_number_times > 0)
         {
@@ -766,8 +791,8 @@ sub get_excel_field
             $most_number_times--;
         }
     }
-    $most_number_times = 5;
-    if ($field =~ m/[^=]INT/ || $field =~ m/^=INT/ && $num_ops == 1)
+
+    if ($field =~ m/INT/ && $num_ops == 1)
     {
         while ($new_field =~ m/INT\(\d+\|\d+\)/ && $most_number_times > 0)
         {
@@ -775,8 +800,8 @@ sub get_excel_field
             $most_number_times--;
         }
     }
-    $most_number_times = 5;
-    if ($field =~ m/[^=]BOLD/ || $field =~ m/^=BOLD/ && $num_ops == 1)
+
+    if ($field =~ m/BOLD/ && $num_ops == 1)
     {
         while ($new_field =~ m/BOLD\(([^|]+)\|([^|]+)\)/ && $most_number_times > 0)
         {
@@ -785,29 +810,41 @@ sub get_excel_field
         }
     }
     
-    $most_number_times = 5;
-    if ($field =~ m/[^=]ADDDAYS/ || $field =~ m/^=ADDDAYS/ && $num_ops == 1)
+    
+    if ($field =~ m/ADDDAYS/ && $num_ops == 1)
     {
-        while ($new_field =~ m/ADDDAYS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/ && $most_number_times > 0)
+        while ($new_field =~ m/ADDDAYS\((.*)\|.*?(\d+).*?\)/ && $most_number_times > 0)
         {
-            $new_field =~ s/ADDDAYS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/DATE($1|$2|$3)+$4/;
+            $new_field =~ s/ADDDAYS\((.*)\|.*?(\d+).*?\)/DATE(YEAR(\1)|MONTH(\1)|DAY(\1)+\2)/;
             $most_number_times--;
         }
     }
     
-    $most_number_times = 5;
-    if ($field =~ m/[^=]ADDMONTHS/ || $field =~ m/^=ADDMONTHS/ && $num_ops == 1)
+    if ($field =~ m/ADDMONTHS/ && $num_ops == 1)
     {
-        while ($new_field =~ m/ADDMONTHS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/ && $most_number_times > 0)
+        while ($new_field =~ m/ADDMONTHS\((.*)\|(.+?)\)/ && $most_number_times > 0)
         {
-            $new_field =~ s/ADDMONTHS\(.*?(\d{4})(\d{2})(\d{2}).*?\|.*?(\d+).*?\)/TEXT(EDATE(DATEVALUE("$1-$2-$3")|$4)|"dd\/mm\/yyyy")/;
+            $new_field =~ s/ADDMONTHS\((.*)\|(.+?)\)/DATE(YEAR(\1)|MONTH(\1)+\2|DAY(\1))/;
             $most_number_times--;
         }
     }
     
-    $most_number_times = 5;
-    if ($field =~ m/[^=]TODAY/ || $field =~ m/^=TODAY/ && $num_ops == 1)
+    if ($field =~ m/ADDYEARS/ && $num_ops == 1)
     {
+        while ($new_field =~ m/ADDYEARS\((.*)\|.*?(\d+).*?\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/ADDYEARS\((.*)\|.*?(\d+).*?\)/DATE(YEAR(\1)+\2|MONTH(\1)|DAY(\1))/;
+            $most_number_times--;
+        }
+    }
+
+    if ($field =~ m/TODAY/ && $num_ops == 1)
+    {
+        if ($new_field =~ m/=TODAY\((.*?)\)/)
+        {
+            $new_field =~ s/=TODAY\((.*?)\)/TODAY($1)/;
+        }
+
         while ($new_field =~ m/TODAY\((.*?)\)/ && $most_number_times > 0)
         {
             my $yyyymmdd = perl_today ($1);
@@ -815,7 +852,7 @@ sub get_excel_field
             if ($num_ops == 1)
             {
                 $yyyymmdd =~ s/(\d{4})(\d{2})(\d{2})/$1-$2-$3/;
-                $new_field =~ s/TODAY\((.*?)\)/"$yyyymmdd"/;
+                $new_field =~ s/TODAY\((.*?)\)/$yyyymmdd/;
             }
             else
             {
@@ -824,9 +861,8 @@ sub get_excel_field
             $most_number_times--;
         }
     }
-    
-    $most_number_times = 5;
-    if ($field =~ m/[^=]HYPERLINK/ || $field =~ m/^=HYPERLINK/ && $num_ops == 1)
+
+    if ($field =~ m/HYPERLINK/ && $num_ops == 1)
     {
         while ($new_field =~ m/HYPERLINK\((.*?)\)/ && $most_number_times > 0)
         {
@@ -840,6 +876,77 @@ sub get_excel_field
             $most_number_times--;
         }
     }
+    
+    if ($field =~ m/DAYOFWEEK/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/DAYOFWEEK\((.*?)\)/ && $most_number_times > 0)
+        {
+            $new_field =~ s/DAYOFWEEK\((.*?)\)/TEXT(\1|"dddd")/;
+            $most_number_times--;
+        }
+    }
+    
+    if ($field =~ m/TAX/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/TAX\((.*?)\)/ && $most_number_times > 0)
+        {
+            my $val = $1;
+            my $inside = "IF($val<=18200| 0| IF($val<=45000| ($val-18200)*0.18| IF($val<=135000| 4824+($val-45000)*0.32| IF($val<=190000| 33624+($val-135000)*0.39| 55074+($val-190000)*0.47))))";
+            $new_field =~ s/TAX\((.*?)\)/$inside/;
+            $most_number_times--;
+        }
+    }
+    
+    if ($field =~ m/ISDAYOFMONTH/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/ISDAYOFMONTH\((.*?)\)/ && $most_number_times > 0)
+        {
+            my $inner_bits = $1;
+            if ($inner_bits =~ m/"last"/)
+            {
+                $inner_bits =~ s/\| *"last"//;
+                $new_field =~ s/ISDAYOFMONTH\((.*?)\)/IF($inner_bits=EOMONTH($inner_bits|0)|1|0)/;
+                $most_number_times--;
+            }
+            elsif ($inner_bits =~ m/\| *(\d|[0-2]\d|3[01])/)
+            {
+                my $actual_day = $1;
+                $inner_bits =~ s/\| *(\d|[0-2]\d|3[01])//;
+                $new_field =~ s/ISDAYOFMONTH\((.*?)\)/IF($actual_day=DAY($inner_bits)|1|0)/;
+                $most_number_times--;
+            }
+        }
+    }
+    
+    if ($field =~ m/ISDAYOFMONTH/ && $num_ops == 1)
+    {
+        while ($new_field =~ m/ISDAYOFMONTH\((.*?)\)/ && $most_number_times > 0)
+        {
+            my $inner_bits = $1;
+            if ($inner_bits =~ m/"last"/)
+            {
+                $inner_bits =~ s/\| *"last"//;
+                $new_field =~ s/ISDAYOFMONTH\((.*?)\)/IF($inner_bits=EOMONTH($inner_bits|0)|1|0)/;
+                $most_number_times--;
+            }
+            elsif ($inner_bits =~ m/\| *(\d|[0-2]\d|3[01])/)
+            {
+                my $actual_day = $1;
+                $inner_bits =~ s/\| *(\d|[0-2]\d|3[01])//;
+                $new_field =~ s/ISDAYOFMONTH\((.*?)\)/IF($actual_day=DAY($inner_bits)|1|0)/;
+                $most_number_times--;
+            }
+        }
+    }
+
+    if ($field =~ m/(20|19)\d\d[01]\d[0-3]\d/)
+    {
+        if ($new_field =~ m/(20|19)\d\d[01]\d[0-3]\d/)
+        {
+            $new_field =~ s/((20|19)\d\d)([01]\d)([0-3]\d)/$1-$3-$4/;
+            $most_number_times++;
+        }
+    }
 
     $new_field =~ s/""/"/g;
     $new_field =~ s/""/"/g;
@@ -848,19 +955,89 @@ sub get_excel_field
     $new_field =~ s/""/"/g;
     $new_field =~ s/""/"/g;
     $new_field =~ s/""/"/g;
-    $new_field =~ s/""/"/g;
-    $new_field =~ s/""/"/g;
-    print (" <<< final ==> $new_field\n");
-    
-    $num_ops = num_ops_excel_field ($new_field);
     $new_field =~ s/DxAYS/DAYS/g;
     $new_field =~ s/IxNT/INT/g;
-    if ($num_ops == 0 || $counter > 05)
-    {
-        return $new_field;
-    }
-    return get_excel_field ($new_field, $counter+1);
+
+    return $new_field;
 }
+
+#EXP0==!>=ADDDAYS(ADDMONTHS(A11|4)|6)
+#EXP0===>NOT SIMPLEST
+#    ================
+#    EXP1 replace EXP0
+#    EXP1==!>=ADDDAYS(ARG1|6)
+#    ARG1==!>ADDMONTHS(A11|4)
+#    EXP1===>NOT SIMPLEST
+#    ARG1===>NOT SIMPLEST
+#        ================
+#        EXP2 replace EXP1
+#        EXP2===>=DATE(YEAR(ARG1)|MONTH(ARG1)|DAY(ARG1)+6)
+#        EXP2===>SIMPLEST
+#        ARG1==!>NOT SIMPLEST
+#        ARG1===>NOT SIMPLEST
+#        ================
+#            EXP3 replace ARG1
+#            EXP3===>=DATE(YEAR(ARG2)|MONTH(ARG2)+4|DAY(ARG2))
+#            ARG2===>A11
+#            EXP3===>SIMPLEST
+#            ARG3===>SIMPLEST
+#            FINISH
+#            ================
+sub breakdown_csv_to_excel
+{
+    my $field = $_ [0];
+    my $expression_id = $_ [1];
+    my $argument_id = $_ [2];
+    my $hash_pointer = $_ [3];
+    my $called = $_ [4];
+    my $debug = $_ [5];
+    my $safety = 10;
+
+    if (is_simplest ($field))
+    {
+        return get_single_excel_function ($field);
+    }
+    elsif (is_only_one_expression ($field))
+    {
+        return get_single_excel_function ($field);
+    }
+    else
+    {
+        while ($field =~ m/\(([^x][^()]*)\)/ && $safety > 0)
+        {
+            $safety--;
+            my $exp = "EXP$expression_id";
+            $field =~ s/((ABSDAYS|ADDDAYS|ADDMONTHS|ADDYEARS|BOLD|DAYOFWEEK|HYPERLINK|INT|ISDAYOFMONTH|TAX|TODAY|[^SD]DAYS)\([^()]*\))/$exp/;
+            my $actual_exp = $1;
+            if ($debug)
+            {
+                print ("\n   >>> BEFORE ==> $actual_exp\n");
+            }
+            $actual_exp = breakdown_csv_to_excel ($actual_exp, $expression_id+1, $argument_id, $hash_pointer, $called . ".here", $debug);
+            $hash_pointer->{"EXP$expression_id"} = $actual_exp;
+            if ($debug)
+            {
+                print ("\n>>> EXP$expression_id -- $actual_exp\n");
+            }
+            $expression_id++;
+        }
+
+        while ($field =~ m/(EXP\d)/)
+        {
+            my $exp = $1;
+            if (defined ($hash_pointer->{$exp}))
+            {
+                if ($debug)
+                {
+                    print ("$exp => $hash_pointer->{$exp}\n");
+                }
+                $field =~ s/$exp/$hash_pointer->{$exp}/img;
+            }
+        }
+        return (breakdown_csv_to_excel ($field, $expression_id, $argument_id, $hash_pointer, $called . ".h2"));
+    }
+}
+#### END EXCEL EXPORT FUNCTIONALITY
 
 my %loop_detections;
 sub get_field_value
@@ -941,7 +1118,7 @@ sub get_field_value
         {
             if (!defined ($csv_data {$field_id . "_excel"}))
             {
-                return get_excel_field ($csv_data {$field_id}, 0);
+                return breakdown_csv_to_excel ($csv_data {$field_id}, 0, 0, {}, "");
             }
             return ($csv_data {$field_id . "_excel"});
         }
@@ -1351,6 +1528,25 @@ sub do_adddays_expansion
             my $new_date = perl_adddays($1,$2);
 
             $field_val =~ s/$func\((.+)\|(.+)\)/perl_adddays($1,$2)/;
+            return $field_val;
+        }
+    }
+    return $field_val;
+}
+
+sub do_addyears_expansion
+{
+    my $field_val = $_ [0];
+    if ($field_val =~ m/((ADDYEARS)\((.*)\))/)
+    {
+        my $to_check = $1;
+        my $func = $2;
+        my $num = $3;
+        if (simple_parentheses_only_two_arguments ($to_check, "$func"))
+        {
+            my $new_date = perl_addyears($1,$2);
+
+            $field_val =~ s/$func\((.+)\|(.+)\)/perl_addyears($1,$2)/;
             return $field_val;
         }
     }
@@ -1840,6 +2036,33 @@ sub perl_adddays
         #open OUTPUT, ">> d:\\perl_programs\\csv_analyse.log";
         #print OUTPUT "Turning $adder, $days_to_add into :: $yyyymmdd --- ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) , d=$d,m=$m,y=$y, time=$time,days_to_add=$days_to_add-- $year, $mon, $mday \n";
         #close OUTPUT;
+        return $yyyymmdd;
+    }
+    return perl_today ();
+}
+
+sub perl_addyears
+{
+    # Add years to the incoming date
+    my $adder = $_ [0];
+    my $years_to_add = $_ [1];
+    if ($adder =~ m/^$/)
+    {
+        $adder = perl_today ();
+    }
+
+    $adder =~ s/\s//;
+    if ($adder =~ m/^(\d\d\d\d)(\d\d)(\d\d)$/)
+    {
+        my $y = $1;
+        my $m = $2;
+        my $d = $3;
+        # Solve for DST
+        $y += $years_to_add;
+        my $time = timelocal(0, 0, 12, $d, $m - 1, $y - 1900);
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($time);
+        my $yyyymmdd = sprintf "%.4d%.2d%.2d", $year+1900, $mon+1, $mday;
+
         return $yyyymmdd;
     }
     return perl_today ();
@@ -2917,6 +3140,14 @@ sub perl_expansions
     if ($str =~ m/ADDDAYS\(/)
     {
         $str = do_adddays_expansion ($str);
+    }
+    if ($str =~ m/ADDMONTHS\(/)
+    {
+        $str = do_addmonths_expansion ($str);
+    }
+    if ($str =~ m/ADDYEARS\(/)
+    {
+        $str = do_addyears_expansion ($str);
     }
     if ($str =~ m/DAYOFWEEK\(/)
     {
@@ -5137,8 +5368,9 @@ $//img;
             $current_file = "d:\\perl_programs\\csv_ingest\\$file";
             $current_file =~ s/\.\./xxxx/img;
             process_csv_data ($new_csv, "DONT_SAVE");
-            print ("PROCESSED CSV_DATA\n");
+
             print ("$txt\n");
+            print ("PROCESSED CSV_DATA\n");
         }
         elsif (!$authorized && $txt =~ m/GET.*old_csv/i)
         {
@@ -5146,7 +5378,7 @@ $//img;
             next;
         }
 
-        # Allow editting from a specific button
+        # Allow editting from a specific button        
         if ($txt =~ m/direct_update.cell=([A-Z]\d+).val=(.*).sectoken=([a-z0-9]+)&finaldate=(\d\d\d\d\d\d\d\d)/im)
         {
             my $cell = $1;
